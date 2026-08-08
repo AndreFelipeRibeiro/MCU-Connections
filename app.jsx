@@ -48,14 +48,28 @@ function useDevice() {
 
 const SORT_LABEL = { release: 'by release', chrono: 'chronological', phase: 'by phase', title: 'A–Z', imdb: 'by IMDb', rt: 'by Tomatometer' };
 
-function sortTitles(list, sort) {
+// Default direction per sort mode, chosen to match each mode's natural/prior default
+// (e.g. ratings default to highest-first, dates/phase default to earliest-first).
+const DEFAULT_SORT_DIR = { release: 'asc', chrono: 'asc', phase: 'asc', imdb: 'desc', rt: 'desc', title: 'asc' };
+
+function sortLabelFor(sort, dir) {
+  if (sort === 'chrono') return dir === 'desc' ? 'reverse chronological' : 'chronological';
+  const base = SORT_LABEL[sort];
+  if (sort === 'release' || sort === 'phase' || sort === 'imdb' || sort === 'rt') {
+    return `${base} · ${dir === 'desc' ? 'descending' : 'ascending'}`;
+  }
+  return base;
+}
+
+function sortTitles(list, sort, dir = 'asc') {
   const out = list.slice();
-  if (sort === 'chrono') out.sort((a,b) => a.chronOrder - b.chronOrder);
-  else if (sort === 'title') out.sort((a,b) => a.title.localeCompare(b.title));
-  else if (sort === 'imdb') out.sort((a,b) => (b.imdb ?? -1) - (a.imdb ?? -1));
-  else if (sort === 'rt') out.sort((a,b) => (b.rt ?? -1) - (a.rt ?? -1));
-  else if (sort === 'phase') out.sort((a,b) => a.phase - b.phase || a.release.localeCompare(b.release));
-  else out.sort((a,b) => a.release.localeCompare(b.release));
+  const mul = dir === 'desc' ? -1 : 1;
+  if (sort === 'chrono') out.sort((a,b) => mul * (a.chronOrder - b.chronOrder));
+  else if (sort === 'title') out.sort((a,b) => mul * a.title.localeCompare(b.title));
+  else if (sort === 'imdb') out.sort((a,b) => mul * ((a.imdb ?? -1) - (b.imdb ?? -1)));
+  else if (sort === 'rt') out.sort((a,b) => mul * ((a.rt ?? -1) - (b.rt ?? -1)));
+  else if (sort === 'phase') out.sort((a,b) => mul * (a.phase - b.phase) || a.release.localeCompare(b.release));
+  else out.sort((a,b) => mul * a.release.localeCompare(b.release));
   return out;
 }
 
@@ -151,7 +165,7 @@ function computeLayout(titles, sort) {
   return { positions, width: maxX + 120, height: maxY + 120 };
 }
 
-function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isDragging }) {
+function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isDragging, matchedChars, searchQuery }) {
   const phaseColor = PHASE_COLORS[title.phase];
   const downRef = useRef({ x: 0, y: 0, moved: false });
   return (
@@ -197,13 +211,14 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
         </div>
       </div>
       <div className="card-meta">
-        <div className="card-title">{title.title}</div>
+        <div className="card-title"><window.Highlight text={title.title} query={searchQuery}/></div>
         <div className="card-year">
           <span>{title.year}</span>
           {title.budget != null && (
             <span className="card-budget">${title.budget < 1 ? title.budget : Math.round(title.budget)}M</span>
           )}
         </div>
+        <window.MatchBadge matchedChars={matchedChars} query={searchQuery}/>
       </div>
     </div>
   );
@@ -335,9 +350,9 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
         </div>
         <div className="search-wrap">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…"/>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/>
         </div>
-        <button className="reset-view" onClick={onResetView} title="Reset view">⊙<span className="lg"> Reset</span></button>
+        <button className="reset-view" onClick={onResetView} title="Recenter view">⊙<span className="lg"> Recenter</span></button>
       </div>
     </div>
   );
@@ -537,6 +552,8 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
 
 function App() {
   const [sort, setSort] = useState('release');
+  const [sortDir, setSortDir] = useState(DEFAULT_SORT_DIR.release);
+  const changeSort = (v) => { setSort(v); setSortDir(DEFAULT_SORT_DIR[v] || 'asc'); };
   const [phaseFilter, setPhaseFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [budgetFilter, setBudgetFilter] = useState('all');
@@ -566,6 +583,23 @@ function App() {
   const viewportRef = useRef(null);
   const panRef = useRef({ panning: false, sx: 0, sy: 0, ox: 0, oy: 0 });
 
+  // Maps title id -> array of cast character ids whose name/actor matched the
+  // search text (empty array if the title only matched on its own title text).
+  // null when there's no active search.
+  const searchCharMatches = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return null;
+    const m = {};
+    window.TITLES.forEach(t => {
+      const chars = t.cast.filter(c => {
+        const ch = window.CHARACTERS[c];
+        return ch && (ch.name.toLowerCase().includes(q) || ch.actor.toLowerCase().includes(q));
+      });
+      if (t.title.toLowerCase().includes(q) || chars.length) m[t.id] = chars;
+    });
+    return m;
+  }, [search]);
+
   const filtered = useMemo(() => {
     let list = window.TITLES.slice();
     if (phaseFilter !== 'all') list = list.filter(t => String(t.phase) === phaseFilter);
@@ -581,12 +615,9 @@ function App() {
         return true;
       });
     }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(t => t.title.toLowerCase().includes(q));
-    }
+    if (searchCharMatches) list = list.filter(t => searchCharMatches[t.id] !== undefined);
     return list;
-  }, [phaseFilter, typeFilter, budgetFilter, search]);
+  }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches]);
 
   const layout = useMemo(() => computeLayout(filtered, sort), [filtered, sort]);
   const basePositions = layout.positions;
@@ -667,11 +698,11 @@ function App() {
   }, [basePositions, overrides, focusId, relatedIds, isTouch]);
 
   // Reset overrides when sort/filter changes the layout
-  useEffect(() => { setOverrides({}); }, [sort, phaseFilter, typeFilter, budgetFilter, search]);
+  useEffect(() => { setOverrides({}); }, [sort, sortDir, phaseFilter, typeFilter, budgetFilter, search]);
 
   const selectedTitle = selectedId ? window.TITLES.find(t => t.id === selectedId) : null;
   const drawerTitle = drawerId ? window.TITLES.find(t => t.id === drawerId) : null;
-  const ordered = useMemo(() => sortTitles(filtered, sort), [filtered, sort]);
+  const ordered = useMemo(() => sortTitles(filtered, sort, sortDir), [filtered, sort, sortDir]);
 
   // Keyed by prime identity, so highlighting any variant lights the whole thread
   const charToTitleIds = useMemo(() => {
@@ -1009,6 +1040,8 @@ function App() {
               isHighlighted={isHighlighted}
               isDimmed={isDimmed}
               isDragging={draggingId === t.id}
+              matchedChars={searchCharMatches ? searchCharMatches[t.id] : null}
+              searchQuery={search}
             />
           );
         })}
@@ -1039,12 +1072,12 @@ function App() {
           onOpenFilters={() => setSheet('filters')}
           filterCount={filterCount}
           showing={filtered.length} total={window.TITLES.length}
-          sort={sort} setSort={setSort} sortLabel={SORT_LABEL[sort]}
+          sort={sort} setSort={changeSort} sortLabel={sortLabelFor(sort, sortDir)}
         />
         {charBanner}
         <div className="m-main">
-          {viewMode === 'grid' && <window.MobileGrid titles={ordered} onSelect={onCardTap}/>}
-          {viewMode === 'list' && <window.MobileList titles={ordered} sort={sort} onSelect={onCardTap}/>}
+          {viewMode === 'grid' && <window.MobileGrid titles={ordered} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search}/>}
+          {viewMode === 'list' && <window.MobileList titles={ordered} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
@@ -1052,12 +1085,13 @@ function App() {
             </div>
           )}
         </div>
-        {device === 'mobile' && <window.SortTabs sort={sort} setSort={setSort}/>}        {sheet === 'filters' && (
+        {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort}/>}        {sheet === 'filters' && (
           <window.FilterSheet
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
             typeFilter={typeFilter} setTypeFilter={setTypeFilter}
             budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
-            sort={sort} setSort={setSort}
+            sort={sort} setSort={changeSort}
+            sortDir={sortDir} setSortDir={setSortDir}
             showing={filtered.length}
             onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); }}
             onClose={() => setSheet(null)}
@@ -1080,7 +1114,7 @@ function App() {
   return (
     <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
       <Toolbar
-        sort={sort} setSort={setSort}
+        sort={sort} setSort={changeSort}
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}
         budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
