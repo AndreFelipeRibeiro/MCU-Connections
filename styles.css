@@ -13,6 +13,13 @@
 }
 
 * { box-sizing: border-box; }
+mark.hl {
+  background: transparent; color: inherit; font: inherit; padding: 0; border-radius: 2px;
+  text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+.card-match-char mark.hl, .card-match-actor mark.hl { text-decoration-color: var(--match-color, var(--accent)); }
+.card-match-actor mark.hl { color: var(--match-color, var(--accent)); font-weight: 700; }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); min-height: 100vh; }
 body {
   background:
@@ -217,6 +224,27 @@ body {
   display: flex; justify-content: space-between; align-items: center; gap: 8px;
 }
 .card-budget { color: #b9c2d6; opacity: 0.75; }
+.card-match {
+  margin-top: 7px; display: flex; align-items: center; gap: 7px;
+  background: color-mix(in oklab, var(--match-color) 14%, transparent);
+  border: 1px solid color-mix(in oklab, var(--match-color) 40%, transparent);
+  border-radius: 6px; padding: 4px 7px 4px 4px;
+}
+.card-match-portrait {
+  width: 22px; height: 22px; border-radius: 50%; flex: 0 0 22px;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  font-size: 8px; font-weight: 700; color: #0a0c14; box-shadow: inset 0 0 0 1px #ffffff20;
+}
+.card-match-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-match-text { min-width: 0; flex: 1; }
+.card-match-char {
+  font-size: 10px; font-weight: 600; color: var(--match-color);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card-match-actor {
+  font-size: 9px; color: var(--text-muted); margin-top: 1px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .rating-row {
   position: absolute; bottom: 10px; left: 10px;
   display: flex; align-items: center; gap: 5px;
@@ -307,8 +335,8 @@ body {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
 .cast-text { flex: 1; min-width: 0; }
-.char-name { font-size: 13px; font-weight: 500; }
-.actor-name { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.char-name { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.actor-name { font-size: 11px; color: var(--text-muted); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cast-color-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .empty-cast {
   padding: 20px 16px; color: var(--text-muted); font-size: 12px; font-style: italic;

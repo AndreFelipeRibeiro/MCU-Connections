@@ -34,7 +34,7 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
       <div className="m-searchrow">
         <div className="m-searchbar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles…"/>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/>
           {search && <button className="m-clear" onClick={()=>setSearch('')} aria-label="Clear search">×</button>}
         </div>
         <button className={`m-fpill${filterCount?' act':''}`} onClick={onOpenFilters}>
@@ -59,34 +59,72 @@ function SortTabs({ sort, setSort }) {
   );
 }
 
-function MobileGrid({ titles, onSelect }) {
-  const PosterArt = window.PosterArt;
-  if (!titles.length) return <EmptyState/>;
+// Wraps the substring(s) of `text` matching `query` in a <mark> so the UI can
+// show exactly what triggered a search result.
+function Highlight({ text, query }) {
+  if (text == null) return null;
+  const str = String(text);
+  const q = query && query.trim();
+  if (!q) return str;
+  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = str.split(new RegExp(`(${escaped})`, 'ig'));
+  if (parts.length === 1) return str;
+  return parts.map((part, i) => i % 2 === 1 ? <mark key={i} className="hl">{part}</mark> : part);
+}
+
+function MatchBadge({ matchedChars, query }) {
+  if (!matchedChars || !matchedChars.length) return null;
+  const id = matchedChars[0];
+  const c = window.CHARACTERS[id];
+  if (!c) return null;
+  const portrait = window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[id]
+    ? (window.mediaURL ? window.mediaURL('a', id, window.MEDIA.profile_base + window.MEDIA.actors[id]) : window.MEDIA.profile_base + window.MEDIA.actors[id])
+    : null;
   return (
-    <div className="m-scrollarea">
-      <div className="m-grid">
-        {titles.map(t => (
-          <button key={t.id} className="m-card" onClick={()=>onSelect(t.id)}>
-            <div className="m-pw">
-              <PosterArt title={t}/>
-              <span className="m-pbadge" style={{background:MPHASE_COLORS[t.phase]}}>PH {t.phase}</span>
-              <ScoreBadges title={t} compact/>
-            </div>
-            <div className="m-cmeta">
-              <div className="m-ctitle">{t.title}</div>
-              <div className="m-cyear">
-                <span>{t.year}</span>
-                {t.budget != null && <b>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</b>}
-              </div>
-            </div>
-          </button>
-        ))}
+    <div className="card-match" style={{'--match-color': c.color}} title={matchedChars.map(mid => window.CHARACTERS[mid].name).join(', ')}>
+      <div className="card-match-portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
+        {portrait ? <img src={portrait} alt={c.name} loading="lazy"/> : <span>{c.initials}</span>}
+      </div>
+      <div className="card-match-text">
+        <div className="card-match-char"><Highlight text={c.name} query={query}/>{matchedChars.length > 1 ? ` +${matchedChars.length - 1}` : ''}</div>
+        <div className="card-match-actor"><Highlight text={c.actor} query={query}/></div>
       </div>
     </div>
   );
 }
 
-function MobileList({ titles, sort, onSelect }) {
+function MobileGrid({ titles, onSelect, searchCharMatches, search }) {
+  const PosterArt = window.PosterArt;
+  if (!titles.length) return <EmptyState/>;
+  return (
+    <div className="m-scrollarea">
+      <div className="m-grid">
+        {titles.map(t => {
+          const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
+          return (
+            <button key={t.id} className="m-card" onClick={()=>onSelect(t.id)}>
+              <div className="m-pw">
+                <PosterArt title={t}/>
+                <span className="m-pbadge" style={{background:MPHASE_COLORS[t.phase]}}>PH {t.phase}</span>
+                <ScoreBadges title={t} compact/>
+              </div>
+              <div className="m-cmeta">
+                <div className="m-ctitle"><Highlight text={t.title} query={search}/></div>
+                <div className="m-cyear">
+                  <span>{t.year}</span>
+                  {t.budget != null && <b>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</b>}
+                </div>
+                <MatchBadge matchedChars={matchedChars} query={search}/>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MobileList({ titles, sort, onSelect, searchCharMatches, search }) {
   const PosterArt = window.PosterArt;
   if (!titles.length) return <EmptyState/>;
   const ranked = sort === 'imdb' || sort === 'rt';
@@ -120,12 +158,13 @@ function MobileList({ titles, sort, onSelect }) {
             {g.items.map(t => {
               n += 1;
               const score = lead === 'rt' ? t.rt : (t.imdb != null ? t.imdb * 10 : null);
+              const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
               return (
                 <button key={t.id} className="m-lrow" onClick={()=>onSelect(t.id)}>
                   {ranked && <div className="m-rank">{n}</div>}
                   <div className="m-lthumb"><PosterArt title={t}/></div>
                   <div className="m-ltext">
-                    <div className="m-ltitle">{t.title}</div>
+                    <div className="m-ltitle"><Highlight text={t.title} query={search}/></div>
                     <div className="m-lmeta">
                       {!ranked && <span>{t.type.toUpperCase()}</span>}
                       {ranked && <span>{t.year}</span>}
@@ -133,6 +172,7 @@ function MobileList({ titles, sort, onSelect }) {
                       <span style={{color:MPHASE_COLORS[t.phase]}}>{MPHASE_LABELS[t.phase]}</span>
                       {t.budget != null && <><span className="m-dot"/><span>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</span></>}
                     </div>
+                    <MatchBadge matchedChars={matchedChars} query={search}/>
                     {ranked && score != null && (
                       <div className="m-barw"><div className="m-barf" style={{width:score+'%', background: lead==='rt' ? '#fa320a' : '#f5c518'}}/></div>
                     )}
@@ -170,7 +210,7 @@ function Sheet({ children, onClose, tall }) {
   );
 }
 
-function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, sort, setSort, onClose, showing, onClear }) {
+function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, sort, setSort, sortDir, setSortDir, onClose, showing, onClear }) {
   return (
     <Sheet onClose={onClose} tall>
       <div className="m-sh-head">
@@ -210,6 +250,24 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
           <button className={`m-chip${sort==='title'?' on':''}`} onClick={()=>setSort('title')}>A–Z</button>
         </div>
       </div>
+      {sort !== 'title' && (
+        <div className="m-fgroup">
+          <div className="m-flab">Direction</div>
+          <div className="m-chips">
+            {sort === 'chrono' ? (
+              <>
+                <button className={`m-chip${sortDir!=='desc'?' on':''}`} onClick={()=>setSortDir('asc')}>Chronological</button>
+                <button className={`m-chip${sortDir==='desc'?' on':''}`} onClick={()=>setSortDir('desc')}>Reverse chronological</button>
+              </>
+            ) : (
+              <>
+                <button className={`m-chip${sortDir!=='desc'?' on':''}`} onClick={()=>setSortDir('asc')}>Ascending</button>
+                <button className={`m-chip${sortDir==='desc'?' on':''}`} onClick={()=>setSortDir('desc')}>Descending</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <button className="m-apply" onClick={onClose}>Show {showing} {showing === 1 ? 'title' : 'titles'}</button>
     </Sheet>
   );
@@ -286,4 +344,4 @@ function SpatialHint({ focused, sharedCount }) {
   );
 }
 
-Object.assign(window, { MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState });
+Object.assign(window, { MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, Highlight });

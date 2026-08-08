@@ -50,6 +50,7 @@
 .m-ctitle { font-size: 12.5px; font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 31px; text-wrap: pretty; }
 .m-cyear { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
 .m-cyear b { color: var(--text-dim); font-weight: 600; }
+.m-cmeta .card-match, .m-ltext .card-match { margin-top: 6px; }
 
 /* LIST VIEW */
 .m-group + .m-group { margin-top: 16px; }
@@ -118,8 +119,8 @@
 .m-port { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #0a0c14; }
 .m-port img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .m-ctext { flex: 1; min-width: 0; }
-.m-cn { font-size: 13.5px; font-weight: 600; }
-.m-an { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+.m-cn { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-an { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .m-cdot { width: 8px; height: 8px; border-radius: 4px; flex: 0 0 8px; }
 .m-empty-cast { font-size: 12.5px; color: var(--text-muted); padding: 10px 0; }
 
