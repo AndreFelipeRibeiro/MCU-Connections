@@ -345,6 +345,8 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
 
 // Connection layer with bolder lines and improved bezier control
 function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, onHoverConnection, hoveredConnection, selectedId, focusId }) {
+  // Group appearances by prime identity so variants share one continuous thread,
+  // but remember which specific variant appeared in each title.
   // One appearance per (prime, title): several variants of the same identity can share a
   // title (the three Peters in No Way Home) — that is not a connection between titles.
   const primeToAppearances = {};
