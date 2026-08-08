@@ -165,12 +165,17 @@ function computeLayout(titles, sort) {
   return { positions, width: maxX + 120, height: maxY + 120 };
 }
 
-function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isDragging, matchedChars, searchQuery }) {
+function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isDragging, matchedChars, searchQuery, scale }) {
   const phaseColor = PHASE_COLORS[title.phase];
   const downRef = useRef({ x: 0, y: 0, moved: false });
+  const { statusOf } = window.useCollection();
+  const status = statusOf(title.id);
+  // Below TSA_MIN_SCALE the toggles are rendered smaller than a usable hit
+  // target, so they withdraw and the seen state reads as a static marker only.
+  const showActions = (scale || 1) >= window.TSA_MIN_SCALE;
   return (
     <div
-      className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isDragging ? 'dragging' : ''}`}
+      className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}`}
       style={{
         '--phase-color': phaseColor,
         transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
@@ -195,6 +200,9 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
           <span className="badge type-badge">{title.type === 'film' ? 'FILM' : 'SERIES'}</span>
           <span className="badge phase-badge" style={{background: phaseColor, color:'#0a0c14'}}>{PHASE_LABELS[title.phase]}</span>
         </div>
+        {showActions
+          ? <window.TitleStatusActions title={title} className="card-tsa"/>
+          : <span className="card-seen-mark"><window.SeenMarker seen={status === 'seen'}/></span>}
         <div className="rating-row">
           {title.imdb != null && (
             <div className="card-rating imdb" title="IMDb rating">
@@ -232,6 +240,7 @@ function CastDrawer({ title, onClose, onCharacterClick, hoveredCharacter, onChar
         <div>
           <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{PHASE_LABELS[title.phase]} · {title.type.toUpperCase()} · {title.year}</div>
           <h2 className="drawer-title">{title.title}</h2>
+          <window.TitleStatusActions title={title} variant="inline" className="drawer-tsa"/>
         </div>
         <button className="drawer-close" onClick={onClose} aria-label="Close">×</button>
       </header>
@@ -279,10 +288,11 @@ const SORT_OPTIONS = [
   ['rt','Tomatometer','RT','◉'],
 ];
 
-function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, search, setSearch, total, showing, onResetView }) {
+function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch, total, showing, onResetView }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
-  const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
+  const { progress } = window.useCollection();
+  const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (collectionFilter !== 'all' ? 1 : 0);
   useEffect(() => {
     if (!popOpen) return;
     const away = (e) => { if (popRef.current && !popRef.current.contains(e.target)) setPopOpen(false); };
@@ -298,7 +308,10 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
           <div className="brand-mark"/>
           <div>
             <div className="brand-title">MCU Connections</div>
-            <div className="brand-sub">{showing} of {total} titles</div>
+            <div className="brand-sub">
+              {showing} of {total} titles
+              {progress.seenReleased > 0 && ` · ${progress.seenReleased} seen`}
+            </div>
           </div>
         </div>
         <div className="control-group">
@@ -325,6 +338,18 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
           {popOpen && (
             <div className="filters-pop">
               <div className="control-group">
+                <label>Collection</label>
+                <div className="segmented">
+                  {window.COLLECTION_OPTIONS.map(([v,l])=>(
+                    <button key={v} className={collectionFilter===v?'on':''} onClick={()=>setCollectionFilter(v)}>{l}</button>
+                  ))}
+                </div>
+                <div className="pop-progress">
+                  {progress.seenReleased} of {progress.releasedTotal} released titles seen
+                  {progress.watchlist > 0 && <> · {progress.watchlist} on watchlist</>}
+                </div>
+              </div>
+              <div className="control-group">
                 <label>Phase</label>
                 <div className="segmented">
                   {['all','1','2','3','4','5','6'].map(p=>(
@@ -343,7 +368,7 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
                 </div>
               </div>
               {activeFilters > 0 && (
-                <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); }}>Clear filters</button>
+                <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); setCollectionFilter('all'); }}>Clear filters</button>
               )}
             </div>
           )}
@@ -557,8 +582,10 @@ function App() {
   const [phaseFilter, setPhaseFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [budgetFilter, setBudgetFilter] = useState('all');
+  const [collectionFilter, setCollectionFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [mediaReady, setMediaReady] = useState(!!window.MEDIA);
+  const { states: collectionStates } = window.useCollection();
 
   useEffect(() => { setMediaReady(true); }, []);
   const device = useDevice();
@@ -600,6 +627,13 @@ function App() {
     return m;
   }, [search]);
 
+  // NOTE: the collection filter (seen/watchlist/unseen) deliberately does NOT
+  // belong in here. `filtered` feeds computeLayout -> basePositions -> resetView,
+  // which runs from a useLayoutEffect — so anything added to this memo re-lays-out
+  // the spatial canvas and recenters the viewport. With "Unseen" active, marking a
+  // title seen would make the card vanish and yank the viewport out from under the
+  // cursor mid-click. Collection is a dimming treatment on the canvas, and a
+  // separate `visible` memo downstream of `ordered` for the flat mobile lists.
   const filtered = useMemo(() => {
     let list = window.TITLES.slice();
     if (phaseFilter !== 'all') list = list.filter(t => String(t.phase) === phaseFilter);
@@ -703,6 +737,19 @@ function App() {
   const selectedTitle = selectedId ? window.TITLES.find(t => t.id === selectedId) : null;
   const drawerTitle = drawerId ? window.TITLES.find(t => t.id === drawerId) : null;
   const ordered = useMemo(() => sortTitles(filtered, sort, sortDir), [filtered, sort, sortDir]);
+
+  // Real filtering, but only for the flat mobile grid/list — they have no layout
+  // or viewport to disturb. Derived from `ordered` so the canvas keeps every card.
+  const visible = useMemo(() => {
+    if (collectionFilter === 'all') return ordered;
+    return ordered.filter(t => window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter));
+  }, [ordered, collectionFilter, collectionStates]);
+
+  // Only speak in collection terms when the collection filter is what emptied
+  // the list — otherwise the generic "clear a filter or the search box" is right.
+  const emptyCopy = (ordered.length > 0 && visible.length === 0)
+    ? window.collectionEmptyCopy(collectionFilter)
+    : null;
 
   // Keyed by prime identity, so highlighting any variant lights the whole thread
   const charToTitleIds = useMemo(() => {
@@ -961,7 +1008,10 @@ function App() {
     }
   };
 
-  const filterCount = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
+  const filterCount = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (collectionFilter !== 'all' ? 1 : 0);
+  // Spatial keeps every card on screen (dimmed), so it counts `filtered`; the
+  // flat views actually drop non-matching rows and count what they render.
+  const mobileShowing = viewMode === 'spatial' ? filtered.length : visible.length;
   const sharedCharCount = useMemo(() => {
     if (!selectedId) return 0;
     const t = window.TITLES.find(x => x.id === selectedId);
@@ -1028,6 +1078,9 @@ function App() {
           const hoverDim = hoverRelatedIds ? !hoverRelatedIds.has(t.id) : false;
           const isDimmed = charDim || hoverDim;
           const isHighlighted = charHL || (hoverFocusId === t.id);
+          // Visual only — the card stays in the layout so nothing reflows.
+          const isCollDimmed = collectionFilter !== 'all'
+            && !window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter);
           return (
             <Card
               key={t.id}
@@ -1039,9 +1092,11 @@ function App() {
               isSelected={selectedId === t.id}
               isHighlighted={isHighlighted}
               isDimmed={isDimmed}
+              isCollDimmed={isCollDimmed}
               isDragging={draggingId === t.id}
               matchedChars={searchCharMatches ? searchCharMatches[t.id] : null}
               searchQuery={search}
+              scale={view.scale}
             />
           );
         })}
@@ -1071,13 +1126,13 @@ function App() {
           search={search} setSearch={setSearch}
           onOpenFilters={() => setSheet('filters')}
           filterCount={filterCount}
-          showing={filtered.length} total={window.TITLES.length}
+          showing={mobileShowing} total={window.TITLES.length}
           sort={sort} setSort={changeSort} sortLabel={sortLabelFor(sort, sortDir)}
         />
         {charBanner}
         <div className="m-main">
-          {viewMode === 'grid' && <window.MobileGrid titles={ordered} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search}/>}
-          {viewMode === 'list' && <window.MobileList titles={ordered} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search}/>}
+          {viewMode === 'grid' && <window.MobileGrid titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy}/>}
+          {viewMode === 'list' && <window.MobileList titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
@@ -1090,10 +1145,11 @@ function App() {
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
             typeFilter={typeFilter} setTypeFilter={setTypeFilter}
             budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
+            collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
             sort={sort} setSort={changeSort}
             sortDir={sortDir} setSortDir={setSortDir}
-            showing={filtered.length}
-            onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); }}
+            showing={mobileShowing}
+            onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setCollectionFilter('all'); }}
             onClose={() => setSheet(null)}
           />
         )}
@@ -1118,6 +1174,7 @@ function App() {
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}
         budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
+        collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         search={search} setSearch={setSearch}
         total={window.TITLES.length} showing={filtered.length}
         onResetView={resetView}
@@ -1154,4 +1211,6 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <window.CollectionProvider><App/></window.CollectionProvider>
+);

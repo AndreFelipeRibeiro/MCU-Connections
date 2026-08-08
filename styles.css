@@ -371,3 +371,89 @@ body {
   .app.drawer-open { padding-right: 0; }
   .drawer { width: 100%; max-width: 380px; }
 }
+
+/* ===========================================================================
+   WATCH TRACKING — status toggles, seen treatment, collection dimming
+   =========================================================================== */
+
+/* Keep the poster badges above the seen veil so phase colour coding survives. */
+.card-badges, .rating-row { z-index: 2; }
+
+.tsa { display: flex; align-items: center; gap: 6px; }
+
+/* Overlay variant — icon-only, sits on a poster. A vertical rail centred on the
+   right edge: the phase badge owns the top corners and the rating pills run
+   along the bottom-left, and at 170px wide a horizontal pair collides with them. */
+.tsa.overlay {
+  position: absolute; top: 50%; right: 8px; transform: translateY(-50%);
+  flex-direction: column; z-index: 3;
+}
+.tsa.overlay .tsa-btn {
+  width: 32px; height: 32px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10,12,20,0.78); backdrop-filter: blur(6px);
+  border: 1px solid #ffffff26; border-radius: 8px;
+  color: var(--text-dim); cursor: pointer;
+  transition: color 150ms, border-color 150ms, background 150ms;
+}
+.tsa.overlay .tsa-btn svg { width: 15px; height: 15px; }
+.tsa.overlay .tsa-btn:hover { color: var(--text); border-color: var(--text-dim); background: rgba(10,12,20,0.92); }
+.tsa.overlay .tsa-btn.seen.on { color: #0a0c14; background: #5fa856; border-color: #5fa856; }
+.tsa.overlay .tsa-btn.watch.on { color: #0a0c14; background: #d4a05a; border-color: #d4a05a; }
+
+/* Inline variant — icon + label, for the drawer and sheets. */
+.tsa.inline { gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.tsa.inline .tsa-btn {
+  min-height: 34px; padding: 0 12px; gap: 7px;
+  display: flex; align-items: center;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text-dim);
+  font: inherit; font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: color 150ms, border-color 150ms, background 150ms;
+}
+.tsa.inline .tsa-btn svg { width: 14px; height: 14px; flex: 0 0 14px; }
+.tsa.inline .tsa-btn:hover { color: var(--text); border-color: var(--border-strong); }
+.tsa.inline .tsa-btn.seen.on { color: #0a0c14; background: #5fa856; border-color: #5fa856; }
+.tsa.inline .tsa-btn.watch.on { color: #0a0c14; background: #d4a05a; border-color: #d4a05a; }
+
+.tsa .tsa-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Pending / error slots — inert in Phase 1, wired when writes go remote. */
+.tsa.pending { opacity: 0.6; pointer-events: none; }
+.tsa-spin {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid var(--border-strong); border-top-color: var(--text);
+  animation: tsa-spin 700ms linear infinite;
+}
+@keyframes tsa-spin { to { transform: rotate(360deg); } }
+.tsa-err { font-size: 10.5px; color: #e06060; font-family: 'JetBrains Mono', monospace; }
+
+/* Non-interactive marker shown in place of the toggles at deep zoom. */
+.card-seen-mark { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); z-index: 3; }
+.seen-marker {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 7px;
+  background: #5fa856; color: #0a0c14;
+}
+.seen-marker svg { width: 14px; height: 14px; }
+
+/* Seen treatment: a wash over the poster art only. It sits under the badges
+   and cannot touch the SVG connection layer, which is a sibling of .card. */
+.card.seen .card-poster::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: rgba(10,12,20,0.34);
+  -webkit-backdrop-filter: saturate(0.35);
+  backdrop-filter: saturate(0.35);
+}
+.card.seen .card-meta { opacity: 0.82; }
+.card.listed { border-color: color-mix(in oklab, #d4a05a 45%, var(--border)); }
+
+/* Collection dimming — visual only, never removes a card from the layout. */
+.card.coll-dim { opacity: 0.26; filter: saturate(0.3); }
+
+.drawer-tsa { margin-top: 12px; }
+
+.pop-progress {
+  margin-top: 9px; font-size: 11px; color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}

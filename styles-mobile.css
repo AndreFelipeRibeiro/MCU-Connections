@@ -156,3 +156,78 @@
   .m-grid { grid-template-columns: repeat(3, 1fr); }
   .m-sheet { left: auto; right: 0; width: min(440px, 100%); }
 }
+
+/* ===========================================================================
+   WATCH TRACKING — mobile
+   ===========================================================================
+   The grid card, list row and focus pop used to each be a single <button>
+   wrapping the whole card. They are now a <div> shell plus a dedicated
+   *-open button, so the status toggles can be real buttons without nesting.
+   The button resets that used to live on the shell moved onto the open button;
+   the shell keeps the surface, border, radius and padding. */
+
+.m-card { position: relative; }
+.m-card-open {
+  display: block; width: 100%; text-align: left; padding: 0;
+  background: transparent; border: 0; border-radius: inherit;
+  cursor: pointer; font: inherit; color: inherit;
+}
+.m-card-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 12px; }
+
+.m-lrow { display: flex; align-items: center; gap: 8px; }
+.m-lrow-open {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 11px;
+  text-align: left; padding: 0; background: transparent; border: 0;
+  cursor: pointer; font: inherit; color: inherit;
+}
+.m-lrow-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+
+.m-focuspop { display: block; }
+.m-fp-open {
+  display: block; width: 100%; text-align: left; padding: 0;
+  background: transparent; border: 0; cursor: pointer; font: inherit; color: inherit;
+}
+.m-fp-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 12px; }
+
+/* Keep the poster badges above the seen veil. */
+.m-pbadge, .m-pw .m-scores, .m-fp-poster .m-pbadge { z-index: 2; }
+
+/* Toggle placement. Top-right on posters, because the PH badge owns top-left.
+   Overrides the desktop vertical-rail positioning, which exists to dodge the
+   wider desktop card's rating pills. */
+/* Needs .tsa.overlay in the selector to outrank the desktop rail rule, which is
+   two classes deep; a lone .m-card-tsa loses on specificity regardless of order. */
+.tsa.overlay.m-card-tsa, .tsa.overlay.m-fp-tsa {
+  position: absolute; top: 7px; right: 7px; bottom: auto;
+  transform: none; flex-direction: row; z-index: 3;
+}
+.m-lrow-tsa { flex: 0 0 auto; flex-direction: column; gap: 6px; }
+.m-hero-tsa { margin-top: 9px; }
+
+/* 36px on touch — comfortably over the 32px floor without crowding the poster. */
+.tsa.overlay .tsa-btn { width: 36px; height: 36px; }
+.tsa.overlay .tsa-btn svg { width: 16px; height: 16px; }
+.m-fp-tsa .tsa-btn { width: 32px; height: 32px; }
+.tsa.inline .tsa-btn { min-height: 40px; font-size: 12.5px; }
+
+/* Seen treatment — a wash over the poster art only, badges stay legible. */
+.m-card.seen .m-pw::after,
+.m-focuspop.seen .m-fp-poster::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: rgba(10,12,20,0.34);
+  -webkit-backdrop-filter: saturate(0.35);
+  backdrop-filter: saturate(0.35);
+}
+.m-card.seen .m-cmeta, .m-focuspop.seen .m-fp-meta { opacity: 0.82; }
+.m-lrow.seen .m-lthumb { position: relative; }
+.m-lrow.seen .m-lthumb::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: rgba(10,12,20,0.5);
+}
+.m-lrow.seen .m-ltext { opacity: 0.85; }
+
+.m-progress {
+  margin-top: 9px; font-size: 11px; color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}

@@ -13,6 +13,7 @@ function ScoreBadges({ title, lead, compact }) {
 }
 
 function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters, filterCount, showing, total, sortLabel }) {
+  const { progress } = window.useCollection();
   return (
     <div className="m-appbar">
       <div className="m-appbar-top">
@@ -20,7 +21,10 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
           <div className="m-mark"/>
           <div>
             <div className="m-btitle">MCU Connections</div>
-            <div className="m-bsub">{showing === total ? `${total} titles` : `${showing} of ${total}`} · {sortLabel}</div>
+            <div className="m-bsub">
+              {showing === total ? `${total} titles` : `${showing} of ${total}`} · {sortLabel}
+              {progress.seenReleased > 0 && ` · ${progress.seenReleased} seen`}
+            </div>
           </div>
         </div>
         <div className="m-viewswitch">
@@ -93,30 +97,39 @@ function MatchBadge({ matchedChars, query }) {
   );
 }
 
-function MobileGrid({ titles, onSelect, searchCharMatches, search }) {
+// The card is a <div> wrapping a dedicated open button rather than one big
+// <button>, because the status toggles are buttons too and a nested <button>
+// is invalid HTML. The open button still covers the whole poster + meta area,
+// so tapping anywhere except the toggles opens the cast sheet exactly as before.
+function MobileGrid({ titles, onSelect, searchCharMatches, search, empty }) {
   const PosterArt = window.PosterArt;
-  if (!titles.length) return <EmptyState/>;
+  const { statusOf } = window.useCollection();
+  if (!titles.length) return <EmptyState {...(empty || {})}/>;
   return (
     <div className="m-scrollarea">
       <div className="m-grid">
         {titles.map(t => {
           const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
+          const seen = statusOf(t.id) === 'seen';
           return (
-            <button key={t.id} className="m-card" onClick={()=>onSelect(t.id)}>
-              <div className="m-pw">
-                <PosterArt title={t}/>
-                <span className="m-pbadge" style={{background:MPHASE_COLORS[t.phase]}}>PH {t.phase}</span>
-                <ScoreBadges title={t} compact/>
-              </div>
-              <div className="m-cmeta">
-                <div className="m-ctitle"><Highlight text={t.title} query={search}/></div>
-                <div className="m-cyear">
-                  <span>{t.year}</span>
-                  {t.budget != null && <b>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</b>}
+            <div key={t.id} className={`m-card${seen ? ' seen' : ''}`}>
+              <button className="m-card-open" onClick={()=>onSelect(t.id)}>
+                <div className="m-pw">
+                  <PosterArt title={t}/>
+                  <span className="m-pbadge" style={{background:MPHASE_COLORS[t.phase]}}>PH {t.phase}</span>
+                  <ScoreBadges title={t} compact/>
                 </div>
-                <MatchBadge matchedChars={matchedChars} query={search}/>
-              </div>
-            </button>
+                <div className="m-cmeta">
+                  <div className="m-ctitle"><Highlight text={t.title} query={search}/></div>
+                  <div className="m-cyear">
+                    <span>{t.year}</span>
+                    {t.budget != null && <b>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</b>}
+                  </div>
+                  <MatchBadge matchedChars={matchedChars} query={search}/>
+                </div>
+              </button>
+              <window.TitleStatusActions title={t} className="m-card-tsa"/>
+            </div>
           );
         })}
       </div>
@@ -124,9 +137,10 @@ function MobileGrid({ titles, onSelect, searchCharMatches, search }) {
   );
 }
 
-function MobileList({ titles, sort, onSelect, searchCharMatches, search }) {
+function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty }) {
   const PosterArt = window.PosterArt;
-  if (!titles.length) return <EmptyState/>;
+  const { statusOf } = window.useCollection();
+  if (!titles.length) return <EmptyState {...(empty || {})}/>;
   const ranked = sort === 'imdb' || sort === 'rt';
   const lead = sort === 'rt' ? 'rt' : 'imdb';
   // Group headers for the non-score sorts
@@ -159,26 +173,30 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search }) {
               n += 1;
               const score = lead === 'rt' ? t.rt : (t.imdb != null ? t.imdb * 10 : null);
               const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
+              const seen = statusOf(t.id) === 'seen';
               return (
-                <button key={t.id} className="m-lrow" onClick={()=>onSelect(t.id)}>
-                  {ranked && <div className="m-rank">{n}</div>}
-                  <div className="m-lthumb"><PosterArt title={t}/></div>
-                  <div className="m-ltext">
-                    <div className="m-ltitle"><Highlight text={t.title} query={search}/></div>
-                    <div className="m-lmeta">
-                      {!ranked && <span>{t.type.toUpperCase()}</span>}
-                      {ranked && <span>{t.year}</span>}
-                      <span className="m-dot"/>
-                      <span style={{color:MPHASE_COLORS[t.phase]}}>{MPHASE_LABELS[t.phase]}</span>
-                      {t.budget != null && <><span className="m-dot"/><span>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</span></>}
+                <div key={t.id} className={`m-lrow${seen ? ' seen' : ''}`}>
+                  <button className="m-lrow-open" onClick={()=>onSelect(t.id)}>
+                    {ranked && <div className="m-rank">{n}</div>}
+                    <div className="m-lthumb"><PosterArt title={t}/></div>
+                    <div className="m-ltext">
+                      <div className="m-ltitle"><Highlight text={t.title} query={search}/></div>
+                      <div className="m-lmeta">
+                        {!ranked && <span>{t.type.toUpperCase()}</span>}
+                        {ranked && <span>{t.year}</span>}
+                        <span className="m-dot"/>
+                        <span style={{color:MPHASE_COLORS[t.phase]}}>{MPHASE_LABELS[t.phase]}</span>
+                        {t.budget != null && <><span className="m-dot"/><span>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</span></>}
+                      </div>
+                      <MatchBadge matchedChars={matchedChars} query={search}/>
+                      {ranked && score != null && (
+                        <div className="m-barw"><div className="m-barf" style={{width:score+'%', background: lead==='rt' ? '#fa320a' : '#f5c518'}}/></div>
+                      )}
                     </div>
-                    <MatchBadge matchedChars={matchedChars} query={search}/>
-                    {ranked && score != null && (
-                      <div className="m-barw"><div className="m-barf" style={{width:score+'%', background: lead==='rt' ? '#fa320a' : '#f5c518'}}/></div>
-                    )}
-                  </div>
-                  <ScoreBadges title={t} lead={lead}/>
-                </button>
+                    <ScoreBadges title={t} lead={lead}/>
+                  </button>
+                  <window.TitleStatusActions title={t} className="m-lrow-tsa"/>
+                </div>
               );
             })}
           </div>
@@ -188,12 +206,12 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search }) {
   );
 }
 
-function EmptyState() {
+function EmptyState({ title, sub, mark }) {
   return (
     <div className="m-empty">
-      <div className="m-empty-mark">◍</div>
-      <div className="m-empty-t">No titles match</div>
-      <div className="m-empty-s">Try clearing a filter or the search box.</div>
+      <div className="m-empty-mark">{mark || '◍'}</div>
+      <div className="m-empty-t">{title || 'No titles match'}</div>
+      <div className="m-empty-s">{sub || 'Try clearing a filter or the search box.'}</div>
     </div>
   );
 }
@@ -210,12 +228,25 @@ function Sheet({ children, onClose, tall }) {
   );
 }
 
-function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, sort, setSort, sortDir, setSortDir, onClose, showing, onClear }) {
+function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, sort, setSort, sortDir, setSortDir, onClose, showing, onClear }) {
+  const { progress } = window.useCollection();
   return (
     <Sheet onClose={onClose} tall>
       <div className="m-sh-head">
         <div className="m-sh-title">Filters</div>
         <button className="m-sh-clear" onClick={onClear}>Clear all</button>
+      </div>
+      <div className="m-fgroup">
+        <div className="m-flab">Collection</div>
+        <div className="m-chips">
+          {window.COLLECTION_OPTIONS.map(([v,l])=>(
+            <button key={v} className={`m-chip${collectionFilter===v?' on':''}`} onClick={()=>setCollectionFilter(v)}>{l}</button>
+          ))}
+        </div>
+        <div className="m-progress">
+          {progress.seenReleased} of {progress.releasedTotal} released titles seen
+          {progress.watchlist > 0 && <> · {progress.watchlist} on watchlist</>}
+        </div>
       </div>
       <div className="m-fgroup">
         <div className="m-flab">Phase</div>
@@ -284,6 +315,7 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
           <div className="m-eyebrow" style={{color:MPHASE_COLORS[title.phase]}}>{MPHASE_LABELS[title.phase]} · {title.type.toUpperCase()} · {title.year}</div>
           <h2 className="m-dtitle">{title.title}</h2>
           <ScoreBadges title={title}/>
+          <window.TitleStatusActions title={title} variant="inline" className="m-hero-tsa"/>
         </div>
       </div>
       <div className="m-flab">Featured cast · {title.cast.length}</div>
@@ -317,20 +349,25 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
 
 // Unscaled overlay that "pops" the focused card out of the zoomed canvas so it stays legible
 function FocusPop({ title, x, y, onOpenCast }) {
+  const { statusOf } = window.useCollection();
   if (!title) return null;
   const PosterArt = window.PosterArt;
+  const seen = statusOf(title.id) === 'seen';
   return (
-    <button className="m-focuspop" style={{left:x+'px', top:y+'px'}} onClick={onOpenCast}>
-      <div className="m-fp-poster">
-        <PosterArt title={title}/>
-        <span className="m-pbadge" style={{background:MPHASE_COLORS[title.phase]}}>PH {title.phase}</span>
-      </div>
-      <div className="m-fp-meta">
-        <div className="m-fp-title">{title.title}</div>
-        <ScoreBadges title={title}/>
-        <div className="m-fp-cta">Tap for cast ›</div>
-      </div>
-    </button>
+    <div className={`m-focuspop${seen ? ' seen' : ''}`} style={{left:x+'px', top:y+'px'}}>
+      <button className="m-fp-open" onClick={onOpenCast}>
+        <div className="m-fp-poster">
+          <PosterArt title={title}/>
+          <span className="m-pbadge" style={{background:MPHASE_COLORS[title.phase]}}>PH {title.phase}</span>
+        </div>
+        <div className="m-fp-meta">
+          <div className="m-fp-title">{title.title}</div>
+          <ScoreBadges title={title}/>
+          <div className="m-fp-cta">Tap for cast ›</div>
+        </div>
+      </button>
+      <window.TitleStatusActions title={title} className="m-fp-tsa"/>
+    </div>
   );
 }
 
