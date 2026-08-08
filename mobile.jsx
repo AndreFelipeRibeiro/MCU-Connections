@@ -12,7 +12,10 @@ function ScoreBadges({ title, lead, compact }) {
   return <div className={`m-scores${compact?' compact':''}`}>{lead === 'rt' ? [rt, imdb] : [imdb, rt]}</div>;
 }
 
-function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters, filterCount, showing, total, sortLabel }) {
+// The app bar is already three rows deep on a phone, so the view switch moved
+// off m-appbar-top (where the account avatar now sits) onto its own tight row
+// rather than becoming a fourth control crammed into the brand row.
+function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters, filterCount, showing, total, sortLabel, onOpenAccount }) {
   const { progress } = window.useCollection();
   return (
     <div className="m-appbar">
@@ -27,6 +30,9 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
             </div>
           </div>
         </div>
+        <window.AccountAvatarButton onOpen={onOpenAccount}/>
+      </div>
+      <div className="m-viewrow">
         <div className="m-viewswitch">
           {VIEW_MODES.map(([v,l,ic]) => (
             <button key={v} className={viewMode===v?'on':''} onClick={()=>setViewMode(v)} aria-label={l} title={l}>

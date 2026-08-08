@@ -378,6 +378,7 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/>
         </div>
         <button className="reset-view" onClick={onResetView} title="Recenter view">⊙<span className="lg"> Recenter</span></button>
+        <window.AccountButton onPickCollection={setCollectionFilter}/>
       </div>
     </div>
   );
@@ -1128,6 +1129,7 @@ function App() {
           filterCount={filterCount}
           showing={mobileShowing} total={window.TITLES.length}
           sort={sort} setSort={changeSort} sortLabel={sortLabelFor(sort, sortDir)}
+          onOpenAccount={() => setSheet('account')}
         />
         {charBanner}
         <div className="m-main">
@@ -1151,6 +1153,12 @@ function App() {
             showing={mobileShowing}
             onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setCollectionFilter('all'); }}
             onClose={() => setSheet(null)}
+          />
+        )}
+        {sheet === 'account' && (
+          <window.AccountSheet
+            onClose={() => setSheet(null)}
+            onPickCollection={setCollectionFilter}
           />
         )}
         {drawerTitle && (
@@ -1211,6 +1219,10 @@ function App() {
   );
 }
 
+// Account wraps collection: from Phase 3 the collection needs to know who is
+// signed in before it can decide what to load.
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <window.CollectionProvider><App/></window.CollectionProvider>
+  <window.AccountProvider>
+    <window.CollectionProvider><App/></window.CollectionProvider>
+  </window.AccountProvider>
 );

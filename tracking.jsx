@@ -107,7 +107,17 @@ function warnUnknownIds(states) {
 
 const CollectionContext = React.createContext(null);
 
+// Stand-in so the auth context can be read with an unconditional hook call even
+// if account.jsx never loaded. tracking.jsx is loaded first and must not depend
+// on account.jsx being present.
+const NoAuthContext = React.createContext(null);
+
 function CollectionProvider({ children }) {
+  const auth = React.useContext(window.MCU_AUTH_CONTEXT || NoAuthContext);
+  // While the session is being restored we don't yet know whose collection this
+  // is, so the controls show a loading treatment rather than asserting "unseen".
+  // The catalog itself renders normally throughout.
+  const loading = !!auth && auth.status === 'initializing';
   const [states, setStates] = React.useState(() => {
     const initial = readGuestStates();
     warnUnknownIds(initial);
@@ -187,6 +197,7 @@ function CollectionProvider({ children }) {
 
   const value = React.useMemo(() => ({
     states,
+    loading,
     statusOf: (id) => states[id] || 'none',
     isSeen: (id) => states[id] === 'seen',
     isWatchlisted: (id) => states[id] === 'watchlist',
@@ -197,7 +208,7 @@ function CollectionProvider({ children }) {
     toggleWatchlist,
     clearAll,
     progress,
-  }), [states, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, progress]);
+  }), [states, loading, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, progress]);
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>;
 }
@@ -259,11 +270,11 @@ function BookmarkIcon({ filled }) {
 // `variant` is 'overlay' (icon-only, sits on a poster) or 'inline' (icon plus
 // text label, for drawers and sheets where there is room).
 function TitleStatusActions({ title, variant, className }) {
-  const { statusOf, pendingOf, errorOf, toggleSeen, toggleWatchlist } = useCollection();
+  const { statusOf, pendingOf, errorOf, toggleSeen, toggleWatchlist, loading } = useCollection();
   const status = statusOf(title.id);
   const seen = status === 'seen';
   const listed = status === 'watchlist';
-  const pending = pendingOf(title.id);
+  const pending = pendingOf(title.id) || loading;
   const error = errorOf(title.id);
   const inline = variant === 'inline';
 
