@@ -767,6 +767,47 @@ function App() {
   const activePrime = activeChar ? primeOf(activeChar) : null;
   const highlightedIds = activePrime && charToTitleIds[activePrime] ? charToTitleIds[activePrime] : null;
 
+  // The ids the active canvas filters single out. Collection status and a pinned
+  // character are both *dimming* treatments — the cards stay in the layout — so
+  // without this, Recenter frames the whole graph including everything dimmed,
+  // and a handful of matches sitting far apart on a timeline layout can end up
+  // entirely off-screen. Only the pinned character counts, not the hovered one,
+  // so passing the cursor over the cast list can't move the viewport.
+  const pinnedCharIds = useMemo(() => {
+    if (!highlightedChar) return null;
+    return charToTitleIds[primeOf(highlightedChar)] || null;
+  }, [highlightedChar, charToTitleIds]);
+
+  const recenterFocusIds = useMemo(() => {
+    const sets = [];
+    if (collectionFilter !== 'all') {
+      const s = new Set();
+      filtered.forEach(t => {
+        if (window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter)) s.add(t.id);
+      });
+      sets.push(s);
+    }
+    if (pinnedCharIds) sets.push(pinnedCharIds);
+    if (!sets.length) return null;
+    const both = sets.reduce((a, b) => new Set([...a].filter(id => b.has(id))));
+    return both.size ? both : null;
+  }, [filtered, collectionFilter, collectionStates, pinnedCharIds]);
+
+  // Read through a ref inside resetView rather than as a dependency. If the
+  // match set were a dependency, marking a title seen while "Unseen" is active
+  // would change resetView's identity, fire the layout effect and recenter the
+  // canvas mid-click — the exact failure §7.1 exists to prevent.
+  const recenterFocusRef = useRef(null);
+  recenterFocusRef.current = recenterFocusIds;
+
+  // Also read through a ref, and for the same reason: resetView must not gain a
+  // selectedId dependency or selecting a card would recenter the canvas. While
+  // a card is selected the canvas shows the focus ring layout, whose positions
+  // are not basePositions — so framing a match set then would aim the viewport
+  // at coordinates the cards are no longer at.
+  const selectedIdRef = useRef(null);
+  selectedIdRef.current = selectedId;
+
   // Card drag handler
   const onCardDragStart = (e, id) => {
     e.stopPropagation();
@@ -860,6 +901,67 @@ function App() {
     const rect = viewportRef.current.getBoundingClientRect();
     const colW = CARD_W + 60;
     const gridSort = sort === 'phase' || sort === 'title' || sort === 'imdb' || sort === 'rt';
+
+    // The scale this sort opens at with no filter applied. Used as the yardstick
+    // below: framing a match set is only an improvement if it doesn't mean
+    // zooming out past the view you'd have had anyway.
+    const defaultScale = gridSort
+      ? Math.min(1, isTouch
+          ? Math.max((rect.width - 32) / canvasW, rect.width / (colW * 3))
+          : (rect.width - 32) / canvasW)
+      : Math.min(1, Math.max(ZOOM_MIN, rect.width / (colW * (isTouch ? 3.4 : 8.5))));
+
+    // A dimming filter is active: frame exactly what it matches. Card positions
+    // are not touched — only the viewport moves — so this stays inside the rule
+    // that the collection filter must never reflow the graph.
+    const focus = recenterFocusRef.current;
+    if (focus && focus.size && !selectedIdRef.current) {
+      let fx0 = Infinity, fy0 = Infinity, fx1 = -Infinity, fy1 = -Infinity;
+      focus.forEach(id => {
+        const p = basePositions[id];
+        if (!p) return;
+        if (p.x < fx0) fx0 = p.x;
+        if (p.y < fy0) fy0 = p.y;
+        if (p.x + CARD_W > fx1) fx1 = p.x + CARD_W;
+        if (p.y + CARD_H > fy1) fy1 = p.y + CARD_H;
+      });
+      if (isFinite(fx0)) {
+        const pad = isTouch ? 28 : 70;
+        const w = fx1 - fx0, h = fy1 - fy0;
+        const fit = Math.min((rect.width - pad * 2) / w, (rect.height - pad * 2) / h);
+
+        if (fit >= defaultScale) {
+          // A tight enough cluster that framing it zooms in rather than out.
+          const scale = Math.min(1, fit);
+          setView({
+            x: rect.width / 2 - (fx0 + w / 2) * scale,
+            y: rect.height / 2 - (fy0 + h / 2) * scale,
+            scale,
+          });
+        } else {
+          // Matches are spread far enough that fitting them all would mean
+          // pulling back past this sort's normal opening view — two seen titles
+          // at opposite ends of the release timeline only fit at ~9%, which is
+          // an unreadable smear. Keep the normal scale and anchor on the
+          // earliest match instead. Anchoring beats centring the bounding box
+          // here: the centre of two distant clusters is empty space with
+          // neither of them on screen, which is worse than doing nothing.
+          let first = null;
+          focus.forEach(id => {
+            const p = basePositions[id];
+            if (!p) return;
+            if (!first || p.x < first.x || (p.x === first.x && p.y < first.y)) first = p;
+          });
+          setView({
+            x: pad - first.x * defaultScale,
+            y: rect.height / 2 - (first.y + CARD_H / 2) * defaultScale,
+            scale: defaultScale,
+          });
+        }
+        return;
+      }
+    }
+
     // Left/top-most card in canvas coords, so we can pad from the real content edge
     let minX = Infinity, minY = Infinity;
     Object.values(basePositions).forEach(p => { if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y; });
@@ -867,9 +969,7 @@ function App() {
     // Aim for a legible card size rather than fitting the whole canvas.
     if (gridSort) {
       // Grid layouts: match the grid's width (mobile keeps a legibility floor of ~3 columns)
-      const fit = (rect.width - 32) / canvasW;
-      const floor = rect.width / (colW * 3);
-      const scale = Math.min(1, isTouch ? Math.max(fit, floor) : fit);
+      const scale = defaultScale;
       const zoomed = canvasW * scale > rect.width - 32;
       setView({
         x: zoomed ? 14 - minX * scale : (rect.width - canvasW * scale) / 2,
@@ -878,8 +978,7 @@ function App() {
       });
     } else {
       // Timeline layouts: start at the beginning, showing a handful of cards at readable size
-      const cols = isTouch ? 3.4 : 8.5;
-      const scale = Math.min(1, Math.max(ZOOM_MIN, rect.width / (colW * cols)));
+      const scale = defaultScale;
       setView({
         x: 14 - minX * scale,
         y: canvasH * scale <= rect.height - 32 ? (rect.height - canvasH * scale) / 2 : 14 - minY * scale,
@@ -890,6 +989,22 @@ function App() {
 
   // Reset view whenever layout changes
   useLayoutEffect(() => { resetView(); }, [resetView]);
+
+  // Recentering because the user changed a filter is intentional. Recentering
+  // because the *contents* of the match set changed — someone marked a title
+  // seen — is the bug §7.1 describes, so this keys off the filter identity
+  // only and never off the matched ids.
+  const prevFocusKey = useRef(null);
+  useEffect(() => {
+    const key = `${collectionFilter}|${highlightedChar || ''}`;
+    if (prevFocusKey.current === null) { prevFocusKey.current = key; return; }
+    if (prevFocusKey.current === key) return;
+    prevFocusKey.current = key;
+    // A selected card owns the viewport — the ring-layout auto-fit below is
+    // driving it, and stepping on that would fight it mid-animation.
+    if (selectedIdRef.current) return;
+    resetView();
+  }, [collectionFilter, highlightedChar, resetView]);
 
   // Auto-fit view to focused layout when a card is selected
   useEffect(() => {

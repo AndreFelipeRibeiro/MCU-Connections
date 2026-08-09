@@ -202,7 +202,16 @@
   position: absolute; top: 7px; right: 7px; bottom: auto;
   transform: none; flex-direction: row; z-index: 3;
 }
-.m-lrow-tsa { flex: 0 0 auto; flex-direction: column; gap: 6px; }
+/* The list row lays the toggles out in normal flow as a flex child, so it has
+   to undo the desktop rail's absolute positioning — and it needs .tsa.overlay
+   in the selector to outrank it, same as the two rules above. Without this the
+   rows all resolve against the same ancestor and stack into one floating pair. */
+.tsa.overlay.m-lrow-tsa {
+  position: static; transform: none;
+  flex: 0 0 auto; flex-direction: column; gap: 6px;
+}
+.m-lrow-tsa .tsa-btn { width: 32px; height: 32px; }
+.m-lrow-tsa .tsa-btn svg { width: 15px; height: 15px; }
 .m-hero-tsa { margin-top: 9px; }
 
 /* 36px on touch — comfortably over the 32px floor without crowding the poster. */
