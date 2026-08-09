@@ -928,36 +928,20 @@ function App() {
       if (isFinite(fx0)) {
         const pad = isTouch ? 28 : 70;
         const w = fx1 - fx0, h = fy1 - fy0;
-        const fit = Math.min((rect.width - pad * 2) / w, (rect.height - pad * 2) / h);
-
-        if (fit >= defaultScale) {
-          // A tight enough cluster that framing it zooms in rather than out.
-          const scale = Math.min(1, fit);
-          setView({
-            x: rect.width / 2 - (fx0 + w / 2) * scale,
-            y: rect.height / 2 - (fy0 + h / 2) * scale,
-            scale,
-          });
-        } else {
-          // Matches are spread far enough that fitting them all would mean
-          // pulling back past this sort's normal opening view — two seen titles
-          // at opposite ends of the release timeline only fit at ~9%, which is
-          // an unreadable smear. Keep the normal scale and anchor on the
-          // earliest match instead. Anchoring beats centring the bounding box
-          // here: the centre of two distant clusters is empty space with
-          // neither of them on screen, which is worse than doing nothing.
-          let first = null;
-          focus.forEach(id => {
-            const p = basePositions[id];
-            if (!p) return;
-            if (!first || p.x < first.x || (p.x === first.x && p.y < first.y)) first = p;
-          });
-          setView({
-            x: pad - first.x * defaultScale,
-            y: rect.height / 2 - (first.y + CARD_H / 2) * defaultScale,
-            scale: defaultScale,
-          });
-        }
+        // Always fit the whole match set, however far apart it is. On the
+        // release and chronological layouts two matches at opposite ends only
+        // fit at around 9%, which is small — but seeing where everything is and
+        // zooming in beats being shown a subset with no clue the rest exists.
+        // ZOOM_MIN is the only floor.
+        const scale = Math.min(1, Math.max(ZOOM_MIN, Math.min(
+          (rect.width - pad * 2) / w,
+          (rect.height - pad * 2) / h
+        )));
+        setView({
+          x: rect.width / 2 - (fx0 + w / 2) * scale,
+          y: rect.height / 2 - (fy0 + h / 2) * scale,
+          scale,
+        });
         return;
       }
     }
