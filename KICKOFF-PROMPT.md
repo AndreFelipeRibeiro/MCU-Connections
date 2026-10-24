@@ -4,7 +4,7 @@
 
 Phases 1–5 were released to `main` at `1f79b74` after user approval.
 Catalog maintenance and further bugs/improvements continue on `version/3.0` in
-`/Users/afr/Documents/Developer/MCU-V3`; this is not a new major release.
+`<your-developer-folder>/MCU-V3`; this is not a new major release.
 Current setup is in [README.md](README.md), catalog work and sources are in
 [docs/CATALOG-AUDIT.md](docs/CATALOG-AUDIT.md), and the original phase verification
 is in [docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
@@ -20,7 +20,7 @@ This template describes the initial build. Do not restart Phase 1 when resuming
 the current worktree; use the current handoff above.
 
 Drop `V3-SPEC.md`, `V3-TASKS.md`, and `schema.sql` into the root of
-`/Users/afr/Documents/Developer/MCU-V3`, then paste the block below.
+`<your-developer-folder>/MCU-V3`, then paste the block below.
 
 ---
 

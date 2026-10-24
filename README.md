@@ -9,6 +9,9 @@ tracking, Google sign-in and cloud sync across devices.
 - Catalog maintenance continues on `version/3.0`; [audit and sources](docs/CATALOG-AUDIT.md),
   [current tasks](V3-TASKS.md). Follow-up changes require approval before merging.
 
+See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
+[privacy review](docs/PRIVACY-REVIEW.md) for the repository audit and its limits.
+
 ## Features
 
 - Spatial connection canvas with pan, zoom, draggable cards and cast highlighting.
@@ -169,12 +172,11 @@ an outage. See [Supabase project pausing](https://supabase.com/docs/guides/platf
 - Vercel's deployment protection is separate from MCU Google sign-in. Public
   browsing can be enabled for previews in Deployment Protection. The toolbar's
   Preview setting is separate and changes apply to new deployments.
-- **Wait for explicit user confirmation before merging V3 into main.** That merge
+- **Wait for fresh user confirmation before merging maintenance into main.** That merge
   can trigger the production deployment. After approval and deployment, verify
   production Google sign-in, reload, sync and sign-out at the production URL.
-- Before Phase 6, discuss the user's bug/improvement list and whether to use a
-  separate branch. Do not create that branch or start email/password work yet.
-  Phase 6 needs its own plan and explicit confirmation.
+- Continue the user's bug/improvement work on `version/3.0` before Phase 6.
+  Email/password work needs its own plan and explicit confirmation.
 
 ## Project structure
 
@@ -196,6 +198,9 @@ an outage. See [Supabase project pausing](https://supabase.com/docs/guides/platf
 | `V3-SPEC.md` / `V3-TASKS.md` | Architecture/decisions and phased delivery checklist |
 | `KICKOFF-PROMPT.md` | Original kickoff and current continuation/approval rules |
 | `docs/V3-VERIFICATION.md` | Detailed phase-by-phase evidence and limitations |
+| `CHANGELOG.md` | Dated commit summaries, release context and verification links |
+| `AGENTS.md` | Contributor workflow, attribution and privacy instructions |
+| `docs/PRIVACY-REVIEW.md` | Source/history review, findings and proposed historical cleanup |
 
 ## Manual verification
 
@@ -222,8 +227,10 @@ accessibility output. **Spoken VoiceOver/TalkBack output is untested.** Controll
 fixtures lived outside the repository. No CI/test runner is claimed; Vercel's
 successful deployment status is a deployment check.
 
-Production OAuth and sync are pending the authorized merge/deployment. Current
-preview checks are not a claim that production already runs V3.
+The initial V3 release has been merged into main. The checks above retain their
+original preview scope; a fresh post-merge production OAuth/sync check is not
+claimed here. The catalog audit supersedes the earlier release-date boundary
+example for VisionQuest.
 
 ## Catalog maintenance
 
@@ -247,3 +254,24 @@ at 9am Eastern; it does not apply, commit or publish changes.
 
 Keep this README current when behavior/setup changes. Treat the dated verification
 log as evidence, not as a live list of pending setup tasks.
+
+
+## Credits and tools
+
+Created and maintained by [André Ribeiro](https://github.com/AndreFelipeRibeiro),
+with development, planning, documentation and verification assistance from
+**Anthropic Claude** and **OpenAI ChatGPT/Codex**. Earlier commits include Claude
+co-author credits; future Codex-assisted commits use a Codex co-author trailer
+while retaining the maintainer as the primary author.
+
+| Area | Tools, services and sources used |
+|---|---|
+| Application | React, ReactDOM, Babel standalone; browser HTML, CSS and JavaScript |
+| Source control and hosting | Git, GitHub and Vercel |
+| Accounts and cloud data | Supabase Auth/Postgres and Google OAuth |
+| Catalog and images | TMDB poster/portrait paths; IMDb user ratings; Rotten Tomatoes critics scores; Marvel and Wikipedia references, with specific catalog evidence in the audit |
+| Development and verification | Claude and ChatGPT/Codex; browser inspection and desktop/mobile manual checks; supporting Python/Node checks outside the application runtime |
+
+[AGENTS.md](AGENTS.md) records the project workflow, changelog maintenance,
+co-author attribution and privacy rules. These credits do not retroactively
+change the authorship metadata of published commits.
