@@ -19,6 +19,6 @@
 //   supabasePublishableKey  -> "Publishable key" (formerly "anon public")
 
 window.MCU_CONFIG = {
-  supabaseUrl: '',
-  supabasePublishableKey: '',
+  supabaseUrl: 'https://wauhmmftltlxzrcwpdvp.supabase.co',
+  supabasePublishableKey: 'sb_publishable_OwIOrYejq0AXJbCaK2DN9A_0kojL_pi',
 };

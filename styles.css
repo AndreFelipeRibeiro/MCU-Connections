@@ -572,3 +572,11 @@ body {
   .reset-view { padding: 0 11px; }
   .search-wrap { flex: 1 1 150px; padding: 0 11px; }
 }
+
+/* At the desktop breakpoint, keep search usable instead of compressing its
+   text field to a few characters. Other controls remain on the first row. */
+@media (min-width: 900px) and (max-width: 960px) {
+  .tb-row { flex-wrap: wrap; }
+  .tb-row > .search-wrap { order: 1; flex: 1 0 100%; margin-left: 0; }
+  .tb-row > .acct-wrap { margin-left: auto; }
+}

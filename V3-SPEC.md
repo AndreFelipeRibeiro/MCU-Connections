@@ -14,7 +14,12 @@ Let a visitor mark titles as **seen** or **on their watchlist**, keep that
 information across reloads and devices, and sign in with Google to sync it.
 
 Non-goals for V3: episode-level progress, ratings/reviews, sharing a collection
-publicly, friends/social, any second auth provider.
+publicly, friends/social, additional social auth providers.
+
+Phases 1–5 remain Google-only. Email/password signup and sign-in are planned
+for deferred **Phase 6** (§5.5), as requested on 2026-10-24. Recording this plan
+is not authorization to implement it: present a Phase 6 plan and obtain explicit
+user confirmation before starting code, schema, or dashboard changes for it.
 
 ---
 
@@ -105,7 +110,7 @@ comment to that effect at the top of `data.js`.
 
 ### 4.2 Table
 
-One table. Full DDL in `supabase/schema.sql` — run that, don't retype it.
+One table. Full DDL in `schema.sql` — run that, don't retype it.
 
 ```
 title_states
@@ -198,10 +203,13 @@ provider access token.
    exchange. After it resolves, strip the auth params from the URL with
    `history.replaceState` so a reload isn't messy.
 
-**Also do:** disable email/password signup and anonymous sign-ins in the Supabase
-dashboard. This repo is public and the publishable key is committed; Google
-should be the only way to create an account, or strangers can create accounts
-against your quota.
+**For Phases 1–5:** in Supabase → Sign In / Providers → Email, turn
+**Enable email provider OFF** and save. Keep Google enabled, **Allow new users
+to sign up ON**, and anonymous sign-ins OFF. The Email provider is deferred
+until Phase 6 is explicitly approved and its complete flows are ready (§5.5).
+Disabling Email limits supported sign-in methods; it does not restrict which
+Google users may register. Provider configuration belongs in the dashboard,
+not in the collection schema.
 
 ### 5.3 Auth state machine
 
@@ -224,6 +232,46 @@ On sign-out, immediately clear all account collection data from React state.
 **Do not write it into the guest `localStorage` key** — on a shared device that
 would hand one person's collection to the next visitor. Guest storage after
 sign-out starts empty.
+
+
+### 5.5 Deferred Phase 6 — email/password accounts (confirmation required)
+
+**Do not start automatically after Phase 5.** First review the current code and
+Supabase documentation, present the implementation/setup plan, and ask the user
+for explicit confirmation to begin Phase 6. Earlier “go ahead” approvals and
+approval to record this roadmap do not authorize this phase. Until then, keep
+Email disabled and do not add forms, recovery handlers, SMTP credentials or
+provider configuration for it.
+
+Once approved, scope includes:
+
+- Email/password signup and sign-in alongside Google, with accessible desktop
+  popover and mobile sheet forms, validation, pending states and useful errors.
+- Email confirmation, resend confirmation, and clear instructions while awaiting
+  confirmation. Do not grant a signed-in UI merely because signup succeeded.
+- Forgot-password email and password reset, including recovery-session handling,
+  expired/used/invalid links, and successful return to normal account UI.
+- Confirmation/recovery redirects for localhost, the V3 Vercel preview and
+  production, using the existing entry page and `window.*` architecture: no
+  router, bundler, npm or separate application server.
+- Transactional email/SMTP configuration and delivery checks before public
+  launch. Keep SMTP credentials and all auth secrets in service dashboards.
+- Review and explicitly document verified-email identity linking behavior when
+  Google and email/password use the same address. Never merge collections by
+  matching email strings in application code; ownership remains `auth.uid()`.
+- Account name/avatar fallbacks for users without Google profile metadata;
+  existing sync, guest merge, sign-out clearing and account isolation still apply.
+
+**Schema:** no change is needed now. `schema.sql` references `auth.users(id)` and
+its RLS checks `auth.uid()`; neither is tied to Google. Supabase Auth manages
+credentials. Do not add password columns or a separate credentials/profile table.
+Reassess only if the approved Phase 6 design introduces a new data requirement.
+
+**Acceptance after approval:** manually verify signup → confirmation → sign-in,
+resend, incorrect credentials, recovery/reset and invalid/expired links, reload
+persistence, Google regression, same-email identity behavior, account switching
+and API-level isolation. Exercise desktop/mobile and allowed deployment origins;
+record actual results separately from assumptions. See Phase 6 in `V3-TASKS.md`.
 
 ---
 
@@ -409,7 +457,7 @@ from user metadata — no separate profile table, and no editable profile in V3.
 | `supabase-client.js` | Creates and exports `window.mcuSupabase`, or `null` on failure. Plain JS. |
 | `tracking.jsx` | Collection state, guest storage, remote load/mutate, merge, `TitleStatusActions`, progress helpers. |
 | `account.jsx` | Auth state machine, session provider, account popover + sheet, sign-in/sign-out UI. |
-| `supabase/schema.sql` | Provided — run as-is. |
+| `schema.sql` | Provided — run as-is. |
 
 **Modify:**
 
@@ -440,6 +488,12 @@ Detail and acceptance criteria in `V3-TASKS.md`. Summary:
 4. **Hardening** — cross-account isolation, mobile interaction testing, OAuth
    cancellation, offline/paused-project behaviour, accessibility, the 900–1200px
    desktop toolbar.
+
+5. **Docs** — setup instructions and manual verification records.
+6. **Email/password accounts — deferred, explicit confirmation required** —
+   signup/sign-in, confirmation/resend, recovery/reset, email delivery, identity
+   behavior and regression verification (§5.5). Do not begin without a new
+   user approval specifically for this phase.
 
 ---
 

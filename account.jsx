@@ -60,54 +60,67 @@ function AccountProvider({ children }) {
   React.useEffect(() => {
     if (!client) return;
     let settled = false;
+    let active = true;
+    let sub;
 
     const oauthError = readOAuthError();
     if (oauthError) setError(oauthError);
 
-    const timer = setTimeout(() => {
-      if (settled) return;
+    const settle = () => {
       settled = true;
-      console.warn('[mcu] session restore timed out after ' + AUTH_TIMEOUT_MS + 'ms; running as guest');
+      clearTimeout(timer);
+    };
+    const applySession = (session) => {
+      const nextUser = session && session.user;
+      setUser(nextUser || null);
+      setStatus(nextUser ? 'signed_in' : 'signed_out');
+      setSyncAvailable(true);
+      if (nextUser) setError(null);
+      stripAuthParams();
+    };
+    const unavailable = () => {
+      settle();
+      setUser(null);
       setSyncAvailable(false);
       setStatus('signed_out');
+    };
+    const timer = setTimeout(() => {
+      if (!active || settled) return;
+      console.warn('[mcu] session restore timed out; running as guest');
+      unavailable();
     }, AUTH_TIMEOUT_MS);
 
-    client.auth.getSession().then(({ data, error: err }) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      stripAuthParams();
-      if (err) { setSyncAvailable(false); setStatus('signed_out'); return; }
-      if (data && data.session) { setUser(data.session.user); setStatus('signed_in'); }
-      else setStatus('signed_out');
-    }).catch((e) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      console.warn('[mcu] could not reach Supabase; running as guest', e);
-      setSyncAvailable(false);
-      setStatus('signed_out');
-    });
+    try {
+      // Subscribe first. An auth event is newer than the initial getSession
+      // snapshot: cancel its timeout and ignore its eventual stale result.
+      const res = client.auth.onAuthStateChange((event, session) => {
+        if (!active) return;
+        if (!['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'TOKEN_REFRESHED'].includes(event)) return;
+        // A late initial snapshot must not overwrite a newer auth event or
+        // the deliberate guest fallback after a timeout.
+        if (event === 'INITIAL_SESSION' && settled) return;
+        settle();
+        applySession(event === 'SIGNED_OUT' ? null : session);
+      });
+      sub = res && res.data && res.data.subscription;
 
-    const res = client.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        setUser(session ? session.user : null);
-        setStatus('signed_in');
-        setError(null);
-        stripAuthParams();
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setStatus('signed_out');
-      } else if (event === 'TOKEN_REFRESHED') {
-        // A refresh that comes back without a session means the refresh token
-        // is spent or revoked. That degrades to signed out; it is not a crash.
-        if (session) setUser(session.user);
-        else { setUser(null); setStatus('signed_out'); }
-      }
-    });
-    const sub = res && res.data && res.data.subscription;
+      Promise.resolve(client.auth.getSession()).then(({ data, error: err }) => {
+        if (!active || settled) return;
+        settle();
+        if (err) { unavailable(); return; }
+        applySession(data && data.session);
+      }).catch(() => {
+        if (active && !settled) unavailable();
+      });
+    } catch (e) {
+      if (!settled) unavailable();
+    }
 
-    return () => { clearTimeout(timer); if (sub) sub.unsubscribe(); };
+    return () => {
+      active = false;
+      settle();
+      if (sub) sub.unsubscribe();
+    };
   }, [client]);
 
   // If the user starts Google sign-in and then backs out, they come back to a
@@ -138,26 +151,28 @@ function AccountProvider({ children }) {
       const redirectTo = window.location.origin + window.location.pathname;
       const { error: err } = await client.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo },
+        options: { redirectTo, queryParams: { prompt: 'select_account' } },
       });
-      if (err) { setError(err.message); setStatus('signed_out'); }
+      if (err) { setError(err.message); setStatus('error'); }
     } catch (e) {
       setError((e && e.message) || 'Sign-in failed');
-      setStatus('signed_out');
+      setStatus('error');
     }
   }, [client]);
 
   const signOut = React.useCallback(async () => {
     if (!client) return;
+    setError(null);
     try {
-      await client.auth.signOut();
+      const { error: err } = await client.auth.signOut({ scope: 'local' });
+      if (err) throw err;
+      setUser(null);
+      setStatus('signed_out');
     } catch (e) {
-      // The local session is dropped either way; a failed network round-trip
-      // must not leave someone apparently still signed in.
-      console.warn('[mcu] sign-out request failed; clearing local session anyway', e);
+      // The SDK may still have a persisted session on failure. Do not claim
+      // sign-out succeeded or switch account data into guest mode.
+      setError('Could not sign out. Please try again.');
     }
-    setUser(null);
-    setStatus('signed_out');
   }, [client]);
 
   const value = React.useMemo(() => ({
@@ -217,7 +232,7 @@ function GoogleMark() {
 // never drift apart in what they say about the same account.
 function AccountPanel({ onPickCollection, onClose }) {
   const { status, profile, error, syncAvailable, unavailableReason, signIn, signOut } = useAccount();
-  const { progress } = window.useCollection();
+  const { progress, loading: collectionLoading } = window.useCollection();
   const signedIn = status === 'signed_in';
 
   const pick = (v) => () => { if (onPickCollection) onPickCollection(v); if (onClose) onClose(); };
@@ -245,6 +260,7 @@ function AccountPanel({ onPickCollection, onClose }) {
         </div>
       )}
 
+      {collectionLoading ? <div className="acct-note" role="status">Loading your collection…</div> : (
       <div className="acct-stats">
         <div className="acct-stat">
           <b>{progress.seenReleased}</b>
@@ -256,10 +272,12 @@ function AccountPanel({ onPickCollection, onClose }) {
         </div>
       </div>
 
+      )}
+
       <div className="acct-links">
-        <button onClick={pick('unseen')}>Show unseen</button>
-        <button onClick={pick('seen')}>Show seen</button>
-        <button onClick={pick('watchlist')}>Show watchlist</button>
+        <button disabled={collectionLoading} onClick={pick('unseen')}>Show unseen</button>
+        <button disabled={collectionLoading} onClick={pick('seen')}>Show seen</button>
+        <button disabled={collectionLoading} onClick={pick('watchlist')}>Show watchlist</button>
       </div>
 
       {error && <div className="acct-error" role="status">{error}</div>}
@@ -275,9 +293,9 @@ function AccountPanel({ onPickCollection, onClose }) {
         signedIn
           ? <button className="acct-action" onClick={signOut}>Sign out</button>
           : (
-            <button className="acct-action primary" onClick={signIn} disabled={status === 'signing_in'}>
+            <button className="acct-action primary" onClick={signIn} disabled={status === 'initializing' || status === 'signing_in'}>
               <GoogleMark/>
-              {status === 'signing_in' ? 'Opening Google…' : 'Sign in with Google'}
+              {status === 'initializing' ? 'Checking session…' : status === 'signing_in' ? 'Opening Google…' : 'Sign in with Google'}
             </button>
           )
       )}

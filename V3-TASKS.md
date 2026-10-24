@@ -5,6 +5,10 @@ Companion to `V3-SPEC.md`. Section references below (§) point into that file.
 Ground rule: **each phase ends in a working, committed, manually verified
 state.** Don't start the next phase with the previous one half-landed.
 
+Phase 6 is deferred and requires a new, explicit user confirmation before any
+implementation or service configuration. Approval of this roadmap is not approval
+to start Phase 6; Phases 1–5 remain Google-only.
+
 ---
 
 ## Phase 1 — Collection foundation (no backend, no auth)
@@ -89,10 +93,11 @@ Schema and sign-in land in one phase on purpose. Splitting them produces a
 sign-in button that authenticates and then has nowhere to write.
 
 ### 2.1 Supabase project
-- [ ] Create the project. Run `supabase/schema.sql` as-is.
+- [ ] Create the project. Run `schema.sql` as-is.
 - [ ] Run the three sanity checks at the bottom of that file.
-- [ ] Disable email/password signup **and** anonymous sign-ins (§5.2). The
-      publishable key is committed to a public repo.
+- [ ] Keep the dedicated Email provider OFF until Phase 6 is approved and ready
+      (§5.2/§5.5). Keep Google and new-user signup ON, anonymous sign-ins OFF.
+      The publishable key is committed to a public repo.
 
 ### 2.2 Google OAuth
 - [ ] Follow the 7-step checklist in §5.2 exactly.
@@ -196,3 +201,53 @@ Force the write to fail → guest data still intact, error shown.
 - [ ] ⚠️ The README's entry-point references are **already correct**. An earlier
       planning pass claimed they say `MCU Explorer.html` — they do not. Don't
       "fix" them (§8).
+
+
+---
+
+## Phase 6 — Email/password accounts (deferred; confirmation required)
+
+**Not authorized to start.** Added to the roadmap on 2026-10-24. Complete the
+Google-only phases first; then present a Phase 6 plan and ask the user for new,
+explicit confirmation. Do not infer approval from earlier phase approvals or
+from the request to update these documents. See spec §5.5.
+
+### 6.1 Approval and design
+- [ ] Review current code and current Supabase Auth documentation; present the
+      plan and obtain explicit user confirmation before implementation or setup.
+- [ ] Define signup, confirmation, recovery and reset states without introducing
+      a router, npm, bundler or server; preserve browser Babel and `window.*`.
+- [ ] Review same-email Google/password identity behavior, including existing
+      users; document the intended behavior and verify it with test accounts.
+      Never merge collections by email string.
+
+### 6.2 Account UI and flows (only after approval)
+- [ ] Add email/password signup and sign-in alongside Google on desktop/mobile.
+- [ ] Add accessible field labels, validation, pending states and auth errors.
+- [ ] Add confirmation instructions and resend; keep confirmation required.
+- [ ] Add forgot-password and reset-password forms, recovery-session handling,
+      and useful expired/used/invalid-link states.
+- [ ] Support account display without Google name/avatar metadata.
+
+### 6.3 Service setup and documentation (only after approval)
+- [ ] Configure transactional email/SMTP and verify confirmation/recovery delivery
+      before public launch; keep SMTP credentials in service dashboards only.
+- [ ] Configure and test confirmation/recovery redirects for local development,
+      V3 preview and production. Keep anonymous sign-ins disabled.
+- [ ] Enable the Email provider when complete flows are ready for verification.
+- [ ] Keep `schema.sql` unchanged unless an approved new data requirement demands
+      a migration: existing `auth.users(id)` ownership/RLS supports either method.
+      Never store passwords in application tables.
+- [ ] Update setup docs, account help and the manual verification record.
+
+### 6.4 Manual acceptance and phase commit
+- [ ] Signup → confirmation → sign-in, resend, wrong password and duplicate signup.
+- [ ] Recovery email → reset → sign-in with new password; invalid/expired/reused
+      links show useful errors without leaving a stuck or misleading auth state.
+- [ ] Google still works; same-email behavior matches the reviewed design without
+      lost collections or accidental account merging.
+- [ ] Reload/session persistence, guest merge, sign-out clearing, cross-device
+      sync and cross-account isolation (UI and API) pass for both sign-in methods.
+- [ ] Verify desktop/mobile forms and supported redirect origins; record what was
+      actually tested and any remaining limitations.
+- [ ] Commit at phase end after relevant manual acceptance, not per file.

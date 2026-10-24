@@ -132,3 +132,70 @@ The existing code also intentionally recenters when the collection filter itself
 is changed (commits `cd43999`/`b4609f8`). This differs from a literal reading of
 §7.1's “nothing recenters”; changing a title's status under that filter does not
 recenter. This existing behavior was preserved.
+
+## V3 Phase 2 checkpoint — 2026-10-24
+
+Phase 2 remains open pending Google OAuth setup and real-account acceptance.
+Public project configuration is populated for `wauhmmftltlxzrcwpdvp`. The supplied
+root `schema.sql` (the plan calls it `supabase/schema.sql`) was deployed unchanged
+as migration `v3_title_states`. Verified RLS, all four ownership policies, table
+constraints, authenticated grants and denied anon grants. An unauthenticated
+PostgREST read returned permission denied; the Supabase security advisor returned
+no findings. This does not yet prove two-account isolation through real sessions.
+
+Auth initialization now ignores stale initial session results after newer auth
+events, cancels its timeout on those events, and accepts later recovery. Sign-out
+uses local scope and reports returned SDK errors without pretending to sign out.
+Collection buttons and account counts show loading during session restoration.
+At 900–960px, desktop search occupies a second toolbar row to keep it usable.
+
+Manual browser checks used the current working copy, including pre-existing
+uncommitted Phase 3 sync changes. A temporary, out-of-repo fake client exercised:
+initial loading/disabled controls; signed-in event followed by stale session
+resolution; failed refresh; five-second timeout fallback; failed and successful
+sign-out; and a recoverable OAuth-start error. These are controlled UI checks,
+not live Google or cloud-sync tests. The real configured client initialized on a
+fresh localhost origin. Desktop toolbar checks at 900/1000/1200px found no
+horizontal overflow; Escape closed the account popover. At 390px, the account
+sheet rendered and the grid/list/spatial controls remained in their own row.
+
+Still required: enable Google, disable email/password, verify redirect settings,
+complete a real Google round trip (profile, reload, cancellation, clean callback
+URL), sign out, and switch to a second Google account without state/data bleed.
+At this checkpoint, Google was disabled, email enabled and anonymous auth disabled.
+
+For local OAuth testing, the preview is `http://localhost:8126/`. Google Web OAuth
+client JavaScript origin: `http://localhost:8126`; authorized redirect URI:
+`https://wauhmmftltlxzrcwpdvp.supabase.co/auth/v1/callback`. Put the Google client ID
+and secret only in Supabase's Google provider settings. Add the exact local page
+URL to Supabase's redirect allowlist; add `/index.html` separately if using that
+entry URL. Choose the actual production URL when publishing. See the official
+[Google provider setup](https://supabase.com/docs/guides/auth/social-sign-in/auth-google)
+and [redirect configuration](https://supabase.com/docs/guides/auth/redirect-urls).
+
+### Phase 2 live Google check — 2026-10-24
+
+A real Google sign-in completed at `http://localhost:8126/`. The account sheet
+showed the Google name and email, remained signed in after reload, and the
+callback URL contained no auth parameters. The browser error log was empty.
+Sign-out returned to the guest UI with zero counts and remained signed out after
+reload. This account had no collection rows, so this check does not establish
+clearing of a populated account or cross-account data isolation.
+
+Live Auth settings now report Google enabled, Email disabled, anonymous sign-in
+disabled. A second-account round trip remains pending. Phase 6 is still deferred.
+
+
+### Phase 2 second-account check — 2026-10-24
+
+After signing out of the first Google account, the same browser signed in as a
+second Google account. Its profile displayed correctly and persisted after
+reload; the first profile was absent. Both accounts had empty collections, so
+this establishes profile/session switching only, not isolation of populated
+collections. That remains required in the sync/hardening verification.
+
+Google OAuth now requests `prompt=select_account`, and the real Google account
+chooser was verified, avoiding automatic reuse of the last Google session.
+The localhost checks above used the working copy with its existing Phase 3 sync
+work; the Phase 2 follow-up commit intentionally leaves that sync work uncommitted.
+Preview/production round trips and real-device checks remain pending.
