@@ -73,3 +73,62 @@ Then open `http://localhost:8123/MCU%20Explorer.html`.
 ## Keeping this file current
 
 This README should get a pass whenever a major feature lands — new views, a data-model change like the variant system, a meaningful jump in title/character counts. Small data corrections (a missing cast credit, a fixed rating) don't need a README update on their own.
+
+
+## V3 Phase 1 verification — 2026-10-24
+
+Phase 1 already exists in commit `1bf565a`. This pass reviewed the current
+`version/3.0` working copy, including its existing auth wiring and uncommitted
+sync changes, in signed-out mode. No application changes were needed for the
+Phase 1 behaviors checked below. This is not a validation of cloud sync.
+
+Browser checks used an isolated local origin (`http://127.0.0.1:8124`), with
+mobile layouts at 390px and the default panel width, and desktop at 1200px.
+
+- [x] Guest watchlist → seen → none transitions; un-seeing does not restore
+  watchlist. Seen state survives a browser reload.
+- [x] Tracking actions exercised on desktop cards/drawer and mobile grid,
+  list, cast sheet, and spatial focus card.
+- [x] Mobile grid/list/focus primary actions still open the cast sheet.
+  Rendered DOM checks found no nested buttons. Grid keyboard navigation goes
+  primary action → seen → watchlist → next primary action; Enter opens details.
+  List keyboard navigation reaches its status control and Enter opens details.
+- [x] Desktop status clicks at 100%, 75%, and 50% zoom do not select cards or
+  change the canvas transform. At 100%, all card position styles were also
+  compared before/after and remained identical. With Unseen active, the changed
+  card dims in place. Mobile spatial status clicks also preserve the transform.
+- [x] Below 50% spatial zoom, interactive status controls disappear while the
+  seen marker remains. Measured mobile grid toggle targets are approximately
+  36 × 36 CSS pixels at scale 1; source CSS provides at least 32px targets.
+- [x] Collection filters update mobile grid/list contents, show the active
+  filter count, and produce the empty-watchlist message. Both desktop and mobile
+  clear-filter controls reset the collection filter.
+- [x] Progress shows 60 released titles with the current catalog/date. Adding
+  unreleased Secret Wars to the watchlist increments the separate watchlist
+  count; marking it seen does not increment released-title completion.
+
+Additional direct helper probes used Node's built-in VM with the actual
+`data.js` and guest-storage/date helpers, without adding a test runner or test
+files. Absent/malformed storage and unsupported versions return an empty state;
+`none` entries are omitted; unknown IDs survive a save and generate a local-dev
+warning; clearing storage returns an empty state. Explicit date inputs give
+59 released titles on 2026-10-13 and 60 on 2026-10-14 and 2026-10-24. These were
+helper probes, not browser storage fault injection or a browser clock override.
+
+Remaining manual verification from spec §10 (not claimed by this pass):
+
+- [ ] Cross-device cloud sync.
+- [ ] Cross-account isolation in separate profiles and directly through PostgREST.
+- [ ] Sign-out clearing without copying account data to guest storage.
+- [ ] Account switching without data bleed.
+- [ ] Guest merge precedence and preservation after a failed remote write.
+- [ ] Block Supabase and verify degraded mode, errors, and guest tracking.
+- [ ] OAuth cancellation without a stuck spinner.
+- [ ] Browser clock override across the release boundary (helper probe passed).
+- [ ] Real-device touch gestures, screen-reader announcements, complete keyboard
+  traversal, and pressed/focus visual states across all mobile surfaces.
+
+The existing code also intentionally recenters when the collection filter itself
+is changed (commits `cd43999`/`b4609f8`). This differs from a literal reading of
+§7.1's “nothing recenters”; changing a title's status under that filter does not
+recenter. This existing behavior was preserved.
