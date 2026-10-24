@@ -1,0 +1,495 @@
+{
+  "checkedAt": "2026-10-24",
+  "imdbEvidence": "Search-indexed primary IMDb pages; direct requests may return 403. Values are snapshots, not a live feed. Ms. Marvel was corroborated through IMDb filmography/list displays.",
+  "rtEvidence": "Rotten Tomatoes own guide and title/season pages; season pages take precedence over cached series landing pages.",
+  "titles": {
+    "iron-man": {
+      "imdbUrl": "https://www.imdb.com/title/tt0371746/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "incredible-hulk": {
+      "imdbUrl": "https://www.imdb.com/title/tt0800080/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "iron-man-2": {
+      "imdbUrl": "https://www.imdb.com/title/tt1228705/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "thor": {
+      "imdbUrl": "https://www.imdb.com/title/tt0800369/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "cap-first-avenger": {
+      "imdbUrl": "https://www.imdb.com/title/tt0458339/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "avengers": {
+      "imdbUrl": "https://www.imdb.com/title/tt0848228/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "iron-man-3": {
+      "imdbUrl": "https://www.imdb.com/title/tt1300854/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "thor-dark-world": {
+      "imdbUrl": "https://www.imdb.com/title/tt1981115/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "cap-winter-soldier": {
+      "imdbUrl": "https://www.imdb.com/title/tt1843866/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "gotg": {
+      "imdbUrl": "https://www.imdb.com/title/tt2015381/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "aou": {
+      "imdbUrl": "https://www.imdb.com/title/tt2395427/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "ant-man": {
+      "imdbUrl": "https://www.imdb.com/title/tt0478970/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "civil-war": {
+      "imdbUrl": "https://www.imdb.com/title/tt3498820/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "doctor-strange": {
+      "imdbUrl": "https://www.imdb.com/title/tt1211837/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "gotg-2": {
+      "imdbUrl": "https://www.imdb.com/title/tt3896198/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "homecoming": {
+      "imdbUrl": "https://www.imdb.com/title/tt2250912/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "thor-ragnarok": {
+      "imdbUrl": "https://www.imdb.com/title/tt3501632/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "black-panther": {
+      "imdbUrl": "https://www.imdb.com/title/tt1825683/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "infinity-war": {
+      "imdbUrl": "https://www.imdb.com/title/tt4154756/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "ant-man-wasp": {
+      "imdbUrl": "https://www.imdb.com/title/tt5095030/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "captain-marvel": {
+      "imdbUrl": "https://www.imdb.com/title/tt4154664/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "endgame": {
+      "imdbUrl": "https://www.imdb.com/title/tt4154796/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "far-from-home": {
+      "imdbUrl": "https://www.imdb.com/title/tt6320628/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "wandavision": {
+      "imdbUrl": "https://www.imdb.com/title/tt9140560/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "falcon-winter": {
+      "imdbUrl": "https://www.imdb.com/title/tt9208876/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "loki-s1": {
+      "imdbUrl": "https://www.imdb.com/title/tt9140554/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "black-widow": {
+      "imdbUrl": "https://www.imdb.com/title/tt3480822/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "what-if": {
+      "imdbUrl": "https://www.imdb.com/title/tt10168312/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "shang-chi": {
+      "imdbUrl": "https://www.imdb.com/title/tt9376612/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "eternals": {
+      "imdbUrl": "https://www.imdb.com/title/tt9032400/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "hawkeye": {
+      "imdbUrl": "https://www.imdb.com/title/tt10160804/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "no-way-home": {
+      "imdbUrl": "https://www.imdb.com/title/tt10872600/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "ms-marvel": {
+      "imdbUrl": "https://www.imdb.com/title/tt10857164/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "multiverse-madness": {
+      "imdbUrl": "https://www.imdb.com/title/tt9419884/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "thor-love": {
+      "imdbUrl": "https://www.imdb.com/title/tt10648342/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "moon-knight": {
+      "imdbUrl": "https://www.imdb.com/title/tt10234724/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "she-hulk": {
+      "imdbUrl": "https://www.imdb.com/title/tt10857160/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "wakanda-forever": {
+      "imdbUrl": "https://www.imdb.com/title/tt9114286/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "quantumania": {
+      "imdbUrl": "https://www.imdb.com/title/tt10954600/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "gotg-3": {
+      "imdbUrl": "https://www.imdb.com/title/tt6791350/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "secret-invasion": {
+      "imdbUrl": "https://www.imdb.com/title/tt13157618/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "loki-s2": {
+      "imdbUrl": "https://www.imdb.com/title/tt9140554/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "marvels": {
+      "imdbUrl": "https://www.imdb.com/title/tt10676048/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "what-if-s2": {
+      "imdbUrl": "https://www.imdb.com/title/tt10168312/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "echo": {
+      "imdbUrl": "https://www.imdb.com/title/tt13966962/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "deadpool-3": {
+      "imdbUrl": "https://www.imdb.com/title/tt6263850/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "agatha": {
+      "imdbUrl": "https://www.imdb.com/title/tt15571732/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "what-if-s3": {
+      "imdbUrl": "https://www.imdb.com/title/tt10168312/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "friendly-spidey": {
+      "imdbUrl": "https://www.imdb.com/title/tt16027074/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "cap-brave": {
+      "imdbUrl": "https://www.imdb.com/title/tt14513804/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "daredevil-born-again": {
+      "imdbUrl": "https://www.imdb.com/title/tt18923754/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed",
+      "castSources": [
+        "https://www.marvel.com/tv-shows/daredevil-born-again/1"
+      ]
+    },
+    "thunderbolts": {
+      "imdbUrl": "https://www.imdb.com/title/tt20969586/",
+      "imdbScope": "movie",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed"
+    },
+    "ironheart": {
+      "imdbUrl": "https://www.imdb.com/title/tt13623126/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "fantastic-four": {
+      "imdbUrl": "https://www.imdb.com/title/tt10676052/",
+      "imdbScope": "movie",
+      "rtUrl": "https://www.rottentomatoes.com/m/the_fantastic_four_first_steps",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed",
+      "castSources": [
+        "https://thewaltdisneycompany.com/news/kevin-feige-fantastic-four/"
+      ]
+    },
+    "eyes-of-wakanda": {
+      "imdbUrl": "https://www.imdb.com/title/tt13968252/",
+      "imdbScope": "series",
+      "rtUrl": "https://www.rottentomatoes.com/tv/eyes_of_wakanda/s01",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "marvel-zombies": {
+      "imdbUrl": "https://www.imdb.com/title/tt16027014/",
+      "imdbScope": "series",
+      "rtUrl": "https://www.rottentomatoes.com/tv/marvel_zombies/s01",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "wonder-man": {
+      "imdbUrl": "https://www.imdb.com/title/tt21066182/",
+      "imdbScope": "series",
+      "rtUrl": "https://www.rottentomatoes.com/tv/wonder_man/s01",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "daredevil-born-again-s2": {
+      "imdbUrl": "https://www.imdb.com/title/tt18923754/",
+      "imdbScope": "series",
+      "rtUrl": "https://www.rottentomatoes.com/tv/daredevil_born_again/s02",
+      "rtScope": "season",
+      "ratingStatus": "reviewed"
+    },
+    "brand-new-day": {
+      "imdbUrl": "https://www.imdb.com/title/tt22084616/",
+      "imdbScope": "movie",
+      "rtUrl": "https://www.rottentomatoes.com/m/spider_man_brand_new_day",
+      "rtScope": "movie",
+      "ratingStatus": "reviewed",
+      "castSources": [
+        "https://www.sonypictures.com/movies/spidermanbrandnewday",
+        "https://www.imdb.com/title/tt22084616/"
+      ],
+      "budgetSource": "https://www.imdb.com/title/tt22084616/"
+    },
+    "visionquest": {
+      "imdbUrl": "https://www.imdb.com/title/tt23112594/",
+      "imdbScope": "series",
+      "rtUrl": "https://www.rottentomatoes.com/tv/visionquest/s01",
+      "rtScope": "season",
+      "ratingStatus": "reviewed",
+      "release": {
+        "value": "2026-10-13",
+        "url": "https://thewaltdisneycompany.com/news/marvel-television-visionquest-disney-plus/",
+        "note": "First US availability; Oct 14 remains the international date on some listings."
+      },
+      "castSources": [
+        "https://www.imdb.com/title/tt38934479/",
+        "https://www.imdb.com/news/ni66066201/"
+      ]
+    },
+    "friendly-spidey-s2": {
+      "imdbUrl": "https://www.imdb.com/title/tt16027074/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "unreleased; do not inherit an older season rating",
+      "release": {
+        "value": "2027-01-13",
+        "url": "https://www.laughingplace.com/disney-entertainment/your-friendly-neighborhood-spider-man-season-2-date/",
+        "note": "NYCC date reporting, corroborated by GamesRadar; supersedes the old 2026 window."
+      }
+    },
+    "doomsday": {
+      "imdbUrl": null,
+      "imdbScope": "movie",
+      "rtUrl": "https://www.rottentomatoes.com/m/avengers_doomsday",
+      "rtScope": "movie",
+      "ratingStatus": "unreleased; do not inherit an older season rating",
+      "release": {
+        "value": "2026-12-18",
+        "url": "https://www.rottentomatoes.com/m/avengers_doomsday",
+        "note": "Reconfirmed; no rating yet."
+      }
+    },
+    "daredevil-born-again-s3": {
+      "imdbUrl": "https://www.imdb.com/title/tt18923754/",
+      "imdbScope": "series",
+      "rtUrl": "https://editorial.rottentomatoes.com/guide/marvel-movies-in-order/",
+      "rtScope": "season",
+      "ratingStatus": "unreleased; do not inherit an older season rating",
+      "release": {
+        "value": "2027-03",
+        "url": "https://www.techradar.com/streaming/disney-plus/marvel-has-canceled-daredevil-born-again-after-three-seasons-and-ive-been-afraid-this-would-happen-to-the-disney-show-for-many-many-months",
+        "note": "March window reported with Disney spokesperson confirmation; no verified day."
+      }
+    },
+    "secret-wars": {
+      "imdbUrl": null,
+      "imdbScope": "movie",
+      "rtUrl": "https://www.rottentomatoes.com/m/avengers_secret_wars",
+      "rtScope": "movie",
+      "ratingStatus": "unreleased; do not inherit an older season rating",
+      "release": {
+        "value": "2027-12-17",
+        "url": "https://www.rottentomatoes.com/m/avengers_secret_wars",
+        "note": "Reconfirmed; no rating yet."
+      }
+    }
+  }
+}

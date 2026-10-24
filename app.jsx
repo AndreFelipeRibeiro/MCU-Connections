@@ -205,7 +205,7 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
           : <span className="card-seen-mark"><window.SeenMarker seen={status === 'seen'}/></span>}
         <div className="rating-row">
           {title.imdb != null && (
-            <div className="card-rating imdb" title="IMDb rating">
+            <div className="card-rating imdb" title={title.type === 'series' ? 'IMDb whole-series rating (shared across seasons)' : 'IMDb movie rating'}>
               <span className="imdb-tag">IMDb</span>
               {title.imdb.toFixed(1)}
             </div>

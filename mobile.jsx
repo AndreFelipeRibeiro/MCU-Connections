@@ -6,8 +6,8 @@ const SORT_TABS = [['release','Release','▤'],['chrono','Chrono','⇄'],['phase
 const VIEW_MODES = [['grid','Grid','▦'],['list','List','☰'],['spatial','Spatial','◈']];
 
 function ScoreBadges({ title, lead, compact }) {
-  const imdb = title.imdb != null ? <div className="m-sc imdb" key="i"><span className="tg">IMDb</span>{title.imdb.toFixed(1)}</div> : null;
-  const rt = title.rt != null ? <div className="m-sc rt" key="r"><span className="tg">RT</span>{title.rt}%</div> : null;
+  const imdb = title.imdb != null ? <div className="m-sc imdb" key="i" title={title.type === 'series' ? 'IMDb whole-series rating (shared across seasons)' : 'IMDb movie rating'}><span className="tg">IMDb</span>{title.imdb.toFixed(1)}</div> : null;
+  const rt = title.rt != null ? <div className="m-sc rt" key="r" title="Rotten Tomatoes Tomatometer (critics)"><span className="tg">RT</span>{title.rt}%</div> : null;
   if (!imdb && !rt) return <div className={`m-scores${compact?' compact':''}`}><div className="m-sc none">Not yet rated</div></div>;
   return <div className={`m-scores${compact?' compact':''}`}>{lead === 'rt' ? [rt, imdb] : [imdb, rt]}</div>;
 }

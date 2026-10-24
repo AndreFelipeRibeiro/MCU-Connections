@@ -27,7 +27,8 @@ function todayISO() {
 }
 
 function isReleased(title, today) {
-  return title.release <= (today || todayISO());
+  // An announced month is a window, not proof that the title has premiered.
+  return /^\d{4}-\d{2}-\d{2}$/.test(title.release) && title.release <= (today || todayISO());
 }
 
 // The completion denominator. Computed from release dates every time rather

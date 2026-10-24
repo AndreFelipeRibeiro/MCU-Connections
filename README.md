@@ -5,8 +5,9 @@ a spatial map, connected by shared actors and characters. V3 adds seen/watchlist
 tracking, Google sign-in and cloud sync across devices.
 
 - [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/)
-- [Production](https://mcu-connections.vercel.app/) — stays on the existing release
-  until the V3 merge is explicitly approved.
+- [Production](https://mcu-connections.vercel.app/) — released V3 (`1f79b74`).
+- V4 catalog work is on `codex/v4`; [audit and sources](docs/CATALOG-AUDIT.md),
+  [current tasks](V4-TASKS.md). It requires separate approval before merging.
 
 ## Features
 
@@ -27,7 +28,7 @@ tracking, Google sign-in and cloud sync across devices.
 ## The data
 
 - **64 titles** spanning Phases 1–6, 2008–2027 (40 films, 24 series)
-- **80 characters**, driving **321 connection segments** between titles
+- **83 characters**, connecting titles through shared character identities
 - Posters and actor portraits sourced from TMDB
 - IMDb and Rotten Tomatoes scores where available
 
@@ -223,6 +224,15 @@ successful deployment status is a deployment check.
 
 Production OAuth and sync are pending the authorized merge/deployment. Current
 preview checks are not a claim that production already runs V3.
+
+## Catalog maintenance
+
+IMDb scores represent whole movies/series; released season entries share their
+series IMDb score. RT scores are season-specific critics’ Tomatometer values.
+The [2026-10-24 audit](docs/CATALOG-AUDIT.md) records sources and research limits.
+Month-only release windows do not count toward released completion until a day
+is confirmed. A weekly Codex task prepares sourced updates for review on Mondays
+at 9am Eastern; it does not apply, commit or publish changes.
 
 ## Known limitations
 

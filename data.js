@@ -2,6 +2,9 @@
 // Phases 1–6, films + series, including announced titles through 2027
 // Title ids are permanent collection keys: never rename or reuse an id, even
 // when a display title changes. Cloud/guest collections refer to TITLES[].id.
+// release is a US first-release day (YYYY-MM-DD), or an announced month
+// (YYYY-MM) when no day is confirmed. Month-only windows sort at that month,
+// but do not count as released until replaced by a confirmed day.
 // chronOrder is approximate in-universe chronological order
 
 const TITLES = [
@@ -64,21 +67,21 @@ const TITLES = [
   { id: 'what-if-s3', title: 'What If…? Season 3', year: 2024, phase: 5, type: 'series', release: '2024-12-22', chronOrder: 50.2, accent: '#a06030', cast: ['captain-carter', 'wong', 'alexei', 'shangchi', 'agatha'] },
   { id: 'friendly-spidey', title: 'Your Friendly Neighborhood Spider-Man', year: 2025, phase: 5, type: 'series', release: '2025-01-29', chronOrder: 24.5, accent: '#a02020', cast: ['peter', 'tony', 'strange', 'ross', 'matt'] },
   { id: 'cap-brave', title: 'Captain America: Brave New World', year: 2025, phase: 5, type: 'film', release: '2025-02-14', chronOrder: 53, accent: '#a04040', cast: ['ross', 'sam', 'bucky'] },
-  { id: 'daredevil-born-again', title: 'Daredevil: Born Again', year: 2025, phase: 5, type: 'series', release: '2025-03-04', chronOrder: 53.5, accent: '#a02020', cast: ['matt', 'fisk'] },
+  { id: 'daredevil-born-again', title: 'Daredevil: Born Again', year: 2025, phase: 5, type: 'series', release: '2025-03-04', chronOrder: 53.5, accent: '#a02020', cast: ['matt', 'fisk', 'frank'] },
   { id: 'thunderbolts', title: 'Thunderbolts*', year: 2025, phase: 5, type: 'film', release: '2025-05-02', chronOrder: 54, accent: '#5a5a5a', cast: ['yelena', 'alexei', 'bucky'] },
   { id: 'ironheart', title: 'Ironheart', year: 2025, phase: 5, type: 'series', release: '2025-06-24', chronOrder: 56, accent: '#c25a3a', cast: ['riri'] },
 
   // Phase 6
-  { id: 'fantastic-four', title: 'The Fantastic Four: First Steps', year: 2025, phase: 6, type: 'film', release: '2025-07-25', chronOrder: 55, accent: '#3a6ab0', cast: ['reed', 'sue', 'johnny', 'ben', 'galactus'] },
+  { id: 'fantastic-four', title: 'The Fantastic Four: First Steps', year: 2025, phase: 6, type: 'film', release: '2025-07-25', chronOrder: 1.5, accent: '#3a6ab0', cast: ['reed', 'sue', 'johnny', 'ben', 'galactus', 'silver-surfer'] },
   { id: 'eyes-of-wakanda', title: 'Eyes of Wakanda', year: 2025, phase: 6, type: 'series', release: '2025-08-01', chronOrder: 0.5, accent: '#3a3a5a', cast: [] },
   { id: 'marvel-zombies', title: 'Marvel Zombies', year: 2025, phase: 6, type: 'series', release: '2025-09-24', chronOrder: 56.5, accent: '#5a7a3a', cast: ['kamala', 'shangchi', 'alexei', 'wanda', 'thor', 'peter', 'scott', 'groot', 'hope', 'yelena'] },
   { id: 'wonder-man', title: 'Wonder Man', year: 2026, phase: 6, type: 'series', release: '2026-01-27', chronOrder: 56.8, accent: '#c02a4a', cast: ['simon', 'trevor'] },
   { id: 'daredevil-born-again-s2', title: 'Daredevil: Born Again Season 2', year: 2026, phase: 6, type: 'series', release: '2026-03-24', chronOrder: 57.2, accent: '#a02020', cast: ['matt', 'fisk'] },
-  { id: 'brand-new-day', title: 'Spider-Man: Brand New Day', year: 2026, phase: 6, type: 'film', release: '2026-07-31', chronOrder: 57, accent: '#a02020', cast: ['peter', 'bruce', 'yelena'] },
-  { id: 'visionquest', title: 'VisionQuest', year: 2026, phase: 6, type: 'series', release: '2026-10-14', chronOrder: 57.5, accent: '#9b3030', cast: ['ultron', 'white-vision'] },
-  { id: 'friendly-spidey-s2', title: 'Your Friendly Neighborhood Spider-Man Season 2', year: 2026, phase: 6, type: 'series', release: '2026-12-01', chronOrder: 24.7, accent: '#a02020', cast: ['peter'] },
+  { id: 'brand-new-day', title: 'Spider-Man: Brand New Day', year: 2026, phase: 6, type: 'film', release: '2026-07-31', chronOrder: 57, accent: '#a02020', cast: ['peter', 'bruce', 'yelena', 'frank'] },
+  { id: 'visionquest', title: 'VisionQuest', year: 2026, phase: 6, type: 'series', release: '2026-10-13', chronOrder: 57.5, accent: '#9b3030', cast: ['ultron', 'white-vision', 'tommy'] },
+  { id: 'friendly-spidey-s2', title: 'Your Friendly Neighborhood Spider-Man Season 2', year: 2027, phase: 6, type: 'series', release: '2027-01-13', chronOrder: 24.7, accent: '#a02020', cast: ['peter'] },
   { id: 'doomsday', title: 'Avengers: Doomsday', year: 2026, phase: 6, type: 'film', release: '2026-12-18', chronOrder: 58, accent: '#704040', cast: ['shangchi', 'mbaku', 'reed', 'sue', 'johnny', 'ben', 'doom', 'peggy', 'thor', 'loki', 'sam', 'scott', 'bucky', 'steve', 'peter', 'yelena', 'alexei', 'shuri'] },
-  { id: 'daredevil-born-again-s3', title: 'Daredevil: Born Again Season 3', year: 2027, phase: 6, type: 'series', release: '2027-03-01', chronOrder: 59, accent: '#a02020', cast: ['matt', 'fisk'] },
+  { id: 'daredevil-born-again-s3', title: 'Daredevil: Born Again Season 3', year: 2027, phase: 6, type: 'series', release: '2027-03', chronOrder: 59, accent: '#a02020', cast: ['matt', 'fisk'] },
   { id: 'secret-wars', title: 'Avengers: Secret Wars', year: 2027, phase: 6, type: 'film', release: '2027-12-17', chronOrder: 60, accent: '#6a3a5a', cast: ['alexei', 'sam', 'vision', 'peter', 'shangchi'] },
 ];
 
@@ -137,6 +140,10 @@ const CHARACTERS = {
   alexei:    { name: 'Alexei Shostakov', actor: 'David Harbour',       color: '#8a3a5a', initials: 'AS' },
   ultron:    { name: 'Ultron',           actor: 'James Spader',        color: '#7a6ab0', initials: 'UL' },
 
+  frank:     { name: 'Frank Castle',      actor: 'Jon Bernthal',        color: '#b4b7bc', initials: 'FC' },
+  tommy:     { name: 'Tommy Shepherd',    actor: 'Ruaridh Mollica',     color: '#54b6a0', initials: 'TS' },
+  'silver-surfer': { name: 'Shalla-Bal / Silver Surfer', actor: 'Julia Garner', color: '#a6bbd2', initials: 'SS' },
+
   // — Variant identities —
   // `prime` points at the through-line identity. Variants keep their own name and
   // colour, but connection threading chains on the prime so the arc stays continuous.
@@ -177,6 +184,7 @@ window.CHARACTERS = CHARACTERS;
 
 // Approximate production budgets in millions USD (publicly reported figures)
 const BUDGETS = {
+  'brand-new-day': 225, // IMDb production estimate; USD millions, checked 2026-10-24.
   'iron-man': 140, 'incredible-hulk': 150, 'iron-man-2': 200, 'thor': 150,
   'cap-first-avenger': 140, 'avengers': 220,
   'iron-man-3': 200, 'thor-dark-world': 170, 'cap-winter-soldier': 170,
@@ -194,44 +202,45 @@ const BUDGETS = {
 TITLES.forEach(t => { t.budget = BUDGETS[t.id] || null; });
 window.BUDGETS = BUDGETS;
 
-// Public IMDb user ratings (distinct from TMDB community score already in media.json)
+// IMDb weighted movie/whole-series ratings, checked 2026-10-24. Released
+// seasons share the series score; these are NOT averages of episode scores.
+// Sources, scopes and evidence limits: docs/CATALOG-AUDIT.md / CATALOG-SOURCES.json.
 const IMDB_RATINGS = {
   'iron-man': 7.9, 'incredible-hulk': 6.6, 'iron-man-2': 6.9, 'thor': 7.0,
-  'cap-first-avenger': 6.9, 'avengers': 8.0,
-  'iron-man-3': 7.1, 'thor-dark-world': 6.8, 'cap-winter-soldier': 7.7,
-  'gotg': 8.0, 'aou': 7.3, 'ant-man': 7.3,
+  'cap-first-avenger': 6.9, 'avengers': 8.0, 'iron-man-3': 7.1, 'thor-dark-world': 6.7,
+  'cap-winter-soldier': 7.7, 'gotg': 8.0, 'aou': 7.3, 'ant-man': 7.2,
   'civil-war': 7.8, 'doctor-strange': 7.5, 'gotg-2': 7.6, 'homecoming': 7.4,
-  'thor-ragnarok': 7.9, 'black-panther': 7.3, 'infinity-war': 8.4,
-  'ant-man-wasp': 7.0, 'captain-marvel': 6.8, 'endgame': 8.4, 'far-from-home': 7.3,
-  'wandavision': 7.9, 'falcon-winter': 7.2, 'loki-s1': 8.2, 'black-widow': 6.7,
-  'what-if': 7.4, 'shang-chi': 7.4, 'eternals': 6.3, 'hawkeye': 7.6,
-  'no-way-home': 8.2, 'ms-marvel': 6.5, 'multiverse-madness': 6.9, 'thor-love': 6.2,
-  'moon-knight': 7.4, 'she-hulk': 5.6, 'wakanda-forever': 6.7,
-  'quantumania': 6.1, 'gotg-3': 7.9, 'secret-invasion': 5.7, 'loki-s2': 8.5,
-  'marvels': 5.6, 'echo': 6.5, 'deadpool-3': 7.6, 'agatha': 7.0, 'cap-brave': 5.6,
-  'ironheart': 4.5, 'thunderbolts': 7.1, 'fantastic-four': 6.8,
-  'daredevil-born-again': 8.0,
+  'thor-ragnarok': 7.9, 'black-panther': 7.3, 'infinity-war': 8.4, 'ant-man-wasp': 7.0,
+  'captain-marvel': 6.7, 'endgame': 8.4, 'far-from-home': 7.3, 'wandavision': 7.9,
+  'falcon-winter': 7.1, 'loki-s1': 8.2, 'black-widow': 6.6, 'what-if': 7.3,
+  'shang-chi': 7.3, 'eternals': 6.2, 'hawkeye': 7.4, 'no-way-home': 8.1,
+  'ms-marvel': 6.2, 'multiverse-madness': 6.8, 'thor-love': 6.1, 'moon-knight': 7.3,
+  'she-hulk': 5.2, 'wakanda-forever': 6.6, 'quantumania': 6.0, 'gotg-3': 7.9,
+  'secret-invasion': 5.8, 'loki-s2': 8.2, 'marvels': 5.4, 'what-if-s2': 7.3,
+  'echo': 5.9, 'deadpool-3': 7.5, 'agatha': 7.2, 'what-if-s3': 7.3,
+  'friendly-spidey': 7.5, 'cap-brave': 5.6, 'daredevil-born-again': 8.1, 'thunderbolts': 7.1,
+  'ironheart': 4.5, 'fantastic-four': 6.8, 'eyes-of-wakanda': 6.2, 'marvel-zombies': 7.0,
+  'wonder-man': 7.4, 'daredevil-born-again-s2': 8.1, 'brand-new-day': 8.0, 'visionquest': 8.0,
 };
 
-// Rotten Tomatoes Tomatometer (critics) scores, %
+// Rotten Tomatoes Tomatometer (critics), %, checked 2026-10-24.
+// TV entries use their specific season, not audience or series-average scores.
 const RT_SCORES = {
-  'iron-man': 94, 'incredible-hulk': 67, 'iron-man-2': 71, 'thor': 77,
-  'cap-first-avenger': 80, 'avengers': 91,
-  'iron-man-3': 79, 'thor-dark-world': 66, 'cap-winter-soldier': 90,
-  'gotg': 92, 'aou': 76, 'ant-man': 83,
+  'iron-man': 94, 'incredible-hulk': 68, 'iron-man-2': 72, 'thor': 77,
+  'cap-first-avenger': 80, 'avengers': 91, 'iron-man-3': 79, 'thor-dark-world': 67,
+  'cap-winter-soldier': 90, 'gotg': 91, 'aou': 75, 'ant-man': 83,
   'civil-war': 90, 'doctor-strange': 89, 'gotg-2': 85, 'homecoming': 92,
-  'thor-ragnarok': 93, 'black-panther': 96, 'infinity-war': 85,
-  'ant-man-wasp': 87, 'captain-marvel': 79, 'endgame': 94, 'far-from-home': 90,
-  'wandavision': 91, 'falcon-winter': 84, 'loki-s1': 92, 'black-widow': 79,
-  'what-if': 91, 'shang-chi': 91, 'eternals': 47, 'hawkeye': 92,
-  'no-way-home': 93, 'ms-marvel': 82, 'multiverse-madness': 74, 'thor-love': 63,
-  'moon-knight': 86, 'she-hulk': 78, 'wakanda-forever': 84,
-  'quantumania': 46, 'gotg-3': 82, 'secret-invasion': 53, 'loki-s2': 82,
-  'marvels': 62, 'echo': 72, 'deadpool-3': 78, 'agatha': 84, 'cap-brave': 46,
-  'thunderbolts': 88, 'fantastic-four': 86, 'ironheart': 71,
-  'what-if-s2': 88, 'what-if-s3': 80, 'friendly-spidey': 97,
-  'daredevil-born-again': 87, 'eyes-of-wakanda': 92, 'marvel-zombies': 62,
-  'wonder-man': 91, 'daredevil-born-again-s2': 95,
+  'thor-ragnarok': 93, 'black-panther': 96, 'infinity-war': 85, 'ant-man-wasp': 87,
+  'captain-marvel': 79, 'endgame': 94, 'far-from-home': 91, 'wandavision': 92,
+  'falcon-winter': 85, 'loki-s1': 92, 'black-widow': 79, 'what-if': 89,
+  'shang-chi': 92, 'eternals': 48, 'hawkeye': 92, 'no-way-home': 93,
+  'ms-marvel': 98, 'multiverse-madness': 73, 'thor-love': 64, 'moon-knight': 86,
+  'she-hulk': 77, 'wakanda-forever': 84, 'quantumania': 46, 'gotg-3': 82,
+  'secret-invasion': 53, 'loki-s2': 82, 'marvels': 63, 'what-if-s2': 88,
+  'echo': 71, 'deadpool-3': 77, 'agatha': 84, 'what-if-s3': 80,
+  'friendly-spidey': 97, 'cap-brave': 46, 'daredevil-born-again': 87, 'thunderbolts': 88,
+  'ironheart': 76, 'fantastic-four': 86, 'eyes-of-wakanda': 92, 'marvel-zombies': 66,
+  'wonder-man': 91, 'daredevil-born-again-s2': 87, 'brand-new-day': 90, 'visionquest': 90,
 };
 TITLES.forEach(t => { t.rt = RT_SCORES[t.id] != null ? RT_SCORES[t.id] : null; });
 window.RT_SCORES = RT_SCORES;
