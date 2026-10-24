@@ -1,5 +1,22 @@
 # Kickoff prompt
 
+## Current handoff — 2026-10-24
+
+Phases 1–5 are complete. Current setup and acceptance results are in
+[README.md](README.md); dated evidence and explicit test limitations are in
+[docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
+
+**Next gates:** obtain explicit confirmation before merging `version/3.0` into
+`main` (which may publish V3 to production). After the release decision, discuss
+the user's bugs/improvements and whether to use a separate branch. Do not create
+that branch yet. This work comes before Phase 6; email/password implementation
+and service setup still require a separate plan and explicit approval.
+
+## Original kickoff template
+
+This template describes the initial build. Do not restart Phase 1 when resuming
+the current worktree; use the current handoff above.
+
 Drop `V3-SPEC.md`, `V3-TASKS.md`, and `schema.sql` into the root of
 `/Users/afr/Documents/Developer/MCU-V3`, then paste the block below.
 
@@ -41,11 +58,11 @@ component names, and line numbers in them are real. Verify as you go.
      navigation of the touch app if done carelessly.
 
 5. **Don't hardcode 59.** The released-title denominator is computed at runtime
-   from release dates. The next title ships 2026-10-14.
+   from release dates. Verify the 2026-10-13 → 2026-10-14 boundary (59 → 60).
 
-6. **Don't "fix" the README entry-point references.** They're already correct. A
-   previous planning pass hallucinated a stale `MCU Explorer.html` reference that
-   doesn't exist in this repo.
+6. **Verify entry-point references against the code.** The entry is `index.html`.
+   The original planning claim about already-correct README references proved
+   inaccurate; the user authorized correcting them in Phase 5 on 2026-10-24.
 
 7. **No secrets in the repo.** The Supabase URL and publishable key are
    intentionally public and committed. The `service_role` key, the Google OAuth
@@ -94,3 +111,7 @@ When the next phase is Phase 6, explicitly say that email/password work is
 waiting for confirmation. Present its plan and wait for a new approval before
 editing code or configuring services. The existing collection schema is provider
 independent; no SQL change is needed just to record this future phase.
+
+For the current handoff, do not automatically advance from Phase 5 to Phase 6.
+First obtain the merge decision, then discuss bugs/improvements and the branch
+choice. Phase 6 remains separately gated even if V3 is merged.

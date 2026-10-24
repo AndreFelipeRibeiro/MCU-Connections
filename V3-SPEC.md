@@ -6,6 +6,18 @@ This spec is the source of truth for V3. It was written after reading the actual
 codebase, so the code references below are real — verify them before assuming
 anything has drifted.
 
+## Current handoff — 2026-10-24
+
+Phases 1–5 are complete. Current setup and acceptance results are in
+[README.md](README.md); dated evidence and explicit test limitations are in
+[docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
+
+**Next gates:** obtain explicit confirmation before merging `version/3.0` into
+`main` (which may publish V3 to production). After the release decision, discuss
+the user's bugs/improvements and whether to use a separate branch. Do not create
+that branch yet. This work comes before Phase 6; email/password implementation
+and service setup still require a separate plan and explicit approval.
+
 ---
 
 ## 1. Goal
@@ -23,9 +35,11 @@ user confirmation before starting code, schema, or dashboard changes for it.
 
 ---
 
-## 2. What the codebase is today
+## 2. Codebase baseline and conventions
 
-Read these before writing anything.
+The table and approximate line numbers describe the pre-V3 baseline. Phases
+1–5 have landed; verify current code before editing. The README lists the
+current files and script order, including tracking/auth and the Supabase client.
 
 | File | What it is |
 |---|---|
@@ -187,15 +201,17 @@ provider access token.
 ### 5.2 Google setup checklist
 
 1. Create a Google **Web application** OAuth client.
-2. Authorized JavaScript origins: the production site origin, and
-   `http://localhost:8123` (the port the README documents for local dev).
+2. Authorized JavaScript origins: production, the V3 branch preview and local
+   development origins (without trailing slashes). Use the exact origin table
+   in the README, including localhost:8126 when using the verification server.
 3. Authorized redirect URI: the Supabase project callback
    (`https://<project-ref>.supabase.co/auth/v1/callback`) — copy the exact value
    from the Supabase dashboard's Google provider page.
 4. In Supabase → Authentication → Providers → Google: paste the client ID and
    client secret, enable.
-5. In Supabase → Authentication → URL Configuration: add the production URL and
-   `http://localhost:8123` to the redirect allowlist.
+5. In Supabase → Authentication → URL Configuration: set Site URL to production
+   and allow the exact production, V3 preview and local page URLs in the README.
+   Add `/index.html` separately if that path is used; ports and paths must match.
 6. In the app: `signInWithOAuth({ provider: 'google', options: { redirectTo } })`
    where `redirectTo` is `window.location.origin + window.location.pathname`.
 7. No callback route is needed. The user lands back on `index.html` with the
@@ -230,8 +246,8 @@ Subscribe to `onAuthStateChange` and handle `SIGNED_IN`, `SIGNED_OUT`, and
 
 On sign-out, immediately clear all account collection data from React state.
 **Do not write it into the guest `localStorage` key** — on a shared device that
-would hand one person's collection to the next visitor. Guest storage after
-sign-out starts empty.
+would hand one person's collection to the next visitor. After a successful guest merge, the guest key is cleared. Independently retained,
+unmerged guest marks can remain; sign-out never fills the key from account rows.
 
 
 ### 5.5 Deferred Phase 6 — email/password accounts (confirmation required)
@@ -310,16 +326,22 @@ concurrent upserts.
 
 ### 6.4 Degrading gracefully
 
-The app currently makes **zero network calls at load** and works offline. V3 must
-not regress that for the catalog.
+The catalog is static and must not depend on Supabase. The earlier claim of
+“zero network calls at load” was inaccurate: CDN scripts, fonts and media can
+require network access. Guest tracking works when Supabase is unavailable, but
+a cold load without cached CDN libraries is not supported.
 
 - If `window.mcuSupabase` is null, or the client fails to initialise, or session
   restoration doesn't resolve within a short timeout (~5s): fall back to guest
   mode, render everything, and show "Sync unavailable" in the account surface.
 - Assume this **will** happen: Supabase pauses free-tier projects after ~7 days
-  of low activity, and this is a personal project with sporadic traffic. Either
-  set up a keep-alive ping or accept the pause — but either way the site must
-  stay usable, not white-screen.
+  of low activity, and this is a personal project with sporadic traffic.
+  The implemented policy is **accept the pause, with no keep-alive automation**.
+  Restore a paused project through the dashboard; meanwhile the catalog and guest
+  tracking remain usable when the required CDN libraries are available.
+- Phase 4 bounds session restoration, cloud reads/merges/writes and OAuth startup
+  with five-second deadlines. Backend/network failures on initial sync degrade
+  to guest without copying account rows; Retry connection reloads to recover.
 
 ---
 
@@ -449,6 +471,8 @@ from user metadata — no separate profile table, and no editable profile in V3.
 
 ## 8. Files
 
+The following is the original delivery file list; these additions are now present.
+
 **Add:**
 
 | File | Contents |
@@ -468,7 +492,7 @@ from user metadata — no separate profile table, and no editable profile in V3.
 | `mobile.jsx` | Status controls at 4 points; the nested-button refactor; Collection group in `FilterSheet`; account sheet; `EmptyState` variants; view-switch row move. |
 | `styles.css`, `styles-mobile.css` | Status badges/toggles, seen treatment, account surfaces, loading and error states. |
 | `data.js` | Comment documenting that ids are permanent and never reused. |
-| `README.md` | Document Supabase + Google setup, the new files, and the tracking feature. **The entry point references in the README are already correct — an earlier planning pass claimed they say `MCU Explorer.html`; they do not. Don't "fix" them.** |
+| `README.md` | Document Supabase + Google setup, new files, tracking and manual verification. Entry point is `index.html`; the user authorized correcting the legacy references on 2026-10-24. |
 | `.gitignore` | Currently only `.DS_Store` and `.claude/`. Leave `config.js` tracked — it is intentionally public. |
 
 ---

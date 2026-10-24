@@ -9,6 +9,18 @@ Phase 6 is deferred and requires a new, explicit user confirmation before any
 implementation or service configuration. Approval of this roadmap is not approval
 to start Phase 6; Phases 1–5 remain Google-only.
 
+## Current handoff — 2026-10-24
+
+Phases 1–5 are complete. Current setup and acceptance results are in
+[README.md](README.md); dated evidence and explicit test limitations are in
+[docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
+
+**Next gates:** obtain explicit confirmation before merging `version/3.0` into
+`main` (which may publish V3 to production). After the release decision, discuss
+the user's bugs/improvements and whether to use a separate branch. Do not create
+that branch yet. This work comes before Phase 6; email/password implementation
+and service setup still require a separate plan and explicit approval.
+
 ---
 
 ## Phase 1 — Collection foundation (no backend, no auth)
@@ -17,38 +29,38 @@ Everything here works signed out, with `localStorage` only. It is a complete,
 shippable feature on its own.
 
 ### 1.1 Tracking state module
-- [ ] Create `tracking.jsx` following the `window.*` export convention (§2).
-- [ ] Internal state: `{ [titleId]: 'seen' | 'watchlist' }`. No `'none'` entries —
+- [x] Create `tracking.jsx` following the `window.*` export convention (§2).
+- [x] Internal state: `{ [titleId]: 'seen' | 'watchlist' }`. No `'none'` entries —
       clearing removes the key (§4.2).
-- [ ] Transitions per D1: watchlist → seen moves; un-seen → `none`, not back to
+- [x] Transitions per D1: watchlist → seen moves; un-seen → `none`, not back to
       watchlist.
-- [ ] Guest persistence to `localStorage` key `mcu.collection.v1`, shaped
+- [x] Guest persistence to `localStorage` key `mcu.collection.v1`, shaped
       `{ version: 1, states: {...} }` (§6.1). Reads must tolerate malformed or
       absent JSON without throwing.
-- [ ] `releasedCount()` helper computing the denominator at runtime from
+- [x] `releasedCount()` helper computing the denominator at runtime from
       `t.release <= todayISO()`. **Do not hardcode 59** (D3).
-- [ ] Dev-only console warning listing stored ids with no catalog match (§4.4).
+- [x] Dev-only console warning listing stored ids with no catalog match (§4.4).
 
 **Acceptance:** mark titles, reload, state survives. `localStorage` cleared →
 clean empty state, no errors.
 
 ### 1.2 `TitleStatusActions`
-- [ ] Toggle buttons using `aria-pressed`, not checkboxes (§7.2).
-- [ ] Labels naming the title: `"Mark Iron Man as seen"`.
-- [ ] `stopPropagation()` on **both** `onMouseDown` and `onClick` — the desktop
+- [x] Toggle buttons using `aria-pressed`, not checkboxes (§7.2).
+- [x] Labels naming the title: `"Mark Iron Man as seen"`.
+- [x] `stopPropagation()` on **both** `onMouseDown` and `onClick` — the desktop
       `Card` starts dragging on mousedown (§7.2).
-- [ ] Pending and error slots (unused in Phase 1, wired in Phase 3).
-- [ ] Hit targets ≥ 32px at scale 1; decide and document small-scale behaviour.
+- [x] Pending and error slots (unused in Phase 1, wired in Phase 3).
+- [x] Hit targets ≥ 32px at scale 1; decide and document small-scale behaviour.
 
 **Acceptance:** on the desktop canvas, clicking a status button at 3 different
 zoom levels never selects, focuses, or drags the card.
 
 ### 1.3 Mobile nested-button refactor ⚠️ highest-risk task
-- [ ] `MobileGrid` — `<button className="m-card">` → `<div>` + dedicated primary
+- [x] `MobileGrid` — `<button className="m-card">` → `<div>` + dedicated primary
       button.
-- [ ] `MobileList` — `<button className="m-lrow">` → same treatment.
-- [ ] `FocusPop` — `<button className="m-focuspop">` → same treatment.
-- [ ] Update `styles-mobile.css` for the changed element types (button resets,
+- [x] `MobileList` — `<button className="m-lrow">` → same treatment.
+- [x] `FocusPop` — `<button className="m-focuspop">` → same treatment.
+- [x] Update `styles-mobile.css` for the changed element types (button resets,
       `:active` states, focus rings).
 
 **Acceptance:** no `<button>` inside `<button>` anywhere in the rendered DOM
@@ -60,27 +72,27 @@ visual states unchanged.
 If it goes badly, stop and report rather than layering fixes.*
 
 ### 1.4 Collection filter and dimming
-- [ ] Read §7.1 in full before touching any filter code.
-- [ ] Spatial (desktop + mobile spatial): dimming only. **Do not add collection
+- [x] Read §7.1 in full before touching any filter code.
+- [x] Spatial (desktop + mobile spatial): dimming only. **Do not add collection
       to the `filtered` memo** (D4).
-- [ ] Mobile grid/list: real filter, as a memo derived from `ordered`,
+- [x] Mobile grid/list: real filter, as a memo derived from `ordered`,
       downstream of `filtered`.
-- [ ] Collection group in the desktop `Toolbar` filters popover.
-- [ ] Collection group in mobile `FilterSheet`.
-- [ ] Wire into `activeFilters` (inside `Toolbar`) and the `filterCount` prop
+- [x] Collection group in the desktop `Toolbar` filters popover.
+- [x] Collection group in mobile `FilterSheet`.
+- [x] Wire into `activeFilters` (inside `Toolbar`) and the `filterCount` prop
       (to `MobileTopBar`) — two separate things (§7.4).
-- [ ] Wire into both clear paths: `pop-clear`, and `onClear` passed to
+- [x] Wire into both clear paths: `pop-clear`, and `onClear` passed to
       `FilterSheet` from `App()`.
 
 **Acceptance:** with "Unseen" active on the spatial canvas, marking a title seen
 dims it in place — the graph does not reflow and the viewport does not recenter.
 
 ### 1.5 Progress and seen treatment
-- [ ] `X of N released titles seen`, N runtime-computed.
-- [ ] Watchlist count shown separately.
-- [ ] Seen badge + subtle desaturation on cards; must not obscure connection
+- [x] `X of N released titles seen`, N runtime-computed.
+- [x] Watchlist count shown separately.
+- [x] Seen badge + subtle desaturation on cards; must not obscure connection
       lines or phase colours.
-- [ ] `EmptyState` gains a message prop; collection-specific copy.
+- [x] `EmptyState` gains a message prop; collection-specific copy.
 
 **Acceptance:** progress reflects reality; unreleased titles can be watchlisted
 but never affect the denominator.
@@ -93,22 +105,22 @@ Schema and sign-in land in one phase on purpose. Splitting them produces a
 sign-in button that authenticates and then has nowhere to write.
 
 ### 2.1 Supabase project
-- [ ] Create the project. Run `schema.sql` as-is.
-- [ ] Run the three sanity checks at the bottom of that file.
-- [ ] Keep the dedicated Email provider OFF until Phase 6 is approved and ready
+- [x] Create the project. Run `schema.sql` as-is.
+- [x] Run the three sanity checks at the bottom of that file.
+- [x] Keep the dedicated Email provider OFF until Phase 6 is approved and ready
       (§5.2/§5.5). Keep Google and new-user signup ON, anonymous sign-ins OFF.
       The publishable key is committed to a public repo.
 
 ### 2.2 Google OAuth
-- [ ] Follow the 7-step checklist in §5.2 exactly.
-- [ ] Confirm the redirect URI in Google is the **Supabase** callback, not the
+- [x] Follow the 7-step checklist in §5.2 exactly.
+- [x] Confirm the redirect URI in Google is the **Supabase** callback, not the
       app's own URL — this is the most commonly mixed-up step.
 
 ### 2.3 Client wiring
-- [ ] `config.js` — `window.MCU_CONFIG`, committed, public key only.
-- [ ] `supabase-client.js` — sets `window.mcuSupabase`, or `null` on failure
+- [x] `config.js` — `window.MCU_CONFIG`, committed, public key only.
+- [x] `supabase-client.js` — sets `window.mcuSupabase`, or `null` on failure
       **without throwing** (§6.4).
-- [ ] `index.html` — supabase-js CDN script pinned to an exact version **with an
+- [x] `index.html` — supabase-js CDN script pinned to an exact version **with an
       SRI `integrity` hash**, matching the existing React/Babel pattern. Not the
       floating `@2` tag. Then `config.js`, `supabase-client.js`, `tracking.jsx`,
       `account.jsx`, then `app.jsx`.
@@ -116,26 +128,28 @@ sign-in button that authenticates and then has nowhere to write.
 **Never commit:** `service_role` key, Google client secret, DB credentials.
 
 ### 2.4 Auth state machine
-- [ ] `account.jsx` with explicit states: `initializing | signed_out |
+- [x] `account.jsx` with explicit states: `initializing | signed_out |
       signing_in | signed_in | error` (§5.3).
-- [ ] `onAuthStateChange` handling `SIGNED_IN` / `SIGNED_OUT` / `TOKEN_REFRESHED`.
+- [x] `onAuthStateChange` handling `SIGNED_IN` / `SIGNED_OUT` / `TOKEN_REFRESHED`.
       Failed refresh → `signed_out`, not a crash.
-- [ ] During `initializing`: catalog renders normally, only collection controls
+- [x] During `initializing`: catalog renders normally, only collection controls
       show loading. **No flash of "all unseen."**
-- [ ] Strip auth params from the URL with `history.replaceState` after the code
+- [x] Strip auth params from the URL with `history.replaceState` after the code
       exchange resolves.
 
 ### 2.5 Account UI
-- [ ] Desktop signed-out: "Sign in" at the right edge of `tb-row`.
-- [ ] Desktop signed-in: avatar → popover, modelled on `filters-pop`
+- [x] Desktop signed-out: accessible account icon at the right edge of `tb-row`.
+      The implementation uses an icon with a sign-in label to fit the toolbar,
+      rather than the originally planned visible "Sign in" text.
+- [x] Desktop signed-in: avatar → popover, modelled on `filters-pop`
       (click-outside + Escape).
-- [ ] ⚠️ Verify `tb-row` at 900px, 1000px, 1200px. It is already dense and the
+- [x] ⚠️ Verify `tb-row` at 900px, 1000px, 1200px. It is already dense and the
       mobile breakpoint is exactly 900px (§7.6).
-- [ ] Mobile: avatar in `m-appbar-top`; move `m-viewswitch` to its own compact
+- [x] Mobile: avatar in `m-appbar-top`; move `m-viewswitch` to its own compact
       row; account opens as a `Sheet`.
-- [ ] Menu: Google avatar/name/email, seen + watchlist summary, collection
+- [x] Menu: Google avatar/name/email, seen + watchlist summary, collection
       shortcuts, sign out. No profile table, no editable profile.
-- [ ] Sign-out clears account data from React state and **does not** write it
+- [x] Sign-out clears account data from React state and **does not** write it
       into the guest key (§5.4).
 
 **Acceptance:** sign in, see your Google name and avatar, sign out, sign in as a
@@ -173,8 +187,9 @@ Force the write to fail → guest data still intact, error shown.
 
 ---
 
-Phase 3 verified and committed on 2026-10-24; detailed browser checks and
-remaining deployment/device limitations are recorded in the README.
+Phases 1–3 were verified and committed on 2026-10-24. These checkboxes now
+reflect that existing work, not new implementation in Phase 5. Detailed browser
+evidence and remaining limitations are in `docs/V3-VERIFICATION.md`.
 
 ## Phase 4 — Hardening
 
@@ -198,7 +213,7 @@ remaining deployment/device limitations are recorded in the README.
 
 ---
 
-Phase 4 code/browser checks are recorded in the README (2026-10-24). API
+Phase 4 code/browser checks are recorded in `docs/V3-VERIFICATION.md` (2026-10-24). API
 isolation reuses the live Phase 3 check; the browser clock boundary was tested
 in the rendered UI. The user confirmed the final phone regression passed on the
 updated preview. Phase 4 is complete; spoken screen-reader output remains an
@@ -206,13 +221,20 @@ explicit verification limitation.
 
 ## Phase 5 — Docs
 
-- [ ] README: Supabase + Google setup, new files table, the tracking feature,
+- [x] README: Supabase + Google setup, new files table, the tracking feature,
       and the manual verification checklist from §10.
-- [ ] `data.js`: comment that title ids are permanent and never reused.
-- [ ] ⚠️ The README's entry-point references are **already correct**. An earlier
-      planning pass claimed they say `MCU Explorer.html` — they do not. Don't
-      "fix" them (§8).
+- [x] `data.js`: comment that title ids are permanent and never reused.
+- [x] Correct the three legacy README entry-point references to `index.html`.
+      The earlier plan's claim that the references were correct was inaccurate;
+      the user explicitly authorized correction on 2026-10-24.
+- [x] Preserve detailed Phase 1–4 evidence in `docs/V3-VERIFICATION.md`, with
+      current results and unperformed checks summarized separately in the README.
+- [x] Synchronize spec/kickoff handoff and approval gates: merge only after
+      confirmation; discuss bugs/improvements and their branch before Phase 6.
 
+Phase 5 changes documentation and a source comment only. Verified local links,
+entry point, script order, configuration/schema claims and whitespace; earlier
+runtime checks are recorded, not claimed as freshly rerun. No schema change.
 
 ---
 

@@ -1,5 +1,7 @@
 // MCU titles data — public factual info; posters are abstract original art
-// Phase 1-5, films + Disney+ series through early 2025
+// Phases 1–6, films + series, including announced titles through 2027
+// Title ids are permanent collection keys: never rename or reuse an id, even
+// when a display title changes. Cloud/guest collections refer to TITLES[].id.
 // chronOrder is approximate in-universe chronological order
 
 const TITLES = [
