@@ -287,7 +287,7 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
   }, [popOpen]);
   return (
     <div className="toolbar">
-      <div className="tb-row tb-identity-row">
+      <div className="tb-row tb-primary-row">
         <div className="brand">
           <div className="brand-mark"/>
           <div>
@@ -298,14 +298,6 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
             </div>
           </div>
         </div>
-        <div className="search-wrap">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-          <input aria-label="Search titles or characters" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/>
-        </div>
-        <button className="reset-view" onClick={onResetView} title="Recenter view"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg><span className="reset-label">Recenter</span></button>
-        <window.AccountButton onPickCollection={setCollectionFilter}/>
-      </div>
-      <div className="tb-row tb-controls-row">
         <div className="control-group tb-sort-controls">
           <div className="segmented">
             {SORT_OPTIONS.map(([v,l,s,ic])=>(
@@ -314,8 +306,13 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
               </button>
             ))}
           </div>
-          <window.SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir}/>
+          <div className="tb-order-control">
+            <span className="tb-order-label">Order</span>
+            <window.SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir}/>
+          </div>
         </div>
+      </div>
+      <div className="tb-row tb-secondary-row">
         <div className="control-group tb-type-controls">
           <div className="segmented">
             {[['all','All'],['film','Films'],['series','Series']].map(([v,l])=>(
@@ -376,7 +373,13 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
             </div>
           )}
         </div>
+        <div className="search-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+          <input aria-label="Search titles or characters" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/>
+        </div>
+        <button className="reset-view" onClick={onResetView} title="Recenter view"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg><span className="reset-label">Recenter</span></button>
       </div>
+      <window.AccountButton onPickCollection={setCollectionFilter}/>
     </div>
   );
 }
@@ -1226,7 +1229,7 @@ function App() {
           onOpenFilters={() => setSheet('filters')}
           filterCount={filterCount}
           showing={mobileShowing} total={window.TITLES.length}
-          sort={sort} setSort={changeSort} sortLabel={sortLabelFor(sort, sortDir)}
+          sort={sort} sortDir={sortDir} setSortDir={setSortDir} sortLabel={sortLabelFor(sort, sortDir)}
           onOpenAccount={() => setSheet('account')}
         />
         {charBanner}
@@ -1240,7 +1243,7 @@ function App() {
             </div>
           )}
         </div>
-        {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}/>}
+        {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort}/>}
         {sheet === 'filters' && (
           <window.FilterSheet
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}

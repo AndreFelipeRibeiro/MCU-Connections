@@ -17,8 +17,9 @@
 .m-viewswitch .vl { display: none; }
 .m-searchrow { display: flex; align-items: center; gap: 8px; }
 .m-searchbar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
-/* iOS Safari zooms the page when a focused input's text is smaller than 16px. */
-.m-searchbar input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--text); font: inherit; font-size: 16px; }
+/* Render at 13px while retaining a 16px input to avoid iOS focus zoom. */
+.m-search-input { position: relative; flex: 1; min-width: 0; height: 24px; }
+.m-searchbar input { position: absolute; inset: 0 auto 0 0; width: 123.076923%; height: 24px; padding: 0; box-sizing: border-box; background: transparent; border: 0; outline: 0; color: var(--text); font: inherit; font-size: 16px; transform: scale(.8125); transform-origin: left center; }
 .m-searchbar input::placeholder { color: var(--text-muted); }
 .m-clear { width: 24px; height: 24px; border: 0; border-radius: 12px; background: var(--surface-2); color: var(--text-dim); font-size: 15px; line-height: 1; cursor: pointer; }
 .m-fpill { display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 13px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer; }
@@ -79,8 +80,7 @@
 
 /* BOTTOM SORT TABS */
 .m-tabs { position: relative; flex: 0 0 auto; display: flex; align-items: stretch; border-top: 1px solid var(--border); background: rgba(10,12,20,.96); backdrop-filter: blur(12px); padding-bottom: env(safe-area-inset-bottom, 8px); z-index: 30; }
-.m-tabs-lab { position: absolute; top: -9px; left: 16px; font-size: 8.5px; letter-spacing: 1.3px; font-weight: 700; color: var(--text-muted); background: var(--bg); padding: 0 6px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
-.m-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 56px; padding: 9px 2px 8px; border: 0; background: transparent; color: var(--text-muted); font: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
+.m-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 68px; padding: 12px 2px; border: 0; background: transparent; color: var(--text-muted); font: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
 .m-tab.on { color: var(--text); }
 .m-tab .ti { font-size: 15px; line-height: 1; }
 .m-tab.on .ti { color: var(--accent); }
@@ -248,9 +248,9 @@
    avatar. It now spans its own row, which is tight (34px controls, no extra
    vertical padding of its own) and lets the labels show even on narrow phones. */
 
-.m-viewrow { display: flex; }
-.m-viewrow .m-viewswitch { flex: 1; }
-.m-viewrow .m-viewswitch button { flex: 1; justify-content: center; }
+.m-viewrow { display: flex; align-items: center; gap: 8px; }
+.m-viewrow .m-viewswitch { flex: 1; min-width: 0; }
+.m-viewrow .m-viewswitch button { flex: 1; justify-content: center; padding: 0 6px; }
 .m-viewrow .m-viewswitch .vl { display: inline; }
 
 .m-acct {
@@ -288,6 +288,5 @@
 }
 
 .m-sort-footer { position: relative; flex: 0 0 auto; z-index: 30; background: var(--bg); }
-.m-orderbar { display: flex; justify-content: flex-end; padding: 6px 14px 10px; }
-.mobile-order .sort-order-pop { top: auto; bottom: calc(100% + 8px); }
+.mobile-order .sort-order-pop { top: calc(100% + 8px); bottom: auto; }
 .sort-order-prefix { color: var(--text-muted); }

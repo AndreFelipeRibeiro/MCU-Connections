@@ -265,18 +265,22 @@ the MCU Phase 6 titles reviewed in the catalog.
 
 ## V3 maintenance — Reverse sort order
 
-Implementation and local verification are ready for user review. See the
+Implementation and local verification were approved on 2026-10-24. See the
 [dated changelog](CHANGELOG.md) for scope and actual checks. Desktop and mobile
 now expose reversal across all six sorts; Spatial honors the shared ordering.
 
 The selected follow-up design uses a separate contextual order menu. Mobile
 mode selection now includes A–Z in the main six-tab navigation; desktop and
 mobile Filters offer only the active mode's two order choices, without a second
-sort-mode selector. The updated implementation still awaits final user review.
-Desktop navigation now uses two stable rows to keep search wide and Recenter's
-label visible; the shared order chevron is centered independently of font metrics.
+sort-mode selector. The user approved the desktop layout and requested the final
+mobile refinements together with committing and pushing the task to V3.
+Desktop navigation uses one row when space permits, with sorting above a
+full-width utilities row on narrower desktops. Search stays usable and Recenter
+keeps its label; the shared order chevron is centered independently of font metrics.
+Mobile Order now sits beside search on header row two; search renders at 13px,
+and the bottom sort tabs are 68px tall without a visible "Sort by" heading.
 
-- [ ] Obtain user approval of the V3 preview before marking the Notion task done.
+- [x] Obtain user approval before committing/pushing the task and marking it done.
 - [ ] Merge into main only after a separate explicit merge approval.
 
 ---

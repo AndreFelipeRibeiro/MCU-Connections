@@ -15,11 +15,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 ## Features
 
 - Spatial connection canvas with pan, zoom, draggable cards and cast highlighting.
-- Desktop navigation uses two rows: brand, wide search, labeled Recenter and
-  account above; sort modes, order, type and Filters below.
+- Desktop navigation uses one row on wide screens and two full-width rows on
+  narrower desktops: brand, sort modes and Order above; type, Filters, search,
+  Recenter and account below. The account control shows Sign in or the signed-in
+  user's name, shortened visually when space is limited.
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.
-- Choose direction from a separate order menu beside desktop sorting or above
-  the mobile sort tabs. Its label shows the current order (Newest, 6 → 1, Z–A).
+- Choose direction from a separate order menu beside desktop sorting or beside
+  mobile search on the second header row. Its label shows the current order
+  (Newest, 6 → 1, Z–A). Mobile uses quieter search text and taller bottom sort tabs.
   Filters offers the two full order labels for the current mode without repeating
   the sort navigation; mobile A–Z is now a main navigation tab. Grid, List and
   Spatial use the same order; unrated titles stay last for either rating direction.

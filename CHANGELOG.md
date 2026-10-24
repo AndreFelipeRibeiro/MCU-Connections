@@ -11,6 +11,32 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Approved responsive navigation and mobile order placement
+
+Recorded: 2026-10-24 17:20:14 EDT (-0400).
+
+- Finalize the user-approved desktop layout: one row from 1920px, sorting above
+  a full-width utilities row below that. Keep Order and Recenter labeled;
+  show Sign in or the active session's name beside the desktop account icon.
+  Long names truncate visually; profile values are never stored in the source.
+- Move mobile Order beside search on header row two. Put Grid/List/Spatial and
+  Filters together below it. Render search text at 13px using a scaled 16px
+  input, retaining the existing iOS focus-zoom safeguard.
+- Remove the visible Sort by caption while preserving an accessible navigation
+  name. Increase bottom sort-tab height from 56px to 68px plus safe-area padding.
+- Record the review-first Git workflow: keep future iterations local until the
+  user approves committing/pushing. This change and V3 task completion were
+  explicitly approved; a main merge remains separately gated.
+- Verification: desktop fit and menus checked at 900–2560px during this review;
+  the final row transition passed at 1919/1920px. Mobile fit passed at 320, 375,
+  390, 430, 768 and 899px, with Order beside search, no horizontal overflow,
+  13px rendered search text, no caption and 68px tabs. Selected both directions
+  for all six mobile modes, searched/cleared VisionQuest, opened/closed Filters,
+  switched Grid/List/Spatial and checked Escape focus return. No console errors.
+- Limits: phone checks used Chrome viewport emulation, not a fresh physical iOS
+  run; native keyboard/autozoom and live Google sign-in/cloud sync were not
+  re-tested. Earlier entries below describe superseded layouts and review states.
+
 ## V3 maintenance — Desktop navigation spacing (awaiting review)
 
 Recorded: 2026-10-24 16:45:26 EDT (-0400).

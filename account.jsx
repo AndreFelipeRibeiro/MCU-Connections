@@ -367,10 +367,12 @@ function AccountButton({ onPickCollection }) {
   }, [open]);
 
   const signedIn = status === 'signed_in';
-  // Icon-only, always. tb-row was already full before V3 and a text label here
-  // squeezed the search box to ~30px and pushed this button off-screen between
-  // 1361px and 1455px. The meaning lives in aria-label and the tooltip, and the
-  // mobile shell uses the same person-icon affordance.
+  // Read the desktop label from the live profile. Keep email in the account
+  // panel rather than using it as the compact navigation label.
+  const accountName = profile?.name && profile.name !== profile.email ? profile.name : 'Account';
+  const visibleLabel = signedIn ? accountName
+    : status === 'signing_in' ? 'Signing in…'
+    : status === 'initializing' || !syncAvailable ? 'Account' : 'Sign in';
   const label = signedIn && profile
     ? `Account — ${profile.name}`
     : (syncAvailable ? 'Sign in with Google' : 'Account — sync unavailable');
@@ -389,6 +391,7 @@ function AccountButton({ onPickCollection }) {
           : signedIn
             ? <Avatar profile={profile} size={26}/>
             : <PersonIcon/>}
+        <span className="acct-nav-label">{visibleLabel}</span>
         {!syncAvailable && status !== 'initializing' && <span className="acct-off" aria-hidden="true"/>}
       </button>
       {open && (

@@ -10,6 +10,9 @@ Email/password Phase 6 and merges to main require separate explicit approval.
 
 ## Change records and attribution
 
+- Keep iterations local and uncommitted until the user explicitly approves
+  committing and pushing the current changes. Prior approval does not carry
+  over to a new revision. Do not push layout experiments for review.
 - Update CHANGELOG.md for each coherent committed change. Include date/time with
   timezone, an overview, verification actually performed and material limitations.
   Distinguish commit/record times from deployment times; do not invent old dates.

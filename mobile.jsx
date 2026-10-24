@@ -15,7 +15,7 @@ function ScoreBadges({ title, lead, compact }) {
 // The app bar is already three rows deep on a phone, so the view switch moved
 // off m-appbar-top (where the account avatar now sits) onto its own tight row
 // rather than becoming a fourth control crammed into the brand row.
-function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters, filterCount, showing, total, sortLabel, onOpenAccount }) {
+function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters, filterCount, showing, total, sortLabel, sort, sortDir, setSortDir, onOpenAccount }) {
   const { progress } = window.useCollection();
   return (
     <div className="m-appbar">
@@ -32,6 +32,14 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
         </div>
         <window.AccountAvatarButton onOpen={onOpenAccount}/>
       </div>
+      <div className="m-searchrow">
+        <div className="m-searchbar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+          <div className="m-search-input"><input aria-label="Search titles or characters" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/></div>
+          {search && <button className="m-clear" onClick={()=>setSearch('')} aria-label="Clear search">×</button>}
+        </div>
+        <SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir} mobile/>
+      </div>
       <div className="m-viewrow">
         <div className="m-viewswitch">
           {VIEW_MODES.map(([v,l,ic]) => (
@@ -39,13 +47,6 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
               <span className="vi">{ic}</span><span className="vl">{l}</span>
             </button>
           ))}
-        </div>
-      </div>
-      <div className="m-searchrow">
-        <div className="m-searchbar">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/>
-          {search && <button className="m-clear" onClick={()=>setSearch('')} aria-label="Clear search">×</button>}
         </div>
         <button className={`m-fpill${filterCount?' act':''}`} onClick={onOpenFilters}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
@@ -104,12 +105,10 @@ function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
 }
 window.SortOrderMenu = SortOrderMenu;
 
-function SortTabs({ sort, setSort, sortDir, setSortDir }) {
+function SortTabs({ sort, setSort }) {
   return (
     <div className="m-sort-footer">
-      <div className="m-orderbar"><SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir} mobile/></div>
-    <nav className="m-tabs">
-      <div className="m-tabs-lab">Sort by</div>
+    <nav className="m-tabs" aria-label="Sort titles by">
       {SORT_TABS.map(([v,l,ic])=>(
         <button key={v} className={`m-tab${sort===v?' on':''}`} onClick={()=>setSort(v)} aria-pressed={sort===v}>
           <span className="ti">{ic}</span>{l}
