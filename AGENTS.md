@@ -19,9 +19,32 @@ Email/password Phase 6 and merges to main require separate explicit approval.
 - Keep README.md current when behavior, setup, release status or workflow changes.
 - For commits assisted by Codex, retain the maintainer as primary author and add
   a blank line followed by: Co-authored-by: Codex <codex@openai.com>
+- For commits assisted by Claude, do the same with the model actually used, e.g.
+  Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>
 - Preserve existing Claude credits and acknowledge the actual tools used. Do not
   claim tools or verification that were not used, or rewrite old credits merely
   to add a new tool.
+
+## Shared working tree (Codex and Claude)
+
+Codex and Claude both work directly in this `version/3.0` worktree, one at a
+time. Uncommitted changes are the hand-off point, so treat them carefully.
+
+- Before starting, run `git status`. If there are uncommitted changes you did
+  not make in the current session, stop and ask the user. Do not edit, stash,
+  reset, discard or commit another agent's pending work.
+- Fetch before starting; if `version/3.0` moved on GitHub, fast-forward only
+  (`git pull --ff-only`) on a clean tree.
+- Claim the Notion task before working by noting "In progress — Codex" or
+  "In progress — Claude" beneath it; change it to "Awaiting review — <agent>"
+  when ready. Do not pick up a task the other agent has claimed.
+- Do not run `git reset --hard`, `git checkout -- .`, `git clean`, `git stash`,
+  rebases, force pushes or `git worktree prune` without explicit user approval.
+  The worktree path can look missing or prunable from a sandboxed shell; it is not.
+- When asked to review the other agent's work, read only (`git diff`) and report
+  findings. Edit only if the user asks.
+- Local preview: `http://localhost:8123/` (README). Google OAuth also allows
+  `http://localhost:8126/`; other ports cannot complete sign-in.
 
 ## Privacy
 

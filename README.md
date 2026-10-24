@@ -209,7 +209,8 @@ an outage. See [Supabase project pausing](https://supabase.com/docs/guides/platf
 | `KICKOFF-PROMPT.md` | Original kickoff and current continuation/approval rules |
 | `docs/V3-VERIFICATION.md` | Detailed phase-by-phase evidence and limitations |
 | `CHANGELOG.md` | Dated commit summaries, release context and verification links |
-| `AGENTS.md` | Contributor workflow, attribution and privacy instructions |
+| `AGENTS.md` | Contributor workflow, shared Codex/Claude working tree, attribution and privacy instructions |
+| `CLAUDE.md` | Points Claude to `AGENTS.md` so both agents follow one rule set |
 | `docs/PRIVACY-REVIEW.md` | Source/history review, findings and proposed historical cleanup |
 
 ## Manual verification
@@ -271,8 +272,9 @@ log as evidence, not as a live list of pending setup tasks.
 Created and maintained by [André Ribeiro](https://github.com/AndreFelipeRibeiro),
 with development, planning, documentation and verification assistance from
 **Anthropic Claude** and **OpenAI ChatGPT/Codex**. Earlier commits include Claude
-co-author credits; future Codex-assisted commits use a Codex co-author trailer
-while retaining the maintainer as the primary author.
+co-author credits. Codex and Claude now share the `version/3.0` working tree;
+assisted commits carry a Codex or Claude co-author trailer while retaining the
+maintainer as the primary author.
 
 | Area | Tools, services and sources used |
 |---|---|

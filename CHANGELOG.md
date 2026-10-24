@@ -11,6 +11,28 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Shared Codex/Claude workflow
+
+Recorded: 2026-10-24 19:35:53 EDT (-0400).
+
+- Codex and Claude now both work directly in the `version/3.0` worktree, one at
+  a time. AGENTS.md gains a shared-working-tree section: check `git status`
+  first and ask before touching another agent's uncommitted work; fast-forward
+  only; claim Notion tasks as "In progress — Codex/Claude"; no destructive git
+  commands or worktree pruning without approval; read-only cross-reviews; local
+  preview on port 8123 (8126 also allowed for Google sign-in).
+- Add a Claude co-author trailer rule naming the model actually used, matching
+  the earlier Claude credits in history. Codex attribution is unchanged.
+- Add CLAUDE.md, which only imports AGENTS.md so both agents share one rule set.
+  README credits and project-structure table updated accordingly.
+- Claude's push access to this repository was set up through the Claude GitHub
+  App; pushes remain limited to `version/3.0` and still require user approval.
+- Verification: documentation-only change; reviewed the diff and confirmed no
+  application files changed. A dry-run push to `version/3.0` succeeded before
+  this commit.
+- Limits: no app behavior changed, so no browser checks were run. A main merge
+  remains separately gated.
+
 ## V3 maintenance — Approved responsive navigation and mobile order placement
 
 Recorded: 2026-10-24 17:20:14 EDT (-0400).
