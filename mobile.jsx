@@ -153,22 +153,132 @@ function MatchBadge({ matchedChars, query }) {
   );
 }
 
+// Reorder animation for the mobile grid and list (FLIP: first, last, invert,
+// play). When the sort mode or order changes, each title's on-screen position is
+// read during render, while the DOM still shows the old order. After React
+// commits the new order, every visible title is shifted back to where it was and
+// animated into its new slot, echoing the spatial view's card motion. Titles are
+// tracked by data-flip-id rather than DOM identity because the list rebuilds its
+// phase/year groups on every reorder.
+// A phone screen shows only a few titles, so most of them change on a reorder:
+// arrivals slide in from the side they came from, and departures leave as
+// temporary copies (in a clipped, non-interactive layer) sliding toward their new
+// slot. Travel is capped to part of the viewport. Skipped entirely for
+// prefers-reduced-motion.
+const FLIP_EASE = 'cubic-bezier(.2,.8,.2,1)';
+const FLIP_MS = 520;
+let flipLayer = null;
+
+function measureFlip(root) {
+  if (!root) return null;
+  const view = root.getBoundingClientRect();
+  const rects = new Map();
+  const ghosts = new Map();
+  root.querySelectorAll('[data-flip-id]').forEach(el => {
+    const r = el.getBoundingClientRect();
+    rects.set(el.dataset.flipId, r);
+    if (r.bottom > view.top && r.top < view.bottom) ghosts.set(el.dataset.flipId, el.cloneNode(true));
+  });
+  return { view, rects, ghosts };
+}
+
+function playFlip(root, prev) {
+  if (flipLayer) { flipLayer.remove(); flipLayer = null; }
+  const view = root.getBoundingClientRect();
+  const cap = view.height * 0.45;
+  const clampY = dy => Math.max(-cap, Math.min(cap, dy));
+  const shown = new Set();
+  const next = new Map();
+  let entering = 0;
+  root.querySelectorAll('[data-flip-id]').forEach(el => {
+    if (el.getAnimations) el.getAnimations().forEach(a => { if (a.id === 'm-flip') a.cancel(); });
+    const id = el.dataset.flipId;
+    const now = el.getBoundingClientRect();
+    next.set(id, now);
+    if (now.bottom <= view.top || now.top >= view.bottom) return;
+    shown.add(id);
+    const old = prev.rects.get(id);
+    const wasVisible = prev.ghosts.has(id);
+    let frames, delay = 0;
+    if (wasVisible) {
+      const dx = old.left - now.left, dy = old.top - now.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      frames = [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }];
+    } else if (old) {
+      frames = [
+        { opacity: 0, transform: `translate(${old.left - now.left}px, ${clampY(old.top - now.top)}px)` },
+        { opacity: 1, offset: 0.4 },
+        { opacity: 1, transform: 'none' },
+      ];
+      delay = Math.min(entering++, 8) * 24;
+    } else {
+      frames = [{ opacity: 0, transform: 'translateY(18px) scale(.97)' }, { opacity: 1, transform: 'none' }];
+      delay = Math.min(entering++, 8) * 24;
+    }
+    const anim = el.animate(frames, { duration: FLIP_MS, easing: FLIP_EASE, delay, fill: 'backwards' });
+    anim.id = 'm-flip';
+  });
+
+  const leaving = [...prev.ghosts].filter(([id]) => !shown.has(id));
+  if (!leaving.length) return;
+  const layer = document.createElement('div');
+  layer.className = 'm-flip-layer';
+  layer.setAttribute('aria-hidden', 'true');
+  layer.inert = true;
+  Object.assign(layer.style, { left: view.left + 'px', top: view.top + 'px', width: view.width + 'px', height: view.height + 'px' });
+  const anims = leaving.map(([id, ghost]) => {
+    const old = prev.rects.get(id);
+    const to = next.get(id);
+    ghost.removeAttribute('data-flip-id');
+    Object.assign(ghost.style, { position: 'absolute', margin: '0', boxSizing: 'border-box',
+      left: (old.left - view.left) + 'px', top: (old.top - view.top) + 'px', width: old.width + 'px', height: old.height + 'px' });
+    layer.appendChild(ghost);
+    const move = to ? `translate(${to.left - old.left}px, ${clampY(to.top - old.top)}px)` : 'scale(.97)';
+    return ghost.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, offset: 0.75 }, { opacity: 0, transform: move }], { duration: FLIP_MS * 0.8, easing: FLIP_EASE, fill: 'forwards' });
+  });
+  document.body.appendChild(layer);
+  flipLayer = layer;
+  Promise.all(anims.map(a => a.finished)).catch(() => {}).then(() => {
+    layer.remove();
+    if (flipLayer === layer) flipLayer = null;
+  });
+}
+
+function useReorderAnimation(orderKey) {
+  const ref = React.useRef(null);
+  const lastKey = React.useRef(orderKey);
+  const before = React.useRef(null);
+  if (orderKey !== lastKey.current) {
+    lastKey.current = orderKey;
+    before.current = measureFlip(ref.current);
+  }
+  React.useLayoutEffect(() => {
+    const prev = before.current;
+    before.current = null;
+    if (!prev || !ref.current || typeof Element === 'undefined' || !Element.prototype.animate) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    playFlip(ref.current, prev);
+  }, [orderKey]);
+  return ref;
+}
+
 // The card is a <div> wrapping a dedicated open button rather than one big
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
 // so tapping anywhere except the toggles opens the cast sheet exactly as before.
-function MobileGrid({ titles, onSelect, searchCharMatches, search, empty }) {
+function MobileGrid({ titles, onSelect, searchCharMatches, search, empty, orderKey }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
+  const flipRef = useReorderAnimation(orderKey);
   if (!titles.length) return <EmptyState {...(empty || {})}/>;
   return (
-    <div className="m-scrollarea">
+    <div className="m-scrollarea" ref={flipRef}>
       <div className="m-grid">
         {titles.map(t => {
           const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
           const seen = statusOf(t.id) === 'seen';
           return (
-            <div key={t.id} className={`m-card${seen ? ' seen' : ''}`}>
+            <div key={t.id} data-flip-id={t.id} className={`m-card${seen ? ' seen' : ''}`}>
               <button className="m-card-open" onClick={()=>onSelect(t.id)}>
                 <div className="m-pw">
                   <PosterArt title={t}/>
@@ -193,9 +303,10 @@ function MobileGrid({ titles, onSelect, searchCharMatches, search, empty }) {
   );
 }
 
-function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty }) {
+function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, orderKey }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
+  const flipRef = useReorderAnimation(orderKey);
   if (!titles.length) return <EmptyState {...(empty || {})}/>;
   const ranked = sort === 'imdb' || sort === 'rt';
   const lead = sort === 'rt' ? 'rt' : 'imdb';
@@ -220,10 +331,10 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty }
   }
   let n = 0;
   return (
-    <div className="m-scrollarea">
+    <div className="m-scrollarea" ref={flipRef}>
       {groups.map(g => (
         <div className="m-group" key={g.key}>
-          {g.label && <div className="m-glabel" style={g.color?{color:g.color}:null}>{g.label}</div>}
+          {g.label && <div className="m-glabel" data-flip-id={'g:' + g.key} style={g.color?{color:g.color}:null}>{g.label}</div>}
           <div className="m-list">
             {g.items.map(t => {
               n += 1;
@@ -231,7 +342,7 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty }
               const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
               const seen = statusOf(t.id) === 'seen';
               return (
-                <div key={t.id} className={`m-lrow${seen ? ' seen' : ''}`}>
+                <div key={t.id} data-flip-id={t.id} className={`m-lrow${seen ? ' seen' : ''}`}>
                   <button className="m-lrow-open" onClick={()=>onSelect(t.id)}>
                     {ranked && <div className="m-rank">{n}</div>}
                     <div className="m-lthumb"><PosterArt title={t}/></div>

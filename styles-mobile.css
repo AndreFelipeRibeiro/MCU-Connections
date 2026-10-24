@@ -286,6 +286,9 @@
 @media (prefers-reduced-motion: reduce) {
   .m-sheet, .m-scrim { animation: none; }
 }
+/* Temporary layer for titles leaving the viewport during a grid/list reorder
+   (see useReorderAnimation in mobile.jsx). Clipped to the scroll area. */
+.m-flip-layer { position: fixed; overflow: hidden; pointer-events: none; z-index: 1; }
 
 .m-sort-footer { position: relative; flex: 0 0 auto; z-index: 30; background: var(--bg); }
 .mobile-order .sort-order-pop { top: calc(100% + 8px); bottom: auto; }

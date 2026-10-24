@@ -26,6 +26,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Filters offers the two full order labels for the current mode without repeating
   the sort navigation; mobile A–Z is now a main navigation tab. Grid, List and
   Spatial use the same order; unrated titles stay last for either rating direction.
+  Changing the sort mode or order animates mobile Grid/List: titles glide to their
+  new slots, echoing Spatial (off with reduced motion).
 - Phase, film/series, budget and collection filters.
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title

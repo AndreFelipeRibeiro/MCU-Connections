@@ -11,6 +11,30 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Animated grid/list reordering
+
+Recorded: 2026-10-24 19:49:39 EDT (-0400).
+
+- Mobile Grid and List now animate when the sort mode or order changes, instead
+  of swapping content instantly. Titles still on screen glide to their new slot;
+  titles arriving from off-screen slide in from the direction they came from;
+  titles leaving the viewport slide toward their new position and fade, using
+  temporary copies in a clipped, inert, aria-hidden layer that is removed when
+  done. Travel is capped to part of the viewport.
+- Uses the Web Animations API with the spatial view's easing (520ms). Titles are
+  tracked by id, since the list rebuilds its phase/year groups on reorder. A new
+  sort mid-animation continues from the cards' current positions. Search,
+  filters and status toggles do not animate. Skipped for prefers-reduced-motion.
+- Verification: headless Chromium with touch emulation at 390×844 and 320×640,
+  using npm copies of the pinned React/Babel/Supabase builds because the CDN was
+  unreachable from the test environment. Checked Release→IMDb, order reversal,
+  sorting while scrolled, a rapid IMDb→RT interrupt, and List Phase→A–Z and
+  reversal; inspected mid-animation frames. No console errors, no animations or
+  copies left behind, no horizontal overflow; reduced motion runs none. The
+  user reviewed the result locally and approved it.
+- Limits: the automated run blocked poster images; a physical-phone check was
+  not performed by Claude. Desktop Spatial behavior is unchanged.
+
 ## V3 maintenance — Shared Codex/Claude workflow
 
 Recorded: 2026-10-24 19:35:53 EDT (-0400).

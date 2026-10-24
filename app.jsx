@@ -1234,8 +1234,8 @@ function App() {
         />
         {charBanner}
         <div className="m-main">
-          {viewMode === 'grid' && <window.MobileGrid titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy}/>}
-          {viewMode === 'list' && <window.MobileList titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy}/>}
+          {viewMode === 'grid' && <window.MobileGrid titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
+          {viewMode === 'list' && <window.MobileList titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
