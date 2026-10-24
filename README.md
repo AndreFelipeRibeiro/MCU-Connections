@@ -15,6 +15,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 ## Features
 
 - Spatial connection canvas with pan, zoom, draggable cards and cast highlighting.
+- Desktop navigation uses two rows: brand, wide search, labeled Recenter and
+  account above; sort modes, order, type and Filters below.
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.
 - Choose direction from a separate order menu beside desktop sorting or above
   the mobile sort tabs. Its label shows the current order (Newest, 6 → 1, Z–A).

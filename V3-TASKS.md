@@ -273,6 +273,8 @@ The selected follow-up design uses a separate contextual order menu. Mobile
 mode selection now includes A–Z in the main six-tab navigation; desktop and
 mobile Filters offer only the active mode's two order choices, without a second
 sort-mode selector. The updated implementation still awaits final user review.
+Desktop navigation now uses two stable rows to keep search wide and Recenter's
+label visible; the shared order chevron is centered independently of font metrics.
 
 - [ ] Obtain user approval of the V3 preview before marking the Notion task done.
 - [ ] Merge into main only after a separate explicit merge approval.

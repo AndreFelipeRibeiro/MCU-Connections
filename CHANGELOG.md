@@ -11,6 +11,26 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Desktop navigation spacing (awaiting review)
+
+Recorded: 2026-10-24 16:45:26 EDT (-0400).
+
+- Use two desktop rows at every desktop width: brand, search, Recenter and
+  account in the first; sort mode/order, title type and Filters in the second.
+  Give search the remaining first-row width with a 280px minimum container.
+- Keep Recenter's text label visible and replace its ambiguous glyph with a
+  crosshair. Preserve a DOM/tab order matching the visible row order.
+- Replace the order selector's baseline-dependent text caret with a centered
+  inline SVG chevron, shared by desktop and mobile. No new dependencies.
+- Verification: both navigation rows fit without overflow at 900, 1000, 1100,
+  1101, 1200, 1440, 1560 and 1920px; the search input had over 460px at 900px.
+  Checked a one-title search and clearing it, Zoom in → Recenter restoring the
+  previous canvas transform, order selection and matching Filters choices.
+  Checked the mobile order popup at 390×844 and measured its chevron at the
+  button's vertical center. The browser console contained no errors.
+- Limits: mobile was browser-emulated; auth/cloud behavior was not re-tested.
+  The V3 preview remains awaiting user review; main is not part of this change.
+
 ## V3 maintenance — Separate order menu (awaiting review)
 
 Recorded: 2026-10-24 16:33:29 EDT (-0400).

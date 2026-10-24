@@ -87,7 +87,11 @@ function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
     onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
     <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
       aria-label={`Sort order: ${labels[index]}`} onClick={() => setOpen(v => !v)}>
-      {mobile && <span className="sort-order-prefix">Order:</span>}{compact}<span aria-hidden="true">⌄</span>
+      {mobile && <span className="sort-order-prefix">Order:</span>}{compact}
+      <svg className="sort-order-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m6 9 6 6 6-6"/>
+      </svg>
     </button>
     {open && <div id={id} ref={choices} className="sort-order-pop" role="group" aria-label="Sort order">
       <div className="sort-order-heading">Order</div>

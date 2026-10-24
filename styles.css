@@ -342,16 +342,7 @@ body {
   padding: 20px 16px; color: var(--text-muted); font-size: 12px; font-style: italic;
 }
 
-/* Card animation: smooth reorder using order via positions */
-@media (max-width: 1100px) {
-  .search-wrap { min-width: 0; flex: 1 1 120px; }
-}
-/* Tighter still: short sort labels, no eyebrows, icon-only Reset.
-   Raised from 1360px to 1560px in V3: the full-label layout this step reverts
-   to does not actually fit until ~1560px, so the row overflowed and clipped the
-   search box between 1361px and ~1455px. That predates the account control
-   (verified by removing it and re-measuring), but the account control made it
-   worse, so the breakpoint moved to where the wide layout genuinely fits. */
+/* Compact spacing; the two-row rules below keep search and sort labels usable. */
 @media (max-width: 1560px) {
   .toolbar { padding: 10px 16px; }
   .tb-row { gap: 12px; }
@@ -361,12 +352,9 @@ body {
   .segmented button { padding: 0 11px; font-size: 12px; }
   .segmented button .lg { display: none; }
   .segmented button .sm { display: inline; }
-  .search-wrap { min-width: 0; flex: 1 1 120px; }
   .tb-hint { display: none; }
 }
-/* Raised from 1140px to 1220px for the same reason as the step above: just
-   past the old boundary the sort labels came back before there was room, and
-   the search box dropped to ~82px. */
+/* Legacy compact controls; the desktop rows below restore their visible labels. */
 @media (max-width: 1220px) {
   .tb-row > .control-group > label { display: none; }
   .filters-pop .control-group label { display: block; }
@@ -565,18 +553,7 @@ body {
 }
 .acct-note { font-size: 11px; color: var(--text-muted); line-height: 1.45; }
 
-/* tb-row was already full at 1360px before V3 — brand, six sort buttons, three
-   type buttons, filters, search, recenter. Even at 44px the account control
-   takes width the row did not have, so Recenter's label goes: it keeps its ⊙
-   glyph and its tooltip, which is the cheapest thing left to drop. */
-@media (max-width: 1560px) {
-  .reset-view .lg { display: none; }
-  .reset-view { padding: 0 13px; }
-  .search-wrap { flex: 1 1 170px; }
-}
-
-/* Below this the sort and type controls are already icon-only, so there is
-   nothing left to hide and the remaining room has to come out of gaps. */
+/* Compact spacing near the desktop/mobile boundary. */
 @media (max-width: 1000px) {
   .tb-row { gap: 9px; }
   .segmented { padding: 2px; }
@@ -584,14 +561,6 @@ body {
   .filters-pill { padding: 0 11px; }
   .reset-view { padding: 0 11px; }
   .search-wrap { flex: 1 1 150px; padding: 0 11px; }
-}
-
-/* At the desktop breakpoint, keep search usable instead of compressing its
-   text field to a few characters. Other controls remain on the first row. */
-@media (min-width: 900px) and (max-width: 1100px) {
-  .tb-row { flex-wrap: wrap; }
-  .tb-row > .search-wrap { order: 1; flex: 1 0 100%; margin-left: 0; }
-  .tb-row > .acct-wrap { margin-left: auto; }
 }
 
 /* Contextual order disclosure, shared with the touch footer. */
@@ -604,3 +573,17 @@ body {
 .sort-order-pop button { display: flex; align-items: center; justify-content: space-between; gap: 18px; width: 100%; min-height: 44px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--text-dim); font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
 .sort-order-pop button:hover { background: var(--surface-2); }
 .sort-order-pop button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); }
+
+/* Two stable desktop rows: identity/search/actions, then sorting/filtering. */
+.tb-identity-row > .search-wrap { flex: 1 1 320px; min-width: 280px; margin-left: 0; }
+.tb-identity-row .reset-view { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.tb-identity-row .reset-view svg { flex: 0 0 16px; }
+.tb-controls-row > .tb-type-controls { margin-left: auto; }
+.tb-controls-row .segmented button .lg { display: inline; }
+.tb-controls-row .segmented button .sm { display: none; }
+.tb-controls-row .segmented button .si { margin-right: 6px; }
+.sort-order-chevron { display: block; flex: 0 0 12px; }
+@media (max-width: 1100px) {
+  .tb-controls-row .segmented button .lg { display: none; }
+  .tb-controls-row .segmented button .sm { display: inline; }
+}
