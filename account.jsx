@@ -232,7 +232,7 @@ function GoogleMark() {
 // never drift apart in what they say about the same account.
 function AccountPanel({ onPickCollection, onClose }) {
   const { status, profile, error, syncAvailable, unavailableReason, signIn, signOut } = useAccount();
-  const { progress, loading: collectionLoading } = window.useCollection();
+  const { progress, loading: collectionLoading, syncError, retrySync } = window.useCollection();
   const signedIn = status === 'signed_in';
 
   const pick = (v) => () => { if (onPickCollection) onPickCollection(v); if (onClose) onClose(); };
@@ -260,7 +260,7 @@ function AccountPanel({ onPickCollection, onClose }) {
         </div>
       )}
 
-      {collectionLoading ? <div className="acct-note" role="status">Loading your collection…</div> : (
+      {collectionLoading ? <div className="acct-note" role="status">{syncError ? 'Collection unavailable' : 'Loading your collection…'}</div> : (
       <div className="acct-stats">
         <div className="acct-stat">
           <b>{progress.seenReleased}</b>
@@ -279,6 +279,14 @@ function AccountPanel({ onPickCollection, onClose }) {
         <button disabled={collectionLoading} onClick={pick('seen')}>Show seen</button>
         <button disabled={collectionLoading} onClick={pick('watchlist')}>Show watchlist</button>
       </div>
+
+      {syncError && (
+        <div className="acct-error" role="status">
+          Couldn't sync — {syncError}. Anything you marked before signing in is still
+          saved on this device. Collection editing is paused until sync succeeds.
+          <button className="acct-action" onClick={retrySync}>Retry sync</button>
+        </div>
+      )}
 
       {error && <div className="acct-error" role="status">{error}</div>}
 

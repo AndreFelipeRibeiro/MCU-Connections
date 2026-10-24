@@ -5,9 +5,8 @@
 // 'none' is the absence of an entry, never a stored value — the same shape the
 // database uses, where clearing a status is a DELETE rather than a third status.
 //
-// Phase 1 is local-only: everything lives in localStorage under a versioned key.
-// The pending/error plumbing below is deliberately inert here; Phase 3 fills it
-// in when writes become remote and can fail.
+// Guests persist locally. Signed-in collections load and merge from Supabase,
+// then save through per-title queues with optimistic updates and rollback.
 
 const STORAGE_KEY = 'mcu.collection.v1';
 const STORAGE_VERSION = 1;
@@ -102,6 +101,45 @@ function warnUnknownIds(states) {
 }
 
 // ---------------------------------------------------------------------------
+// Remote shape
+// ---------------------------------------------------------------------------
+
+const TABLE = 'title_states';
+
+// Guest and account data are merged by strength, not by recency. These are
+// monotonic facts about what someone watched — a last-write-wins or
+// remote-wins rule silently throws real information away.
+const STATUS_RANK = { none: 0, watchlist: 1, seen: 2 };
+
+function strongestStatus(a, b) {
+  const x = a || 'none';
+  const y = b || 'none';
+  return STATUS_RANK[x] >= STATUS_RANK[y] ? x : y;
+}
+
+function mergeStates(remote, guest) {
+  const out = {};
+  const ids = new Set(Object.keys(remote).concat(Object.keys(guest)));
+  ids.forEach((id) => {
+    const s = strongestStatus(remote[id], guest[id]);
+    if (s !== 'none') out[id] = s;
+  });
+  return out;
+}
+
+// seen_at is only meaningful for 'seen' rows — the table has a CHECK constraint
+// enforcing that it is null otherwise, so this must be explicit rather than
+// simply left off the payload on an update.
+function rowFor(userId, titleId, status) {
+  return {
+    user_id: userId,
+    title_id: titleId,
+    status,
+    seen_at: status === 'seen' ? new Date().toISOString() : null,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Collection context
 // ---------------------------------------------------------------------------
 
@@ -114,64 +152,249 @@ const NoAuthContext = React.createContext(null);
 
 function CollectionProvider({ children }) {
   const auth = React.useContext(window.MCU_AUTH_CONTEXT || NoAuthContext);
-  // While the session is being restored we don't yet know whose collection this
-  // is, so the controls show a loading treatment rather than asserting "unseen".
-  // The catalog itself renders normally throughout.
-  const loading = !!auth && auth.status === 'initializing';
-  const [states, setStates] = React.useState(() => {
+  const authStatus = auth ? auth.status : 'signed_out';
+  const userId = auth && auth.user ? auth.user.id : null;
+  const client = window.mcuSupabase;
+
+  const [storedStates, setStates] = React.useState(() => {
     const initial = readGuestStates();
     warnUnknownIds(initial);
     return initial;
   });
+  const [pending, setPending] = React.useState({});
+  const [errors, setErrors] = React.useState({});
+  const [remoteLoading, setRemoteLoading] = React.useState(false);
+  const [syncError, setSyncError] = React.useState(null);
 
-  // Phase 3 populates these from the write queue; Phase 1 leaves them empty so
-  // every consumer already renders the slots.
-  const [pending] = React.useState({});
-  const [errors] = React.useState({});
+  // Supabase is the source of truth when signed in; localStorage otherwise.
+  const mode = (client && authStatus === 'signed_in' && userId) ? 'account' : 'guest';
+  const modeRef = React.useRef(mode);
+  modeRef.current = mode;
+  // A scope is replaced on every account/guest transition, including A → guest
+  // → A. Old requests retain their original user id and cannot update a new scope.
+  const identity = mode === 'account' ? userId : authStatus === 'initializing' ? 'initializing' : 'guest';
+  const scopeRef = React.useRef(null);
+  if (!scopeRef.current || scopeRef.current.identity !== identity) {
+    scopeRef.current = { identity };
+  }
+  const scope = scopeRef.current;
+  const [loadedScope, setLoadedScope] = React.useState(null);
+  const [retryCount, setRetryCount] = React.useState(0);
+  const states = loadedScope === scope ? storedStates : {};
+  const loading = authStatus === 'initializing' || loadedScope !== scope || (mode === 'account' && (remoteLoading || !!syncError));
+  const loadingRef = React.useRef(loading);
+  loadingRef.current = loading;
 
-  const firstWrite = React.useRef(true);
-  React.useEffect(() => {
-    // Don't rewrite storage with what we just read out of it on mount.
-    if (firstWrite.current) { firstWrite.current = false; return; }
-    writeGuestStates(states);
-  }, [states]);
+  // A mirror of `states` that is updated synchronously. Rapid toggling calls the
+  // mutators faster than React re-renders, so reading the previous value from a
+  // stale closure would lose intermediate transitions.
+  const statesRef = React.useRef(storedStates);
+  const commit = React.useCallback((next) => {
+    statesRef.current = next;
+    setStates(next);
+  }, []);
 
-  // Sets an explicit status. `next` of 'none' removes the entry entirely.
-  const setStatus = React.useCallback((titleId, next) => {
-    setStates((prev) => {
-      const current = prev[titleId] || 'none';
-      if (current === next) return prev;
-      const out = { ...prev };
-      if (next === 'none') delete out[titleId];
-      else out[titleId] = next;
+  // Last value we know is actually in the database, per title. Rollback targets
+  // this rather than "whatever React had a moment ago", which may itself be an
+  // optimistic value that never landed.
+  const confirmedRef = React.useRef({});
+
+  // One in-flight write per title id, with last-intent-wins. Rapid toggling
+  // (seen -> none -> seen) races otherwise and can settle on the wrong value.
+  const writersRef = React.useRef({});
+
+  const markPending = React.useCallback((titleId, on) => {
+    setPending((p) => {
+      if (!!p[titleId] === on) return p;
+      const out = { ...p };
+      if (on) out[titleId] = true; else delete out[titleId];
       return out;
     });
   }, []);
+
+  const setTitleError = React.useCallback((titleId, message) => {
+    setErrors((e) => {
+      if (!message && !e[titleId]) return e;
+      const out = { ...e };
+      if (message) out[titleId] = message; else delete out[titleId];
+      return out;
+    });
+  }, []);
+
+  const performWrite = React.useCallback(async (uid, titleId, target) => {
+    if (!client || !uid) throw new Error('not signed in');
+    if (target === 'none') {
+      // There is no 'none' status — absence of the row is 'none'.
+      const { error } = await client.from(TABLE).delete().eq('user_id', uid).eq('title_id', titleId);
+      if (error) throw error;
+    } else {
+      const { error } = await client.from(TABLE)
+        .upsert(rowFor(uid, titleId, target), { onConflict: 'user_id,title_id' });
+      if (error) throw error;
+    }
+  }, [client]);
+
+  // Drains a single title's queue. The loop re-reads `desired` after each write,
+  // so a value changed mid-flight is picked up without ever running two writes
+  // for the same title concurrently.
+  const drain = React.useCallback((titleId) => {
+    const w = writersRef.current[titleId];
+    if (!w || w.running) return;
+    const requestScope = scopeRef.current;
+    const uid = userId;
+    const current = () => scopeRef.current === requestScope;
+    w.running = true;
+    (async () => {
+      try {
+        while (current() && w.desired !== w.confirmed) {
+          const target = w.desired;
+          await performWrite(uid, titleId, target);
+          if (!current()) return;
+          w.confirmed = target;
+          confirmedRef.current[titleId] = target;
+        }
+        if (current()) setTitleError(titleId, null);
+      } catch (e) {
+        if (!current()) return;
+        // Roll the UI back to the last value we know landed, and report it on
+        // the title itself rather than as a global toast.
+        const back = confirmedRef.current[titleId] || 'none';
+        const cur = { ...statesRef.current };
+        if (back === 'none') delete cur[titleId]; else cur[titleId] = back;
+        commit(cur);
+        w.desired = back;
+        w.confirmed = back;
+        setTitleError(titleId, (e && e.message) ? e.message : 'Could not save');
+        console.warn('[mcu] write failed for', titleId, e);
+      } finally {
+        w.running = false;
+        if (current()) markPending(titleId, false);
+      }
+    })();
+  }, [performWrite, commit, markPending, setTitleError, userId]);
+
+  // Applies a status change: optimistic locally, queued remotely when signed in.
+  const applyStatus = React.useCallback((titleId, next) => {
+    if (loadingRef.current || !['none', 'seen', 'watchlist'].includes(next)) return;
+    const prev = statesRef.current;
+    if ((prev[titleId] || 'none') === next) return;
+    const out = { ...prev };
+    if (next === 'none') delete out[titleId]; else out[titleId] = next;
+    commit(out);
+
+    if (modeRef.current === 'guest') {
+      // Written here rather than in an effect on `states`, so account data can
+      // never reach the guest key by way of a mode change (§5.4).
+      writeGuestStates(out);
+      return;
+    }
+    const w = writersRef.current[titleId] || (writersRef.current[titleId] = {
+      desired: confirmedRef.current[titleId] || 'none',
+      confirmed: confirmedRef.current[titleId] || 'none',
+      running: null,
+    });
+    w.desired = next;
+    setTitleError(titleId, null);
+    markPending(titleId, true);
+    drain(titleId);
+  }, [commit, drain, markPending, setTitleError]);
+
+  const setStatus = React.useCallback((titleId, next) => {
+    applyStatus(titleId, next);
+  }, [applyStatus]);
 
   // Un-seeing returns a title to 'none', never to 'watchlist' — the watchlist
   // entry was consumed when it was marked seen and there is nothing to restore.
   const toggleSeen = React.useCallback((titleId) => {
-    setStates((prev) => {
-      const out = { ...prev };
-      if (prev[titleId] === 'seen') delete out[titleId];
-      else out[titleId] = 'seen';
-      return out;
-    });
-  }, []);
+    applyStatus(titleId, statesRef.current[titleId] === 'seen' ? 'none' : 'seen');
+  }, [applyStatus]);
 
   const toggleWatchlist = React.useCallback((titleId) => {
-    setStates((prev) => {
-      const out = { ...prev };
-      if (prev[titleId] === 'watchlist') delete out[titleId];
-      else out[titleId] = 'watchlist';
-      return out;
-    });
-  }, []);
+    applyStatus(titleId, statesRef.current[titleId] === 'watchlist' ? 'none' : 'watchlist');
+  }, [applyStatus]);
 
   const clearAll = React.useCallback(() => {
-    setStates({});
-    clearGuestStates();
-  }, []);
+    if (loadingRef.current) return;
+    Object.keys(statesRef.current).forEach((id) => applyStatus(id, 'none'));
+    if (modeRef.current === 'guest') clearGuestStates();
+  }, [applyStatus]);
+
+  // ---- Load + merge on sign-in -------------------------------------------
+  React.useEffect(() => {
+    let cancelled = false;
+    const current = () => !cancelled && scopeRef.current === scope;
+    writersRef.current = {};
+    confirmedRef.current = {};
+    setPending({});
+    setErrors({});
+    setSyncError(null);
+    commit({});
+    if (mode !== 'account') {
+      // Only guest data is read here. Account state is never persisted into it.
+      commit(readGuestStates());
+      setLoadedScope(scope);
+      setRemoteLoading(false);
+      return;
+    }
+    setRemoteLoading(true);
+
+    (async () => {
+      try {
+        // RLS already restricts this to the caller's rows; the filter is
+        // explicit so the intent is readable and the index is used.
+        const { data, error } = await client.from(TABLE)
+          .select('title_id,status')
+          .eq('user_id', userId);
+        if (error) throw error;
+        if (!current()) return;
+
+        const remote = {};
+        (data || []).forEach((r) => {
+          if (r.status === 'seen' || r.status === 'watchlist') remote[r.title_id] = r.status;
+        });
+        warnUnknownIds(remote);
+
+        const guest = readGuestStates();
+        const hasGuestData = Object.keys(guest).length > 0;
+        if (!hasGuestData) {
+          confirmedRef.current = { ...remote };
+          writersRef.current = {};
+          commit(remote);
+          setLoadedScope(scope);
+          return;
+        }
+
+        const merged = mergeStates(remote, guest);
+        const changed = Object.keys(merged).filter((id) => merged[id] !== remote[id]);
+        if (changed.length) {
+          const { error: upErr } = await client.from(TABLE)
+            .upsert(changed.map((id) => rowFor(userId, id, merged[id])), { onConflict: 'user_id,title_id' });
+          if (upErr) throw upErr;
+        }
+        // Only now — an unconfirmed sync must never destroy the local copy.
+        if (!current()) return;
+        // Another tab may have edited its guest copy during the request. Keep
+        // those newer local changes for the next merge rather than erasing them.
+        if (JSON.stringify(readGuestStates()) === JSON.stringify(guest)) clearGuestStates();
+        confirmedRef.current = { ...merged };
+        writersRef.current = {};
+        commit(merged);
+        setLoadedScope(scope);
+      } catch (e) {
+        if (!current()) return;
+        console.warn('[mcu] could not load or merge remote collection', e);
+        // Guest data is deliberately left in place; the merge retries next
+        // sign-in or explicit retry. Editing stays disabled until a load succeeds.
+        setSyncError((e && e.message) ? e.message : 'Sync failed');
+      } finally {
+        if (current()) setRemoteLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [client, mode, userId, scope, retryCount, commit]);
+
+  const retrySync = React.useCallback(() => setRetryCount((n) => n + 1), []);
 
   // Unreleased titles can be watchlisted and even marked seen, but they never
   // enter the completion ratio in either position.
@@ -195,20 +418,26 @@ function CollectionProvider({ children }) {
     return { releasedTotal, seenReleased, seenTotal, watchlist };
   }, [states]);
 
+  // The catalog renders normally throughout; only the collection controls show
+  // a loading treatment, so titles never flash as "unseen" before rows arrive.
+
   const value = React.useMemo(() => ({
     states,
     loading,
+    mode,
+    syncError,
+    retrySync,
     statusOf: (id) => states[id] || 'none',
     isSeen: (id) => states[id] === 'seen',
     isWatchlisted: (id) => states[id] === 'watchlist',
-    pendingOf: (id) => !!pending[id],
-    errorOf: (id) => errors[id] || null,
+    pendingOf: (id) => loadedScope === scope && !!pending[id],
+    errorOf: (id) => loadedScope === scope ? errors[id] || null : null,
     setStatus,
     toggleSeen,
     toggleWatchlist,
     clearAll,
     progress,
-  }), [states, loading, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, progress]);
+  }), [states, loading, mode, syncError, retrySync, loadedScope, scope, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, progress]);
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>;
 }
@@ -274,7 +503,11 @@ function TitleStatusActions({ title, variant, className }) {
   const status = statusOf(title.id);
   const seen = status === 'seen';
   const listed = status === 'watchlist';
-  const pending = pendingOf(title.id) || loading;
+  // `busy` is a write in flight — deliberately NOT disabling, because the write
+  // queue exists precisely so that toggling faster than the network settles on
+  // the right value. `loading` is the initial load, where the state genuinely
+  // isn't known yet, so the controls are inert until it resolves.
+  const busy = pendingOf(title.id);
   const error = errorOf(title.id);
   const inline = variant === 'inline';
 
@@ -287,24 +520,28 @@ function TitleStatusActions({ title, variant, className }) {
   const act = (fn) => (e) => {
     e.stopPropagation();
     e.preventDefault();
-    fn(title.id);
+    if (!loading) fn(title.id);
   };
 
   const cls = [
     'tsa',
     inline ? 'inline' : 'overlay',
-    pending ? 'pending' : '',
+    loading ? 'loading' : '',
+    busy ? 'busy' : '',
     error ? 'has-error' : '',
     className || '',
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={cls} onMouseDown={swallow} onClick={swallow} onTouchStart={swallow}>
+    <div className={cls} onMouseDown={swallow} onClick={swallow} onTouchStart={swallow}
+         title={error ? `Not saved — ${error}` : undefined}>
       <button
         type="button"
         className={`tsa-btn seen${seen ? ' on' : ''}`}
-        aria-pressed={seen}
-        aria-label={seen ? `Mark ${title.title} as not seen` : `Mark ${title.title} as seen`}
+        disabled={loading}
+        aria-busy={loading}
+        aria-pressed={loading ? undefined : seen}
+        aria-label={loading ? `Loading watch status for ${title.title}` : seen ? `Mark ${title.title} as not seen` : `Mark ${title.title} as seen`}
         title={seen ? 'Marked as seen' : 'Mark as seen'}
         onMouseDown={swallow}
         onClick={act(toggleSeen)}
@@ -315,8 +552,10 @@ function TitleStatusActions({ title, variant, className }) {
       <button
         type="button"
         className={`tsa-btn watch${listed ? ' on' : ''}`}
-        aria-pressed={listed}
-        aria-label={listed ? `Remove ${title.title} from watchlist` : `Add ${title.title} to watchlist`}
+        disabled={loading}
+        aria-busy={loading}
+        aria-pressed={loading ? undefined : listed}
+        aria-label={loading ? `Loading watchlist status for ${title.title}` : listed ? `Remove ${title.title} from watchlist` : `Add ${title.title} to watchlist`}
         title={listed ? 'On your watchlist' : 'Add to watchlist'}
         onMouseDown={swallow}
         onClick={act(toggleWatchlist)}
@@ -324,8 +563,11 @@ function TitleStatusActions({ title, variant, className }) {
         <BookmarkIcon filled={listed}/>
         {inline && <span className="tsa-lab">{listed ? 'On watchlist' : 'Watchlist'}</span>}
       </button>
-      {pending && <span className="tsa-spin" aria-hidden="true"/>}
-      {error && <span className="tsa-err" role="status">{error}</span>}
+      {(loading || busy) && <span className="tsa-spin" aria-hidden="true"/>}
+      {/* The overlay variant has no room for a message; it carries the red
+          treatment plus a tooltip, and the drawer/sheet spells it out. */}
+      {error && inline && <span className="tsa-err" role="status">Not saved — {error}</span>}
+      {error && !inline && <span className="tsa-bang" role="status" aria-label={`Not saved — ${error}`}>!</span>}
     </div>
   );
 }

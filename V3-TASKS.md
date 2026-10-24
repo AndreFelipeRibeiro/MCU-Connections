@@ -146,32 +146,35 @@ different account — no visual or data bleed between them.
 ## Phase 3 — Sync
 
 ### 3.1 Remote read/write
-- [ ] Load all rows on `SIGNED_IN`.
-- [ ] Upsert on set; **DELETE** on clear (there is no `'none'` status).
-- [ ] Set `seen_at` when status becomes `seen`; clear it otherwise — the schema
+- [x] Load all rows on `SIGNED_IN`.
+- [x] Upsert on set; **DELETE** on clear (there is no `'none'` status).
+- [x] Set `seen_at` when status becomes `seen`; clear it otherwise — the schema
       has a CHECK constraint enforcing `seen_at is null` for non-seen rows, so
       forgetting this produces a constraint violation, not silent drift.
 
 ### 3.2 Write queue
-- [ ] Serialize writes per `title_id` with last-intent-wins (§6.3).
-- [ ] No unbounded concurrent upserts.
+- [x] Serialize writes per `title_id` with last-intent-wins (§6.3).
+- [x] No unbounded concurrent upserts.
 
 **Acceptance:** toggle one title seen→none→seen→none rapidly ~10 times; the final
 DB state matches the final UI state every time.
 
 ### 3.3 Optimistic updates
-- [ ] Apply in React immediately; roll back on failure.
-- [ ] Error shown inline on the affected title, not as a global toast.
+- [x] Apply in React immediately; roll back on failure.
+- [x] Error shown inline on the affected title, not as a global toast.
 
 ### 3.4 Guest merge
-- [ ] Status precedence `seen > watchlist > none` (D5) — **not** remote-wins.
-- [ ] Write back only changed rows.
-- [ ] Clear the guest key **only after** the write succeeds (§6.2).
+- [x] Status precedence `seen > watchlist > none` (D5) — **not** remote-wins.
+- [x] Write back only changed rows.
+- [x] Clear the guest key **only after** the write succeeds (§6.2).
 
 **Acceptance:** guest has X seen, account has X watchlisted → result is `seen`.
 Force the write to fail → guest data still intact, error shown.
 
 ---
+
+Phase 3 verified and committed on 2026-10-24; detailed browser checks and
+remaining deployment/device limitations are recorded in the README.
 
 ## Phase 4 — Hardening
 

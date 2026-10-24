@@ -426,15 +426,28 @@ body {
 
 .tsa .tsa-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* Pending / error slots — inert in Phase 1, wired when writes go remote. */
-.tsa.pending { opacity: 0.6; pointer-events: none; }
+/* Initial load: the collection state genuinely isn't known yet, so the controls
+   are inert until rows arrive. A write in flight (.busy) must NOT disable them —
+   the per-title write queue exists so that toggling faster than the network
+   still settles on the right value. */
+.tsa.loading { opacity: 0.45; pointer-events: none; }
+.tsa.busy .tsa-btn { opacity: 0.75; }
+.tsa.has-error .tsa-btn { border-color: #e06060; }
 .tsa-spin {
   width: 12px; height: 12px; border-radius: 50%;
   border: 2px solid var(--border-strong); border-top-color: var(--text);
   animation: tsa-spin 700ms linear infinite;
 }
 @keyframes tsa-spin { to { transform: rotate(360deg); } }
-.tsa-err { font-size: 10.5px; color: #e06060; font-family: 'JetBrains Mono', monospace; }
+.tsa-err { font-size: 10.5px; color: #e06060; font-family: 'JetBrains Mono', monospace; flex-basis: 100%; }
+
+/* Inline error marker for the overlay variant, which has no room for text. */
+.tsa-bang {
+  display: flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #e06060; color: #0a0c14;
+  font-size: 11px; font-weight: 700; line-height: 1;
+}
 
 /* Non-interactive marker shown in place of the toggles at deep zoom. */
 .card-seen-mark { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); z-index: 3; }

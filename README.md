@@ -199,3 +199,63 @@ chooser was verified, avoiding automatic reuse of the last Google session.
 The localhost checks above used the working copy with its existing Phase 3 sync
 work; the Phase 2 follow-up commit intentionally leaves that sync work uncommitted.
 Preview/production round trips and real-device checks remain pending.
+
+
+## V3 Phase 3 verification — 2026-10-24
+
+Signed-in tracking now loads from Supabase, merges guest marks using
+`seen > watchlist > none`, and saves through one queue per title. Setting a
+status upserts; clearing deletes. `seen_at` is populated only for seen status.
+Failed writes roll back to the last confirmed value and report an inline error.
+An initial read/merge failure preserves guest storage, pauses editing, and offers
+Retry sync in the account surface.
+
+Account/guest transitions create a new request scope. Queued writes retain the
+original user id; old completions cannot update a new account's UI, continue its
+queue, or clear a newer guest copy. Account rows are never written to guest
+storage. A changed guest copy from another tab is retained for a later merge.
+
+Actual checks (browser Babel; no npm, runner or build step):
+
+- [x] Real Google account: mark Iron Man seen and Thor watchlisted; SQL confirmed
+  the stored statuses and correct null/non-null `seen_at`. Reload restored both.
+- [x] Twenty rapid live toggles ended with the intended database status. A
+  seen → watchlist transition cleared `seen_at`; clearing marks deleted rows.
+- [x] Sign out of a populated account: guest UI was empty, and a temporary
+  browser probe reported the guest storage key absent. A new guest Hulk mark
+  merged into the other Google account and the guest key was cleared afterward.
+- [x] Switch back: each real account loaded its own saved collection. With the
+  second account's rows populated, the first account's actual Supabase/PostgREST
+  session requested that user's id and received an empty result without error.
+  This was a client API/RLS check, not an admin SQL read used as proof of RLS.
+- [x] Temporary title marks were removed through the UI after the live checks.
+- [x] An out-of-repo manual browser fixture used the actual application scripts
+  with a controlled client. Guest seen beat remote watchlist; 20 toggles under
+  delayed responses kept maximum concurrent requests per title at one; final
+  remote state matched the UI. A failed save rolled back and showed an error.
+- [x] The same fixture switched from A to B with an A write pending: B's state
+  remained separate, and the remaining A queue did not run under B. Cancelling
+  an in-flight guest merge preserved guest storage after its response arrived.
+- [x] Failed initial reads and merge writes retained guest data and disabled
+  status controls; keyboard activation of Retry sync succeeded and cleared
+  guest storage only after the successful merge. The fixture's floating panel
+  overlapped its mobile sheet, so pointer activation of Retry was not used as
+  evidence; this panel is not part of the product or repository.
+- [x] `git diff --check` passed. No schema or CDN dependency changes were needed.
+
+Remaining: real-device/cross-device sync, full Phase 4 accessibility/degraded-mode
+checks, and preview/production OAuth round trips. Local reloads and controlled
+clients do not substitute for those. Email/password Phase 6 remains deferred and
+requires a new explicit user confirmation.
+
+Deployment URLs for Supabase's exact redirect allowlist:
+
+- `https://mcu-connections.vercel.app/` (production Site URL)
+- `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/` (V3 preview)
+- `http://localhost:8126/` (verification origin; README local-dev port 8123 can
+  also be allowed when used)
+
+Google's callback remains
+`https://wauhmmftltlxzrcwpdvp.supabase.co/auth/v1/callback`; its JavaScript origins
+use the deployment origins without trailing slashes. Keep Email and anonymous
+sign-in disabled for the Google-only phases.
