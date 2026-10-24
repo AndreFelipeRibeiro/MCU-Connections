@@ -338,9 +338,10 @@ and spatial-layout filtering were preserved.
   rows. No schema/RLS changes were made in Phase 4.
 - [x] `git diff --check` passed; no npm, build pipeline, router or test runner.
 
-Final device follow-up: recheck opening/closing sheets and scrolling the updated
-Phase 4 preview on the phone, because modal focus/inert behavior changed after
-the user's earlier device pass. Actual spoken VoiceOver/TalkBack output was not
-checked; browser accessibility state and keyboard behavior were verified above.
+Final device follow-up passed: on 2026-10-24, the user reloaded the updated
+Phase 4 preview and confirmed Account, Filters, title details and scrolling
+inside long sheets all worked normally. Phase 4 is complete. Actual spoken
+VoiceOver/TalkBack output was not checked; browser accessibility state and
+keyboard behavior were verified above.
 Production OAuth remains to be verified after an explicitly authorized merge.
 Email/password Phase 6 remains deferred and requires separate confirmation.
