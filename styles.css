@@ -593,3 +593,8 @@ body {
   .tb-row > .search-wrap { order: 1; flex: 1 0 100%; margin-left: 0; }
   .tb-row > .acct-wrap { margin-left: auto; }
 }
+
+/* Sort direction is a separate action so reselecting a mode keeps its order. */
+.sort-direction { flex: 0 0 36px; width: 36px; height: 44px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font: inherit; font-size: 21px; cursor: pointer; }
+.sort-direction:hover { background: var(--surface-2); }
+.sort-direction:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

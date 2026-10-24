@@ -52,28 +52,42 @@ const SORT_LABEL = { release: 'by release', chrono: 'chronological', phase: 'by 
 // (e.g. ratings default to highest-first, dates/phase default to earliest-first).
 const DEFAULT_SORT_DIR = { release: 'asc', chrono: 'asc', phase: 'asc', imdb: 'desc', rt: 'desc', title: 'asc' };
 
-function sortLabelFor(sort, dir) {
-  if (sort === 'chrono') return dir === 'desc' ? 'reverse chronological' : 'chronological';
-  const base = SORT_LABEL[sort];
-  if (sort === 'release' || sort === 'phase' || sort === 'imdb' || sort === 'rt') {
-    return `${base} · ${dir === 'desc' ? 'descending' : 'ascending'}`;
+function sortDirectionLabels(sort) {
+  if (sort === 'title') return ['A–Z', 'Z–A'];
+  if (sort === 'release') return ['Oldest first', 'Newest first'];
+  if (sort === 'chrono') return ['Earliest first', 'Latest first'];
+  if (sort === 'phase') {
+    const phases = window.TITLES.map(t => t.phase);
+    const low = Math.min(...phases), high = Math.max(...phases);
+    return [`Phase ${low} → ${high}`, `Phase ${high} → ${low}`];
   }
-  return base;
+  return ['Lowest rated first', 'Highest rated first'];
+}
+window.sortDirectionLabels = sortDirectionLabels;
+
+function sortLabelFor(sort, dir) {
+  const direction = sortDirectionLabels(sort)[dir === 'desc' ? 1 : 0];
+  return sort === 'title' ? direction : `${SORT_LABEL[sort]} · ${direction.toLowerCase()}`;
 }
 
 function sortTitles(list, sort, dir = 'asc') {
-  const out = list.slice();
   const mul = dir === 'desc' ? -1 : 1;
-  if (sort === 'chrono') out.sort((a,b) => mul * (a.chronOrder - b.chronOrder));
-  else if (sort === 'title') out.sort((a,b) => mul * a.title.localeCompare(b.title));
-  else if (sort === 'imdb') out.sort((a,b) => mul * ((a.imdb ?? -1) - (b.imdb ?? -1)));
-  else if (sort === 'rt') out.sort((a,b) => mul * ((a.rt ?? -1) - (b.rt ?? -1)));
-  else if (sort === 'phase') out.sort((a,b) => mul * (a.phase - b.phase) || a.release.localeCompare(b.release));
-  else out.sort((a,b) => mul * a.release.localeCompare(b.release));
-  return out;
+  return list.slice().sort((a, b) => {
+    if (sort === 'imdb' || sort === 'rt') {
+      // Unrated titles are not low ratings: keep them last in either direction.
+      if (a[sort] == null) return b[sort] == null ? 0 : 1;
+      if (b[sort] == null) return -1;
+      return mul * (a[sort] - b[sort]);
+    }
+    if (sort === 'chrono') return mul * (a.chronOrder - b.chronOrder);
+    if (sort === 'title') return mul * a.title.localeCompare(b.title);
+    if (sort === 'phase') return mul * ((a.phase - b.phase) || a.release.localeCompare(b.release));
+    return mul * a.release.localeCompare(b.release);
+  });
 }
 
-function computeLayout(titles, sort) {
+function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
+  const ordered = sortTitles(titles, sort, dir);
   const positions = {};
   const colW = CARD_W + 60;
   const rowH = CARD_H + 70;
@@ -81,10 +95,9 @@ function computeLayout(titles, sort) {
   if (sort === 'phase') {
     // Group by phase into vertical lanes
     const byPhase = {1:[],2:[],3:[],4:[],5:[],6:[]};
-    titles.forEach(t => byPhase[t.phase].push(t));
-    Object.keys(byPhase).forEach(p => byPhase[p].sort((a,b)=>a.release.localeCompare(b.release)));
+    ordered.forEach(t => byPhase[t.phase].push(t));
     let y = 60;
-    Object.keys(byPhase).sort().forEach(p => {
+    Object.keys(byPhase).sort((a,b) => (dir === 'desc' ? -1 : 1) * (Number(a) - Number(b))).forEach(p => {
       const list = byPhase[p];
       const cols = Math.max(6, Math.ceil(Math.sqrt(list.length * 1.6)));
       list.forEach((t, i) => {
@@ -98,35 +111,10 @@ function computeLayout(titles, sort) {
       const rows = Math.ceil(list.length / cols);
       y += rows * rowH + 80;
     });
-  } else if (sort === 'imdb') {
-    // Highest-rated first, flowing grid
-    const sorted = titles.slice().sort((a,b)=> (b.imdb ?? -1) - (a.imdb ?? -1));
+  } else if (sort === 'imdb' || sort === 'rt' || sort === 'title') {
+    // Use the same ordering as Grid/List; layout must not silently re-sort it.
     const cols = 7;
-    sorted.forEach((t,i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      positions[t.id] = {
-        x: 80 + col * colW + seedJitter(t.id+'x', 26),
-        y: 80 + row * rowH + seedJitter(t.id+'y', 22),
-      };
-    });
-  } else if (sort === 'rt') {
-    // Highest Tomatometer first, flowing grid
-    const sorted = titles.slice().sort((a,b)=> (b.rt ?? -1) - (a.rt ?? -1));
-    const cols = 7;
-    sorted.forEach((t,i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      positions[t.id] = {
-        x: 80 + col * colW + seedJitter(t.id+'x', 26),
-        y: 80 + row * rowH + seedJitter(t.id+'y', 22),
-      };
-    });
-  } else if (sort === 'title') {
-    // Alphabetical flow
-    const sorted = titles.slice().sort((a,b)=>a.title.localeCompare(b.title));
-    const cols = 7;
-    sorted.forEach((t,i) => {
+    ordered.forEach((t,i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
       positions[t.id] = {
@@ -135,16 +123,12 @@ function computeLayout(titles, sort) {
       };
     });
   } else {
-    // release or chrono — horizontal timeline with phase as vertical band
-    const sorted = titles.slice().sort((a,b)=>{
-      if (sort === 'chrono') return a.chronOrder - b.chronOrder;
-      return a.release.localeCompare(b.release);
-    });
+    // Release or chronology flows left-to-right in the selected direction.
     // Place in timeline rows; phase determines vertical band
     const phaseRow = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5 };
     // To avoid horizontal collisions, count along x and bump y when too close
     const lastXByRow = {0:-Infinity,1:-Infinity,2:-Infinity,3:-Infinity,4:-Infinity,5:-Infinity};
-    sorted.forEach((t, i) => {
+    ordered.forEach((t, i) => {
       const baseX = 80 + i * (CARD_W * 1.15);
       const row = phaseRow[t.phase];
       const y = 80 + row * (rowH * 1.25) + seedJitter(t.id+'y', 30);
@@ -288,7 +272,7 @@ const SORT_OPTIONS = [
   ['rt','Tomatometer','RT','◉'],
 ];
 
-function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch, total, showing, onResetView }) {
+function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch, total, showing, onResetView }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   const { progress } = window.useCollection();
@@ -317,11 +301,16 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
         <div className="control-group">
           <div className="segmented">
             {SORT_OPTIONS.map(([v,l,s,ic])=>(
-              <button key={v} className={sort===v?'on':''} onClick={()=>setSort(v)} title={l}>
+              <button key={v} className={sort===v?'on':''} onClick={()=>setSort(v)} aria-pressed={sort===v} title={l}>
                 <span className="si">{ic}</span><span className="lg">{l}</span><span className="sm">{s}</span>
               </button>
             ))}
           </div>
+          <button className="sort-direction" onClick={()=>setSortDir(d=>d==='desc'?'asc':'desc')}
+            aria-label={`Reverse sort order (currently ${sortDirectionLabels(sort)[sortDir==='desc'?1:0]})`}
+            title={`Order: ${sortDirectionLabels(sort)[sortDir==='desc'?1:0]}. Click to reverse.`}>
+            {sortDir==='desc' ? '↓' : '↑'}
+          </button>
         </div>
         <div className="control-group">
           <div className="segmented">
@@ -579,7 +568,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
 function App() {
   const [sort, setSort] = useState('release');
   const [sortDir, setSortDir] = useState(DEFAULT_SORT_DIR.release);
-  const changeSort = (v) => { setSort(v); setSortDir(DEFAULT_SORT_DIR[v] || 'asc'); };
+  const changeSort = (v) => { if (v === sort) return; setSort(v); setSortDir(DEFAULT_SORT_DIR[v] || 'asc'); };
   const [phaseFilter, setPhaseFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [budgetFilter, setBudgetFilter] = useState('all');
@@ -654,7 +643,7 @@ function App() {
     return list;
   }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches]);
 
-  const layout = useMemo(() => computeLayout(filtered, sort), [filtered, sort]);
+  const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir]);
   const basePositions = layout.positions;
   const canvasW = layout.width;
   const canvasH = layout.height;
@@ -961,13 +950,15 @@ function App() {
         scale,
       });
     } else {
-      // Timeline layouts: start at the beginning, showing a handful of cards at readable size
+      // Keep the leading title visible even when reverse order starts in a
+      // lower phase band. Retain the normal framing when it already fits.
       const scale = defaultScale;
-      setView({
-        x: 14 - minX * scale,
-        y: canvasH * scale <= rect.height - 32 ? (rect.height - canvasH * scale) / 2 : 14 - minY * scale,
-        scale,
-      });
+      let y = canvasH * scale <= rect.height - 32 ? (rect.height - canvasH * scale) / 2 : 14 - minY * scale;
+      const leading = Object.values(basePositions).reduce((first, p) => !first || p.x < first.x ? p : first, null);
+      if (leading && (leading.y * scale + y < 0 || (leading.y + CARD_H) * scale + y > rect.height)) {
+        y = rect.height / 2 - (leading.y + CARD_H / 2) * scale;
+      }
+      setView({ x: 14 - minX * scale, y, scale });
     }
   }, [canvasW, canvasH, basePositions, sort, isTouch]);
 
@@ -1241,7 +1232,7 @@ function App() {
             </div>
           )}
         </div>
-        {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort}/>}        {sheet === 'filters' && (
+        {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}/>}        {sheet === 'filters' && (
           <window.FilterSheet
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
             typeFilter={typeFilter} setTypeFilter={setTypeFilter}
@@ -1277,7 +1268,7 @@ function App() {
   return (
     <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
       <Toolbar
-        sort={sort} setSort={changeSort}
+        sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}
         budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}

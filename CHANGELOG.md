@@ -11,6 +11,31 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Reverse sort order (awaiting user approval)
+
+Recorded: 2026-10-24 15:55:24 EDT (-0400).
+
+- Add a desktop reverse-order arrow and mobile Order button; expose A–Z/Z–A
+  alongside the other explicit direction choices in mobile Filters.
+- Make release, chronology, phase, title, IMDb and RT ordering consistent across
+  Grid, List and Spatial. Reverse phase groups and their within-phase release
+  order; keep unrated titles last for either rating direction.
+- Keep the leading timeline title visible when its phase band starts below the
+  initial viewport. Reselecting the active mode preserves its current direction;
+  changing modes retains the existing natural default for that new mode.
+- Preserve collection dimming without reflow/recentering on status changes.
+- Record the agreed Notion priority, approval and completion-date workflow.
+- Verification: all 12 sort/direction combinations checked against the actual
+  sort/layout functions; all 48 rendered combinations checked across desktop
+  Spatial and mobile Grid/List/Spatial. Checked 900/1000/1200/1440px toolbar fit,
+  mobile alphabetical direction chips, keyboard reversal, active-mode reselect,
+  no nested buttons and the Unseen status-click viewport invariant. Local guest
+  test marks were removed; the final browser console had no errors.
+- Limits: mobile checks used a 390×844 browser viewport, not a physical phone.
+  No fresh Google sign-in or cloud-sync regression was run; auth/schema/config,
+  catalog ids, runtime dependencies and script loading are unchanged. Main merge
+  and task completion still await user approval.
+
 ## Current documentation and privacy update — not yet on main
 
 Recorded: 2026-10-24 15:11:55 EDT (-0400).

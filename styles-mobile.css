@@ -286,3 +286,5 @@
 @media (prefers-reduced-motion: reduce) {
   .m-sheet, .m-scrim { animation: none; }
 }
+
+.m-tab.m-order { border-left: 1px solid var(--border); color: var(--text); }

@@ -16,6 +16,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 
 - Spatial connection canvas with pan, zoom, draggable cards and cast highlighting.
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.
+- Reverse every sort using the desktop arrow or mobile **Order** button. Mobile
+  Filters also exposes explicit order choices, including A–Z/Z–A. Grid, List and
+  Spatial use the same order; unrated titles stay last for either rating direction.
 - Phase, film/series, budget and collection filters.
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title

@@ -56,15 +56,20 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
   );
 }
 
-function SortTabs({ sort, setSort }) {
+function SortTabs({ sort, setSort, sortDir, setSortDir }) {
   return (
     <nav className="m-tabs">
       <div className="m-tabs-lab">Sort by</div>
       {SORT_TABS.map(([v,l,ic])=>(
-        <button key={v} className={`m-tab${sort===v?' on':''}`} onClick={()=>setSort(v)}>
+        <button key={v} className={`m-tab${sort===v?' on':''}`} onClick={()=>setSort(v)} aria-pressed={sort===v}>
           <span className="ti">{ic}</span>{l}
         </button>
       ))}
+      <button className="m-tab m-order" onClick={()=>setSortDir(d=>d==='desc'?'asc':'desc')}
+        aria-label={`Reverse sort order (currently ${window.sortDirectionLabels(sort)[sortDir==='desc'?1:0]})`}
+        title={window.sortDirectionLabels(sort)[sortDir==='desc'?1:0]}>
+        <span className="ti">{sortDir==='desc'?'↓':'↑'}</span>Order
+      </button>
     </nav>
   );
 }
@@ -321,24 +326,16 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
           <button className={`m-chip${sort==='title'?' on':''}`} onClick={()=>setSort('title')}>A–Z</button>
         </div>
       </div>
-      {sort !== 'title' && (
-        <div className="m-fgroup">
-          <div className="m-flab">Direction</div>
-          <div className="m-chips">
-            {sort === 'chrono' ? (
-              <>
-                <button className={`m-chip${sortDir!=='desc'?' on':''}`} onClick={()=>setSortDir('asc')}>Chronological</button>
-                <button className={`m-chip${sortDir==='desc'?' on':''}`} onClick={()=>setSortDir('desc')}>Reverse chronological</button>
-              </>
-            ) : (
-              <>
-                <button className={`m-chip${sortDir!=='desc'?' on':''}`} onClick={()=>setSortDir('asc')}>Ascending</button>
-                <button className={`m-chip${sortDir==='desc'?' on':''}`} onClick={()=>setSortDir('desc')}>Descending</button>
-              </>
-            )}
-          </div>
+      <div className="m-fgroup">
+        <div className="m-flab">Order</div>
+        <div className="m-chips">
+          {window.sortDirectionLabels(sort).map((label, i) => {
+            const dir = i === 0 ? 'asc' : 'desc';
+            return <button key={dir} className={`m-chip${sortDir===dir?' on':''}`}
+              aria-pressed={sortDir===dir} onClick={()=>setSortDir(dir)}>{label}</button>;
+          })}
         </div>
-      )}
+      </div>
       <button className="m-apply" onClick={onClose}>Show {showing} {showing === 1 ? 'title' : 'titles'}</button>
     </Sheet>
   );

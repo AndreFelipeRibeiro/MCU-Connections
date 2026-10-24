@@ -263,6 +263,17 @@ the MCU Phase 6 titles reviewed in the catalog.
 
 ---
 
+## V3 maintenance — Reverse sort order
+
+Implementation and local verification are ready for user review. See the
+[dated changelog](CHANGELOG.md) for scope and actual checks. Desktop and mobile
+now expose reversal across all six sorts; Spatial honors the shared ordering.
+
+- [ ] Obtain user approval of the V3 preview before marking the Notion task done.
+- [ ] Merge into main only after a separate explicit merge approval.
+
+---
+
 ## Phase 6 — Email/password accounts (deferred; confirmation required)
 
 **Not authorized to start.** Added to the roadmap on 2026-10-24. Complete the

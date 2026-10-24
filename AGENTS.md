@@ -35,3 +35,12 @@ Email/password Phase 6 and merges to main require separate explicit approval.
   existing exposure and obtain explicit approval before rewriting published
   history or force-pushing. Do not claim that a Git rewrite removes external
   clones, caches or all historical deployments.
+
+## Backlog workflow
+
+Use the top unchecked task in the user's current V3 Notion checklist unless the
+user explicitly names another task. Work on one item at a time. Keep it unchecked
+and mark it Awaiting review after implementation and verification. Move it to
+Completed only after explicit user approval and its changes are committed and
+pushed to GitHub. Add a bracketed completion date using America/New_York, commit
+links and verification notes. Completion on V3 does not approve a main merge.
