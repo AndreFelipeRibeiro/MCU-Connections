@@ -178,23 +178,29 @@ remaining deployment/device limitations are recorded in the README.
 
 ## Phase 4 — Hardening
 
-- [ ] Degraded mode: block the Supabase domain in devtools, reload. Catalog
+- [x] Degraded mode: block the Supabase domain in devtools, reload. Catalog
       renders, guest tracking works, "sync unavailable" shown, no white screen,
       no unhandled promise rejection (§6.4).
-- [ ] Free-tier pausing: decide keep-alive vs accept-the-pause, and document the
+- [x] Free-tier pausing: decide keep-alive vs accept-the-pause, and document the
       choice in the README. Either way degraded mode must hold.
-- [ ] OAuth cancellation: start sign-in, hit back. Returns to `signed_out`, no
+- [x] OAuth cancellation: start sign-in, hit back. Returns to `signed_out`, no
       stuck spinner.
-- [ ] Cross-account isolation at the API layer, not just the UI: request account
+- [x] Cross-account isolation at the API layer, not just the UI: request account
       B's rows with account A's JWT, expect empty.
-- [ ] Mobile interaction pass on a real device: tap targets, sheet behaviour,
-      the new view-switch row, scroll performance with dimming applied.
-- [ ] Accessibility: `aria-pressed` states announce correctly, focus visible on
+- [ ] Final Phase 4 mobile regression on a real device: tap targets, sheet behaviour,
+      the new view-switch row, scroll performance with dimming applied. The user
+      passed these on Phase 3; repeat sheet checks after the Phase 4 modal changes.
+- [x] Accessibility: `aria-pressed` states exposed correctly in the browser accessibility tree, focus visible on
       all new controls, tab order sane after the button refactor.
-- [ ] Desktop toolbar at 900–1200px.
-- [ ] Progress denominator: fake the clock past 2026-10-14, confirm 59 → 60.
+- [x] Desktop toolbar at 900–1200px.
+- [x] Progress denominator: fake the clock past 2026-10-14, confirm 59 → 60.
 
 ---
+
+Phase 4 code/browser checks are recorded in the README (2026-10-24). API
+isolation reuses the live Phase 3 check; the browser clock boundary was tested
+in the rendered UI. Spoken screen-reader output was not verified. Final phone
+regression of the changed sheets remains pending on the updated preview.
 
 ## Phase 5 — Docs
 

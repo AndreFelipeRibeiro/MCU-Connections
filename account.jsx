@@ -56,6 +56,17 @@ function AccountProvider({ children }) {
   const [user, setUser] = React.useState(null);
   const [error, setError] = React.useState(null);
   const [syncAvailable, setSyncAvailable] = React.useState(!!client);
+  const [offlineReason, setOfflineReason] = React.useState(null);
+  const offlineRef = React.useRef(false);
+  const attemptRef = React.useRef(0);
+  const continueAsGuest = React.useCallback((reason) => {
+    offlineRef.current = true;
+    attemptRef.current += 1;
+    setOfflineReason(reason || 'Cloud connection unavailable');
+    setUser(null);
+    setSyncAvailable(false);
+    setStatus('signed_out');
+  }, []);
 
   React.useEffect(() => {
     if (!client) return;
@@ -71,6 +82,8 @@ function AccountProvider({ children }) {
       clearTimeout(timer);
     };
     const applySession = (session) => {
+      if (offlineRef.current) return;
+      attemptRef.current += 1;
       const nextUser = session && session.user;
       setUser(nextUser || null);
       setStatus(nextUser ? 'signed_in' : 'signed_out');
@@ -80,9 +93,7 @@ function AccountProvider({ children }) {
     };
     const unavailable = () => {
       settle();
-      setUser(null);
-      setSyncAvailable(false);
-      setStatus('signed_out');
+      continueAsGuest('Could not restore the cloud session');
     };
     const timer = setTimeout(() => {
       if (!active || settled) return;
@@ -121,23 +132,35 @@ function AccountProvider({ children }) {
       settle();
       if (sub) sub.unsubscribe();
     };
-  }, [client]);
+  }, [client, continueAsGuest]);
 
   // If the user starts Google sign-in and then backs out, they come back to a
   // page still sitting in 'signing_in'. Re-check on return so there is no
   // spinner stuck forever waiting for a redirect that is not coming.
   React.useEffect(() => {
     if (status !== 'signing_in' || !client) return;
-    const recheck = async () => {
+    let active = true;
+    let timer;
+    const recheck = () => {
       if (document.visibilityState !== 'visible') return;
-      try {
-        const { data } = await client.auth.getSession();
-        if (!data || !data.session) setStatus('signed_out');
-      } catch (e) { setStatus('signed_out'); }
+      clearTimeout(timer);
+      const attempt = attemptRef.current;
+      const finish = (session) => {
+        if (!active || attemptRef.current !== attempt) return;
+        clearTimeout(timer);
+        setUser(session ? session.user : null);
+        setStatus(session ? 'signed_in' : 'signed_out');
+      };
+      timer = setTimeout(() => finish(null), AUTH_TIMEOUT_MS);
+      Promise.resolve(client.auth.getSession()).then(({ data }) => {
+        finish(data && data.session);
+      }).catch(() => finish(null));
     };
     window.addEventListener('pageshow', recheck);
     document.addEventListener('visibilitychange', recheck);
     return () => {
+      active = false;
+      clearTimeout(timer);
       window.removeEventListener('pageshow', recheck);
       document.removeEventListener('visibilitychange', recheck);
     };
@@ -147,16 +170,27 @@ function AccountProvider({ children }) {
     if (!client) return;
     setError(null);
     setStatus('signing_in');
+    const attempt = ++attemptRef.current;
+    const timer = setTimeout(() => {
+      if (attemptRef.current !== attempt) return;
+      attemptRef.current += 1;
+      setError('Could not start sign-in. Please try again.');
+      setStatus('error');
+    }, AUTH_TIMEOUT_MS);
     try {
       const redirectTo = window.location.origin + window.location.pathname;
       const { error: err } = await client.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo, queryParams: { prompt: 'select_account' } },
       });
-      if (err) { setError(err.message); setStatus('error'); }
+      if (err && attemptRef.current === attempt) { setError(err.message); setStatus('error'); }
     } catch (e) {
-      setError((e && e.message) || 'Sign-in failed');
-      setStatus('error');
+      if (attemptRef.current === attempt) {
+        setError((e && e.message) || 'Sign-in failed');
+        setStatus('error');
+      }
+    } finally {
+      clearTimeout(timer);
     }
   }, [client]);
 
@@ -181,11 +215,12 @@ function AccountProvider({ children }) {
     profile: profileOf(user),
     error,
     syncAvailable,
-    unavailableReason: (window.MCU_SUPABASE_STATUS && window.MCU_SUPABASE_STATUS.reason) || null,
+    continueAsGuest,
+    unavailableReason: offlineReason || (window.MCU_SUPABASE_STATUS && window.MCU_SUPABASE_STATUS.reason) || null,
     isSignedIn: status === 'signed_in',
     signIn,
     signOut,
-  }), [status, user, error, syncAvailable, signIn, signOut]);
+  }), [status, user, error, syncAvailable, offlineReason, continueAsGuest, signIn, signOut]);
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;
 }
@@ -294,6 +329,7 @@ function AccountPanel({ onPickCollection, onClose }) {
         <div className="acct-note">
           Sync unavailable{unavailableReason ? ` — ${unavailableReason}` : ''}. Your collection is
           still saved in this browser.
+          {window.mcuSupabase && <button className="acct-action" onClick={() => window.location.reload()}>Retry connection</button>}
         </div>
       )}
 
@@ -324,7 +360,7 @@ function AccountButton({ onPickCollection }) {
   React.useEffect(() => {
     if (!open) return;
     const away = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
+    const esc = (e) => { if (e.key === 'Escape') { setOpen(false); ref.current?.querySelector('.acct-pill')?.focus(); } };
     document.addEventListener('mousedown', away);
     document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc); };
@@ -390,7 +426,7 @@ function AccountAvatarButton({ onOpen }) {
 function AccountSheet({ onClose, onPickCollection }) {
   const Sheet = window.Sheet;
   return (
-    <Sheet onClose={onClose}>
+    <Sheet onClose={onClose} label="Account">
       <div className="m-sh-head">
         <div className="m-sh-title">Account</div>
       </div>

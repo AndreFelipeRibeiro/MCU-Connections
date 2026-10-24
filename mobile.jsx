@@ -35,7 +35,7 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
       <div className="m-viewrow">
         <div className="m-viewswitch">
           {VIEW_MODES.map(([v,l,ic]) => (
-            <button key={v} className={viewMode===v?'on':''} onClick={()=>setViewMode(v)} aria-label={l} title={l}>
+            <button key={v} className={viewMode===v?'on':''} onClick={()=>setViewMode(v)} aria-label={l} aria-pressed={viewMode===v} title={l}>
               <span className="vi">{ic}</span><span className="vl">{l}</span>
             </button>
           ))}
@@ -222,11 +222,45 @@ function EmptyState({ title, sub, mark }) {
   );
 }
 
-function Sheet({ children, onClose, tall }) {
+function Sheet({ children, onClose, tall, label }) {
+  const ref = React.useRef(null);
+  const closeRef = React.useRef(onClose);
+  closeRef.current = onClose;
+  React.useEffect(() => {
+    const sheet = ref.current;
+    const opener = document.activeElement;
+    // The sheet lives inside #root, so make its app siblings inert, not #root.
+    const siblings = Array.from(sheet.parentElement.children).filter((el) => el !== sheet && !el.classList.contains('m-scrim'));
+    const previous = siblings.map((el) => [el, el.inert]);
+    previous.forEach(([el]) => { el.inert = true; });
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusable = () => Array.from(sheet.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]')).filter((el) => el.getClientRects().length);
+    (focusable()[0] || sheet).focus();
+    const keys = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); closeRef.current(); }
+      if (e.key !== 'Tab') return;
+      const items = focusable();
+      const first = items[0] || sheet;
+      const last = items[items.length - 1] || sheet;
+      if (e.shiftKey && (document.activeElement === first || !sheet.contains(document.activeElement))) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && (document.activeElement === last || !sheet.contains(document.activeElement))) {
+        e.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener('keydown', keys);
+    return () => {
+      document.removeEventListener('keydown', keys);
+      previous.forEach(([el, inert]) => { el.inert = inert; });
+      document.body.style.overflow = overflow;
+      if (opener && opener.isConnected) opener.focus();
+    };
+  }, []);
   return (
     <>
-      <div className="m-scrim" onClick={onClose}/>
-      <div className={`m-sheet${tall?' tall':''}`}>
+      <div className="m-scrim" onClick={onClose} aria-hidden="true"/>
+      <div ref={ref} className={`m-sheet${tall?' tall':''}`} role="dialog" aria-modal="true" aria-label={label || 'Details'} tabIndex={-1}>
         <button className="m-grab" onClick={onClose} aria-label="Close"/>
         <div className="m-sheet-body">{children}</div>
       </div>
@@ -237,7 +271,7 @@ function Sheet({ children, onClose, tall }) {
 function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, sort, setSort, sortDir, setSortDir, onClose, showing, onClear }) {
   const { progress } = window.useCollection();
   return (
-    <Sheet onClose={onClose} tall>
+    <Sheet onClose={onClose} tall label="Filters">
       <div className="m-sh-head">
         <div className="m-sh-title">Filters</div>
         <button className="m-sh-clear" onClick={onClear}>Clear all</button>
@@ -246,7 +280,7 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
         <div className="m-flab">Collection</div>
         <div className="m-chips">
           {window.COLLECTION_OPTIONS.map(([v,l])=>(
-            <button key={v} className={`m-chip${collectionFilter===v?' on':''}`} onClick={()=>setCollectionFilter(v)}>{l}</button>
+            <button key={v} className={`m-chip${collectionFilter===v?' on':''}`} aria-pressed={collectionFilter===v} onClick={()=>setCollectionFilter(v)}>{l}</button>
           ))}
         </div>
         <div className="m-progress">
@@ -314,7 +348,7 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
   if (!title) return null;
   const PosterArt = window.PosterArt;
   return (
-    <Sheet onClose={onClose} tall>
+    <Sheet onClose={onClose} tall label={`${title.title} details`}>
       <div className="m-cast-hero">
         <div className="m-hero-th"><PosterArt title={title}/></div>
         <div className="m-hero-text">

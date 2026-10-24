@@ -259,3 +259,88 @@ Google's callback remains
 `https://wauhmmftltlxzrcwpdvp.supabase.co/auth/v1/callback`; its JavaScript origins
 use the deployment origins without trailing slashes. Keep Email and anonymous
 sign-in disabled for the Google-only phases.
+
+
+## V3 Phase 4 hardening — 2026-10-24
+
+### Backend availability and free-tier policy
+
+**Decision: accept free-tier pauses; no keep-alive automation.** Restore the
+project from the Supabase dashboard when needed. See
+[Supabase's project-pausing guidance](https://supabase.com/docs/guides/platform/free-project-pausing).
+The catalog/guest collection remain usable when cloud services cannot be reached.
+This does not promise a cold offline page load without cached React/Babel/CDN
+assets: the existing static architecture still obtains those libraries online.
+
+Session restoration, collection reads/merges/writes and OAuth-start waits now
+have five-second UI deadlines. Collection operations abort their SDK request,
+including its automatic retry loop. A failed initial read/merge caused by a
+network error, timeout or server outage falls back to guest tracking and shows
+Sync unavailable. Account collection data is hidden and never copied to the
+guest key. Existing unmerged guest marks are preserved. Late auth results cannot
+silently switch this degraded guest session back into account mode.
+
+Retry connection reloads the page, restoring the saved session and merging guest
+marks once service is reachable. Permission/validation errors retain the existing
+Retry sync path. A failed signed-in write rolls back and reports its error inline;
+a network failure can leave its server outcome uncertain, so reload to reconcile
+with the cloud before assuming that write did or did not land.
+
+### Dialog and keyboard behavior
+
+Account, Filters and title-detail sheets have named modal dialog semantics.
+Opening focuses Close; Tab/Shift-Tab stay within the sheet; Escape/scrim/Close
+close it; focus returns to the opener where it still exists. Background app
+siblings are inert while open. Sheet scrolling is contained, and the close target
+is now 46 × 32px. Focus rings cover account actions, filters and view controls.
+View and collection filter buttons expose selected state with aria-pressed;
+status buttons expose saving through aria-busy. The primary mobile card buttons
+and spatial-layout filtering were preserved.
+
+### Verification record
+
+- [x] User reported the deployed V3 preview's full desktop-guest → Google merge →
+  phone sign-in flow passed, with saved titles restored on the phone.
+- [x] User reported phone account/filter sheets, Grid/List details, Spatial
+  pan/pinch and filtered-list scrolling all worked normally on the Phase 3
+  preview. This is user evidence, not an agent-performed device test.
+- [x] Browser network blocking: an out-of-repo local server applied CSP
+  `connect-src 'self'` while the actual Supabase client restored its cached
+  Google session. Initially this reproduced stuck collection loading; after the
+  fix it fell back to guest mode. Guest marking survived reload under the block.
+  This uses real browser connection blocking, not DevTools' request-blocking UI.
+- [x] Supabase CDN omitted: full catalog and guest controls rendered, with the
+  specific sync-unavailable message. This test did not block React/Babel assets.
+- [x] Controlled clients with non-settling auth and collection requests recovered
+  to guest mode after the deadline. A test-page unhandledrejection counter stayed
+  at zero for the hung collection case. The production repository has no fixture.
+- [x] Real Google flow: sign out locally, open Google account chooser, browser
+  Back; signed-out app and enabled sign-in returned without a stuck spinner.
+- [x] Non-settling OAuth-start fixture: error/retry button returned after five
+  seconds, with zero unhandledrejection events recorded by the test page.
+- [x] Successful guest merge and failed-save rollback still passed using the
+  actual application with the controlled client after adding request deadlines;
+  a stalled save rolled back and its control exposed aria-busy while pending.
+- [x] Account modal: initial focus on Close; Shift-Tab wrapped to last action;
+  Tab wrapped back; Escape restored Account focus. DOM showed inert background
+  siblings. Grid, List and Spatial primary buttons opened named details dialogs.
+- [x] Space toggled seen and aria-pressed; view and collection-filter pressed
+  states changed correctly. Rendered DOM had zero nested buttons. Status targets
+  measured 36 × 36px at mobile scale 1. Status/Close focus outlines measured 2px.
+- [x] Desktop toolbar: no horizontal overflow at 900, 960, 961, 1000, 1100 and
+  1200px; input widths were approximately 819, 879, 167, 206, 266 and 362px.
+  Escape from the account popover returned focus to its opener.
+- [x] Page-local browser Date override at local noon on 2026-10-13 and
+  2026-10-14: account UI denominator changed from 59 to 60. Host/device clocks
+  were unchanged. This extends Phase 1's direct helper probes to the rendered UI.
+- [x] API-level isolation carried forward from Phase 3: a real signed-in account
+  requested the other account's populated title_states rows and received zero
+  rows. No schema/RLS changes were made in Phase 4.
+- [x] `git diff --check` passed; no npm, build pipeline, router or test runner.
+
+Final device follow-up: recheck opening/closing sheets and scrolling the updated
+Phase 4 preview on the phone, because modal focus/inert behavior changed after
+the user's earlier device pass. Actual spoken VoiceOver/TalkBack output was not
+checked; browser accessibility state and keyboard behavior were verified above.
+Production OAuth remains to be verified after an explicitly authorized merge.
+Email/password Phase 6 remains deferred and requires separate confirmation.

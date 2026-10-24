@@ -105,6 +105,42 @@ function warnUnknownIds(states) {
 // ---------------------------------------------------------------------------
 
 const TABLE = 'title_states';
+const SYNC_TIMEOUT_MS = 5000;
+
+// Bound the entire operation, including SDK retries. Aborting the builder also
+// stops its retry loop; Promise.race covers adapters that never settle on abort.
+async function collectionRequest(query) {
+  const controller = new AbortController();
+  let timer;
+  try {
+    const result = await Promise.race([
+      Promise.resolve(query.abortSignal(controller.signal)),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          const error = new Error('Cloud request timed out');
+          error.code = 'MCU_TIMEOUT';
+          reject(error);
+          controller.abort();
+        }, SYNC_TIMEOUT_MS);
+      }),
+    ]);
+    if (result.error) {
+      const error = new Error(result.error.message || 'Could not sync');
+      error.status = result.status;
+      error.code = result.error.code;
+      throw error;
+    }
+    return result;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function connectionUnavailable(error) {
+  return error.code === 'MCU_TIMEOUT' || error.status === 0 || error.status >= 500 ||
+    /failed to fetch|fetch failed|networkerror|network request failed|load failed/i.test(error.message || '');
+}
+
 
 // Guest and account data are merged by strength, not by recency. These are
 // monotonic facts about what someone watched — a last-write-wins or
@@ -155,6 +191,7 @@ function CollectionProvider({ children }) {
   const authStatus = auth ? auth.status : 'signed_out';
   const userId = auth && auth.user ? auth.user.id : null;
   const client = window.mcuSupabase;
+  const continueAsGuest = auth && auth.continueAsGuest;
 
   const [storedStates, setStates] = React.useState(() => {
     const initial = readGuestStates();
@@ -225,12 +262,10 @@ function CollectionProvider({ children }) {
     if (!client || !uid) throw new Error('not signed in');
     if (target === 'none') {
       // There is no 'none' status — absence of the row is 'none'.
-      const { error } = await client.from(TABLE).delete().eq('user_id', uid).eq('title_id', titleId);
-      if (error) throw error;
+      await collectionRequest(client.from(TABLE).delete().eq('user_id', uid).eq('title_id', titleId));
     } else {
-      const { error } = await client.from(TABLE)
-        .upsert(rowFor(uid, titleId, target), { onConflict: 'user_id,title_id' });
-      if (error) throw error;
+      await collectionRequest(client.from(TABLE)
+        .upsert(rowFor(uid, titleId, target), { onConflict: 'user_id,title_id' }));
     }
   }, [client]);
 
@@ -342,10 +377,9 @@ function CollectionProvider({ children }) {
       try {
         // RLS already restricts this to the caller's rows; the filter is
         // explicit so the intent is readable and the index is used.
-        const { data, error } = await client.from(TABLE)
+        const { data } = await collectionRequest(client.from(TABLE)
           .select('title_id,status')
-          .eq('user_id', userId);
-        if (error) throw error;
+          .eq('user_id', userId));
         if (!current()) return;
 
         const remote = {};
@@ -367,9 +401,8 @@ function CollectionProvider({ children }) {
         const merged = mergeStates(remote, guest);
         const changed = Object.keys(merged).filter((id) => merged[id] !== remote[id]);
         if (changed.length) {
-          const { error: upErr } = await client.from(TABLE)
-            .upsert(changed.map((id) => rowFor(userId, id, merged[id])), { onConflict: 'user_id,title_id' });
-          if (upErr) throw upErr;
+          await collectionRequest(client.from(TABLE)
+            .upsert(changed.map((id) => rowFor(userId, id, merged[id])), { onConflict: 'user_id,title_id' }));
         }
         // Only now — an unconfirmed sync must never destroy the local copy.
         if (!current()) return;
@@ -385,14 +418,18 @@ function CollectionProvider({ children }) {
         console.warn('[mcu] could not load or merge remote collection', e);
         // Guest data is deliberately left in place; the merge retries next
         // sign-in or explicit retry. Editing stays disabled until a load succeeds.
-        setSyncError((e && e.message) ? e.message : 'Sync failed');
+        if (connectionUnavailable(e) && continueAsGuest) {
+          continueAsGuest('Cloud connection unavailable');
+        } else {
+          setSyncError((e && e.message) ? e.message : 'Sync failed');
+        }
       } finally {
         if (current()) setRemoteLoading(false);
       }
     })();
 
     return () => { cancelled = true; };
-  }, [client, mode, userId, scope, retryCount, commit]);
+  }, [client, mode, userId, scope, retryCount, commit, continueAsGuest]);
 
   const retrySync = React.useCallback(() => setRetryCount((n) => n + 1), []);
 
@@ -539,7 +576,7 @@ function TitleStatusActions({ title, variant, className }) {
         type="button"
         className={`tsa-btn seen${seen ? ' on' : ''}`}
         disabled={loading}
-        aria-busy={loading}
+        aria-busy={loading || busy}
         aria-pressed={loading ? undefined : seen}
         aria-label={loading ? `Loading watch status for ${title.title}` : seen ? `Mark ${title.title} as not seen` : `Mark ${title.title} as seen`}
         title={seen ? 'Marked as seen' : 'Mark as seen'}
@@ -553,7 +590,7 @@ function TitleStatusActions({ title, variant, className }) {
         type="button"
         className={`tsa-btn watch${listed ? ' on' : ''}`}
         disabled={loading}
-        aria-busy={loading}
+        aria-busy={loading || busy}
         aria-pressed={loading ? undefined : listed}
         aria-label={loading ? `Loading watchlist status for ${title.title}` : listed ? `Remove ${title.title} from watchlist` : `Add ${title.title} to watchlist`}
         title={listed ? 'On your watchlist' : 'Add to watchlist'}

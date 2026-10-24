@@ -341,7 +341,7 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
                 <label>Collection</label>
                 <div className="segmented">
                   {window.COLLECTION_OPTIONS.map(([v,l])=>(
-                    <button key={v} className={collectionFilter===v?'on':''} onClick={()=>setCollectionFilter(v)}>{l}</button>
+                    <button key={v} className={collectionFilter===v?'on':''} aria-pressed={collectionFilter===v} onClick={()=>setCollectionFilter(v)}>{l}</button>
                   ))}
                 </div>
                 <div className="pop-progress">
