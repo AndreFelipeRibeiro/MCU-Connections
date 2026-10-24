@@ -588,13 +588,19 @@ body {
 
 /* At the desktop breakpoint, keep search usable instead of compressing its
    text field to a few characters. Other controls remain on the first row. */
-@media (min-width: 900px) and (max-width: 960px) {
+@media (min-width: 900px) and (max-width: 1100px) {
   .tb-row { flex-wrap: wrap; }
   .tb-row > .search-wrap { order: 1; flex: 1 0 100%; margin-left: 0; }
   .tb-row > .acct-wrap { margin-left: auto; }
 }
 
-/* Sort direction is a separate action so reselecting a mode keeps its order. */
-.sort-direction { flex: 0 0 36px; width: 36px; height: 44px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text); font: inherit; font-size: 21px; cursor: pointer; }
-.sort-direction:hover { background: var(--surface-2); }
-.sort-direction:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* Contextual order disclosure, shared with the touch footer. */
+.sort-order { position: relative; flex-shrink: 0; }
+.sort-order-trigger { display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; min-width: 86px; padding: 0 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; }
+.sort-order-trigger:hover, .sort-order-trigger[aria-expanded="true"] { background: var(--surface-2); border-color: var(--border-strong); }
+.sort-order-trigger:focus-visible, .sort-order-pop button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sort-order-pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 65; min-width: 216px; padding: 8px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface); box-shadow: 0 18px 44px rgba(0,0,0,.6); }
+.sort-order-heading { padding: 6px 10px 8px; color: var(--text-muted); font: 10px 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 1px; }
+.sort-order-pop button { display: flex; align-items: center; justify-content: space-between; gap: 18px; width: 100%; min-height: 44px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--text-dim); font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
+.sort-order-pop button:hover { background: var(--surface-2); }
+.sort-order-pop button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); }

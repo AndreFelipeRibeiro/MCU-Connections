@@ -269,6 +269,11 @@ Implementation and local verification are ready for user review. See the
 [dated changelog](CHANGELOG.md) for scope and actual checks. Desktop and mobile
 now expose reversal across all six sorts; Spatial honors the shared ordering.
 
+The selected follow-up design uses a separate contextual order menu. Mobile
+mode selection now includes A–Z in the main six-tab navigation; desktop and
+mobile Filters offer only the active mode's two order choices, without a second
+sort-mode selector. The updated implementation still awaits final user review.
+
 - [ ] Obtain user approval of the V3 preview before marking the Notion task done.
 - [ ] Merge into main only after a separate explicit merge approval.
 

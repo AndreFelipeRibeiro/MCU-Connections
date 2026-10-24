@@ -306,11 +306,7 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
               </button>
             ))}
           </div>
-          <button className="sort-direction" onClick={()=>setSortDir(d=>d==='desc'?'asc':'desc')}
-            aria-label={`Reverse sort order (currently ${sortDirectionLabels(sort)[sortDir==='desc'?1:0]})`}
-            title={`Order: ${sortDirectionLabels(sort)[sortDir==='desc'?1:0]}. Click to reverse.`}>
-            {sortDir==='desc' ? '↓' : '↑'}
-          </button>
+          <window.SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir}/>
         </div>
         <div className="control-group">
           <div className="segmented">
@@ -353,6 +349,16 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
                 <div className="segmented">
                   {[['all','All'],['low','<$50M'],['mid','$50–200M'],['high','$200–300M'],['mega','$300M+']].map(([v,l])=>(
                     <button key={v} className={budgetFilter===v?'on':''} onClick={()=>setBudgetFilter(v)}>{l}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="control-group">
+                <label>Order</label>
+                <div className="segmented">
+                  {sortDirectionLabels(sort).map((label, i) => (
+                    <button key={label} className={sortDir===(i===0?'asc':'desc')?'on':''}
+                      aria-pressed={sortDir===(i===0?'asc':'desc')}
+                      onClick={()=>setSortDir(i===0?'asc':'desc')}>{label}</button>
                   ))}
                 </div>
               </div>
@@ -1232,13 +1238,14 @@ function App() {
             </div>
           )}
         </div>
-        {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}/>}        {sheet === 'filters' && (
+        {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}/>}
+        {sheet === 'filters' && (
           <window.FilterSheet
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
             typeFilter={typeFilter} setTypeFilter={setTypeFilter}
             budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
             collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
-            sort={sort} setSort={changeSort}
+            sort={sort}
             sortDir={sortDir} setSortDir={setSortDir}
             showing={mobileShowing}
             onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setCollectionFilter('all'); }}

@@ -287,4 +287,7 @@
   .m-sheet, .m-scrim { animation: none; }
 }
 
-.m-tab.m-order { border-left: 1px solid var(--border); color: var(--text); }
+.m-sort-footer { position: relative; flex: 0 0 auto; z-index: 30; background: var(--bg); }
+.m-orderbar { display: flex; justify-content: flex-end; padding: 6px 14px 10px; }
+.mobile-order .sort-order-pop { top: auto; bottom: calc(100% + 8px); }
+.sort-order-prefix { color: var(--text-muted); }

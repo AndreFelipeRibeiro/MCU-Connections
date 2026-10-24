@@ -11,7 +11,30 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
-## V3 maintenance — Reverse sort order (awaiting user approval)
+## V3 maintenance — Separate order menu (awaiting review)
+
+Recorded: 2026-10-24 16:33:29 EDT (-0400).
+
+- Replace the reversal arrows with the user-selected separate order menu:
+  beside desktop sorting and above the mobile sort navigation. Compact labels
+  show the current direction; the popover offers both full contextual labels.
+- Keep mode selection in the main navigation. Move mobile A–Z out of Filters
+  into the six-tab navigation; Filters contains only the current mode's two
+  order choices, alongside its existing collection/phase/type/budget controls.
+- Add full order choices to desktop Filters. Preserve existing sorting/layout
+  functions, defaults, collection filtering and permanent title ids.
+- Support pointer dismissal, Escape, focus return after selection and keyboard
+  activation. Widen the desktop search-wrap breakpoint to accommodate the label.
+- Verification: selected both directions for all six modes on desktop and mobile
+  (24 menu selections); checked Filters wording/selection, mobile Grid/List Z–A,
+  order-menu access in Spatial, keyboard Space/Escape/focus return, outside-click
+  dismissal, no nested buttons and no browser console errors. Toolbar fit passed
+  at 900/1000/1200/1440px; mobile navigation fit at 320px with 53px-wide tabs.
+- Limits: phone layouts were browser-emulated, including 390×844; a new physical
+  phone check and final user approval remain pending. No new auth/cloud checks
+  were run. This change does not authorize merging into main.
+
+## V3 maintenance — Reverse sort order (initial implementation)
 
 Recorded: 2026-10-24 15:55:24 EDT (-0400).
 

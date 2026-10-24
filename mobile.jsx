@@ -2,7 +2,7 @@ const { useState: mUseState } = React;
 
 const MPHASE_COLORS = { 1:'#d4a05a', 2:'#4a8de8', 3:'#d04040', 4:'#a05cd0', 5:'#5fa856', 6:'#c8384a' };
 const MPHASE_LABELS = { 1:'PHASE 1', 2:'PHASE 2', 3:'PHASE 3', 4:'PHASE 4', 5:'PHASE 5', 6:'PHASE 6' };
-const SORT_TABS = [['release','Release','▤'],['chrono','Chrono','⇄'],['phase','Phase','◫'],['imdb','IMDb','★'],['rt','RT','◉']];
+const SORT_TABS = [['release','Release','▤'],['chrono','Chrono','⇄'],['phase','Phase','◫'],['title','A–Z','⇅'],['imdb','IMDb','★'],['rt','RT','◉']];
 const VIEW_MODES = [['grid','Grid','▦'],['list','List','☰'],['spatial','Spatial','◈']];
 
 function ScoreBadges({ title, lead, compact }) {
@@ -56,8 +56,54 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
   );
 }
 
+// Shared disclosure: full wording in the popover, compact current value outside.
+function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
+  const [open, setOpen] = React.useState(false);
+  const wrap = React.useRef(null), trigger = React.useRef(null), choices = React.useRef(null);
+  const id = React.useId();
+  const labels = window.sortDirectionLabels(sort);
+  const index = sortDir === 'desc' ? 1 : 0;
+  const compact = sort === 'phase' ? labels[index].replace('Phase ', '')
+    : sort === 'title' ? labels[index]
+    : sort === 'release' ? ['Oldest', 'Newest'][index]
+    : sort === 'chrono' ? ['Earliest', 'Latest'][index]
+    : ['Lowest', 'Highest'][index];
+  React.useEffect(() => { setOpen(false); }, [sort]);
+  React.useEffect(() => {
+    if (!open) return;
+    choices.current?.querySelector('[aria-pressed="true"]')?.focus();
+    const away = e => { if (!wrap.current?.contains(e.target)) setOpen(false); };
+    const escape = e => {
+      if (e.key === 'Escape') { setOpen(false); trigger.current?.focus(); }
+    };
+    document.addEventListener('pointerdown', away);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', away);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+  return <div className={`sort-order${mobile ? ' mobile-order' : ''}`} ref={wrap}
+    onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
+    <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
+      aria-label={`Sort order: ${labels[index]}`} onClick={() => setOpen(v => !v)}>
+      {mobile && <span className="sort-order-prefix">Order:</span>}{compact}<span aria-hidden="true">⌄</span>
+    </button>
+    {open && <div id={id} ref={choices} className="sort-order-pop" role="group" aria-label="Sort order">
+      <div className="sort-order-heading">Order</div>
+      {labels.map((label, i) => <button key={label} aria-pressed={index === i}
+        onClick={() => { setSortDir(i === 0 ? 'asc' : 'desc'); setOpen(false); trigger.current?.focus(); }}>
+        <span>{label}</span><span aria-hidden="true">{index === i ? '✓' : ''}</span>
+      </button>)}
+    </div>}
+  </div>;
+}
+window.SortOrderMenu = SortOrderMenu;
+
 function SortTabs({ sort, setSort, sortDir, setSortDir }) {
   return (
+    <div className="m-sort-footer">
+      <div className="m-orderbar"><SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir} mobile/></div>
     <nav className="m-tabs">
       <div className="m-tabs-lab">Sort by</div>
       {SORT_TABS.map(([v,l,ic])=>(
@@ -65,12 +111,8 @@ function SortTabs({ sort, setSort, sortDir, setSortDir }) {
           <span className="ti">{ic}</span>{l}
         </button>
       ))}
-      <button className="m-tab m-order" onClick={()=>setSortDir(d=>d==='desc'?'asc':'desc')}
-        aria-label={`Reverse sort order (currently ${window.sortDirectionLabels(sort)[sortDir==='desc'?1:0]})`}
-        title={window.sortDirectionLabels(sort)[sortDir==='desc'?1:0]}>
-        <span className="ti">{sortDir==='desc'?'↓':'↑'}</span>Order
-      </button>
     </nav>
+    </div>
   );
 }
 
@@ -273,7 +315,7 @@ function Sheet({ children, onClose, tall, label }) {
   );
 }
 
-function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, sort, setSort, sortDir, setSortDir, onClose, showing, onClear }) {
+function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, sort, sortDir, setSortDir, onClose, showing, onClear }) {
   const { progress } = window.useCollection();
   return (
     <Sheet onClose={onClose} tall label="Filters">
@@ -318,12 +360,6 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
           {[['all','All'],['low','<$50M'],['mid','$50–200M'],['high','$200–300M'],['mega','$300M+']].map(([v,l])=>(
             <button key={v} className={`m-chip${budgetFilter===v?' on':''}`} onClick={()=>setBudgetFilter(v)}>{l}</button>
           ))}
-        </div>
-      </div>
-      <div className="m-fgroup">
-        <div className="m-flab">Also sort</div>
-        <div className="m-chips">
-          <button className={`m-chip${sort==='title'?' on':''}`} onClick={()=>setSort('title')}>A–Z</button>
         </div>
       </div>
       <div className="m-fgroup">
