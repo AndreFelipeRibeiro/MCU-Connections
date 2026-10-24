@@ -11,15 +11,17 @@ to start Phase 6; Phases 1–5 remain Google-only.
 
 ## Current handoff — 2026-10-24
 
-Phases 1–5 are complete. Current setup and acceptance results are in
-[README.md](README.md); dated evidence and explicit test limitations are in
-[docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
+Phases 1–5 were released to `main` at `1f79b74` after user approval.
+Catalog maintenance and further bugs/improvements continue on `version/3.0` in
+`/Users/afr/Documents/Developer/MCU-V3`; this is not a new major release.
+Current setup is in [README.md](README.md), catalog work and sources are in
+[docs/CATALOG-AUDIT.md](docs/CATALOG-AUDIT.md), and the original phase verification
+is in [docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
 
-**Next gates:** obtain explicit confirmation before merging `version/3.0` into
-`main` (which may publish V3 to production). After the release decision, discuss
-the user's bugs/improvements and whether to use a separate branch. Do not create
-that branch yet. This work comes before Phase 6; email/password implementation
-and service setup still require a separate plan and explicit approval.
+**Next gates:** obtain fresh confirmation before merging these follow-up changes
+into `main` and publishing them. Continue the user's bugs/improvements before
+Phase 6. Email/password implementation and service setup still require their own
+plan and explicit approval; earlier release approval does not authorize them.
 
 ---
 
@@ -235,6 +237,29 @@ explicit verification limitation.
 Phase 5 changes documentation and a source comment only. Verified local links,
 entry point, script order, configuration/schema claims and whitespace; earlier
 runtime checks are recorded, not claimed as freshly rerun. No schema change.
+
+---
+
+## V3 maintenance — Catalog refresh and weekly review
+
+Continues as maintenance on `version/3.0` after the initial V3 release.
+See [catalog audit](docs/CATALOG-AUDIT.md) and
+[source mapping](docs/CATALOG-SOURCES.json).
+
+- [x] Review all 60 released IMDb/RT entries, fill missing ratings and record
+      sources, score scopes, checked dates and research limitations.
+- [x] Correct supported release dates/windows and focused cast/chronology omissions.
+- [x] Preserve all 64 permanent title ids and existing collection data contracts.
+- [x] Verify data invariants, date boundaries, rating sorts and desktop/mobile
+      rendering; verify guest persistence. Details are in the catalog audit.
+- [x] Commit the catalog change; consolidate it into the V3 branch and workflow.
+- [x] Schedule Review MCU catalog updates for Mondays at 9am Eastern in this chat.
+      Prepare sourced patches for review; do not auto-apply, commit or publish.
+- [ ] Obtain confirmation before merging the maintenance changes into main.
+
+The weekly task follows `version/3.0` while changes are being tested and main
+once merged. The deferred email/password phase below is a separate task from
+the MCU Phase 6 titles reviewed in the catalog.
 
 ---
 

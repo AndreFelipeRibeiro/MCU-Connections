@@ -2,15 +2,17 @@
 
 ## Current handoff — 2026-10-24
 
-Phases 1–5 are complete. Current setup and acceptance results are in
-[README.md](README.md); dated evidence and explicit test limitations are in
-[docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
+Phases 1–5 were released to `main` at `1f79b74` after user approval.
+Catalog maintenance and further bugs/improvements continue on `version/3.0` in
+`/Users/afr/Documents/Developer/MCU-V3`; this is not a new major release.
+Current setup is in [README.md](README.md), catalog work and sources are in
+[docs/CATALOG-AUDIT.md](docs/CATALOG-AUDIT.md), and the original phase verification
+is in [docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
 
-**Next gates:** obtain explicit confirmation before merging `version/3.0` into
-`main` (which may publish V3 to production). After the release decision, discuss
-the user's bugs/improvements and whether to use a separate branch. Do not create
-that branch yet. This work comes before Phase 6; email/password implementation
-and service setup still require a separate plan and explicit approval.
+**Next gates:** obtain fresh confirmation before merging these follow-up changes
+into `main` and publishing them. Continue the user's bugs/improvements before
+Phase 6. Email/password implementation and service setup still require their own
+plan and explicit approval; earlier release approval does not authorize them.
 
 ## Original kickoff template
 
@@ -113,5 +115,6 @@ editing code or configuring services. The existing collection schema is provider
 independent; no SQL change is needed just to record this future phase.
 
 For the current handoff, do not automatically advance from Phase 5 to Phase 6.
-First obtain the merge decision, then discuss bugs/improvements and the branch
-choice. Phase 6 remains separately gated even if V3 is merged.
+Continue bugs/improvements on `version/3.0`; obtain a fresh merge decision for
+those changes. Phase 6 remains separately gated even though the original V3
+release is already merged.

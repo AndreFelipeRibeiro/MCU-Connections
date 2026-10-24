@@ -6,8 +6,8 @@ tracking, Google sign-in and cloud sync across devices.
 
 - [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/)
 - [Production](https://mcu-connections.vercel.app/) — released V3 (`1f79b74`).
-- V4 catalog work is on `codex/v4`; [audit and sources](docs/CATALOG-AUDIT.md),
-  [current tasks](V4-TASKS.md). It requires separate approval before merging.
+- Catalog maintenance continues on `version/3.0`; [audit and sources](docs/CATALOG-AUDIT.md),
+  [current tasks](V3-TASKS.md). Follow-up changes require approval before merging.
 
 ## Features
 
