@@ -78,19 +78,19 @@ function sortTitles(list, sort, dir = 'asc') {
   });
 }
 
-// What the view is showing, in one place at every size: how many titles match,
-// the sort, the seen count and the active filters (search, collection, type,
-// phase, budget). Variants:
-//   'bar'  - desktop strip under the toolbar: full sort text, one removable chip
-//            per filter, Clear all and Recenter.
-//   'line' - top of the mobile List/Grid (scrolls away with it).
-//   'pill' - mobile Spatial, top-left of the canvas clear of the zoom control.
-// Phones show just the count, seen and how many filters: the sort tabs, Order
-// button, search box, collection switch and Filters badge already say the rest.
+// What the view is showing that the controls don't: how many titles match and,
+// when filtering, which filters are on. The sort, order and collection already
+// show on their own controls, so they are not repeated here. Variants:
+//   'float' - desktop Spatial, top-left of the canvas: the count, one removable
+//             chip per filter (search, collection, type, phase, budget) and
+//             Clear all.
+//   'line'  - top of the mobile List/Grid (scrolls away with it).
+//   'pill'  - mobile Spatial, top-left of the canvas clear of the zoom control.
+// Phones show the count and how many filters, plus Clear; the search box,
+// collection switch and Filters badge already name them.
 // `showing` counts titles matching every filter, including the collection one,
 // which only dims cards in Spatial.
-function ContextSummary({ variant, showing, total, sort, sortDir, filters: f, onRecenter }) {
-  const { progress } = window.useCollection();
+function ContextSummary({ variant, showing, total, filters: f }) {
   const chips = [];
   const query = f.search.trim();
   if (query) chips.push(['search', `“${query}”`, () => f.setSearch('')]);
@@ -103,53 +103,31 @@ function ContextSummary({ variant, showing, total, sort, sortDir, filters: f, on
     f.setPhaseFilter('all'); f.setBudgetFilter('all');
   };
   const count = showing === total ? tr('header.count', { n: total }) : tr('header.countOf', { shown: showing, total });
-  const seen = progress.seenReleased > 0 ? tr('header.seen', { n: progress.seenReleased }) : null;
+  // Keep the canvas pan/pinch handlers from treating a click here as a drag.
+  const stop = e => e.stopPropagation();
 
-  if (variant !== 'bar') {
-    // The Spatial pill sits beside the zoom control, so it drops the seen count
-    // while filters are on to stay on one line.
-    const showSeen = seen && !(variant === 'pill' && chips.length);
-    // Keep canvas pan/pinch handlers from treating a tap here as a drag.
-    const stop = e => e.stopPropagation();
+  if (variant === 'float') {
     return (
-      <div className={`ctx ctx-${variant}`} onTouchStart={stop} onMouseDown={stop}>
-        <span className="ctx-text" role="status">
-          <span className="ctx-seg"><b>{count}</b></span>
-          {showSeen && <>{' '}<span className="ctx-seg">· {seen}</span></>}
-          {chips.length > 0 && <>{' '}<span className="ctx-seg ctx-nfilters">· {tr('context.filters', { n: chips.length })}</span></>}
-        </span>
-        {chips.length > 0 && <button className="ctx-clear" onClick={clearAll}>{tr('context.clear')}</button>}
-      </div>
-    );
-  }
-
-  const direction = sortDirectionLabels(sort)[sortDir === 'desc' ? 1 : 0];
-  // Phase and A-Z directions already name the sort ("Phase 1 → 6", "A–Z").
-  const sortText = (sort === 'title' || sort === 'phase') ? direction
-    : `${tr('sort.' + sort)} · ${direction.toLocaleLowerCase(document.documentElement.lang || 'en')}`;
-  return (
-    <div className="ctx ctx-bar">
-      <div className="ctx-main">
-        <span className="ctx-text" role="status">
-          <span className="ctx-seg"><b>{count}</b></span>{' '}
-          <span className="ctx-seg">· {sortText}</span>
-          {seen && <>{' '}<span className="ctx-seg">· {seen}</span></>}
-        </span>
+      <div className="ctx ctx-float" onMouseDown={stop} onWheel={stop}>
+        <span className="ctx-count" role="status">{count}</span>
         {chips.map(([key, label, clear]) => (
           <button key={key} className="ctx-chip" onClick={clear} title={tr('context.remove', { label })}
             aria-label={tr('context.remove', { label })}>
             {label}<span aria-hidden="true">×</span>
           </button>
         ))}
+        {chips.length > 1 && <button className="ctx-clear" onClick={clearAll}>{tr('filters.clearAll')}</button>}
       </div>
-      <div className="ctx-end">
-        {chips.length > 0 && <button className="ctx-clear" onClick={clearAll}>{tr('filters.clearAll')}</button>}
-        <button className="ctx-recenter" onClick={onRecenter} aria-label={tr('canvas.recenterAria')}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-            strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-          {tr('canvas.recenter')}
-        </button>
-      </div>
+    );
+  }
+
+  return (
+    <div className={`ctx ctx-${variant}`} onTouchStart={stop} onMouseDown={stop}>
+      <span className="ctx-text" role="status">
+        <span className="ctx-seg"><b>{count}</b></span>
+        {chips.length > 0 && <>{' '}<span className="ctx-seg ctx-nfilters">· {tr('context.filters', { n: chips.length })}</span></>}
+      </span>
+      {chips.length > 0 && <button className="ctx-clear" onClick={clearAll}>{tr('context.clear')}</button>}
     </div>
   );
 }
@@ -1304,7 +1282,6 @@ function App() {
   // flat views actually drop non-matching rows and count what they render.
   const contextSummary = (variant) => (
     <ContextSummary variant={variant} showing={visible.length} total={window.TITLES.length}
-      sort={sort} sortDir={sortDir} onRecenter={resetView}
       filters={{ search, setSearch, collectionFilter, setCollectionFilter, typeFilter, setTypeFilter,
         phaseFilter, setPhaseFilter, budgetFilter, setBudgetFilter }}/>
   );
@@ -1413,7 +1390,7 @@ function App() {
               title={tr(isTouch ? 'canvas.zoomTypeTouch' : 'canvas.zoomTypeDesktop')}>{Math.round(view.scale * 100)}%</button>}
         <button className="zoom-btn" onClick={()=>applyScale(s=>s*1.15)} disabled={view.scale >= 2 - 1e-4} aria-label={tr('canvas.zoomIn')}>+</button>
       </div>
-      {isTouch && contextSummary('pill')}
+      {contextSummary(isTouch ? 'pill' : 'float')}
       {focusPop}
     </div>
   );
@@ -1485,7 +1462,6 @@ function App() {
         collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         search={search} setSearch={setSearch}
       />
-      {contextSummary('bar')}
 
       {charBanner}
 
