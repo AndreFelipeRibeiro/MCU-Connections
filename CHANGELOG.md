@@ -12,6 +12,31 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — Search suggestions
+
+Recorded: 2026-10-25 14:41:47 EDT (-0400).
+
+- New `search-suggest.jsx` (`window.SearchInput`), shared by the desktop toolbar
+  and the mobile app bar. From two letters it lists matching actors (with their
+  characters and title count), characters (actor, title count) and titles (type,
+  year) under the search box, with the matched part in bold and photo/poster
+  thumbnails. Matching folds accents and covers names in every language. Names
+  or words starting with the query rank first; people by title count, titles by
+  release. Up to eight rows.
+- Picking an actor or character searches for that name; picking a title also
+  opens its details (desktop drawer, with the card selected in Spatial; mobile
+  sheet). Combobox keyboard pattern (arrows, Enter, Escape); free-text search is
+  unchanged. On phones the list spans the search row.
+- Verification: headless Chromium. Desktop: no list for one letter; "tom" lists
+  Tom Holland, Tom Hiddleston, Tommy Shepherd; arrows + Enter, click, title pick
+  (drawer + Spatial selection), Escape, reopen on typing, close on blur, ARIA
+  combobox attributes. pt-BR: "iron" and "vinga" results. Mobile 390px: full-row
+  list, actor pick filters to 13 rows, title pick opens the sheet. Toolbar fit,
+  desktop List, search highlighting, context summary, camera and language
+  scripts pass. The user reviewed and approved committing and merging to main.
+- Limits: on phones the open list covers the collection row until the box loses
+  focus; thumbnails were not loadable in the test browser.
+
 ## V3 feature — Desktop List view
 
 Recorded: 2026-10-25 14:22:35 EDT (-0400).

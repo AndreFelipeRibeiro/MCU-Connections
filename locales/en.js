@@ -91,6 +91,11 @@ window.MCU_LOCALES.en = {
     'search.placeholder': 'Search titles or characters…',
     'search.aria': 'Search titles or characters',
     'search.clear': 'Clear search',
+    'suggest.label': 'Suggestions',
+    'suggest.actors': 'Actors',
+    'suggest.characters': 'Characters',
+    'suggest.titles': 'Titles',
+    'suggest.as': 'as {names}',
 
     'canvas.zoomIn': 'Zoom in',
     'canvas.zoomOut': 'Zoom out',
