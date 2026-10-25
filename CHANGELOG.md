@@ -12,6 +12,33 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Desktop navigation grouped like mobile
+
+Recorded: 2026-10-25 00:57:40 EDT (-0400).
+
+- The desktop toolbar now follows the mobile header's grouping. Top row: brand,
+  then search, Order, Filters and All / Films / Series, then the language menu
+  and account at the right. Second row: the six sort modes (sharing the width)
+  and Unseen / Seen / Watchlist. Below 1280px the search group wraps onto its
+  own full-width row between them (three rows).
+- Step-downs sized for Portuguese: short sort labels at 1300px and below; at
+  1150px and below the collection switch labels only All and the active option
+  and "Order:" is hidden; below 1000px the switch is icon-only apart from All and
+  Filters loses its text. The former single-row layout at 1920px+ is replaced.
+- Removed the Recenter button (and its unused `canvas.recenter*` strings).
+  Spatial still frames itself when the layout, filters or selection change and
+  when details close.
+- Verification: headless Chromium, pt-BR and en-US, with All and Watchlist
+  active: no offscreen controls, row overflow, overlaps, clipped buttons,
+  horizontal scroll or console errors at 20 desktop widths (900–2560, including
+  1279/1280/1300/1301) and 4 phone widths (320–430). The 1280px breakpoint was
+  measured with a long 176px account name in Portuguese (search ≈ 274px).
+  Filters, Order and language popovers open inside the viewport; Order,
+  language, sort, type and search work. Header height: 121–129px from 1280px,
+  177px below. The user reviewed and approved committing and merging to main.
+- Limits: no manual way to re-frame Spatial after panning other than changing a
+  sort or filter; no physical-device or signed-in check.
+
 ## V3 maintenance — English and Brazilian Portuguese
 
 Recorded: 2026-10-25 00:38:53 EDT (-0400).

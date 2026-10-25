@@ -276,7 +276,7 @@ function CastDrawer({ title, onClose, onCharacterClick, hoveredCharacter, onChar
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
 const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
-function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch, total, showing, onResetView }) {
+function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch, total, showing }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   const { progress } = window.useCollection();
@@ -290,9 +290,13 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
     document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc); };
   }, [popOpen]);
+  // Grouped like the mobile header. The top row holds the brand, then search,
+  // order, filters and type, then language + account at the right edge; on
+  // narrower desktops the search group wraps onto its own row (CSS). Below it:
+  // sort modes and the collection switch.
   return (
     <div className="toolbar">
-      <div className="tb-row tb-primary-row">
+      <div className="tb-row tb-top-row">
         <div className="brand">
           <div className="brand-mark"/>
           <div>
@@ -303,6 +307,71 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
             </div>
           </div>
         </div>
+        <div className="tb-filter-row">
+          <div className="search-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+            <input aria-label={tr('search.aria')} value={search} onChange={e=>setSearch(e.target.value)} placeholder={tr('search.placeholder')}/>
+          </div>
+          <div className="tb-order-control">
+            <span className="tb-order-label">{tr('order.label')}</span>
+            <window.SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir}/>
+          </div>
+          <div className="filters-pop-wrap" ref={popRef}>
+            <button className={`filters-pill${popOpen?' open':''}${activeFilters?' active':''}`} onClick={()=>setPopOpen(o=>!o)}
+              aria-label={activeFilters ? tr('filters.aria', { n: activeFilters }) : tr('filters.title')} title={tr('filters.title')}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+              <span className="filters-label">{tr('filters.title')}</span>{activeFilters ? <span className="fcount">{activeFilters}</span> : null}
+            </button>
+            {popOpen && (
+              <div className="filters-pop">
+                <div className="control-group">
+                  <label>{tr('filters.phase')}</label>
+                  <div className="segmented">
+                    {['all','1','2','3','4','5','6'].map(p=>(
+                      <button key={p} className={phaseFilter===p?'on':''} onClick={()=>setPhaseFilter(p)}
+                        style={p!=='all' && phaseFilter===p ? {background:PHASE_COLORS[p],color:'#0a0c14',borderColor:PHASE_COLORS[p]} : {}}
+                      >{p==='all'?tr('filters.all'):p}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="control-group">
+                  <label>{tr('filters.budget')}</label>
+                  <div className="segmented">
+                    {[['all','filters.all'],['low','budget.low'],['mid','budget.mid'],['high','budget.high'],['mega','budget.mega']].map(([v,k])=>(
+                      <button key={v} className={budgetFilter===v?'on':''} onClick={()=>setBudgetFilter(v)}>{tr(k)}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="control-group">
+                  <label>{tr('order.label')}</label>
+                  <div className="segmented">
+                    {sortDirectionLabels(sort).map((label, i) => (
+                      <button key={label} className={sortDir===(i===0?'asc':'desc')?'on':''}
+                        aria-pressed={sortDir===(i===0?'asc':'desc')}
+                        onClick={()=>setSortDir(i===0?'asc':'desc')}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+                {activeFilters > 0 && (
+                  <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); }}>{tr('filters.clear')}</button>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="control-group tb-type-controls">
+            <div className="segmented">
+              {[['all','type.all'],['film','type.films'],['series','type.series']].map(([v,k])=>(
+                <button key={v} className={typeFilter===v?'on':''} onClick={()=>setTypeFilter(v)}>{tr(k)}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="tb-end">
+          <window.LanguageMenu/>
+          <window.AccountButton onPickCollection={setCollectionFilter}/>
+        </div>
+      </div>
+      <div className="tb-row tb-sort-row">
         <div className="control-group tb-sort-controls">
           <div className="segmented">
             {SORT_OPTIONS.map(([v,ic])=>(
@@ -311,72 +380,8 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
               </button>
             ))}
           </div>
-          <div className="tb-order-control">
-            <span className="tb-order-label">{tr('order.label')}</span>
-            <window.SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir}/>
-          </div>
-        </div>
-      </div>
-      <div className="tb-row tb-secondary-row">
-        <div className="control-group tb-type-controls">
-          <div className="segmented">
-            {[['all','type.all'],['film','type.films'],['series','type.series']].map(([v,k])=>(
-              <button key={v} className={typeFilter===v?'on':''} onClick={()=>setTypeFilter(v)}>{tr(k)}</button>
-            ))}
-          </div>
         </div>
         <window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter}/>
-        <div className="filters-pop-wrap" ref={popRef}>
-          <button className={`filters-pill${popOpen?' open':''}${activeFilters?' active':''}`} onClick={()=>setPopOpen(o=>!o)}
-            aria-label={activeFilters ? tr('filters.aria', { n: activeFilters }) : tr('filters.title')} title={tr('filters.title')}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-            <span className="filters-label">{tr('filters.title')}</span>{activeFilters ? <span className="fcount">{activeFilters}</span> : null}
-          </button>
-          {popOpen && (
-            <div className="filters-pop">
-              <div className="control-group">
-                <label>{tr('filters.phase')}</label>
-                <div className="segmented">
-                  {['all','1','2','3','4','5','6'].map(p=>(
-                    <button key={p} className={phaseFilter===p?'on':''} onClick={()=>setPhaseFilter(p)}
-                      style={p!=='all' && phaseFilter===p ? {background:PHASE_COLORS[p],color:'#0a0c14',borderColor:PHASE_COLORS[p]} : {}}
-                    >{p==='all'?tr('filters.all'):p}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="control-group">
-                <label>{tr('filters.budget')}</label>
-                <div className="segmented">
-                  {[['all','filters.all'],['low','budget.low'],['mid','budget.mid'],['high','budget.high'],['mega','budget.mega']].map(([v,k])=>(
-                    <button key={v} className={budgetFilter===v?'on':''} onClick={()=>setBudgetFilter(v)}>{tr(k)}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="control-group">
-                <label>{tr('order.label')}</label>
-                <div className="segmented">
-                  {sortDirectionLabels(sort).map((label, i) => (
-                    <button key={label} className={sortDir===(i===0?'asc':'desc')?'on':''}
-                      aria-pressed={sortDir===(i===0?'asc':'desc')}
-                      onClick={()=>setSortDir(i===0?'asc':'desc')}>{label}</button>
-                  ))}
-                </div>
-              </div>
-              {activeFilters > 0 && (
-                <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); }}>{tr('filters.clear')}</button>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="search-wrap">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-          <input aria-label={tr('search.aria')} value={search} onChange={e=>setSearch(e.target.value)} placeholder={tr('search.placeholder')}/>
-        </div>
-        <button className="reset-view" onClick={onResetView} title={tr('canvas.recenterAria')} aria-label={tr('canvas.recenterAria')}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg><span className="reset-label">{tr('canvas.recenter')}</span></button>
-      </div>
-      <div className="tb-end">
-        <window.LanguageMenu/>
-        <window.AccountButton onPickCollection={setCollectionFilter}/>
       </div>
     </div>
   );
@@ -1420,7 +1425,6 @@ function App() {
         collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         search={search} setSearch={setSearch}
         total={window.TITLES.length} showing={filtered.length}
-        onResetView={resetView}
       />
 
       {charBanner}

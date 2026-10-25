@@ -71,12 +71,6 @@ body {
 .zoom-val { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); min-width: 48px; text-align: center; padding: 5px 4px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
 .zoom-val:hover { color: var(--text); }
 .zoom-val.edit { color: var(--text); background: rgba(255,255,255,.06); outline: none; width: 48px; }
-.reset-view {
-  background: var(--surface); border: 1px solid var(--border);
-  color: var(--text-dim); padding: 0 14px; border-radius: 10px;
-  font-size: 12.5px; font-family: inherit; cursor: pointer;
-}
-.reset-view:hover { color: var(--text); border-color: var(--text-dim); }
 
 /* TOOLBAR */
 .toolbar {
@@ -87,9 +81,9 @@ body {
   position: sticky; top: 0; z-index: 50;
 }
 .tb-row { display: flex; align-items: center; gap: 18px; }
-.tb-row > .segmented, .tb-row .control-group > .segmented, .tb-row .filters-pill, .tb-row .search-wrap, .tb-row .reset-view { height: 44px; box-sizing: border-box; }
-.brand, .control-group, .segmented, .reset-view, .filters-pill { flex-shrink: 0; }
-.brand-title, .brand-sub, .reset-view, .filters-pill, .control-group label { white-space: nowrap; }
+.tb-row > .segmented, .tb-row .control-group > .segmented, .tb-row .filters-pill, .tb-row .search-wrap { height: 44px; box-sizing: border-box; }
+.brand, .control-group, .segmented, .filters-pill { flex-shrink: 0; }
+.brand-title, .brand-sub, .filters-pill, .control-group label { white-space: nowrap; }
 .segmented button .si { font-size: 12px; opacity: .75; margin-right: 6px; }
 .segmented button.on .si { opacity: 1; }
 .filters-pop-wrap { position: relative; flex-shrink: 0; }
@@ -372,7 +366,6 @@ body {
 @media (max-width: 1220px) {
   .tb-row > .control-group > label { display: none; }
   .filters-pop .control-group label { display: block; }
-  .reset-view .lg { display: none; }
   .segmented button .si { margin-right: 0; }
   .segmented button .sm { display: none; }
   .control-group + .control-group .segmented button .sm { display: inline; }
@@ -575,7 +568,6 @@ body {
   .segmented { padding: 2px; }
   .segmented button { padding: 0 8px; }
   .filters-pill { padding: 0 11px; }
-  .reset-view { padding: 0 11px; }
   .search-wrap { flex: 1 1 150px; padding: 0 11px; }
 }
 
@@ -590,28 +582,33 @@ body {
 .sort-order-pop button:hover { background: var(--surface-2); }
 .sort-order-pop button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); }
 
-/* Use the whole width of each row; join the rows when every control fits. */
-.toolbar { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; column-gap: 16px; }
-.tb-primary-row { display: contents; }
-.tb-primary-row > .brand { grid-column: 1; grid-row: 1; }
-.tb-primary-row > .tb-sort-controls { grid-column: 2 / -1; grid-row: 1; }
-/* Language menu + account share the last toolbar cell. */
-.toolbar > .tb-end { grid-column: 3; grid-row: 2; justify-self: end; display: flex; align-items: center; gap: 10px; }
+/* Desktop rows, grouped like the mobile header:
+   1. brand, the search group (search takes the spare width, then order,
+      filters and All/Films/Series), then language + account at the right;
+   2. sort modes (share the spare width), then Unseen/Seen/Watchlist.
+   Below 1280px (where search would drop under ~270px with a long account
+   name in Portuguese) the search group wraps onto its own full-width line
+   between the two (three rows). */
+.tb-top-row { flex-wrap: wrap; justify-content: space-between; column-gap: 16px; row-gap: 12px; }
+.tb-top-row > .brand { min-width: 0; }
+.tb-end { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
 .lang-menu .sort-order-trigger { min-width: 0; gap: 6px; padding: 0 11px; }
 .lang-menu .lang-globe { flex: 0 0 auto; opacity: .8; }
 .lang-menu .sort-order-pop { min-width: 200px; }
-.tb-sort-controls > .segmented { flex: 1; }
-.tb-sort-controls > .segmented button { flex: 1; justify-content: center; white-space: nowrap; }
-.tb-secondary-row { grid-column: 1 / 3; grid-row: 2; gap: 12px; min-width: 0; }
-.tb-secondary-row > .search-wrap { flex: 1; min-width: 280px; margin-left: 0; }
+.tb-filter-row { display: flex; align-items: center; gap: 12px; min-width: 0; order: 3; flex: 1 0 100%; }
+.tb-sort-row { gap: 12px; min-width: 0; }
+@media (min-width: 1280px) {
+  .tb-filter-row { order: 0; flex: 1 1 0; }
+}
+.tb-filter-row > .search-wrap { flex: 1; min-width: 200px; margin-left: 0; }
 .tb-order-control { display: flex; align-items: center; gap: 8px; }
 .tb-order-label { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
-.tb-secondary-row .filters-pop { left: 0; right: auto; }
-.tb-secondary-row .reset-view { display: flex; align-items: center; justify-content: center; gap: 8px; }
-.tb-secondary-row .reset-view svg { flex: 0 0 16px; }
-.tb-primary-row .segmented button .lg { display: inline; }
-.tb-primary-row .segmented button .sm { display: none; }
-.tb-primary-row .segmented button .si { margin-right: 6px; }
+.tb-sort-controls { flex: 1; min-width: 0; }
+.tb-sort-controls > .segmented { flex: 1; }
+.tb-sort-controls > .segmented button { flex: 1; justify-content: center; white-space: nowrap; }
+.tb-sort-row .segmented button .lg { display: inline; }
+.tb-sort-row .segmented button .sm { display: none; }
+.tb-sort-row .segmented button .si { margin-right: 6px; }
 .sort-order-chevron { display: block; flex: 0 0 12px; }
 
 /* Collection switch (CollectionSwitch in tracking.jsx) and its state icons. */
@@ -629,44 +626,21 @@ body {
 .coll-compact .coll-label { display: none; }
 .coll-compact button:first-child .coll-label, .coll-compact button.on .coll-label { display: inline; }
 @media (min-width: 400px) { .coll-compact .coll-label { display: inline; } }
-/* Desktop toolbar: step the second row down where it gets tight (two-row
-   layout below 1440px; joined single row from 1920px until 2560px). Longer
-   translations (e.g. Portuguese) need the same room as the widest English
-   state, so the ranges are sized for both. First label only All + the active
-   option and drop Recenter's text; then go icon-only, drop the language
-   globe and let search shrink a little. */
-@media (max-width: 1439px), (min-width: 1920px) and (max-width: 2559px) {
-  .tb-secondary-row .coll-switch button { padding: 0 10px; }
-  .tb-secondary-row .coll-switch .coll-label { display: none; }
-  .tb-secondary-row .coll-switch button:first-child .coll-label,
-  .tb-secondary-row .coll-switch button.on .coll-label { display: inline; }
-  .tb-secondary-row .reset-view .reset-label { display: none; }
-  .tb-secondary-row .reset-view { padding: 0 13px; }
+/* Desktop toolbar step-downs, sized for the longest translation
+   (Portuguese). Row 3: short sort labels, then label only All + the active
+   collection, then icons only. Row 2: drop "Order:", then Filters' text. */
+@media (max-width: 1300px) {
+  .tb-sort-row .segmented button .lg { display: none; }
+  .tb-sort-row .segmented button .sm { display: inline; }
 }
-@media (max-width: 1199px), (min-width: 1920px) and (max-width: 2199px) {
-  .tb-secondary-row .coll-switch button.on:not(:first-child) .coll-label { display: none; }
-  .tb-secondary-row > .search-wrap { min-width: 200px; }
-  .tb-end .lang-menu .lang-globe { display: none; }
+@media (max-width: 1150px) {
+  .tb-sort-row .coll-switch button { padding: 0 10px; }
+  .tb-sort-row .coll-switch .coll-label { display: none; }
+  .tb-sort-row .coll-switch button:first-child .coll-label,
+  .tb-sort-row .coll-switch button.on .coll-label { display: inline; }
+  .tb-order-label { display: none; }
 }
 @media (max-width: 999px) {
-  .tb-secondary-row .filters-pill .filters-label { display: none; }
-}
-
-@media (max-width: 1250px) {
-  .tb-primary-row .segmented button .lg { display: none; }
-  .tb-primary-row .segmented button .sm { display: inline; }
-}
-@media (min-width: 1920px) {
-  .toolbar { grid-template-columns: max-content max-content minmax(0, 1fr) max-content; column-gap: 12px; }
-  .tb-primary-row > .tb-sort-controls { grid-column: 2; }
-  .toolbar > .tb-end { grid-column: 4; grid-row: 1; }
-  .tb-secondary-row { grid-column: 3; grid-row: 1; }
-  .tb-sort-controls > .segmented { flex: none; }
-  .tb-primary-row .segmented button .lg { display: none; }
-  .tb-primary-row .segmented button .sm { display: inline; }
-  .tb-secondary-row .filters-pop { left: auto; right: 0; }
-}
-@media (min-width: 2100px) {
-  .tb-primary-row .segmented button .lg { display: inline; }
-  .tb-primary-row .segmented button .sm { display: none; }
+  .tb-sort-row .coll-switch button.on:not(:first-child) .coll-label { display: none; }
+  .tb-filter-row .filters-pill .filters-label { display: none; }
 }

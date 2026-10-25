@@ -87,8 +87,6 @@ window.MCU_LOCALES.en = {
     'search.aria': 'Search titles or characters',
     'search.clear': 'Clear search',
 
-    'canvas.recenter': 'Recenter',
-    'canvas.recenterAria': 'Recenter view',
     'canvas.zoomIn': 'Zoom in',
     'canvas.zoomOut': 'Zoom out',
     'canvas.zoomTypeTouch': 'Tap to type a zoom level',

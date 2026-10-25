@@ -20,10 +20,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Spatial connection canvas with pan, zoom, draggable cards and cast highlighting.
   Release/Chrono open closer and centred on the titles in view; closing a title's
   details glides the camera back to where you were.
-- Desktop navigation uses one row on wide screens and two full-width rows on
-  narrower desktops: brand, sort modes and Order above; type, Filters, search,
-  Recenter and account below. The account control shows Sign in or the signed-in
-  user's name, shortened visually when space is limited.
+- Desktop navigation is grouped like the mobile header. The top row has the
+  brand, then search, Order, Filters and All/Films/Series, then the language
+  menu and account at the right; the second row has the sort modes and
+  Unseen/Seen/Watchlist. Below 1280px the search group moves to its own row
+  between them, and labels shorten step by step on narrower desktops. The account control shows
+  Sign in or the signed-in user's name, shortened visually when space is limited.
+  Spatial frames itself when the layout, filters or selection change, so there is
+  no manual Recenter button.
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.
 - Each released title shows its in-story timeframe (e.g. "Set in 1943–1945") on
   cards, list rows and details, alongside the release year. Chronological order
@@ -310,7 +314,7 @@ log as evidence, not as a live list of pending setup tasks.
 
 ## Credits and tools
 
-Created and maintained by [André Ribeiro](https://github.com/AndreFelipeRibeiro),
+Created and maintained by [Andre Ribeiro](https://github.com/AndreFelipeRibeiro),
 with development, planning, documentation and verification assistance from
 **Anthropic Claude** and **OpenAI ChatGPT/Codex**. Earlier commits include Claude
 co-author credits. Codex and Claude now share the `version/3.0` working tree;
