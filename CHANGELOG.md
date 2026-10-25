@@ -11,6 +11,18 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Agent workflow uses the Notion task database
+
+Recorded: 2026-10-24 21:41:19 EDT (-0400).
+
+- AGENTS.md now points Codex and Claude to the Notion V3 Tasks database instead
+  of the archived checklist: take the next task from the Queue view, claim it
+  with Assigned to + Status In progress and re-read the record, set Awaiting
+  review when ready, and complete code tasks only after approval and a push,
+  filling Completed on and Latest commit. Phase 6 stays Deferred.
+- Verification: documentation-only; diff reviewed against the database's own
+  workflow notes. No application files changed.
+
 ## V3 maintenance — Remember view, sort mode and order per device
 
 Recorded: 2026-10-24 21:34:34 EDT (-0400).

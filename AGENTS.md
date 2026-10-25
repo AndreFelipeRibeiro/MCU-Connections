@@ -35,9 +35,8 @@ time. Uncommitted changes are the hand-off point, so treat them carefully.
   reset, discard or commit another agent's pending work.
 - Fetch before starting; if `version/3.0` moved on GitHub, fast-forward only
   (`git pull --ff-only`) on a clean tree.
-- Claim the Notion task before working by noting "In progress — Codex" or
-  "In progress — Claude" beneath it; change it to "Awaiting review — <agent>"
-  when ready. Do not pick up a task the other agent has claimed.
+- Claim the task in the Notion V3 Tasks database before working (see Backlog
+  workflow). Do not pick up a task the other agent has claimed.
 - Do not run `git reset --hard`, `git checkout -- .`, `git clean`, `git stash`,
   rebases, force pushes or `git worktree prune` without explicit user approval.
   The worktree path can look missing or prunable from a sandboxed shell; it is not.
@@ -64,9 +63,20 @@ time. Uncommitted changes are the hand-off point, so treat them carefully.
 
 ## Backlog workflow
 
-Use the top unchecked task in the user's current V3 Notion checklist unless the
-user explicitly names another task. Work on one item at a time. Keep it unchecked
-and mark it Awaiting review after implementation and verification. Move it to
-Completed only after explicit user approval and its changes are committed and
-pushed to GitHub. Add a bracketed completion date using America/New_York, commit
-links and verification notes. Completion on V3 does not approve a main merge.
+The user's Notion **V3 Tasks** database (under the MCU - V3 page) is the backlog;
+the old checklist is a read-only archive. Use the next task in its **Queue** view
+unless the user names another. Work on one task at a time.
+
+- Claim: set **Assigned to** to your agent and **Status** to **In progress**, then
+  re-read the record to confirm no one else claimed it. Ownership is a
+  coordination convention, not a file lock.
+- Ready: set **Status** to **Awaiting review**. Keep the request, changes, actual
+  verification and remaining limits in the task page body.
+- Complete code tasks only after explicit user approval and once the approved
+  change is committed and pushed: set **Status** to **Completed**, **Completed
+  on** to the America/New_York date and **Latest commit** to the final
+  implementation commit; list every related commit in the page body. Completed
+  tasks move to the Completed view automatically.
+- Notion-only tasks still need the user's review but no code commit. Phase 6
+  (email/password) stays **Deferred** until its own plan and approval.
+  Completion on V3 does not approve a main merge.
