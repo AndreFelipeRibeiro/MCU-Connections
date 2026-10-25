@@ -268,6 +268,38 @@ function useReorderAnimation(orderKey) {
   return ref;
 }
 
+// In-story timeframe (data.js `story`), shown alongside the release year on
+// every card, row and detail view. The compact form is the label with an
+// hourglass; `detail` reads "Set in …" (for years) plus any alternate-reality
+// note. Titles
+// without a sourced timeframe (unreleased) render nothing.
+function Hourglass() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 22h14M5 2h14"/>
+      <path d="M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22"/>
+      <path d="M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/>
+    </svg>
+  );
+}
+
+function StoryYear({ title, detail = false, className = '' }) {
+  if (!title || !title.story) return null;
+  const note = title.storyNote;
+  // "Set in 1995", but "Outside time" / "Multiverse" stand on their own.
+  const lead = /^(c\. )?\d/.test(title.story) ? 'Set in ' : '';
+  return (
+    <span className={`story-year${detail ? ' detail' : ''}${className ? ' ' + className : ''}`}
+      title={`In-story timeframe: ${title.story}${note ? ' · ' + note : ''}`}>
+      <Hourglass/>
+      {detail
+        ? <span>{lead}{title.story}{note && <span className="story-note"> · {note}</span>}</span>
+        : <span>{lead && <span className="story-sr">{lead}</span>}{title.story}</span>}
+    </span>
+  );
+}
+
 // The card is a <div> wrapping a dedicated open button rather than one big
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
@@ -297,6 +329,7 @@ function MobileGrid({ titles, onSelect, searchCharMatches, search, empty, orderK
                     <span>{t.year}</span>
                     {t.budget != null && <b>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</b>}
                   </div>
+                  <StoryYear title={t} className="m-cstory"/>
                   <MatchBadge matchedChars={matchedChars} query={search}/>
                 </div>
               </button>
@@ -316,9 +349,18 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, 
   if (!titles.length) return <EmptyState {...(empty || {})}/>;
   const ranked = sort === 'imdb' || sort === 'rt';
   const lead = sort === 'rt' ? 'rt' : 'imdb';
-  // Group headers for the non-score sorts
+  // Group headers for the non-score sorts. Chrono groups by in-story timeframe
+  // (headers carry the hourglass, so rows show their release year instead).
   const groups = [];
-  if (sort === 'release' || sort === 'chrono') {
+  const chrono = sort === 'chrono';
+  if (chrono) {
+    titles.forEach(t => {
+      const label = t.story || 'Timeframe TBA';
+      const last = groups[groups.length-1];
+      if (last && last.label === label) last.items.push(t);
+      else groups.push({ key: 's:' + label + '#' + groups.length, label, story: true, items: [t] });
+    });
+  } else if (sort === 'release') {
     titles.forEach(t => {
       const key = String(t.year);
       const last = groups[groups.length-1];
@@ -340,7 +382,9 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, 
     <div className="m-scrollarea" ref={flipRef}>
       {groups.map(g => (
         <div className="m-group" key={g.key}>
-          {g.label && <div className="m-glabel" data-flip-id={'g:' + g.key} style={g.color?{color:g.color}:null}>{g.label}</div>}
+          {g.label && <div className={`m-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.key} style={g.color?{color:g.color}:null}>
+            {g.story && <Hourglass/>}{g.story && <span className="story-sr">Set in </span>}{g.label}
+          </div>}
           <div className="m-list">
             {g.items.map(t => {
               n += 1;
@@ -356,10 +400,12 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, 
                       <div className="m-ltitle"><Highlight text={t.title} query={search}/></div>
                       <div className="m-lmeta">
                         {!ranked && <span>{t.type.toUpperCase()}</span>}
+                        {chrono && <><span className="m-dot"/><span title="Release year">{t.year}</span></>}
                         {ranked && <span>{t.year}</span>}
                         <span className="m-dot"/>
                         <span style={{color:MPHASE_COLORS[t.phase]}}>{MPHASE_LABELS[t.phase]}</span>
                         {t.budget != null && <><span className="m-dot"/><span>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</span></>}
+                        {t.story && !chrono && <><span className="m-dot"/><StoryYear title={t}/></>}
                       </div>
                       <ScoreBadges title={t} lead={lead}/>
                       <MatchBadge matchedChars={matchedChars} query={search}/>
@@ -507,6 +553,7 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
         <div className="m-hero-text">
           <div className="m-eyebrow" style={{color:MPHASE_COLORS[title.phase]}}>{MPHASE_LABELS[title.phase]} · {title.type.toUpperCase()} · {title.year}</div>
           <h2 className="m-dtitle">{title.title}</h2>
+          <StoryYear title={title} detail className="m-hero-story"/>
           <ScoreBadges title={title}/>
           <window.TitleStatusActions title={title} variant="inline" className="m-hero-tsa"/>
         </div>
@@ -555,6 +602,7 @@ function FocusPop({ title, x, y, onOpenCast }) {
         </div>
         <div className="m-fp-meta">
           <div className="m-fp-title">{title.title}</div>
+          <StoryYear title={title} className="m-fp-story"/>
           <ScoreBadges title={title}/>
           <div className="m-fp-cta">Tap for cast ›</div>
         </div>
@@ -574,4 +622,4 @@ function SpatialHint({ focused, sharedCount }) {
   );
 }
 
-Object.assign(window, { MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, Highlight });
+Object.assign(window, { MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, Highlight, StoryYear });

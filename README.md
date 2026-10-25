@@ -26,6 +26,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Recenter and account below. The account control shows Sign in or the signed-in
   user's name, shortened visually when space is limited.
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.
+- Each released title shows its in-story timeframe (e.g. "Set in 1943–1945") on
+  cards, list rows and details, alongside the release year. Chronological order
+  follows those timeframes, and the mobile Chrono list groups by them.
 - Mobile view navigation is List / Grid / Spatial. List rows place IMDb and
   Rotten Tomatoes together beneath their phase/budget metadata.
 - Choose direction from a separate order menu beside desktop sorting or beside

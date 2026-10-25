@@ -165,3 +165,42 @@ No API credentials or new runtime dependencies are added by this audit.
 The catalog maintenance is included in the V3 maintenance release approved for
 main on 2026-10-24. The research dates and limitations above are historical;
 this release does not represent a fresh ratings audit.
+
+## In-story timeframes — 2026-10-24
+
+Added `story` (and `storyNote` for alternate realities) to the 60 released
+titles in `data.js`, and renumbered `chronOrder` (1–64) so the Chronological
+sort follows these timeframes, as the user approved.
+
+- Primary source: Marvel Studios' 2023 book *The Marvel Cinematic Universe: An
+  Official Timeline*, as summarized with citations in Wikipedia's
+  [Marvel Cinematic Universe timeline](https://en.wikipedia.org/wiki/Marvel_Cinematic_Universe_timeline)
+  article. Later titles the book does not cover use that article's in-film and
+  creator-statement evidence. Checked 2026-10-24.
+- Where sources disagree, the book wins: Iron Man is 2008 (some fan and earlier
+  timelines say 2010); Iron Man 2, The Incredible Hulk and Thor are 2010; Iron Man
+  3 is December 2013–early 2014; Spider-Man: Homecoming is 2016 despite its
+  "eight years later" card; Wakanda Forever is 2025.
+- Ranges cover stories that span years (The First Avenger 1943–1945, Endgame
+  2018–2023, Daredevil: Born Again 2025–2027). `c.` marks approximate years the
+  sources only infer (Secret Invasion, VisionQuest, Your Friendly Neighborhood
+  Spider-Man).
+- Loki seasons read "Outside time" and What If…? seasons "Multiverse"; the
+  sources give them no place in the Sacred Timeline. Alternate-reality titles
+  (The Fantastic Four: First Steps, Marvel Zombies, Your Friendly Neighborhood
+  Spider-Man, Deadpool & Wolverine) keep a year plus a note naming the reality.
+- Unreleased titles (Avengers: Doomsday, Avengers: Secret Wars, Daredevil: Born
+  Again Season 3, Your Friendly Neighborhood Spider-Man Season 2) have no value
+  yet; add one after release from on-screen evidence.
+- Chronological order: the previous `chronOrder` disagreed with these years in
+  about 17 places (e.g. Guardians of the Galaxy Vol. 2, set in 2014, sorted after
+  Civil War; Ant-Man and the Wasp, set in 2018, before Black Widow; Echo,
+  Ironheart and Daredevil: Born Again Season 2 after later-set titles). It now
+  moves forward by timeframe. Within a year it follows the book's seasons (e.g.
+  Thor: The Dark World, fall 2013, before Iron Man 3, Christmas 2013; Shang-Chi
+  before The Falcon and the Winter Soldier). Dated alternate realities sit at
+  their year (Marvel Zombies after WandaVision, Deadpool & Wolverine at the end of
+  2024); She-Hulk, which runs from fall 2024 into 2025, closes 2024; undated
+  Loki and What If…? seasons keep their previous neighbours (What If…? seasons 2
+  and 3 together); unreleased titles sit at the end. The mobile Chrono list groups by timeframe.
+
