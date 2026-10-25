@@ -12,6 +12,20 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 workflow — Completion time and order rules
+
+Recorded: 2026-10-25 12:35:17 EDT (-0400).
+
+- AGENTS.md (Backlog workflow) now matches the MCU - V3 Notion page: priority is
+  the drag order of the Backlog column in the All tasks board (no priority
+  numbers); closing a task records the actual America/New_York date and time and
+  the next Completion order (highest existing value plus one, queried first),
+  never creation or last-edited time; All tasks and Completed sort by Completed
+  on, then Completion order, both descending. The Notion page's stale "Queue
+  sorted by Order" instruction was replaced to match.
+- Documentation only; no application change. Verified by re-reading both
+  documents and querying the All tasks view (latest completion listed first).
+
 ## V3 maintenance — Floating desktop context summary
 
 Recorded: 2026-10-25 12:15:11 EDT (-0400).
