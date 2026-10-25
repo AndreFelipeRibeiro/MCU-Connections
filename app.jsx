@@ -62,11 +62,6 @@ function sortDirectionLabels(sort, short = false) {
 }
 window.sortDirectionLabels = sortDirectionLabels;
 
-function sortLabelFor(sort, dir) {
-  const direction = sortDirectionLabels(sort)[dir === 'desc' ? 1 : 0];
-  return sort === 'title' ? direction : `${tr('sort.by.' + sort)} · ${direction.toLocaleLowerCase(document.documentElement.lang || 'en')}`;
-}
-
 function sortTitles(list, sort, dir = 'asc') {
   const mul = dir === 'desc' ? -1 : 1;
   return list.slice().sort((a, b) => {
@@ -81,6 +76,82 @@ function sortTitles(list, sort, dir = 'asc') {
     if (sort === 'phase') return mul * ((a.phase - b.phase) || a.release.localeCompare(b.release));
     return mul * a.release.localeCompare(b.release);
   });
+}
+
+// What the view is showing, in one place at every size: how many titles match,
+// the sort, the seen count and the active filters (search, collection, type,
+// phase, budget). Variants:
+//   'bar'  - desktop strip under the toolbar: full sort text, one removable chip
+//            per filter, Clear all and Recenter.
+//   'line' - top of the mobile List/Grid (scrolls away with it).
+//   'pill' - mobile Spatial, top-left of the canvas clear of the zoom control.
+// Phones show just the count, seen and how many filters: the sort tabs, Order
+// button, search box, collection switch and Filters badge already say the rest.
+// `showing` counts titles matching every filter, including the collection one,
+// which only dims cards in Spatial.
+function ContextSummary({ variant, showing, total, sort, sortDir, filters: f, onRecenter }) {
+  const { progress } = window.useCollection();
+  const chips = [];
+  const query = f.search.trim();
+  if (query) chips.push(['search', `“${query}”`, () => f.setSearch('')]);
+  if (f.collectionFilter !== 'all') chips.push(['collection', tr('collection.' + f.collectionFilter), () => f.setCollectionFilter('all')]);
+  if (f.typeFilter !== 'all') chips.push(['type', tr(f.typeFilter === 'film' ? 'type.films' : 'type.series'), () => f.setTypeFilter('all')]);
+  if (f.phaseFilter !== 'all') chips.push(['phase', tr('phase.label', { n: f.phaseFilter }), () => f.setPhaseFilter('all')]);
+  if (f.budgetFilter !== 'all') chips.push(['budget', tr('budget.' + f.budgetFilter), () => f.setBudgetFilter('all')]);
+  const clearAll = () => {
+    f.setSearch(''); f.setCollectionFilter('all'); f.setTypeFilter('all');
+    f.setPhaseFilter('all'); f.setBudgetFilter('all');
+  };
+  const count = showing === total ? tr('header.count', { n: total }) : tr('header.countOf', { shown: showing, total });
+  const seen = progress.seenReleased > 0 ? tr('header.seen', { n: progress.seenReleased }) : null;
+
+  if (variant !== 'bar') {
+    // The Spatial pill sits beside the zoom control, so it drops the seen count
+    // while filters are on to stay on one line.
+    const showSeen = seen && !(variant === 'pill' && chips.length);
+    // Keep canvas pan/pinch handlers from treating a tap here as a drag.
+    const stop = e => e.stopPropagation();
+    return (
+      <div className={`ctx ctx-${variant}`} onTouchStart={stop} onMouseDown={stop}>
+        <span className="ctx-text" role="status">
+          <span className="ctx-seg"><b>{count}</b></span>
+          {showSeen && <>{' '}<span className="ctx-seg">· {seen}</span></>}
+          {chips.length > 0 && <>{' '}<span className="ctx-seg ctx-nfilters">· {tr('context.filters', { n: chips.length })}</span></>}
+        </span>
+        {chips.length > 0 && <button className="ctx-clear" onClick={clearAll}>{tr('context.clear')}</button>}
+      </div>
+    );
+  }
+
+  const direction = sortDirectionLabels(sort)[sortDir === 'desc' ? 1 : 0];
+  // Phase and A-Z directions already name the sort ("Phase 1 → 6", "A–Z").
+  const sortText = (sort === 'title' || sort === 'phase') ? direction
+    : `${tr('sort.' + sort)} · ${direction.toLocaleLowerCase(document.documentElement.lang || 'en')}`;
+  return (
+    <div className="ctx ctx-bar">
+      <div className="ctx-main">
+        <span className="ctx-text" role="status">
+          <span className="ctx-seg"><b>{count}</b></span>{' '}
+          <span className="ctx-seg">· {sortText}</span>
+          {seen && <>{' '}<span className="ctx-seg">· {seen}</span></>}
+        </span>
+        {chips.map(([key, label, clear]) => (
+          <button key={key} className="ctx-chip" onClick={clear} title={tr('context.remove', { label })}
+            aria-label={tr('context.remove', { label })}>
+            {label}<span aria-hidden="true">×</span>
+          </button>
+        ))}
+      </div>
+      <div className="ctx-end">
+        {chips.length > 0 && <button className="ctx-clear" onClick={clearAll}>{tr('filters.clearAll')}</button>}
+        <button className="ctx-recenter" onClick={onRecenter} aria-label={tr('canvas.recenterAria')}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          {tr('canvas.recenter')}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // Compute layout positions per sort mode on an even grid: cards in a row share
@@ -266,10 +337,9 @@ function CastDrawer({ title, onClose, onCharacterClick, hoveredCharacter, onChar
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
 const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
-function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch, total, showing }) {
+function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
-  const { progress } = window.useCollection();
   // Collection has its own always-visible switch, so it is not counted here.
   const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
   useEffect(() => {
@@ -289,13 +359,7 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
       <div className="tb-row tb-top-row">
         <div className="brand">
           <div className="brand-mark"/>
-          <div>
-            <div className="brand-title">{tr('app.name')}</div>
-            <div className="brand-sub">
-              {tr('header.countOfTitles', { shown: showing, total })}
-              {progress.seenReleased > 0 && ` · ${tr('header.seen', { n: progress.seenReleased })}`}
-            </div>
-          </div>
+          <div className="brand-title">{tr('app.name')}</div>
         </div>
         <div className="tb-filter-row">
           <div className="search-wrap">
@@ -1238,6 +1302,12 @@ function App() {
   const filterCount = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
   // Spatial keeps every card on screen (dimmed), so it counts `filtered`; the
   // flat views actually drop non-matching rows and count what they render.
+  const contextSummary = (variant) => (
+    <ContextSummary variant={variant} showing={visible.length} total={window.TITLES.length}
+      sort={sort} sortDir={sortDir} onRecenter={resetView}
+      filters={{ search, setSearch, collectionFilter, setCollectionFilter, typeFilter, setTypeFilter,
+        phaseFilter, setPhaseFilter, budgetFilter, setBudgetFilter }}/>
+  );
   const mobileShowing = viewMode === 'spatial' ? filtered.length : visible.length;
   const sharedCharCount = useMemo(() => {
     if (!selectedId) return 0;
@@ -1343,6 +1413,7 @@ function App() {
               title={tr(isTouch ? 'canvas.zoomTypeTouch' : 'canvas.zoomTypeDesktop')}>{Math.round(view.scale * 100)}%</button>}
         <button className="zoom-btn" onClick={()=>applyScale(s=>s*1.15)} disabled={view.scale >= 2 - 1e-4} aria-label={tr('canvas.zoomIn')}>+</button>
       </div>
+      {isTouch && contextSummary('pill')}
       {focusPop}
     </div>
   );
@@ -1356,15 +1427,14 @@ function App() {
           search={search} setSearch={setSearch}
           onOpenFilters={() => setSheet('filters')}
           filterCount={filterCount}
-          showing={mobileShowing} total={window.TITLES.length}
-          sort={sort} sortDir={sortDir} setSortDir={setSortDir} sortLabel={sortLabelFor(sort, sortDir)}
+          sort={sort} sortDir={sortDir} setSortDir={setSortDir}
           onOpenAccount={() => setSheet('account')}
           collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         />
         {charBanner}
         <div className="m-main">
-          {viewMode === 'grid' && <window.MobileGrid titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
-          {viewMode === 'list' && <window.MobileList titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
+          {viewMode === 'grid' && <window.MobileGrid header={contextSummary('line')} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
+          {viewMode === 'list' && <window.MobileList header={contextSummary('line')} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
@@ -1414,8 +1484,8 @@ function App() {
         budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
         collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         search={search} setSearch={setSearch}
-        total={window.TITLES.length} showing={filtered.length}
       />
+      {contextSummary('bar')}
 
       {charBanner}
 

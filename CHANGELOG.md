@@ -12,6 +12,37 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Context summary on every screen size
+
+Recorded: 2026-10-25 11:47:47 EDT (-0400).
+
+- New context summary for what the view is showing. Desktop: a bar under the
+  toolbar with the matching count, sort and seen count, one removable chip per
+  active filter (search, collection, type, phase, budget), Clear all and a
+  Recenter button (restored). Phones: one line at the top of List and Grid
+  (count · seen · N filters, Clear) that scrolls with the list, and a pill at the
+  top-left of Spatial clear of the zoom control; the line also shows above the
+  empty state.
+- The logo subtitles are gone on desktop and mobile, which also resolves the
+  320px mobile subtitle overflow. The count is now the titles matching every
+  filter, including the collection filter, on every surface (Spatial previously
+  also counted cards the collection filter only dims). Below 360px the language
+  globe hides so the app name fits.
+- Locales: added `context.*`, restored `canvas.recenter*`; removed the unused
+  `header.countOfTitles` and `sort.by.*` keys.
+- Verification: headless Chromium, en-US and pt-BR. Fit sweep at 20 desktop and 4
+  phone widths with All and Watchlist active: no overflow, overlaps, clipping,
+  horizontal scroll or console errors. Desktop: chips match the filters, removing
+  one resets its control, Clear all resets everything, Recenter restores the
+  start camera after a pan, count equals the undimmed cards. Mobile: count equals
+  list rows, Clear resets search and collection, empty state keeps the line, the
+  Spatial pill does not overlap the zoom control and its Clear does not select a
+  card. Camera regression and language scripts pass (the camera script now
+  measures the card actually selected in its A→B step). The user reviewed
+  screenshots and approved committing, pushing and merging to main.
+- Limits: the desktop bar adds about 40px; the compact collection switch at 320px
+  in Portuguese remains tight (pre-existing); no physical-device check.
+
 ## V3 maintenance — Even Spatial card layout; backlog priority rule
 
 Recorded: 2026-10-25 09:44:26 EDT (-0400).

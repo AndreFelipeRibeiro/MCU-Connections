@@ -5,18 +5,27 @@
 /* APP BAR */
 .m-appbar { flex: 0 0 auto; padding: 10px 14px 11px; border-bottom: 1px solid var(--border); background: rgba(10,12,20,.94); backdrop-filter: blur(12px); display: flex; flex-direction: column; gap: 10px; z-index: 30; }
 .m-appbar-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-/* Let the brand shrink so the language menu and avatar always fit; the
-   subtitle truncates instead of running under them on narrow phones. */
+/* Let the brand shrink so the language menu and avatar always fit. */
 .m-brandrow { flex: 1 1 auto; min-width: 0; }
-.m-brandrow > div:last-child { min-width: 0; }
-.m-bsub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .m-appbar-top .lang-menu { flex: 0 0 auto; }
 .m-appbar-top .lang-menu .sort-order-trigger { height: 38px; padding: 0 9px; gap: 5px; font-size: 12px; }
 .m-brandrow { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .m-mark { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 7px; position: relative; background: conic-gradient(from 45deg,#d4a05a,#4a8de8,#d04040,#a05cd0,#5fa856,#d4a05a); }
 .m-mark::after { content: ''; position: absolute; inset: 5px; border-radius: 3px; background: var(--bg); }
 .m-btitle { font-size: 15px; font-weight: 600; line-height: 1.15; white-space: nowrap; }
-.m-bsub { font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 2px; white-space: nowrap; }
+.m-btitle { overflow: hidden; text-overflow: ellipsis; }
+/* Context summary (ContextSummary in app.jsx): one line at the top of List and
+   Grid; a pill at the top-left of Spatial, clear of the zoom control. */
+.ctx-line { justify-content: space-between; margin: -2px 0 10px; min-height: 22px; }
+.ctx-line .ctx-text, .ctx-pill .ctx-text { flex-wrap: nowrap; overflow: hidden; }
+.ctx-pill { position: absolute; top: 12px; left: 14px; max-width: calc(100% - 164px); z-index: 40; min-height: 26px; box-sizing: border-box; padding: 2px 10px; border: 1px solid var(--border); border-radius: 13px; background: rgba(10,12,20,.82); backdrop-filter: blur(6px); }
+.ctx-pill:has(.ctx-clear) { padding-right: 4px; }
+/* The narrowest phones: the title needs the language globe's width, and the
+   Spatial pill keeps just the count and Clear. */
+@media (max-width: 359px) {
+  .m-appbar-top .lang-menu .lang-globe { display: none; }
+  .ctx-pill .ctx-nfilters { display: none; }
+}
 .m-searchrow { display: flex; align-items: center; gap: 8px; }
 .m-searchbar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
 /* Render at 13px while retaining a 16px input to avoid iOS focus zoom. */

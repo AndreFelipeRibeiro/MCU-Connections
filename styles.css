@@ -83,7 +83,7 @@ body {
 .tb-row { display: flex; align-items: center; gap: 18px; }
 .tb-row > .segmented, .tb-row .control-group > .segmented, .tb-row .filters-pill, .tb-row .search-wrap { height: 44px; box-sizing: border-box; }
 .brand, .control-group, .segmented, .filters-pill { flex-shrink: 0; }
-.brand-title, .brand-sub, .filters-pill, .control-group label { white-space: nowrap; }
+.brand-title, .filters-pill, .control-group label { white-space: nowrap; }
 .segmented button .si { font-size: 12px; opacity: .75; margin-right: 6px; }
 .segmented button.on .si { opacity: 1; }
 .filters-pop-wrap { position: relative; flex-shrink: 0; }
@@ -106,7 +106,6 @@ body {
   content: ''; position: absolute; inset: 6px; border-radius: 3px; background: var(--bg);
 }
 .brand-title { font-size: 15px; font-weight: 600; letter-spacing: 0.2px; }
-.brand-sub { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
 
 .control-group { display: flex; align-items: center; gap: 10px; }
 .control-group label {
@@ -648,3 +647,21 @@ body {
   .tb-sort-row .coll-switch button.on:not(:first-child) .coll-label { display: none; }
   .tb-filter-row .filters-pill .filters-label { display: none; }
 }
+
+/* Context summary (ContextSummary in app.jsx). Shared pieces, then the desktop
+   bar under the toolbar; the phone line and Spatial pill are in styles-mobile.css. */
+.ctx { display: flex; align-items: center; gap: 6px 8px; font-size: 11.5px; color: var(--text-dim); }
+.ctx-text { display: inline-flex; flex-wrap: wrap; column-gap: 1ch; min-width: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 16px; color: var(--text-dim); }
+.ctx-seg { white-space: nowrap; }
+.ctx-text b { color: var(--text); font-weight: 600; }
+.ctx-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 7px 0 10px; border: 1px solid var(--border-strong); border-radius: 13px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 11.5px; white-space: nowrap; cursor: pointer; }
+.ctx-chip span { opacity: .6; font-size: 14px; line-height: 1; }
+.ctx-chip:hover span { opacity: 1; }
+.ctx-clear { flex: 0 0 auto; height: 26px; padding: 0 4px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 11.5px; white-space: nowrap; cursor: pointer; }
+.ctx-chip:focus-visible, .ctx-clear:focus-visible, .ctx-recenter:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctx-bar { flex: 0 0 auto; position: relative; z-index: 45; justify-content: space-between; gap: 16px; min-height: 40px; box-sizing: border-box; padding: 6px 22px; border-bottom: 1px solid var(--border); background: rgba(10,12,20,.85); }
+.ctx-main { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+.ctx-end { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+.ctx-recenter { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-dim); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; }
+.ctx-recenter:hover { color: var(--text); border-color: var(--border-strong); }
+@media (max-width: 1560px) { .ctx-bar { padding: 6px 16px; } }

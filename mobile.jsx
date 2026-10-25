@@ -21,20 +21,13 @@ function ScoreBadges({ title, lead, compact }) {
 // The app bar is already three rows deep on a phone, so the view switch moved
 // off m-appbar-top (where the account avatar now sits) onto its own tight row
 // rather than becoming a fourth control crammed into the brand row.
-function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters, filterCount, showing, total, sortLabel, sort, sortDir, setSortDir, onOpenAccount, collectionFilter, setCollectionFilter }) {
-  const { progress } = window.useCollection();
+function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, collectionFilter, setCollectionFilter }) {
   return (
     <div className="m-appbar">
       <div className="m-appbar-top">
         <div className="m-brandrow">
           <div className="m-mark"/>
-          <div>
-            <div className="m-btitle">{mtr('app.name')}</div>
-            <div className="m-bsub">
-              {showing === total ? mtr('header.count', { n: total }) : mtr('header.countOf', { shown: showing, total })} · {sortLabel}
-              {progress.seenReleased > 0 && ` · ${mtr('header.seen', { n: progress.seenReleased })}`}
-            </div>
-          </div>
+          <div className="m-btitle">{mtr('app.name')}</div>
         </div>
         <window.LanguageMenu compact/>
         <window.AccountAvatarButton onOpen={onOpenAccount}/>
@@ -395,13 +388,14 @@ function StoryYear({ title, detail = false, className = '' }) {
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
 // so tapping anywhere except the toggles opens the cast sheet exactly as before.
-function MobileGrid({ titles, onSelect, searchCharMatches, search, empty, orderKey }) {
+function MobileGrid({ header, titles, onSelect, searchCharMatches, search, empty, orderKey }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
   const flipRef = useReorderAnimation(orderKey);
-  if (!titles.length) return <EmptyState {...(empty || {})}/>;
+  if (!titles.length) return <div className="m-scrollarea">{header}<EmptyState {...(empty || {})}/></div>;
   return (
     <div className="m-scrollarea" ref={flipRef}>
+      {header}
       <div className="m-grid">
         {titles.map(t => {
           const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
@@ -433,11 +427,11 @@ function MobileGrid({ titles, onSelect, searchCharMatches, search, empty, orderK
   );
 }
 
-function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, orderKey }) {
+function MobileList({ header, titles, sort, onSelect, searchCharMatches, search, empty, orderKey }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
   const flipRef = useReorderAnimation(orderKey);
-  if (!titles.length) return <EmptyState {...(empty || {})}/>;
+  if (!titles.length) return <div className="m-scrollarea">{header}<EmptyState {...(empty || {})}/></div>;
   const ranked = sort === 'imdb' || sort === 'rt';
   const lead = sort === 'rt' ? 'rt' : 'imdb';
   // Group headers for the non-score sorts. Chrono groups by in-story timeframe
@@ -471,6 +465,7 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, 
   let n = 0;
   return (
     <div className="m-scrollarea" ref={flipRef}>
+      {header}
       {groups.map(g => (
         <div className="m-group" key={g.key}>
           {g.label && <div className={`m-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.key} style={g.color?{color:g.color}:null}>
