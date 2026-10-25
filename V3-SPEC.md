@@ -102,6 +102,9 @@ active filters are device-scoped by nature (this app renders a completely
 different shell on phone vs desktop). Persist them in `localStorage` only. If
 account-level preferences are ever wanted, add a single `jsonb` column later
 rather than a column-per-setting table.
+Implemented (V3 maintenance) as `mcu.prefs.v1` for view mode, sort and sort
+direction only. Filters are deliberately not persisted: returning to a silently
+filtered catalog reads as missing titles.
 
 **D7 — Supabase, not Firebase.** Reasons: officially supported plain-CDN UMD
 build (no npm needed), Google OAuth with browser redirect, session persistence

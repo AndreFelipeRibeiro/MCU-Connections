@@ -576,9 +576,44 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
   );
 }
 
+// Display preferences (V3-SPEC D6): device-scoped, localStorage only, not tied to
+// the account and not cleared on sign-out. Saves the mobile view mode, the sort
+// mode and the order direction, on desktop and mobile. Filters, search and the
+// spatial camera deliberately start fresh each visit, so nobody returns to a
+// silently filtered catalog. Nothing is written until the visitor changes one of
+// these, so first visits keep following the defaults below. Missing, malformed or
+// unknown values fall back to those defaults.
+const PREFS_KEY = 'mcu.prefs.v1';
+const PREFS_VERSION = 1;
+const VIEW_MODE_VALUES = ['list', 'grid', 'spatial'];
+
+function readDisplayPrefs() {
+  const prefs = { viewMode: 'list', sort: 'release', sortDir: DEFAULT_SORT_DIR.release };
+  let parsed = null;
+  try {
+    parsed = JSON.parse(window.localStorage.getItem(PREFS_KEY) || 'null');
+  } catch (e) {
+    return prefs; // Storage disabled, or not valid JSON.
+  }
+  if (!parsed || typeof parsed !== 'object' || parsed.version !== PREFS_VERSION) return prefs;
+  if (VIEW_MODE_VALUES.indexOf(parsed.viewMode) !== -1) prefs.viewMode = parsed.viewMode;
+  if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, parsed.sort)) {
+    prefs.sort = parsed.sort;
+    prefs.sortDir = parsed.sortDir === 'asc' || parsed.sortDir === 'desc' ? parsed.sortDir : DEFAULT_SORT_DIR[parsed.sort];
+  }
+  return prefs;
+}
+
+function writeDisplayPrefs(prefs) {
+  try {
+    window.localStorage.setItem(PREFS_KEY, JSON.stringify({ version: PREFS_VERSION, ...prefs }));
+  } catch (e) { /* Quota or disabled storage: the choice lasts for this visit only. */ }
+}
+
 function App() {
-  const [sort, setSort] = useState('release');
-  const [sortDir, setSortDir] = useState(DEFAULT_SORT_DIR.release);
+  const [initialPrefs] = useState(readDisplayPrefs);
+  const [sort, setSort] = useState(initialPrefs.sort);
+  const [sortDir, setSortDir] = useState(initialPrefs.sortDir);
   const changeSort = (v) => { if (v === sort) return; setSort(v); setSortDir(DEFAULT_SORT_DIR[v] || 'asc'); };
   const [phaseFilter, setPhaseFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -591,8 +626,14 @@ function App() {
   useEffect(() => { setMediaReady(true); }, []);
   const device = useDevice();
   const isTouch = device !== 'desktop';
-  // Mobile opens in List (user preference); desktop ignores viewMode (spatial only).
-  const [viewMode, setViewMode] = useState('list');
+  // Mobile opens in List unless the visitor chose another view before; desktop
+  // ignores viewMode (spatial only).
+  const [viewMode, setViewMode] = useState(initialPrefs.viewMode);
+  const prefsLoaded = useRef(false);
+  useEffect(() => {
+    if (!prefsLoaded.current) { prefsLoaded.current = true; return; }
+    writeDisplayPrefs({ viewMode, sort, sortDir });
+  }, [viewMode, sort, sortDir]);
   const [drawerId, setDrawerId] = useState(null);
   const [sheet, setSheet] = useState(null);
   const [selectedId, setSelectedId] = useState(null);

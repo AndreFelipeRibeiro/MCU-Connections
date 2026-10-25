@@ -30,7 +30,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   new slots, echoing Spatial (off with reduced motion).
 - Phase, film/series, budget and collection filters.
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
-  Mobile opens in List.
+  Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
   seen moves it to seen; un-seeing returns it to untracked.
 - Guest tracking saved in this browser; Google sign-in merges those marks and
@@ -150,7 +150,8 @@ and [redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
 ## Sync, errors and availability
 
 Guest marks use `localStorage` key `mcu.collection.v1`; the auth client uses
-`mcu.auth.v1`. Signed-in rows load from Supabase. Guest merges write only changed
+`mcu.auth.v1`. Display preferences (mobile view, sort mode and order) use
+`mcu.prefs.v1` on that device only; filters and search are not saved. Signed-in rows load from Supabase. Guest merges write only changed
 rows and clear guest storage only after success. Per-title write queues retain
 their original account scope, keep the latest intent, and prevent stale responses
 from changing a different account's UI. Writes are optimistic; failures roll back

@@ -11,6 +11,30 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Remember view, sort mode and order per device
+
+Recorded: 2026-10-24 21:34:34 EDT (-0400).
+
+- Each device now remembers the mobile view (List/Grid/Spatial), the sort mode
+  and the order direction, on desktop and mobile, in `localStorage` key
+  `mcu.prefs.v1` (`{ version: 1, viewMode, sort, sortDir }`), per V3-SPEC D6.
+- Nothing is written until the visitor changes one of these, so first visits keep
+  following the defaults (List, Release, oldest first). Preferences are not tied
+  to the account and are not cleared on sign-out.
+- Filters, search and the spatial camera are deliberately not saved, so nobody
+  returns to a silently filtered catalog. D6 and README note this.
+- Missing, malformed, wrong-version or unknown values fall back to defaults; an
+  invalid direction falls back to that mode's default; blocked storage keeps
+  choices for the visit only.
+- Verification: headless Chromium. Mobile 390×844: Grid + IMDb lowest-first and
+  Spatial + Chrono latest-first survived reloads; returning to List/Release
+  persisted too; a Series filter (24 titles) reset to all 64 after reload with
+  nothing stored. Desktop 1440×900: Phase 6→1 survived reload. Malformed JSON,
+  wrong version, unknown values, an invalid direction and throwing storage all
+  loaded without console errors. The user reviewed locally and approved it.
+- Limits: browser emulation only; no physical-phone or private-browsing check by
+  Claude.
+
 ## V3 maintenance — Mobile opens in List view
 
 Recorded: 2026-10-24 21:20:39 EDT (-0400).
