@@ -41,7 +41,7 @@ function profileOf(user) {
   const name = m.full_name || m.name || m.preferred_username || null;
   const email = user.email || m.email || null;
   return {
-    name: name || email || 'Signed in',
+    name: name || email || window.MCU_I18N.tr('account.signedIn'),
     email,
     avatar: m.avatar_url || m.picture || null,
     initials: (name || email || '?').trim().slice(0, 1).toUpperCase(),
@@ -62,7 +62,7 @@ function AccountProvider({ children }) {
   const continueAsGuest = React.useCallback((reason) => {
     offlineRef.current = true;
     attemptRef.current += 1;
-    setOfflineReason(reason || 'Cloud connection unavailable');
+    setOfflineReason(reason || window.MCU_I18N.tr('error.connection'));
     setUser(null);
     setSyncAvailable(false);
     setStatus('signed_out');
@@ -93,7 +93,7 @@ function AccountProvider({ children }) {
     };
     const unavailable = () => {
       settle();
-      continueAsGuest('Could not restore the cloud session');
+      continueAsGuest(window.MCU_I18N.tr('error.restore'));
     };
     const timer = setTimeout(() => {
       if (!active || settled) return;
@@ -174,7 +174,7 @@ function AccountProvider({ children }) {
     const timer = setTimeout(() => {
       if (attemptRef.current !== attempt) return;
       attemptRef.current += 1;
-      setError('Could not start sign-in. Please try again.');
+      setError(window.MCU_I18N.tr('error.signIn'));
       setStatus('error');
     }, AUTH_TIMEOUT_MS);
     try {
@@ -205,7 +205,7 @@ function AccountProvider({ children }) {
     } catch (e) {
       // The SDK may still have a persisted session on failure. Do not claim
       // sign-out succeeded or switch account data into guest mode.
-      setError('Could not sign out. Please try again.');
+      setError(window.MCU_I18N.tr('error.signOut'));
     }
   }, [client]);
 
@@ -266,6 +266,7 @@ function GoogleMark() {
 // The body shared by the desktop popover and the mobile sheet, so the two can
 // never drift apart in what they say about the same account.
 function AccountPanel({ onPickCollection, onClose }) {
+  const { tr } = window.useI18n();
   const { status, profile, error, syncAvailable, unavailableReason, signIn, signOut } = useAccount();
   const { progress, loading: collectionLoading, syncError, retrySync } = window.useCollection();
   const signedIn = status === 'signed_in';
@@ -285,41 +286,38 @@ function AccountPanel({ onPickCollection, onClose }) {
       ) : (
         <div className="acct-id guest">
           <div className="acct-id-text">
-            <div className="acct-name">Not signed in</div>
+            <div className="acct-name">{tr('account.notSignedIn')}</div>
             <div className="acct-email">
-              {syncAvailable
-                ? 'Saved on this device. Sign in to sync.'
-                : 'Saved on this device. Sync unavailable.'}
+              {tr(syncAvailable ? 'account.savedSync' : 'account.savedNoSync')}
             </div>
           </div>
         </div>
       )}
 
-      {collectionLoading ? <div className="acct-note" role="status">{syncError ? 'Collection unavailable' : 'Loading your collection…'}</div> : (
+      {collectionLoading ? <div className="acct-note" role="status">{tr(syncError ? 'account.collectionUnavailable' : 'account.loading')}</div> : (
       <div className="acct-stats">
         <div className="acct-stat">
           <b>{progress.seenReleased}</b>
-          <span>of {progress.releasedTotal} released seen</span>
+          <span>{tr('account.seenStat', { total: progress.releasedTotal })}</span>
         </div>
         <div className="acct-stat">
           <b>{progress.watchlist}</b>
-          <span>on watchlist</span>
+          <span>{tr('account.watchStat')}</span>
         </div>
       </div>
 
       )}
 
       <div className="acct-links">
-        <button disabled={collectionLoading} onClick={pick('unseen')}><span className="coll-ic"><window.CollectionIcon kind="unseen"/></span>Show unseen</button>
-        <button disabled={collectionLoading} onClick={pick('seen')}><span className="coll-ic"><window.CollectionIcon kind="seen"/></span>Show seen</button>
-        <button disabled={collectionLoading} onClick={pick('watchlist')}><span className="coll-ic"><window.CollectionIcon kind="watchlist"/></span>Show watchlist</button>
+        <button disabled={collectionLoading} onClick={pick('unseen')}><span className="coll-ic"><window.CollectionIcon kind="unseen"/></span>{tr('account.showUnseen')}</button>
+        <button disabled={collectionLoading} onClick={pick('seen')}><span className="coll-ic"><window.CollectionIcon kind="seen"/></span>{tr('account.showSeen')}</button>
+        <button disabled={collectionLoading} onClick={pick('watchlist')}><span className="coll-ic"><window.CollectionIcon kind="watchlist"/></span>{tr('account.showWatchlist')}</button>
       </div>
 
       {syncError && (
         <div className="acct-error" role="status">
-          Couldn't sync — {syncError}. Anything you marked before signing in is still
-          saved on this device. Collection editing is paused until sync succeeds.
-          <button className="acct-action" onClick={retrySync}>Retry sync</button>
+          {tr('account.syncError', { error: syncError })}
+          <button className="acct-action" onClick={retrySync}>{tr('account.retrySync')}</button>
         </div>
       )}
 
@@ -327,19 +325,18 @@ function AccountPanel({ onPickCollection, onClose }) {
 
       {!syncAvailable && (
         <div className="acct-note">
-          Sync unavailable{unavailableReason ? ` — ${unavailableReason}` : ''}. Your collection is
-          still saved in this browser.
-          {window.mcuSupabase && <button className="acct-action" onClick={() => window.location.reload()}>Retry connection</button>}
+          {tr('account.unavailable', { reason: unavailableReason ? ` — ${unavailableReason}` : '' })}
+          {window.mcuSupabase && <button className="acct-action" onClick={() => window.location.reload()}>{tr('account.retryConnection')}</button>}
         </div>
       )}
 
       {syncAvailable && (
         signedIn
-          ? <button className="acct-action" onClick={signOut}>Sign out</button>
+          ? <button className="acct-action" onClick={signOut}>{tr('account.signOut')}</button>
           : (
             <button className="acct-action primary" onClick={signIn} disabled={status === 'initializing' || status === 'signing_in'}>
               <GoogleMark/>
-              {status === 'initializing' ? 'Checking session…' : status === 'signing_in' ? 'Opening Google…' : 'Sign in with Google'}
+              {tr(status === 'initializing' ? 'account.checking' : status === 'signing_in' ? 'account.opening' : 'account.signInGoogle')}
             </button>
           )
       )}
@@ -369,13 +366,14 @@ function AccountButton({ onPickCollection }) {
   const signedIn = status === 'signed_in';
   // Read the desktop label from the live profile. Keep email in the account
   // panel rather than using it as the compact navigation label.
-  const accountName = profile?.name && profile.name !== profile.email ? profile.name : 'Account';
+  const { tr } = window.useI18n();
+  const accountName = profile?.name && profile.name !== profile.email ? profile.name : tr('account.title');
   const visibleLabel = signedIn ? accountName
-    : status === 'signing_in' ? 'Signing in…'
-    : status === 'initializing' || !syncAvailable ? 'Account' : 'Sign in';
+    : status === 'signing_in' ? tr('account.signingIn')
+    : status === 'initializing' || !syncAvailable ? tr('account.title') : tr('account.signIn');
   const label = signedIn && profile
-    ? `Account — ${profile.name}`
-    : (syncAvailable ? 'Sign in with Google' : 'Account — sync unavailable');
+    ? tr('account.named', { name: profile.name })
+    : tr(syncAvailable ? 'account.signInGoogle' : 'account.noSync');
 
   return (
     <div className="acct-wrap" ref={ref}>
@@ -414,7 +412,7 @@ function AccountAvatarButton({ onOpen }) {
     <button
       className={`m-acct${signedIn ? ' signed-in' : ''}`}
       onClick={onOpen}
-      aria-label={signedIn && profile ? `Account — ${profile.name}` : 'Account'}
+      aria-label={signedIn && profile ? window.MCU_I18N.tr('account.named', { name: profile.name }) : window.MCU_I18N.tr('account.title')}
     >
       {status === 'initializing'
         ? <span className="acct-dot loading" aria-hidden="true"/>
@@ -429,9 +427,9 @@ function AccountAvatarButton({ onOpen }) {
 function AccountSheet({ onClose, onPickCollection }) {
   const Sheet = window.Sheet;
   return (
-    <Sheet onClose={onClose} label="Account">
+    <Sheet onClose={onClose} label={window.MCU_I18N.tr('account.title')}>
       <div className="m-sh-head">
-        <div className="m-sh-title">Account</div>
+        <div className="m-sh-title">{window.MCU_I18N.tr('account.title')}</div>
       </div>
       <AccountPanel onPickCollection={onPickCollection} onClose={onClose}/>
     </Sheet>

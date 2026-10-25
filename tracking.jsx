@@ -118,7 +118,7 @@ async function collectionRequest(query) {
       Promise.resolve(query.abortSignal(controller.signal)),
       new Promise((_, reject) => {
         timer = setTimeout(() => {
-          const error = new Error('Cloud request timed out');
+          const error = new Error(window.MCU_I18N.tr('error.timeout'));
           error.code = 'MCU_TIMEOUT';
           reject(error);
           controller.abort();
@@ -126,7 +126,7 @@ async function collectionRequest(query) {
       }),
     ]);
     if (result.error) {
-      const error = new Error(result.error.message || 'Could not sync');
+      const error = new Error(result.error.message || window.MCU_I18N.tr('error.sync'));
       error.status = result.status;
       error.code = result.error.code;
       throw error;
@@ -300,7 +300,7 @@ function CollectionProvider({ children }) {
         commit(cur);
         w.desired = back;
         w.confirmed = back;
-        setTitleError(titleId, (e && e.message) ? e.message : 'Could not save');
+        setTitleError(titleId, (e && e.message) ? e.message : window.MCU_I18N.tr('error.save'));
         console.warn('[mcu] write failed for', titleId, e);
       } finally {
         w.running = false;
@@ -420,9 +420,9 @@ function CollectionProvider({ children }) {
         // Guest data is deliberately left in place; the merge retries next
         // sign-in or explicit retry. Editing stays disabled until a load succeeds.
         if (connectionUnavailable(e) && continueAsGuest) {
-          continueAsGuest('Cloud connection unavailable');
+          continueAsGuest(window.MCU_I18N.tr('error.connection'));
         } else {
-          setSyncError((e && e.message) ? e.message : 'Sync failed');
+          setSyncError((e && e.message) ? e.message : window.MCU_I18N.tr('error.syncFailed'));
         }
       } finally {
         if (current()) setRemoteLoading(false);
@@ -508,14 +508,15 @@ function matchesCollection(status, filter) {
 
 // Copy for a list emptied by the collection filter rather than by phase/search.
 function collectionEmptyCopy(filter) {
+  const tr = window.MCU_I18N.tr;
   if (filter === 'watchlist') {
-    return { title: 'Your watchlist is empty', sub: 'Add titles with the bookmark button to plan what to watch next.' };
+    return { title: tr('collection.emptyWatchlist'), sub: tr('collection.emptyWatchlistSub') };
   }
   if (filter === 'seen') {
-    return { title: 'Nothing marked as seen yet', sub: 'Mark a title with the check button to start tracking.' };
+    return { title: tr('collection.emptySeen'), sub: tr('collection.emptySeenSub') };
   }
   if (filter === 'unseen') {
-    return { title: "You've seen everything", sub: 'Every title matching these filters is already marked seen.' };
+    return { title: tr('collection.emptyUnseen'), sub: tr('collection.emptyUnseenSub') };
   }
   return null;
 }
@@ -550,15 +551,19 @@ function CollectionIcon({ kind }) {
 // changes layout: 'toolbar' keeps every label where there is room; 'compact'
 // labels just All and the active option, leaving the others as icons.
 function CollectionSwitch({ value, onChange, variant = 'toolbar' }) {
+  const { tr } = window.useI18n();
   return (
-    <div className={`coll-switch coll-${variant}`} role="group" aria-label="Show titles">
-      {COLLECTION_OPTIONS.map(([v, l]) => (
+    <div className={`coll-switch coll-${variant}`} role="group" aria-label={tr('collection.groupAria')}>
+      {COLLECTION_OPTIONS.map(([v]) => {
+        const l = tr('collection.' + v);
+        return (
         <button key={v} className={value === v ? 'on' : ''} aria-pressed={value === v}
           aria-label={l} title={l} onClick={() => onChange(v)}>
           {v !== 'all' && <span className="coll-ic"><CollectionIcon kind={v}/></span>}
           <span className="coll-label">{l}</span>
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -603,20 +608,20 @@ function TitleStatusActions({ title, variant, className }) {
 
   return (
     <div className={cls} onMouseDown={swallow} onClick={swallow} onTouchStart={swallow}
-         title={error ? `Not saved — ${error}` : undefined}>
+         title={error ? window.MCU_I18N.tr('status.notSaved', { error }) : undefined}>
       <button
         type="button"
         className={`tsa-btn seen${seen ? ' on' : ''}`}
         disabled={loading}
         aria-busy={loading || busy}
         aria-pressed={loading ? undefined : seen}
-        aria-label={loading ? `Loading watch status for ${title.title}` : seen ? `Mark ${title.title} as not seen` : `Mark ${title.title} as seen`}
-        title={seen ? 'Marked as seen' : 'Mark as seen'}
+        aria-label={window.MCU_I18N.tr(loading ? 'status.loadingSeen' : seen ? 'status.unmarkSeenAria' : 'status.markSeenAria', { title: window.MCU_I18N.titleName(title) })}
+        title={window.MCU_I18N.tr(seen ? 'status.markedSeen' : 'status.markSeenTip')}
         onMouseDown={swallow}
         onClick={act(toggleSeen)}
       >
         <CheckIcon/>
-        {inline && <span className="tsa-lab">{seen ? 'Seen' : 'Mark seen'}</span>}
+        {inline && <span className="tsa-lab">{window.MCU_I18N.tr(seen ? 'status.seen' : 'status.markSeen')}</span>}
       </button>
       <button
         type="button"
@@ -624,19 +629,19 @@ function TitleStatusActions({ title, variant, className }) {
         disabled={loading}
         aria-busy={loading || busy}
         aria-pressed={loading ? undefined : listed}
-        aria-label={loading ? `Loading watchlist status for ${title.title}` : listed ? `Remove ${title.title} from watchlist` : `Add ${title.title} to watchlist`}
-        title={listed ? 'On your watchlist' : 'Add to watchlist'}
+        aria-label={window.MCU_I18N.tr(loading ? 'status.loadingWatch' : listed ? 'status.removeWatchAria' : 'status.addWatchAria', { title: window.MCU_I18N.titleName(title) })}
+        title={window.MCU_I18N.tr(listed ? 'status.onWatchTip' : 'status.addWatchTip')}
         onMouseDown={swallow}
         onClick={act(toggleWatchlist)}
       >
         <BookmarkIcon filled={listed}/>
-        {inline && <span className="tsa-lab">{listed ? 'On watchlist' : 'Watchlist'}</span>}
+        {inline && <span className="tsa-lab">{window.MCU_I18N.tr(listed ? 'status.onWatch' : 'status.watchlist')}</span>}
       </button>
       {(loading || busy) && <span className="tsa-spin" aria-hidden="true"/>}
       {/* The overlay variant has no room for a message; it carries the red
           treatment plus a tooltip, and the drawer/sheet spells it out. */}
-      {error && inline && <span className="tsa-err" role="status">Not saved — {error}</span>}
-      {error && !inline && <span className="tsa-bang" role="status" aria-label={`Not saved — ${error}`}>!</span>}
+      {error && inline && <span className="tsa-err" role="status">{window.MCU_I18N.tr('status.notSaved', { error })}</span>}
+      {error && !inline && <span className="tsa-bang" role="status" aria-label={window.MCU_I18N.tr('status.notSaved', { error })}>!</span>}
     </div>
   );
 }
@@ -645,7 +650,7 @@ function TitleStatusActions({ title, variant, className }) {
 // hit (deep zoom on the spatial canvas) but the state still needs to read.
 function SeenMarker({ seen }) {
   if (!seen) return null;
-  return <span className="seen-marker" title="Seen" aria-hidden="true"><CheckIcon/></span>;
+  return <span className="seen-marker" title={window.MCU_I18N.tr('status.seen')} aria-hidden="true"><CheckIcon/></span>;
 }
 
 Object.assign(window, {

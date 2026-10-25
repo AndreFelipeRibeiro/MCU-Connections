@@ -204,3 +204,29 @@ sort follows these timeframes, as the user approved.
   Loki and What If…? seasons keep their previous neighbours (What If…? seasons 2
   and 3 together); unreleased titles sit at the end. The mobile Chrono list groups by timeframe.
 
+## Brazilian Portuguese titles — 2026-10-25
+
+`locales/pt-BR.js` maps all 64 title ids to their official Brazilian release
+titles (cinema or Disney+ Brasil). Checked 2026-10-25.
+
+- Films through The Marvels: consistent across Brazilian watch-order guides
+  ([Canaltech](https://canaltech.com.br/cinema/marvel-qual-a-ordem-certa-dos-filmes-para-assistir-no-disney/),
+  [AdoroCinema](https://www.adorocinema.com/noticias/filmes/noticia-158775/)),
+  e.g. Os Vingadores, Capitão América 2: O Soldado Invernal, Vingadores: Ultimato.
+- Later films and series: [Universo Marvel 616](https://www.marvel616.com/),
+  [Omelete](https://www.omelete.com.br/), [Rolling Stone Brasil](https://rollingstone.com.br/)
+  and [JustWatch Brasil](https://www.justwatch.com/br) (which mirrors the
+  Disney+ catalog): Capitão América: Admirável Mundo Novo, Quarteto Fantástico:
+  Primeiros Passos, Homem-Aranha: Um Novo Dia, Vingadores: Doomsday, Vingadores:
+  Guerras Secretas, Coração de Ferro, Olhos de Wakanda, Demolidor: Renascido.
+- Judgment calls: Agatha All Along uses the Disney+ catalog title "Foi Sempre a
+  Agatha"; the pre-release "Agatha Desde Sempre" is kept as a search alias.
+  Wonder Man is "Magnum" in Brazil. Your Friendly Neighborhood Spider-Man is
+  "Seu Amigão da Vizinhança: Homem-Aranha" ("Seu Amigável Vizinho Homem-Aranha"
+  kept as an alias). Untranslated originals stay as released (WandaVision,
+  Loki, What If…?, Ms. Marvel, Echo, Thunderbolts*, Marvel Zombies, VisionQuest).
+  Seasons read "– Temporada N".
+- Character names change only where Brazil uses a different name (Visão,
+  Nebulosa, Valquíria, Aquele Que Permanece, Kang, o Conquistador, Capitã
+  Carter, Surfista Prateada); personal names stay as in `data.js`.
+

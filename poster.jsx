@@ -35,7 +35,7 @@ function PosterArt({ title }) {
     const url = window.mediaURL ? window.mediaURL('p', title.id, local || (media.poster_base + path)) : (local || (media.poster_base + path));
     return (
       <div className="poster-image-wrap" style={{width:'100%', height:'100%', position:'relative', background:'#0a0c14'}}>
-        <img src={url} alt={title.title} loading="lazy" style={{width:'100%', height:'100%', objectFit:'cover', display:'block'}}/>
+        <img src={url} alt={window.MCU_I18N.titleName(title)} loading="lazy" style={{width:'100%', height:'100%', objectFit:'cover', display:'block'}}/>
       </div>
     );
   }
