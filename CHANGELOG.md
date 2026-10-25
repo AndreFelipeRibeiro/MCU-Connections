@@ -12,6 +12,26 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Remove mobile List rating bars
+
+Recorded: 2026-10-24 23:15 EDT (-0400).
+
+- Removed the score-length progress bars from mobile List when sorting by IMDb
+  or Rotten Tomatoes. Numeric rating badges and rank numbers remain. Removed
+  the unused bar styles and score calculation.
+- User approved committing, pushing and merging all current V3 work into main,
+  including the earlier in-story timeframe / Chrono update in
+  [cbd8b3f](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/cbd8b3f).
+  Original commit attribution is preserved.
+- Verified locally in Chrome at 320px and 390px with IMDb and RT selected:
+  all 64 List rows rendered, numeric badges and ranks remained, and rating bars
+  were absent. List rows fit both widths; no browser errors were observed.
+  `git diff --check` passed.
+- Limits: existing header overflow with RT selected at 320px (340px content)
+  remains separate from this List-only change. No physical-device, OAuth or
+  cloud-write checks were repeated. These checks describe the local change,
+  not a verified production deployment.
+
 ## V3 maintenance — In-story timeframes and a story-ordered Chrono view
 
 Recorded: 2026-10-24 23:10:58 EDT (-0400).

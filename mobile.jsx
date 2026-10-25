@@ -388,7 +388,6 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, 
           <div className="m-list">
             {g.items.map(t => {
               n += 1;
-              const score = lead === 'rt' ? t.rt : (t.imdb != null ? t.imdb * 10 : null);
               const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
               const seen = statusOf(t.id) === 'seen';
               return (
@@ -409,9 +408,6 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, 
                       </div>
                       <ScoreBadges title={t} lead={lead}/>
                       <MatchBadge matchedChars={matchedChars} query={search}/>
-                      {ranked && score != null && (
-                        <div className="m-barw"><div className="m-barf" style={{width:score+'%', background: lead==='rt' ? '#fa320a' : '#f5c518'}}/></div>
-                      )}
                     </div>
                   </button>
                   <window.TitleStatusActions title={t} className="m-lrow-tsa"/>

@@ -5,9 +5,8 @@ a spatial map, connected by shared actors and characters. V3 adds seen/watchlist
 tracking, Google sign-in and cloud sync across devices.
 
 - [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/)
-- [Production](https://mcu-connections.vercel.app/) — V3 with the maintenance
-  release [merged on 2026-10-24](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/8731121cb4f9ab85e228315e44236532fda326d3)
-  (catalog, sorting, navigation and mobile improvements).
+- [Production](https://mcu-connections.vercel.app/) — V3, published from `main`.
+  See the changelog for approved maintenance changes and deployment checks.
 - Catalog maintenance continues on `version/3.0`; [audit and sources](docs/CATALOG-AUDIT.md),
   [phase roadmap](V3-TASKS.md). The Notion V3 Tasks database holds the live queue.
   Future changes still require review and approval before committing/pushing
@@ -30,7 +29,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   cards, list rows and details, alongside the release year. Chronological order
   follows those timeframes, and the mobile Chrono list groups by them.
 - Mobile view navigation is List / Grid / Spatial. List rows place IMDb and
-  Rotten Tomatoes together beneath their phase/budget metadata.
+  Rotten Tomatoes numeric badges together beneath their phase/budget metadata,
+  with rank numbers when sorting by rating.
 - Choose direction from a separate order menu beside desktop sorting or beside
   mobile search on the second header row. Its label shows the current order
   (Newest, 6 → 1, Z–A). Mobile uses quieter search text and taller bottom sort tabs.
