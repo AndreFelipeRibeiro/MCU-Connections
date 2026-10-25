@@ -210,6 +210,7 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
             <span className="card-budget">${title.budget < 1 ? title.budget : Math.round(title.budget)}M</span>
           )}
         </div>
+        <window.StoryYear title={title} className="card-story"/>
         <window.MatchBadge matchedChars={matchedChars} query={searchQuery}/>
       </div>
     </div>
@@ -224,6 +225,7 @@ function CastDrawer({ title, onClose, onCharacterClick, hoveredCharacter, onChar
         <div>
           <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{PHASE_LABELS[title.phase]} · {title.type.toUpperCase()} · {title.year}</div>
           <h2 className="drawer-title">{title.title}</h2>
+          <window.StoryYear title={title} detail className="drawer-story"/>
           <window.TitleStatusActions title={title} variant="inline" className="drawer-tsa"/>
         </div>
         <button className="drawer-close" onClick={onClose} aria-label="Close">×</button>

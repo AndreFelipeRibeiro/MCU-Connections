@@ -224,6 +224,20 @@ body {
   display: flex; justify-content: space-between; align-items: center; gap: 8px;
 }
 .card-budget { color: #b9c2d6; opacity: 0.75; }
+/* In-story timeframe label (StoryYear in mobile.jsx), shared by desktop and mobile. */
+.story-year {
+  display: inline-flex; align-items: center; gap: 4px; min-width: 0;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1.3;
+  color: var(--text-dim); white-space: nowrap;
+}
+.story-year svg { flex: 0 0 auto; opacity: 0.75; }
+.story-year > span { overflow: hidden; text-overflow: ellipsis; }
+.story-year.detail { display: flex; align-items: flex-start; font-size: 11px; white-space: normal; }
+.story-year.detail svg { margin-top: 1px; }
+.story-note { color: var(--text-muted); }
+.story-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.card-story { display: flex; margin-top: 3px; }
+.drawer-story { margin-top: 7px; }
 .card-match {
   margin-top: 7px; display: flex; align-items: center; gap: 7px;
   background: color-mix(in oklab, var(--match-color) 14%, transparent);

@@ -12,6 +12,54 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Remove mobile List rating bars
+
+Recorded: 2026-10-24 23:15 EDT (-0400).
+
+- Removed the score-length progress bars from mobile List when sorting by IMDb
+  or Rotten Tomatoes. Numeric rating badges and rank numbers remain. Removed
+  the unused bar styles and score calculation.
+- User approved committing, pushing and merging all current V3 work into main,
+  including the earlier in-story timeframe / Chrono update in
+  [cbd8b3f](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/cbd8b3f).
+  Original commit attribution is preserved.
+- Verified locally in Chrome at 320px and 390px with IMDb and RT selected:
+  all 64 List rows rendered, numeric badges and ranks remained, and rating bars
+  were absent. List rows fit both widths; no browser errors were observed.
+  `git diff --check` passed.
+- Limits: existing header overflow with RT selected at 320px (340px content)
+  remains separate from this List-only change. No physical-device, OAuth or
+  cloud-write checks were repeated. These checks describe the local change,
+  not a verified production deployment.
+
+## V3 maintenance — In-story timeframes and a story-ordered Chrono view
+
+Recorded: 2026-10-24 23:10:58 EDT (-0400).
+
+- Every released title now has an in-story timeframe (`story`, plus
+  `storyNote` for alternate realities) in `data.js`: a year, a range, `c.` for
+  approximate years, or "Outside time" / "Multiverse". Primary source: Marvel's
+  2023 official timeline book via Wikipedia's MCU timeline article; the book wins
+  disputes (e.g. Iron Man 2008). Unreleased titles have none yet. Sources and
+  judgment calls are in `docs/CATALOG-AUDIT.md`.
+- A shared hourglass label shows it on desktop spatial cards, mobile grid cards,
+  list rows and the mobile focus pop-up; the drawer and detail sheet read
+  "Set in 1943–1945" plus any reality note. Release years stay visible.
+- Chronological order now follows those timeframes (`chronOrder` renumbered
+  1–64; about 17 backwards jumps removed). Within a year it follows the book's
+  seasons; undated Loki/What If…? seasons keep their neighbours; unreleased
+  titles sit at the end. The mobile Chrono list groups under story-timeframe
+  headers and rows show their release year.
+- Verification: headless Chromium. Labels on all 60 released titles on desktop
+  1440×900 and mobile 390×844/320×640, none on the 4 unreleased; no clipped card
+  text or horizontal overflow. 35 Chrono headers, none backwards, in both
+  directions; Release headers unchanged; desktop Chrono opens with Eyes of
+  Wakanda, First Avenger, Fantastic Four, Captain Marvel, Iron Man. No console
+  errors. The user reviewed and approved it.
+- Limits: in-universe years are partly disputed and judged from the cited
+  sources; posters were blocked in the test renders; no physical-phone check by
+  Claude.
+
 ## V3 maintenance — Main merge and production verification
 
 Recorded: 2026-10-24 22:19:17 EDT (-0400).
