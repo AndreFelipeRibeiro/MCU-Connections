@@ -278,7 +278,8 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   const { progress } = window.useCollection();
-  const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (collectionFilter !== 'all' ? 1 : 0);
+  // Collection has its own always-visible switch, so it is not counted here.
+  const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
   useEffect(() => {
     if (!popOpen) return;
     const away = (e) => { if (popRef.current && !popRef.current.contains(e.target)) setPopOpen(false); };
@@ -322,6 +323,7 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
             ))}
           </div>
         </div>
+        <window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter}/>
         <div className="filters-pop-wrap" ref={popRef}>
           <button className={`filters-pill${popOpen?' open':''}${activeFilters?' active':''}`} onClick={()=>setPopOpen(o=>!o)}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
@@ -329,18 +331,6 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
           </button>
           {popOpen && (
             <div className="filters-pop">
-              <div className="control-group">
-                <label>Collection</label>
-                <div className="segmented">
-                  {window.COLLECTION_OPTIONS.map(([v,l])=>(
-                    <button key={v} className={collectionFilter===v?'on':''} aria-pressed={collectionFilter===v} onClick={()=>setCollectionFilter(v)}>{l}</button>
-                  ))}
-                </div>
-                <div className="pop-progress">
-                  {progress.seenReleased} of {progress.releasedTotal} released titles seen
-                  {progress.watchlist > 0 && <> · {progress.watchlist} on watchlist</>}
-                </div>
-              </div>
               <div className="control-group">
                 <label>Phase</label>
                 <div className="segmented">
@@ -370,7 +360,7 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
                 </div>
               </div>
               {activeFilters > 0 && (
-                <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); setCollectionFilter('all'); }}>Clear filters</button>
+                <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); }}>Clear filters</button>
               )}
             </div>
           )}
@@ -379,7 +369,7 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
           <input aria-label="Search titles or characters" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/>
         </div>
-        <button className="reset-view" onClick={onResetView} title="Recenter view"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg><span className="reset-label">Recenter</span></button>
+        <button className="reset-view" onClick={onResetView} title="Recenter view" aria-label="Recenter view"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg><span className="reset-label">Recenter</span></button>
       </div>
       <window.AccountButton onPickCollection={setCollectionFilter}/>
     </div>
@@ -1240,7 +1230,8 @@ function App() {
     }
   };
 
-  const filterCount = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (collectionFilter !== 'all' ? 1 : 0);
+  // Collection has its own switch in the header, so the Filters badge skips it.
+  const filterCount = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
   // Spatial keeps every card on screen (dimmed), so it counts `filtered`; the
   // flat views actually drop non-matching rows and count what they render.
   const mobileShowing = viewMode === 'spatial' ? filtered.length : visible.length;
@@ -1364,6 +1355,7 @@ function App() {
           showing={mobileShowing} total={window.TITLES.length}
           sort={sort} sortDir={sortDir} setSortDir={setSortDir} sortLabel={sortLabelFor(sort, sortDir)}
           onOpenAccount={() => setSheet('account')}
+          collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         />
         {charBanner}
         <div className="m-main">
@@ -1382,11 +1374,10 @@ function App() {
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
             typeFilter={typeFilter} setTypeFilter={setTypeFilter}
             budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
-            collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
             sort={sort}
             sortDir={sortDir} setSortDir={setSortDir}
             showing={mobileShowing}
-            onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setCollectionFilter('all'); }}
+            onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); }}
             onClose={() => setSheet(null)}
           />
         )}
