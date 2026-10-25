@@ -309,3 +309,6 @@
 
 .m-sort-footer { position: relative; flex: 0 0 auto; z-index: 30; background: var(--bg); }
 .mobile-order .sort-order-pop { top: calc(100% + 8px); bottom: auto; }
+/* Search matches in the details sheet, underlined in the character's colour. */
+.m-crow mark.hl { text-decoration-color: var(--match-color, var(--accent)); }
+.m-crow .m-an mark.hl { color: var(--match-color, var(--accent)); font-weight: 700; }

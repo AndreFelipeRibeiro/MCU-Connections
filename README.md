@@ -55,6 +55,10 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   language; a language menu in the header (desktop toolbar, mobile app bar)
   overrides it per device. Portuguese shows official Brazilian release titles,
   and search matches titles and characters in either language.
+- Desktop has Spatial and List views (switch at the end of the sort row). The
+  List is one row per title with sortable column headers (title, phase, release,
+  in-story years, IMDb, RT) that stay in step with the sort row; a row opens the
+  cast drawer, which sits below the toolbar. Columns drop as the List narrows.
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
   Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
@@ -176,7 +180,7 @@ and [redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
 ## Sync, errors and availability
 
 Guest marks use `localStorage` key `mcu.collection.v1`; the auth client uses
-`mcu.auth.v1`. Display preferences (mobile view, sort mode and order) use
+`mcu.auth.v1`. Display preferences (mobile view, desktop view, sort mode and order) use
 `mcu.prefs.v1` on that device only; filters and search are not saved. The
 language choice uses `mcu.lang.v1`. Signed-in rows load from Supabase. Guest merges write only changed
 rows and clear guest storage only after success. Per-title write queues retain
@@ -249,6 +253,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `account.jsx` | Google auth/session state, account UI, sign-out and degraded-mode recovery |
 | `app.jsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
 | `mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
+| `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
 | `poster.jsx` | TMDB posters or generated abstract fallback |
 | `connections.jsx` | Standalone connection layer retained for reference; not wired into the app |
 | `styles.css` / `styles-mobile.css` | Desktop/touch layout, status treatments, focus and dialogs |
