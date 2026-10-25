@@ -591,7 +591,8 @@ function App() {
   useEffect(() => { setMediaReady(true); }, []);
   const device = useDevice();
   const isTouch = device !== 'desktop';
-  const [viewMode, setViewMode] = useState('grid');
+  // Mobile opens in List (user preference); desktop ignores viewMode (spatial only).
+  const [viewMode, setViewMode] = useState('list');
   const [drawerId, setDrawerId] = useState(null);
   const [sheet, setSheet] = useState(null);
   const [selectedId, setSelectedId] = useState(null);

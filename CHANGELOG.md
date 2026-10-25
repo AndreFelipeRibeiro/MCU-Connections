@@ -11,6 +11,19 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Mobile opens in List view
+
+Recorded: 2026-10-24 21:20:39 EDT (-0400).
+
+- Mobile (and touch layouts under 900px) now start in List instead of Grid.
+  Grid and Spatial remain one tap away. The choice is not yet remembered between
+  visits. Desktop is spatial-only and unaffected.
+- Verification: headless Chromium at 390×844, 320×640 and 899×1100 opened with
+  List selected and all 64 rows; List→Grid→Spatial→List switching worked;
+  1440×900 still rendered the desktop spatial canvas. No console errors. The
+  user approved the change.
+- Limits: browser emulation only; no physical-phone check by Claude.
+
 ## V3 maintenance — Animated grid/list reordering
 
 Recorded: 2026-10-24 19:49:39 EDT (-0400).

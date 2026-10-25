@@ -30,6 +30,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   new slots, echoing Spatial (off with reduced motion).
 - Phase, film/series, budget and collection filters.
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
+  Mobile opens in List.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
   seen moves it to seen; un-seeing returns it to untracked.
 - Guest tracking saved in this browser; Google sign-in merges those marks and
