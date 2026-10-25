@@ -11,6 +11,24 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Fix the Order menu in Safari (awaiting phone check)
+
+Recorded: 2026-10-24 21:41:19 EDT (-0400).
+
+- Choosing an option in the Order menu did nothing on iPhone. Safari (iOS and
+  macOS) does not focus a tapped button, so tapping an option blurred the
+  focused one with no new focus target; the menu treated that as focus leaving
+  and closed, unmounting the option before its click fired. The menu now only
+  closes on focus loss when focus moves to an element outside it. Outside taps
+  (pointerdown listener) and Escape still close it. Shared by desktop and mobile.
+- Verification: headless Chromium with a script reproducing Safari's tap focus
+  behavior. Before the fix both options failed on mobile 390×844 and desktop
+  1440×900; after it both work in both directions, with and without the
+  emulation. Outside tap, Escape with focus return, Enter to open, Tab out to
+  close and keyboard selection pass. No console errors.
+- Limits: WebKit was not available to Claude; pushed to the V3 preview so the
+  user can confirm on a real iPhone.
+
 ## V3 maintenance — Agent workflow uses the Notion task database
 
 Recorded: 2026-10-24 21:41:19 EDT (-0400).

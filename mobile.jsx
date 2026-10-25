@@ -84,8 +84,14 @@ function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
       document.removeEventListener('keydown', escape);
     };
   }, [open]);
+  // Close when keyboard focus moves to something outside the menu. Safari (iOS
+  // and macOS) does not focus a tapped/clicked button: tapping an option blurs
+  // the focused one with relatedTarget null, and closing then would unmount the
+  // option before its click fires, so the choice was silently lost. A null
+  // relatedTarget is therefore ignored here; outside taps are handled by the
+  // pointerdown listener above, and Escape still closes.
   return <div className={`sort-order${mobile ? ' mobile-order' : ''}`} ref={wrap}
-    onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
+    onBlur={e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
     <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
       aria-label={`Sort order: ${labels[index]}`} onClick={() => setOpen(v => !v)}>
       {mobile && <span className="sort-order-prefix">Order:</span>}{compact}
