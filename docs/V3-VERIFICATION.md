@@ -315,3 +315,17 @@ their pending merge gates were satisfied by this approval.
   catalog audit. They were not all repeated for this release preparation.
 - Limits: no fresh physical-device, WebKit, spoken screen-reader, live Google
   OAuth or cross-device cloud-sync acceptance test for this maintenance merge.
+
+### Post-merge production smoke check
+
+Main merge: `8731121`; final mobile implementation/release docs: `e36e4fd`.
+Both were pushed, and the two mobile tasks were closed in Notion with their
+completion date and links. Main and version/3.0 were synchronized.
+
+Observed production at mcu-connections.vercel.app in Chrome: 390×844 showed
+List / Grid / Spatial, 64 List rows and inline ratings below metadata without
+horizontal overflow. VisionQuest search returned one result with IMDb 8.0 and
+RT 90%; clearing restored the list. Desktop at 1440×900 showed the updated
+toolbar and Order label without overflow. Console error log was empty.
+No account marks were changed and no new OAuth/cloud-sync flow was exercised.
+This records an observed deployment result, not its exact deployment timestamp.

@@ -6,7 +6,8 @@ tracking, Google sign-in and cloud sync across devices.
 
 - [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/)
 - [Production](https://mcu-connections.vercel.app/) — V3 with the maintenance
-  release approved on 2026-10-24 (catalog, sorting, navigation and mobile improvements).
+  release [merged on 2026-10-24](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/8731121cb4f9ab85e228315e44236532fda326d3)
+  (catalog, sorting, navigation and mobile improvements).
 - Catalog maintenance continues on `version/3.0`; [audit and sources](docs/CATALOG-AUDIT.md),
   [phase roadmap](V3-TASKS.md). The Notion V3 Tasks database holds the live queue.
   Future changes still require review and approval before committing/pushing

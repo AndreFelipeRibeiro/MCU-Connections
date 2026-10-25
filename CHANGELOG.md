@@ -1,15 +1,37 @@
 # Changelog
 
 A backfilled record of the project through the current V3 maintenance branch.
-Times below are **Git author timestamps**, converted to America/New_York (EDT
-for these dates), including seconds. They identify commits, not the time a change
-was deployed or a manual check was performed. This record was assembled from
+Backfilled commit entries use **Git author timestamps**, converted to
+America/New_York (EDT for these dates), including seconds. Entries labeled
+**Recorded** identify the time the checkpoint was written, not an inferred
+deployment time. Deployment checks are identified explicitly. This record was assembled from
 commit messages, diffs, the planning/verification documents and user-reported
 checks on 2026-10-24; it does not invent deployment times.
 
 Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
+
+## V3 maintenance — Main merge and production verification
+
+Recorded: 2026-10-24 22:19:17 EDT (-0400).
+
+- Final mobile layout and release documentation:
+  [e36e4fd](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/e36e4fd5fa1fc8316649ad105da0203d3ff10a71).
+  Approved V3 maintenance merged and pushed to main in
+  [8731121](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/8731121cb4f9ab85e228315e44236532fda326d3).
+  This preserved all original maintenance commits and coauthor credits.
+- Closed both Notion tasks (List information layout and List/Grid navigation)
+  with the 2026-10-24 completion date, implementation commit and merge link.
+  Main and version/3.0 were synchronized; local worktrees were clean.
+- Production smoke check at mcu-connections.vercel.app: at 390×844, List / Grid /
+  Spatial appeared in order, all 64 rows loaded, ratings appeared inline under
+  metadata and no horizontal overflow occurred. VisionQuest search returned one
+  row with IMDb 8.0 / RT 90%; clearing restored the list. At 1440×900, desktop
+  navigation loaded with Order and no toolbar overflow. No console errors.
+- This proves the updated UI was observed on production; it does not establish
+  the exact deployment time or repeat live OAuth, cloud-write, physical-device,
+  Safari or screen-reader acceptance tests. No account data was modified.
 
 ## V3 maintenance — Mobile List layout and approved main release
 
