@@ -15,6 +15,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 ## Features
 
 - Spatial connection canvas with pan, zoom, draggable cards and cast highlighting.
+  Release/Chrono open closer and centred on the titles in view; closing a title's
+  details glides the camera back to where you were.
 - Desktop navigation uses one row on wide screens and two full-width rows on
   narrower desktops: brand, sort modes and Order above; type, Filters, search,
   Recenter and account below. The account control shows Sign in or the signed-in

@@ -11,6 +11,34 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Spatial keeps your place and opens bolder
+
+Recorded: 2026-10-24 22:07:27 EDT (-0400).
+
+- Closing title details no longer drops the camera at the Phase 1 end. The
+  focus ring is laid out near the canvas origin and the camera stayed there
+  after the cards returned. The camera position is now remembered on selection
+  and restored on close with a 600ms glide (cancelled by any pointer or wheel
+  input). If the visitor hopped to another card through the ring, that card's
+  layout position is centred at the original zoom. A layout change or Recenter
+  in between clears the memory.
+- Release/Chrono open at about 7.5 titles across on desktop and 2.5 on touch
+  (capped at 100%), centred vertically on the titles in view instead of the
+  top-left corner, keeping the leading title visible in reverse order.
+  Grid-style sorts are unchanged.
+- Entering Spatial on mobile from List/Grid now frames the canvas; it previously
+  opened unframed at 100% on the top-left corner.
+- Verification: headless Chromium. Desktop 1440×900: from a Phase 6 card,
+  open/close restored the exact camera position (two runs); A→B through the
+  ring centred B with 0px offset at the original zoom; sorting while open did not
+  jump on close. Mobile 390×844: deselect restored the framed view; List → detail
+  sheet → Spatial → deselect framed at 80%. Opening zoom for Release: 1280 65→87%,
+  1440 74→98%, 1920 98→100%, phone 50→80%. No new console errors. The user
+  reviewed and approved it.
+- Limits: no physical phone/trackpad check by Claude; posters were blocked in
+  the test renders. A pre-existing passive-listener warning on desktop wheel
+  zoom remains.
+
 ## V3 maintenance — Fix the Order menu in Safari (awaiting phone check)
 
 Recorded: 2026-10-24 21:41:19 EDT (-0400).

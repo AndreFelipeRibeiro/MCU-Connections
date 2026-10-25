@@ -650,6 +650,33 @@ function App() {
   const [view, setView] = useState({ x: 0, y: 0, scale: 1 });
   const [zoomEdit, setZoomEdit] = useState(null);
   const ZOOM_MIN = 0.05;
+
+  // Camera glide, for programmatic returns only (see the selection return
+  // below). Manual pan and zoom must stay instant, so any pointer or wheel input
+  // on the viewport cancels it.
+  const [cameraGlide, setCameraGlide] = useState(false);
+  const glideTimer = useRef(null);
+  const glideTo = useCallback((next) => {
+    clearTimeout(glideTimer.current);
+    setCameraGlide(true);
+    setView(next);
+    glideTimer.current = setTimeout(() => { glideTimer.current = null; setCameraGlide(false); }, 650);
+  }, []);
+  const stopGlide = useCallback(() => {
+    if (!glideTimer.current) return;
+    clearTimeout(glideTimer.current);
+    glideTimer.current = null;
+    setCameraGlide(false);
+  }, []);
+  // Where the camera was before a card was selected, so closing its details can
+  // return there instead of leaving the viewport on the focus ring (laid out
+  // near the canvas origin, i.e. the Phase 1 end of the timeline layouts).
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  const selectionReturnRef = useRef(null);
+  // False until resetView has framed the canvas; the mobile canvas only exists
+  // while Spatial is showing, so its camera is unframed after each visit.
+  const cameraFramedRef = useRef(false);
   const viewportRef = useRef(null);
   const panRef = useRef({ panning: false, sx: 0, sy: 0, ox: 0, oy: 0 });
 
@@ -940,6 +967,9 @@ function App() {
 
   const resetView = useCallback(() => {
     if (!viewportRef.current) return;
+    // A layout change or Recenter supersedes any remembered pre-selection view.
+    selectionReturnRef.current = null;
+    cameraFramedRef.current = true;
     const rect = viewportRef.current.getBoundingClientRect();
     const colW = CARD_W + 60;
     const gridSort = sort === 'phase' || sort === 'title' || sort === 'imdb' || sort === 'rt';
@@ -951,7 +981,9 @@ function App() {
       ? Math.min(1, isTouch
           ? Math.max((rect.width - 32) / canvasW, rect.width / (colW * 3))
           : (rect.width - 32) / canvasW)
-      : Math.min(1, Math.max(ZOOM_MIN, rect.width / (colW * (isTouch ? 3.4 : 8.5))));
+      // Timeline layouts open at about 7.5 titles across on desktop and 2.5 on
+      // touch (one title step is CARD_W * 1.15), capped at 100%.
+      : Math.min(1, Math.max(ZOOM_MIN, rect.width / (CARD_W * 1.15 * (isTouch ? 2.5 : 7.5))));
 
     // A dimming filter is active: frame exactly what it matches. Card positions
     // are not touched — only the viewport moves — so this stays inside the rule
@@ -1003,13 +1035,27 @@ function App() {
         scale,
       });
     } else {
-      // Keep the leading title visible even when reverse order starts in a
-      // lower phase band. Retain the normal framing when it already fits.
+      // Timeline layouts step down one phase band at a time as they move right,
+      // so anchoring the top-left corner left most of the screen empty. Centre
+      // vertically on the titles actually in view horizontally instead; if they
+      // are taller than the viewport, top-align them but keep the leading title
+      // (which may sit in a lower band in reverse order) on screen.
       const scale = defaultScale;
-      let y = canvasH * scale <= rect.height - 32 ? (rect.height - canvasH * scale) / 2 : 14 - minY * scale;
-      const leading = Object.values(basePositions).reduce((first, p) => !first || p.x < first.x ? p : first, null);
-      if (leading && (leading.y * scale + y < 0 || (leading.y + CARD_H) * scale + y > rect.height)) {
-        y = rect.height / 2 - (leading.y + CARD_H / 2) * scale;
+      const left = minX - 14 / scale, right = left + rect.width / scale;
+      let y0 = Infinity, y1 = -Infinity, leading = null;
+      Object.values(basePositions).forEach(p => {
+        if (!leading || p.x < leading.x) leading = p;
+        if (p.x + CARD_W < left || p.x > right) return;
+        if (p.y < y0) y0 = p.y;
+        if (p.y + CARD_H > y1) y1 = p.y + CARD_H;
+      });
+      let y = 14 - minY * scale;
+      if (isFinite(y0)) {
+        if ((y1 - y0) * scale <= rect.height - 28) y = rect.height / 2 - ((y0 + y1) / 2) * scale;
+        else {
+          y = 14 - y0 * scale;
+          if (leading && (leading.y + CARD_H) * scale + y > rect.height - 14) y = rect.height - 14 - (leading.y + CARD_H) * scale;
+        }
       }
       setView({ x: 14 - minX * scale, y, scale });
     }
@@ -1033,6 +1079,46 @@ function App() {
     if (selectedIdRef.current) return;
     resetView();
   }, [collectionFilter, highlightedChar, resetView]);
+
+  // Entering Spatial on touch mounts a fresh canvas whose camera was never
+  // framed (it previously opened at 100% on the top-left corner). Frame it,
+  // unless a card is already selected (opened from a detail sheet): the
+  // focus-ring auto-fit below owns the camera then.
+  useLayoutEffect(() => {
+    if (!isTouch) return;
+    if (viewMode !== 'spatial') { cameraFramedRef.current = false; return; }
+    if (!selectedIdRef.current) resetView();
+  }, [viewMode, isTouch]);
+
+  // Remember the camera when a card becomes selected; when the selection clears,
+  // glide back so the visitor returns to where they were (e.g. Phase 6) rather
+  // than the focus ring's spot near Phase 1. If they moved on to another card
+  // through the ring, centre that card's layout position at the original zoom.
+  // An unframed camera (selection opened straight into Spatial) gets a normal
+  // reset instead.
+  const prevSelectedRef = useRef(null);
+  useEffect(() => {
+    const prev = prevSelectedRef.current;
+    prevSelectedRef.current = selectedId;
+    if (selectedId && !prev) {
+      selectionReturnRef.current = { view: cameraFramedRef.current ? viewRef.current : null, id: selectedId };
+      return;
+    }
+    if (selectedId || !prev) return;
+    const back = selectionReturnRef.current;
+    selectionReturnRef.current = null;
+    if (!back || !viewportRef.current) return;
+    if (!back.view) { resetView(); return; }
+    const p = basePositions[prev];
+    if (prev === back.id || !p) { glideTo(back.view); return; }
+    const rect = viewportRef.current.getBoundingClientRect();
+    const scale = back.view.scale;
+    glideTo({
+      x: rect.width / 2 - (p.x + CARD_W / 2) * scale,
+      y: rect.height / 2 - (p.y + CARD_H / 2) * scale,
+      scale,
+    });
+  }, [selectedId]);
 
   // Auto-fit view to focused layout when a card is selected
   useEffect(() => {
@@ -1190,6 +1276,8 @@ function App() {
     <div
       className="viewport"
       ref={viewportRef}
+      onPointerDownCapture={stopGlide}
+      onWheelCapture={stopGlide}
       onMouseDown={isTouch ? undefined : onMouseDown}
       onWheel={isTouch ? undefined : onWheel}
       onTouchStart={isTouch ? onTouchStart : undefined}
@@ -1204,6 +1292,7 @@ function App() {
           height: canvasH + 'px',
           transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
           transformOrigin: '0 0',
+          transition: cameraGlide ? 'transform 600ms cubic-bezier(.2,.8,.2,1)' : undefined,
         }}
       >
         <FloatingConnections
