@@ -12,6 +12,32 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Even Spatial card layout; backlog priority rule
+
+Recorded: 2026-10-25 09:44:26 EDT (-0400).
+
+- Spatial cards sit on an even grid. Each card used to get a pseudo-random
+  offset (±18–30px) for an "organic" look, which broke row alignment and made
+  gaps uneven: Release/Chrono neighbours ranged from 8px overlapping to 57px
+  apart, grid sorts from 15 to 110px. Gaps are now constant (25px in
+  Release/Chrono, 60px in Phase/A–Z/IMDb/RT) and rows share a top edge.
+- Card footers reserve room for a two-line title plus the year and story rows
+  (92px), so every poster is the same height (176px) and the status buttons and
+  rating badges line up; a one-line title previously left a taller poster
+  (177–209px). Cards showing a search match badge shrink their posters equally.
+- AGENTS.md: backlog priority is the order of the Backlog column in the Notion
+  All tasks board (Notion keeps a separate manual order per view, so the Queue
+  table's order is not the priority).
+- Verification: headless Chromium at 1440px in all six sorts: no overlapping
+  cards; neighbour gaps 25–26px (Release/Chrono) and 60px (grid sorts). Footer
+  92px and poster 176px on all 64 cards in en-US, pt-BR and mobile Spatial; no
+  card overflow while searching. Camera regression script (desktop
+  select/close/glide/wheel/sort, mobile enter/select/restore/re-enter) unchanged;
+  its mobile half was updated for the view menu. The user reviewed screenshots
+  and approved committing and pushing to `version/3.0`.
+- Limits: posters were blocked in the test browser, so poster cropping at the
+  new height was not checked there; the canvas looks less scattered by design.
+
 ## V3 maintenance — Desktop navigation grouped like mobile
 
 Recorded: 2026-10-25 00:57:40 EDT (-0400).

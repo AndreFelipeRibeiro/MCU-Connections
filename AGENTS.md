@@ -71,8 +71,11 @@ time. Uncommitted changes are the hand-off point, so treat them carefully.
 ## Backlog workflow
 
 The user's Notion **V3 Tasks** database (under the MCU - V3 page) is the backlog;
-the old checklist is a read-only archive. Use the next task in its **Queue** view
-unless the user names another. Work on one task at a time.
+the old checklist is a read-only archive. Priority is the order of the **Backlog**
+column in the **All tasks** board view, top first: take the top unclaimed task
+unless the user names another. Notion keeps a separate manual order per view, so
+the **Queue** table lists the same tasks but its order is not the priority.
+Work on one task at a time.
 
 - Claim: set **Assigned to** to your agent and **Status** to **In progress**, then
   re-read the record to confirm no one else claimed it. Ownership is a

@@ -29,17 +29,6 @@ function primeOf(id) {
   return (c && c.prime) || id;
 }
 
-// Deterministic jitter
-function seedJitter(id, range) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = ((h << 5) - h + id.charCodeAt(i)) | 0;
-  const r = (Math.sin(h) * 10000);
-  return ((r - Math.floor(r)) - 0.5) * 2 * range;
-}
-
-// Compute floating layout positions per sort mode.
-// Cards are arranged organically in a horizontally-scrollable canvas,
-// with vertical bands per phase and chronological flow left-to-right.
 function useDevice() {
   const get = () => (window.innerWidth < 900 ? 'mobile' : 'desktop');
   const [device, setDevice] = useState(get);
@@ -94,6 +83,10 @@ function sortTitles(list, sort, dir = 'asc') {
   });
 }
 
+// Compute layout positions per sort mode on an even grid: cards in a row share
+// a top edge and neighbours are a constant distance apart (a per-card random
+// offset used to make gaps uneven and could make release neighbours overlap).
+// Release/chronology flow left-to-right in phase bands; the others use rows.
 function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   const ordered = sortTitles(titles, sort, dir);
   const positions = {};
@@ -112,8 +105,8 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
         const col = i % cols;
         const row = Math.floor(i / cols);
         positions[t.id] = {
-          x: 80 + col * colW + seedJitter(t.id + 'x', 22),
-          y: y + row * rowH + seedJitter(t.id + 'y', 18),
+          x: 80 + col * colW,
+          y: y + row * rowH,
         };
       });
       const rows = Math.ceil(list.length / cols);
@@ -126,8 +119,8 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
       const col = i % cols;
       const row = Math.floor(i / cols);
       positions[t.id] = {
-        x: 80 + col * colW + seedJitter(t.id+'x', 26),
-        y: 80 + row * rowH + seedJitter(t.id+'y', 22),
+        x: 80 + col * colW,
+        y: 80 + row * rowH,
       };
     });
   } else {
@@ -139,11 +132,8 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
     ordered.forEach((t, i) => {
       const baseX = 80 + i * (CARD_W * 1.15);
       const row = phaseRow[t.phase];
-      const y = 80 + row * (rowH * 1.25) + seedJitter(t.id+'y', 30);
-      positions[t.id] = {
-        x: baseX + seedJitter(t.id+'x', 24),
-        y,
-      };
+      const y = 80 + row * (rowH * 1.25);
+      positions[t.id] = { x: baseX, y };
       lastXByRow[row] = baseX;
     });
   }
