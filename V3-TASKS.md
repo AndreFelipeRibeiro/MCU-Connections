@@ -11,15 +11,23 @@ to start Phase 6; Phases 1–5 remain Google-only.
 
 ## Current handoff — 2026-10-24
 
-Phases 1–5 are complete. Current setup and acceptance results are in
-[README.md](README.md); dated evidence and explicit test limitations are in
-[docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
+Phases 1–5 were initially released to `main` at `1f79b74`.
+The subsequent V3 maintenance release was approved on 2026-10-24: catalog
+refresh, reverse sorting, responsive navigation, mobile List/animations,
+per-device preferences, Safari Order handling and spatial camera improvements.
+These changes are included in the current `main` release, not a new major version.
+Further development continues on `version/3.0` in
+`<your-developer-folder>/MCU-V3`. The Notion V3 Tasks database is the active
+backlog; the former checklist is archived.
+Current setup is in [README.md](README.md), catalog work and sources are in
+[docs/CATALOG-AUDIT.md](docs/CATALOG-AUDIT.md), and the original phase verification
+is in [docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
 
-**Next gates:** obtain explicit confirmation before merging `version/3.0` into
-`main` (which may publish V3 to production). After the release decision, discuss
-the user's bugs/improvements and whether to use a separate branch. Do not create
-that branch yet. This work comes before Phase 6; email/password implementation
-and service setup still require a separate plan and explicit approval.
+**Next gates:** the user approved this maintenance merge on 2026-10-24.
+Future changes still require review before committing/pushing and a new approval
+before another main merge. Continue the user's bugs/improvements before Phase 6.
+Email/password implementation and service setup require their own plan and
+explicit approval; this maintenance release does not authorize them.
 
 ---
 
@@ -237,6 +245,60 @@ entry point, script order, configuration/schema claims and whitespace; earlier
 runtime checks are recorded, not claimed as freshly rerun. No schema change.
 
 ---
+
+## V3 maintenance — Catalog refresh and weekly review
+
+Continues as maintenance on `version/3.0` after the initial V3 release.
+See [catalog audit](docs/CATALOG-AUDIT.md) and
+[source mapping](docs/CATALOG-SOURCES.json).
+
+- [x] Review all 60 released IMDb/RT entries, fill missing ratings and record
+      sources, score scopes, checked dates and research limitations.
+- [x] Correct supported release dates/windows and focused cast/chronology omissions.
+- [x] Preserve all 64 permanent title ids and existing collection data contracts.
+- [x] Verify data invariants, date boundaries, rating sorts and desktop/mobile
+      rendering; verify guest persistence. Details are in the catalog audit.
+- [x] Commit the catalog change; consolidate it into the V3 branch and workflow.
+- [x] Schedule Review MCU catalog updates for Mondays at 9am Eastern in this chat.
+      Prepare sourced patches for review; do not auto-apply, commit or publish.
+- [x] User approved the maintenance merge into main on 2026-10-24.
+
+The weekly task follows `version/3.0` while changes are being tested and main
+once merged. The deferred email/password phase below is a separate task from
+the MCU Phase 6 titles reviewed in the catalog.
+
+---
+
+## V3 maintenance — Reverse sort order
+
+Implementation and local verification were approved on 2026-10-24. See the
+[dated changelog](CHANGELOG.md) for scope and actual checks. Desktop and mobile
+now expose reversal across all six sorts; Spatial honors the shared ordering.
+
+The selected follow-up design uses a separate contextual order menu. Mobile
+mode selection now includes A–Z in the main six-tab navigation; desktop and
+mobile Filters offer only the active mode's two order choices, without a second
+sort-mode selector. The user approved the desktop layout and requested the final
+mobile refinements together with committing and pushing the task to V3.
+Desktop navigation uses one row when space permits, with sorting above a
+full-width utilities row on narrower desktops. Search stays usable and Recenter
+keeps its label; the shared order chevron is centered independently of font metrics.
+Mobile Order now sits beside search on header row two; search renders at 13px,
+and the bottom sort tabs are 68px tall without a visible "Sort by" heading.
+
+- [x] Obtain user approval before committing/pushing the task and marking it done.
+- [x] Separate explicit main-merge approval received on 2026-10-24.
+
+---
+
+## V3 maintenance — Mobile List layout and view navigation
+
+- [x] Place IMDb and Rotten Tomatoes side by side beneath List metadata.
+- [x] Order the mobile view switch as List / Grid / Spatial, retaining stable ids.
+- [x] Check 320–899px layouts, ranked/unrated rows, details, independent status
+      buttons, view switching and saved-view reload behavior.
+- [x] User approved both tasks, their commit/push and the complete V3 maintenance
+      merge on 2026-10-24. Commit and closure evidence is kept in Notion.
 
 ## Phase 6 — Email/password accounts (deferred; confirmation required)
 

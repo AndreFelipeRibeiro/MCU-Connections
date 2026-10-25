@@ -1,6 +1,6 @@
 # MCU Connections — V3 Spec: Watch Tracking & Accounts
 
-Target worktree: `/Users/afr/Documents/Developer/MCU-V3`
+Target worktree: `<your-developer-folder>/MCU-V3`
 
 This spec is the source of truth for V3. It was written after reading the actual
 codebase, so the code references below are real — verify them before assuming
@@ -8,15 +8,23 @@ anything has drifted.
 
 ## Current handoff — 2026-10-24
 
-Phases 1–5 are complete. Current setup and acceptance results are in
-[README.md](README.md); dated evidence and explicit test limitations are in
-[docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
+Phases 1–5 were initially released to `main` at `1f79b74`.
+The subsequent V3 maintenance release was approved on 2026-10-24: catalog
+refresh, reverse sorting, responsive navigation, mobile List/animations,
+per-device preferences, Safari Order handling and spatial camera improvements.
+These changes are included in the current `main` release, not a new major version.
+Further development continues on `version/3.0` in
+`<your-developer-folder>/MCU-V3`. The Notion V3 Tasks database is the active
+backlog; the former checklist is archived.
+Current setup is in [README.md](README.md), catalog work and sources are in
+[docs/CATALOG-AUDIT.md](docs/CATALOG-AUDIT.md), and the original phase verification
+is in [docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
 
-**Next gates:** obtain explicit confirmation before merging `version/3.0` into
-`main` (which may publish V3 to production). After the release decision, discuss
-the user's bugs/improvements and whether to use a separate branch. Do not create
-that branch yet. This work comes before Phase 6; email/password implementation
-and service setup still require a separate plan and explicit approval.
+**Next gates:** the user approved this maintenance merge on 2026-10-24.
+Future changes still require review before committing/pushing and a new approval
+before another main merge. Continue the user's bugs/improvements before Phase 6.
+Email/password implementation and service setup require their own plan and
+explicit approval; this maintenance release does not authorize them.
 
 ---
 
@@ -100,6 +108,9 @@ active filters are device-scoped by nature (this app renders a completely
 different shell on phone vs desktop). Persist them in `localStorage` only. If
 account-level preferences are ever wanted, add a single `jsonb` column later
 rather than a column-per-setting table.
+Implemented (V3 maintenance) as `mcu.prefs.v1` for view mode, sort and sort
+direction only. Filters are deliberately not persisted: returning to a silently
+filtered catalog reads as missing titles.
 
 **D7 — Supabase, not Firebase.** Reasons: officially supported plain-CDN UMD
 build (no npm needed), Google OAuth with browser redirect, session persistence

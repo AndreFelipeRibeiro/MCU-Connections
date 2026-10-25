@@ -2,12 +2,12 @@ const { useState: mUseState } = React;
 
 const MPHASE_COLORS = { 1:'#d4a05a', 2:'#4a8de8', 3:'#d04040', 4:'#a05cd0', 5:'#5fa856', 6:'#c8384a' };
 const MPHASE_LABELS = { 1:'PHASE 1', 2:'PHASE 2', 3:'PHASE 3', 4:'PHASE 4', 5:'PHASE 5', 6:'PHASE 6' };
-const SORT_TABS = [['release','Release','▤'],['chrono','Chrono','⇄'],['phase','Phase','◫'],['imdb','IMDb','★'],['rt','RT','◉']];
-const VIEW_MODES = [['grid','Grid','▦'],['list','List','☰'],['spatial','Spatial','◈']];
+const SORT_TABS = [['release','Release','▤'],['chrono','Chrono','⇄'],['phase','Phase','◫'],['title','A–Z','⇅'],['imdb','IMDb','★'],['rt','RT','◉']];
+const VIEW_MODES = [['list','List','☰'],['grid','Grid','▦'],['spatial','Spatial','◈']];
 
 function ScoreBadges({ title, lead, compact }) {
-  const imdb = title.imdb != null ? <div className="m-sc imdb" key="i"><span className="tg">IMDb</span>{title.imdb.toFixed(1)}</div> : null;
-  const rt = title.rt != null ? <div className="m-sc rt" key="r"><span className="tg">RT</span>{title.rt}%</div> : null;
+  const imdb = title.imdb != null ? <div className="m-sc imdb" key="i" title={title.type === 'series' ? 'IMDb whole-series rating (shared across seasons)' : 'IMDb movie rating'}><span className="tg">IMDb</span>{title.imdb.toFixed(1)}</div> : null;
+  const rt = title.rt != null ? <div className="m-sc rt" key="r" title="Rotten Tomatoes Tomatometer (critics)"><span className="tg">RT</span>{title.rt}%</div> : null;
   if (!imdb && !rt) return <div className={`m-scores${compact?' compact':''}`}><div className="m-sc none">Not yet rated</div></div>;
   return <div className={`m-scores${compact?' compact':''}`}>{lead === 'rt' ? [rt, imdb] : [imdb, rt]}</div>;
 }
@@ -15,7 +15,7 @@ function ScoreBadges({ title, lead, compact }) {
 // The app bar is already three rows deep on a phone, so the view switch moved
 // off m-appbar-top (where the account avatar now sits) onto its own tight row
 // rather than becoming a fourth control crammed into the brand row.
-function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters, filterCount, showing, total, sortLabel, onOpenAccount }) {
+function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters, filterCount, showing, total, sortLabel, sort, sortDir, setSortDir, onOpenAccount }) {
   const { progress } = window.useCollection();
   return (
     <div className="m-appbar">
@@ -32,6 +32,14 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
         </div>
         <window.AccountAvatarButton onOpen={onOpenAccount}/>
       </div>
+      <div className="m-searchrow">
+        <div className="m-searchbar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+          <div className="m-search-input"><input aria-label="Search titles or characters" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/></div>
+          {search && <button className="m-clear" onClick={()=>setSearch('')} aria-label="Clear search">×</button>}
+        </div>
+        <SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir} mobile/>
+      </div>
       <div className="m-viewrow">
         <div className="m-viewswitch">
           {VIEW_MODES.map(([v,l,ic]) => (
@@ -39,13 +47,6 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
               <span className="vi">{ic}</span><span className="vl">{l}</span>
             </button>
           ))}
-        </div>
-      </div>
-      <div className="m-searchrow">
-        <div className="m-searchbar">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/>
-          {search && <button className="m-clear" onClick={()=>setSearch('')} aria-label="Clear search">×</button>}
         </div>
         <button className={`m-fpill${filterCount?' act':''}`} onClick={onOpenFilters}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
@@ -56,16 +57,71 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
   );
 }
 
+// Shared disclosure: full wording in the popover, compact current value outside.
+function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
+  const [open, setOpen] = React.useState(false);
+  const wrap = React.useRef(null), trigger = React.useRef(null), choices = React.useRef(null);
+  const id = React.useId();
+  const labels = window.sortDirectionLabels(sort);
+  const index = sortDir === 'desc' ? 1 : 0;
+  const compact = sort === 'phase' ? labels[index].replace('Phase ', '')
+    : sort === 'title' ? labels[index]
+    : sort === 'release' ? ['Oldest', 'Newest'][index]
+    : sort === 'chrono' ? ['Earliest', 'Latest'][index]
+    : ['Lowest', 'Highest'][index];
+  React.useEffect(() => { setOpen(false); }, [sort]);
+  React.useEffect(() => {
+    if (!open) return;
+    choices.current?.querySelector('[aria-pressed="true"]')?.focus();
+    const away = e => { if (!wrap.current?.contains(e.target)) setOpen(false); };
+    const escape = e => {
+      if (e.key === 'Escape') { setOpen(false); trigger.current?.focus(); }
+    };
+    document.addEventListener('pointerdown', away);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', away);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+  // Close when keyboard focus moves to something outside the menu. Safari (iOS
+  // and macOS) does not focus a tapped/clicked button: tapping an option blurs
+  // the focused one with relatedTarget null, and closing then would unmount the
+  // option before its click fires, so the choice was silently lost. A null
+  // relatedTarget is therefore ignored here; outside taps are handled by the
+  // pointerdown listener above, and Escape still closes.
+  return <div className={`sort-order${mobile ? ' mobile-order' : ''}`} ref={wrap}
+    onBlur={e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
+    <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
+      aria-label={`Sort order: ${labels[index]}`} onClick={() => setOpen(v => !v)}>
+      {mobile && <span className="sort-order-prefix">Order:</span>}{compact}
+      <svg className="sort-order-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m6 9 6 6 6-6"/>
+      </svg>
+    </button>
+    {open && <div id={id} ref={choices} className="sort-order-pop" role="group" aria-label="Sort order">
+      <div className="sort-order-heading">Order</div>
+      {labels.map((label, i) => <button key={label} aria-pressed={index === i}
+        onClick={() => { setSortDir(i === 0 ? 'asc' : 'desc'); setOpen(false); trigger.current?.focus(); }}>
+        <span>{label}</span><span aria-hidden="true">{index === i ? '✓' : ''}</span>
+      </button>)}
+    </div>}
+  </div>;
+}
+window.SortOrderMenu = SortOrderMenu;
+
 function SortTabs({ sort, setSort }) {
   return (
-    <nav className="m-tabs">
-      <div className="m-tabs-lab">Sort by</div>
+    <div className="m-sort-footer">
+    <nav className="m-tabs" aria-label="Sort titles by">
       {SORT_TABS.map(([v,l,ic])=>(
-        <button key={v} className={`m-tab${sort===v?' on':''}`} onClick={()=>setSort(v)}>
+        <button key={v} className={`m-tab${sort===v?' on':''}`} onClick={()=>setSort(v)} aria-pressed={sort===v}>
           <span className="ti">{ic}</span>{l}
         </button>
       ))}
     </nav>
+    </div>
   );
 }
 
@@ -103,22 +159,132 @@ function MatchBadge({ matchedChars, query }) {
   );
 }
 
+// Reorder animation for the mobile grid and list (FLIP: first, last, invert,
+// play). When the sort mode or order changes, each title's on-screen position is
+// read during render, while the DOM still shows the old order. After React
+// commits the new order, every visible title is shifted back to where it was and
+// animated into its new slot, echoing the spatial view's card motion. Titles are
+// tracked by data-flip-id rather than DOM identity because the list rebuilds its
+// phase/year groups on every reorder.
+// A phone screen shows only a few titles, so most of them change on a reorder:
+// arrivals slide in from the side they came from, and departures leave as
+// temporary copies (in a clipped, non-interactive layer) sliding toward their new
+// slot. Travel is capped to part of the viewport. Skipped entirely for
+// prefers-reduced-motion.
+const FLIP_EASE = 'cubic-bezier(.2,.8,.2,1)';
+const FLIP_MS = 520;
+let flipLayer = null;
+
+function measureFlip(root) {
+  if (!root) return null;
+  const view = root.getBoundingClientRect();
+  const rects = new Map();
+  const ghosts = new Map();
+  root.querySelectorAll('[data-flip-id]').forEach(el => {
+    const r = el.getBoundingClientRect();
+    rects.set(el.dataset.flipId, r);
+    if (r.bottom > view.top && r.top < view.bottom) ghosts.set(el.dataset.flipId, el.cloneNode(true));
+  });
+  return { view, rects, ghosts };
+}
+
+function playFlip(root, prev) {
+  if (flipLayer) { flipLayer.remove(); flipLayer = null; }
+  const view = root.getBoundingClientRect();
+  const cap = view.height * 0.45;
+  const clampY = dy => Math.max(-cap, Math.min(cap, dy));
+  const shown = new Set();
+  const next = new Map();
+  let entering = 0;
+  root.querySelectorAll('[data-flip-id]').forEach(el => {
+    if (el.getAnimations) el.getAnimations().forEach(a => { if (a.id === 'm-flip') a.cancel(); });
+    const id = el.dataset.flipId;
+    const now = el.getBoundingClientRect();
+    next.set(id, now);
+    if (now.bottom <= view.top || now.top >= view.bottom) return;
+    shown.add(id);
+    const old = prev.rects.get(id);
+    const wasVisible = prev.ghosts.has(id);
+    let frames, delay = 0;
+    if (wasVisible) {
+      const dx = old.left - now.left, dy = old.top - now.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      frames = [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }];
+    } else if (old) {
+      frames = [
+        { opacity: 0, transform: `translate(${old.left - now.left}px, ${clampY(old.top - now.top)}px)` },
+        { opacity: 1, offset: 0.4 },
+        { opacity: 1, transform: 'none' },
+      ];
+      delay = Math.min(entering++, 8) * 24;
+    } else {
+      frames = [{ opacity: 0, transform: 'translateY(18px) scale(.97)' }, { opacity: 1, transform: 'none' }];
+      delay = Math.min(entering++, 8) * 24;
+    }
+    const anim = el.animate(frames, { duration: FLIP_MS, easing: FLIP_EASE, delay, fill: 'backwards' });
+    anim.id = 'm-flip';
+  });
+
+  const leaving = [...prev.ghosts].filter(([id]) => !shown.has(id));
+  if (!leaving.length) return;
+  const layer = document.createElement('div');
+  layer.className = 'm-flip-layer';
+  layer.setAttribute('aria-hidden', 'true');
+  layer.inert = true;
+  Object.assign(layer.style, { left: view.left + 'px', top: view.top + 'px', width: view.width + 'px', height: view.height + 'px' });
+  const anims = leaving.map(([id, ghost]) => {
+    const old = prev.rects.get(id);
+    const to = next.get(id);
+    ghost.removeAttribute('data-flip-id');
+    Object.assign(ghost.style, { position: 'absolute', margin: '0', boxSizing: 'border-box',
+      left: (old.left - view.left) + 'px', top: (old.top - view.top) + 'px', width: old.width + 'px', height: old.height + 'px' });
+    layer.appendChild(ghost);
+    const move = to ? `translate(${to.left - old.left}px, ${clampY(to.top - old.top)}px)` : 'scale(.97)';
+    return ghost.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, offset: 0.75 }, { opacity: 0, transform: move }], { duration: FLIP_MS * 0.8, easing: FLIP_EASE, fill: 'forwards' });
+  });
+  document.body.appendChild(layer);
+  flipLayer = layer;
+  Promise.all(anims.map(a => a.finished)).catch(() => {}).then(() => {
+    layer.remove();
+    if (flipLayer === layer) flipLayer = null;
+  });
+}
+
+function useReorderAnimation(orderKey) {
+  const ref = React.useRef(null);
+  const lastKey = React.useRef(orderKey);
+  const before = React.useRef(null);
+  if (orderKey !== lastKey.current) {
+    lastKey.current = orderKey;
+    before.current = measureFlip(ref.current);
+  }
+  React.useLayoutEffect(() => {
+    const prev = before.current;
+    before.current = null;
+    if (!prev || !ref.current || typeof Element === 'undefined' || !Element.prototype.animate) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    playFlip(ref.current, prev);
+  }, [orderKey]);
+  return ref;
+}
+
 // The card is a <div> wrapping a dedicated open button rather than one big
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
 // so tapping anywhere except the toggles opens the cast sheet exactly as before.
-function MobileGrid({ titles, onSelect, searchCharMatches, search, empty }) {
+function MobileGrid({ titles, onSelect, searchCharMatches, search, empty, orderKey }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
+  const flipRef = useReorderAnimation(orderKey);
   if (!titles.length) return <EmptyState {...(empty || {})}/>;
   return (
-    <div className="m-scrollarea">
+    <div className="m-scrollarea" ref={flipRef}>
       <div className="m-grid">
         {titles.map(t => {
           const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
           const seen = statusOf(t.id) === 'seen';
           return (
-            <div key={t.id} className={`m-card${seen ? ' seen' : ''}`}>
+            <div key={t.id} data-flip-id={t.id} className={`m-card${seen ? ' seen' : ''}`}>
               <button className="m-card-open" onClick={()=>onSelect(t.id)}>
                 <div className="m-pw">
                   <PosterArt title={t}/>
@@ -143,9 +309,10 @@ function MobileGrid({ titles, onSelect, searchCharMatches, search, empty }) {
   );
 }
 
-function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty }) {
+function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, orderKey }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
+  const flipRef = useReorderAnimation(orderKey);
   if (!titles.length) return <EmptyState {...(empty || {})}/>;
   const ranked = sort === 'imdb' || sort === 'rt';
   const lead = sort === 'rt' ? 'rt' : 'imdb';
@@ -170,10 +337,10 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty }
   }
   let n = 0;
   return (
-    <div className="m-scrollarea">
+    <div className="m-scrollarea" ref={flipRef}>
       {groups.map(g => (
         <div className="m-group" key={g.key}>
-          {g.label && <div className="m-glabel" style={g.color?{color:g.color}:null}>{g.label}</div>}
+          {g.label && <div className="m-glabel" data-flip-id={'g:' + g.key} style={g.color?{color:g.color}:null}>{g.label}</div>}
           <div className="m-list">
             {g.items.map(t => {
               n += 1;
@@ -181,7 +348,7 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty }
               const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
               const seen = statusOf(t.id) === 'seen';
               return (
-                <div key={t.id} className={`m-lrow${seen ? ' seen' : ''}`}>
+                <div key={t.id} data-flip-id={t.id} className={`m-lrow${seen ? ' seen' : ''}`}>
                   <button className="m-lrow-open" onClick={()=>onSelect(t.id)}>
                     {ranked && <div className="m-rank">{n}</div>}
                     <div className="m-lthumb"><PosterArt title={t}/></div>
@@ -194,12 +361,12 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty }
                         <span style={{color:MPHASE_COLORS[t.phase]}}>{MPHASE_LABELS[t.phase]}</span>
                         {t.budget != null && <><span className="m-dot"/><span>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</span></>}
                       </div>
+                      <ScoreBadges title={t} lead={lead}/>
                       <MatchBadge matchedChars={matchedChars} query={search}/>
                       {ranked && score != null && (
                         <div className="m-barw"><div className="m-barf" style={{width:score+'%', background: lead==='rt' ? '#fa320a' : '#f5c518'}}/></div>
                       )}
                     </div>
-                    <ScoreBadges title={t} lead={lead}/>
                   </button>
                   <window.TitleStatusActions title={t} className="m-lrow-tsa"/>
                 </div>
@@ -268,7 +435,7 @@ function Sheet({ children, onClose, tall, label }) {
   );
 }
 
-function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, sort, setSort, sortDir, setSortDir, onClose, showing, onClear }) {
+function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, sort, sortDir, setSortDir, onClose, showing, onClear }) {
   const { progress } = window.useCollection();
   return (
     <Sheet onClose={onClose} tall label="Filters">
@@ -316,29 +483,15 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
         </div>
       </div>
       <div className="m-fgroup">
-        <div className="m-flab">Also sort</div>
+        <div className="m-flab">Order</div>
         <div className="m-chips">
-          <button className={`m-chip${sort==='title'?' on':''}`} onClick={()=>setSort('title')}>A–Z</button>
+          {window.sortDirectionLabels(sort).map((label, i) => {
+            const dir = i === 0 ? 'asc' : 'desc';
+            return <button key={dir} className={`m-chip${sortDir===dir?' on':''}`}
+              aria-pressed={sortDir===dir} onClick={()=>setSortDir(dir)}>{label}</button>;
+          })}
         </div>
       </div>
-      {sort !== 'title' && (
-        <div className="m-fgroup">
-          <div className="m-flab">Direction</div>
-          <div className="m-chips">
-            {sort === 'chrono' ? (
-              <>
-                <button className={`m-chip${sortDir!=='desc'?' on':''}`} onClick={()=>setSortDir('asc')}>Chronological</button>
-                <button className={`m-chip${sortDir==='desc'?' on':''}`} onClick={()=>setSortDir('desc')}>Reverse chronological</button>
-              </>
-            ) : (
-              <>
-                <button className={`m-chip${sortDir!=='desc'?' on':''}`} onClick={()=>setSortDir('asc')}>Ascending</button>
-                <button className={`m-chip${sortDir==='desc'?' on':''}`} onClick={()=>setSortDir('desc')}>Descending</button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
       <button className="m-apply" onClick={onClose}>Show {showing} {showing === 1 ? 'title' : 'titles'}</button>
     </Sheet>
   );

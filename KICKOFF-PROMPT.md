@@ -2,15 +2,23 @@
 
 ## Current handoff — 2026-10-24
 
-Phases 1–5 are complete. Current setup and acceptance results are in
-[README.md](README.md); dated evidence and explicit test limitations are in
-[docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
+Phases 1–5 were initially released to `main` at `1f79b74`.
+The subsequent V3 maintenance release was approved on 2026-10-24: catalog
+refresh, reverse sorting, responsive navigation, mobile List/animations,
+per-device preferences, Safari Order handling and spatial camera improvements.
+These changes are included in the current `main` release, not a new major version.
+Further development continues on `version/3.0` in
+`<your-developer-folder>/MCU-V3`. The Notion V3 Tasks database is the active
+backlog; the former checklist is archived.
+Current setup is in [README.md](README.md), catalog work and sources are in
+[docs/CATALOG-AUDIT.md](docs/CATALOG-AUDIT.md), and the original phase verification
+is in [docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
 
-**Next gates:** obtain explicit confirmation before merging `version/3.0` into
-`main` (which may publish V3 to production). After the release decision, discuss
-the user's bugs/improvements and whether to use a separate branch. Do not create
-that branch yet. This work comes before Phase 6; email/password implementation
-and service setup still require a separate plan and explicit approval.
+**Next gates:** the user approved this maintenance merge on 2026-10-24.
+Future changes still require review before committing/pushing and a new approval
+before another main merge. Continue the user's bugs/improvements before Phase 6.
+Email/password implementation and service setup require their own plan and
+explicit approval; this maintenance release does not authorize them.
 
 ## Original kickoff template
 
@@ -18,7 +26,7 @@ This template describes the initial build. Do not restart Phase 1 when resuming
 the current worktree; use the current handoff above.
 
 Drop `V3-SPEC.md`, `V3-TASKS.md`, and `schema.sql` into the root of
-`/Users/afr/Documents/Developer/MCU-V3`, then paste the block below.
+`<your-developer-folder>/MCU-V3`, then paste the block below.
 
 ---
 
@@ -113,5 +121,6 @@ editing code or configuring services. The existing collection schema is provider
 independent; no SQL change is needed just to record this future phase.
 
 For the current handoff, do not automatically advance from Phase 5 to Phase 6.
-First obtain the merge decision, then discuss bugs/improvements and the branch
-choice. Phase 6 remains separately gated even if V3 is merged.
+Continue bugs/improvements on `version/3.0`; obtain a fresh merge decision for
+those changes. Phase 6 remains separately gated even though the original V3
+release is already merged.

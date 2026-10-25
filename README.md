@@ -5,15 +5,39 @@ a spatial map, connected by shared actors and characters. V3 adds seen/watchlist
 tracking, Google sign-in and cloud sync across devices.
 
 - [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/)
-- [Production](https://mcu-connections.vercel.app/) — stays on the existing release
-  until the V3 merge is explicitly approved.
+- [Production](https://mcu-connections.vercel.app/) — V3 with the maintenance
+  release approved on 2026-10-24 (catalog, sorting, navigation and mobile improvements).
+- Catalog maintenance continues on `version/3.0`; [audit and sources](docs/CATALOG-AUDIT.md),
+  [phase roadmap](V3-TASKS.md). The Notion V3 Tasks database holds the live queue.
+  Future changes still require review and approval before committing/pushing
+  and a separate approval before merging to main. Email/password Phase 6 is deferred.
+
+See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
+[privacy review](docs/PRIVACY-REVIEW.md) for the repository audit and its limits.
 
 ## Features
 
 - Spatial connection canvas with pan, zoom, draggable cards and cast highlighting.
+  Release/Chrono open closer and centred on the titles in view; closing a title's
+  details glides the camera back to where you were.
+- Desktop navigation uses one row on wide screens and two full-width rows on
+  narrower desktops: brand, sort modes and Order above; type, Filters, search,
+  Recenter and account below. The account control shows Sign in or the signed-in
+  user's name, shortened visually when space is limited.
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.
+- Mobile view navigation is List / Grid / Spatial. List rows place IMDb and
+  Rotten Tomatoes together beneath their phase/budget metadata.
+- Choose direction from a separate order menu beside desktop sorting or beside
+  mobile search on the second header row. Its label shows the current order
+  (Newest, 6 → 1, Z–A). Mobile uses quieter search text and taller bottom sort tabs.
+  Filters offers the two full order labels for the current mode without repeating
+  the sort navigation; mobile A–Z is now a main navigation tab. Grid, List and
+  Spatial use the same order; unrated titles stay last for either rating direction.
+  Changing the sort mode or order animates mobile Grid/List: titles glide to their
+  new slots, echoing Spatial (off with reduced motion).
 - Phase, film/series, budget and collection filters.
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
+  Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
   seen moves it to seen; un-seeing returns it to untracked.
 - Guest tracking saved in this browser; Google sign-in merges those marks and
@@ -27,7 +51,7 @@ tracking, Google sign-in and cloud sync across devices.
 ## The data
 
 - **64 titles** spanning Phases 1–6, 2008–2027 (40 films, 24 series)
-- **80 characters**, driving **321 connection segments** between titles
+- **83 characters**, connecting titles through shared character identities
 - Posters and actor portraits sourced from TMDB
 - IMDb and Rotten Tomatoes scores where available
 
@@ -133,7 +157,8 @@ and [redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
 ## Sync, errors and availability
 
 Guest marks use `localStorage` key `mcu.collection.v1`; the auth client uses
-`mcu.auth.v1`. Signed-in rows load from Supabase. Guest merges write only changed
+`mcu.auth.v1`. Display preferences (mobile view, sort mode and order) use
+`mcu.prefs.v1` on that device only; filters and search are not saved. Signed-in rows load from Supabase. Guest merges write only changed
 rows and clear guest storage only after success. Per-title write queues retain
 their original account scope, keep the latest intent, and prevent stale responses
 from changing a different account's UI. Writes are optimistic; failures roll back
@@ -168,12 +193,11 @@ an outage. See [Supabase project pausing](https://supabase.com/docs/guides/platf
 - Vercel's deployment protection is separate from MCU Google sign-in. Public
   browsing can be enabled for previews in Deployment Protection. The toolbar's
   Preview setting is separate and changes apply to new deployments.
-- **Wait for explicit user confirmation before merging V3 into main.** That merge
+- **Wait for fresh user confirmation before merging maintenance into main.** That merge
   can trigger the production deployment. After approval and deployment, verify
   production Google sign-in, reload, sync and sign-out at the production URL.
-- Before Phase 6, discuss the user's bug/improvement list and whether to use a
-  separate branch. Do not create that branch or start email/password work yet.
-  Phase 6 needs its own plan and explicit confirmation.
+- Continue the user's bug/improvement work on `version/3.0` before Phase 6.
+  Email/password work needs its own plan and explicit confirmation.
 
 ## Project structure
 
@@ -195,6 +219,10 @@ an outage. See [Supabase project pausing](https://supabase.com/docs/guides/platf
 | `V3-SPEC.md` / `V3-TASKS.md` | Architecture/decisions and phased delivery checklist |
 | `KICKOFF-PROMPT.md` | Original kickoff and current continuation/approval rules |
 | `docs/V3-VERIFICATION.md` | Detailed phase-by-phase evidence and limitations |
+| `CHANGELOG.md` | Dated commit summaries, release context and verification links |
+| `AGENTS.md` | Contributor workflow, shared Codex/Claude working tree, attribution and privacy instructions |
+| `CLAUDE.md` | Points Claude to `AGENTS.md` so both agents follow one rule set |
+| `docs/PRIVACY-REVIEW.md` | Source/history review, findings and proposed historical cleanup |
 
 ## Manual verification
 
@@ -221,8 +249,19 @@ accessibility output. **Spoken VoiceOver/TalkBack output is untested.** Controll
 fixtures lived outside the repository. No CI/test runner is claimed; Vercel's
 successful deployment status is a deployment check.
 
-Production OAuth and sync are pending the authorized merge/deployment. Current
-preview checks are not a claim that production already runs V3.
+The initial V3 release has been merged into main. The checks above retain their
+original preview scope; a fresh post-merge production OAuth/sync check is not
+claimed here. The catalog audit supersedes the earlier release-date boundary
+example for VisionQuest.
+
+## Catalog maintenance
+
+IMDb scores represent whole movies/series; released season entries share their
+series IMDb score. RT scores are season-specific critics’ Tomatometer values.
+The [2026-10-24 audit](docs/CATALOG-AUDIT.md) records sources and research limits.
+Month-only release windows do not count toward released completion until a day
+is confirmed. A weekly Codex task prepares sourced updates for review on Mondays
+at 9am Eastern; it does not apply, commit or publish changes.
 
 ## Known limitations
 
@@ -237,3 +276,25 @@ preview checks are not a claim that production already runs V3.
 
 Keep this README current when behavior/setup changes. Treat the dated verification
 log as evidence, not as a live list of pending setup tasks.
+
+
+## Credits and tools
+
+Created and maintained by [André Ribeiro](https://github.com/AndreFelipeRibeiro),
+with development, planning, documentation and verification assistance from
+**Anthropic Claude** and **OpenAI ChatGPT/Codex**. Earlier commits include Claude
+co-author credits. Codex and Claude now share the `version/3.0` working tree;
+assisted commits carry a Codex or Claude co-author trailer while retaining the
+maintainer as the primary author.
+
+| Area | Tools, services and sources used |
+|---|---|
+| Application | React, ReactDOM, Babel standalone; browser HTML, CSS and JavaScript |
+| Source control and hosting | Git, GitHub and Vercel |
+| Accounts and cloud data | Supabase Auth/Postgres and Google OAuth |
+| Catalog and images | TMDB poster/portrait paths; IMDb user ratings; Rotten Tomatoes critics scores; Marvel and Wikipedia references, with specific catalog evidence in the audit |
+| Development and verification | Claude and ChatGPT/Codex; browser inspection and desktop/mobile manual checks; supporting Python/Node checks outside the application runtime |
+
+[AGENTS.md](AGENTS.md) records the project workflow, changelog maintenance,
+co-author attribution and privacy rules. These credits do not retroactively
+change the authorship metadata of published commits.

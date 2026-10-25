@@ -52,28 +52,42 @@ const SORT_LABEL = { release: 'by release', chrono: 'chronological', phase: 'by 
 // (e.g. ratings default to highest-first, dates/phase default to earliest-first).
 const DEFAULT_SORT_DIR = { release: 'asc', chrono: 'asc', phase: 'asc', imdb: 'desc', rt: 'desc', title: 'asc' };
 
-function sortLabelFor(sort, dir) {
-  if (sort === 'chrono') return dir === 'desc' ? 'reverse chronological' : 'chronological';
-  const base = SORT_LABEL[sort];
-  if (sort === 'release' || sort === 'phase' || sort === 'imdb' || sort === 'rt') {
-    return `${base} · ${dir === 'desc' ? 'descending' : 'ascending'}`;
+function sortDirectionLabels(sort) {
+  if (sort === 'title') return ['A–Z', 'Z–A'];
+  if (sort === 'release') return ['Oldest first', 'Newest first'];
+  if (sort === 'chrono') return ['Earliest first', 'Latest first'];
+  if (sort === 'phase') {
+    const phases = window.TITLES.map(t => t.phase);
+    const low = Math.min(...phases), high = Math.max(...phases);
+    return [`Phase ${low} → ${high}`, `Phase ${high} → ${low}`];
   }
-  return base;
+  return ['Lowest rated first', 'Highest rated first'];
+}
+window.sortDirectionLabels = sortDirectionLabels;
+
+function sortLabelFor(sort, dir) {
+  const direction = sortDirectionLabels(sort)[dir === 'desc' ? 1 : 0];
+  return sort === 'title' ? direction : `${SORT_LABEL[sort]} · ${direction.toLowerCase()}`;
 }
 
 function sortTitles(list, sort, dir = 'asc') {
-  const out = list.slice();
   const mul = dir === 'desc' ? -1 : 1;
-  if (sort === 'chrono') out.sort((a,b) => mul * (a.chronOrder - b.chronOrder));
-  else if (sort === 'title') out.sort((a,b) => mul * a.title.localeCompare(b.title));
-  else if (sort === 'imdb') out.sort((a,b) => mul * ((a.imdb ?? -1) - (b.imdb ?? -1)));
-  else if (sort === 'rt') out.sort((a,b) => mul * ((a.rt ?? -1) - (b.rt ?? -1)));
-  else if (sort === 'phase') out.sort((a,b) => mul * (a.phase - b.phase) || a.release.localeCompare(b.release));
-  else out.sort((a,b) => mul * a.release.localeCompare(b.release));
-  return out;
+  return list.slice().sort((a, b) => {
+    if (sort === 'imdb' || sort === 'rt') {
+      // Unrated titles are not low ratings: keep them last in either direction.
+      if (a[sort] == null) return b[sort] == null ? 0 : 1;
+      if (b[sort] == null) return -1;
+      return mul * (a[sort] - b[sort]);
+    }
+    if (sort === 'chrono') return mul * (a.chronOrder - b.chronOrder);
+    if (sort === 'title') return mul * a.title.localeCompare(b.title);
+    if (sort === 'phase') return mul * ((a.phase - b.phase) || a.release.localeCompare(b.release));
+    return mul * a.release.localeCompare(b.release);
+  });
 }
 
-function computeLayout(titles, sort) {
+function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
+  const ordered = sortTitles(titles, sort, dir);
   const positions = {};
   const colW = CARD_W + 60;
   const rowH = CARD_H + 70;
@@ -81,10 +95,9 @@ function computeLayout(titles, sort) {
   if (sort === 'phase') {
     // Group by phase into vertical lanes
     const byPhase = {1:[],2:[],3:[],4:[],5:[],6:[]};
-    titles.forEach(t => byPhase[t.phase].push(t));
-    Object.keys(byPhase).forEach(p => byPhase[p].sort((a,b)=>a.release.localeCompare(b.release)));
+    ordered.forEach(t => byPhase[t.phase].push(t));
     let y = 60;
-    Object.keys(byPhase).sort().forEach(p => {
+    Object.keys(byPhase).sort((a,b) => (dir === 'desc' ? -1 : 1) * (Number(a) - Number(b))).forEach(p => {
       const list = byPhase[p];
       const cols = Math.max(6, Math.ceil(Math.sqrt(list.length * 1.6)));
       list.forEach((t, i) => {
@@ -98,35 +111,10 @@ function computeLayout(titles, sort) {
       const rows = Math.ceil(list.length / cols);
       y += rows * rowH + 80;
     });
-  } else if (sort === 'imdb') {
-    // Highest-rated first, flowing grid
-    const sorted = titles.slice().sort((a,b)=> (b.imdb ?? -1) - (a.imdb ?? -1));
+  } else if (sort === 'imdb' || sort === 'rt' || sort === 'title') {
+    // Use the same ordering as Grid/List; layout must not silently re-sort it.
     const cols = 7;
-    sorted.forEach((t,i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      positions[t.id] = {
-        x: 80 + col * colW + seedJitter(t.id+'x', 26),
-        y: 80 + row * rowH + seedJitter(t.id+'y', 22),
-      };
-    });
-  } else if (sort === 'rt') {
-    // Highest Tomatometer first, flowing grid
-    const sorted = titles.slice().sort((a,b)=> (b.rt ?? -1) - (a.rt ?? -1));
-    const cols = 7;
-    sorted.forEach((t,i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      positions[t.id] = {
-        x: 80 + col * colW + seedJitter(t.id+'x', 26),
-        y: 80 + row * rowH + seedJitter(t.id+'y', 22),
-      };
-    });
-  } else if (sort === 'title') {
-    // Alphabetical flow
-    const sorted = titles.slice().sort((a,b)=>a.title.localeCompare(b.title));
-    const cols = 7;
-    sorted.forEach((t,i) => {
+    ordered.forEach((t,i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
       positions[t.id] = {
@@ -135,16 +123,12 @@ function computeLayout(titles, sort) {
       };
     });
   } else {
-    // release or chrono — horizontal timeline with phase as vertical band
-    const sorted = titles.slice().sort((a,b)=>{
-      if (sort === 'chrono') return a.chronOrder - b.chronOrder;
-      return a.release.localeCompare(b.release);
-    });
+    // Release or chronology flows left-to-right in the selected direction.
     // Place in timeline rows; phase determines vertical band
     const phaseRow = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5 };
     // To avoid horizontal collisions, count along x and bump y when too close
     const lastXByRow = {0:-Infinity,1:-Infinity,2:-Infinity,3:-Infinity,4:-Infinity,5:-Infinity};
-    sorted.forEach((t, i) => {
+    ordered.forEach((t, i) => {
       const baseX = 80 + i * (CARD_W * 1.15);
       const row = phaseRow[t.phase];
       const y = 80 + row * (rowH * 1.25) + seedJitter(t.id+'y', 30);
@@ -205,7 +189,7 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
           : <span className="card-seen-mark"><window.SeenMarker seen={status === 'seen'}/></span>}
         <div className="rating-row">
           {title.imdb != null && (
-            <div className="card-rating imdb" title="IMDb rating">
+            <div className="card-rating imdb" title={title.type === 'series' ? 'IMDb whole-series rating (shared across seasons)' : 'IMDb movie rating'}>
               <span className="imdb-tag">IMDb</span>
               {title.imdb.toFixed(1)}
             </div>
@@ -288,7 +272,7 @@ const SORT_OPTIONS = [
   ['rt','Tomatometer','RT','◉'],
 ];
 
-function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch, total, showing, onResetView }) {
+function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch, total, showing, onResetView }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   const { progress } = window.useCollection();
@@ -303,7 +287,7 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
   }, [popOpen]);
   return (
     <div className="toolbar">
-      <div className="tb-row">
+      <div className="tb-row tb-primary-row">
         <div className="brand">
           <div className="brand-mark"/>
           <div>
@@ -314,16 +298,22 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
             </div>
           </div>
         </div>
-        <div className="control-group">
+        <div className="control-group tb-sort-controls">
           <div className="segmented">
             {SORT_OPTIONS.map(([v,l,s,ic])=>(
-              <button key={v} className={sort===v?'on':''} onClick={()=>setSort(v)} title={l}>
+              <button key={v} className={sort===v?'on':''} onClick={()=>setSort(v)} aria-pressed={sort===v} title={l}>
                 <span className="si">{ic}</span><span className="lg">{l}</span><span className="sm">{s}</span>
               </button>
             ))}
           </div>
+          <div className="tb-order-control">
+            <span className="tb-order-label">Order</span>
+            <window.SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir}/>
+          </div>
         </div>
-        <div className="control-group">
+      </div>
+      <div className="tb-row tb-secondary-row">
+        <div className="control-group tb-type-controls">
           <div className="segmented">
             {[['all','All'],['film','Films'],['series','Series']].map(([v,l])=>(
               <button key={v} className={typeFilter===v?'on':''} onClick={()=>setTypeFilter(v)}>{l}</button>
@@ -367,6 +357,16 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
                   ))}
                 </div>
               </div>
+              <div className="control-group">
+                <label>Order</label>
+                <div className="segmented">
+                  {sortDirectionLabels(sort).map((label, i) => (
+                    <button key={label} className={sortDir===(i===0?'asc':'desc')?'on':''}
+                      aria-pressed={sortDir===(i===0?'asc':'desc')}
+                      onClick={()=>setSortDir(i===0?'asc':'desc')}>{label}</button>
+                  ))}
+                </div>
+              </div>
               {activeFilters > 0 && (
                 <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); setCollectionFilter('all'); }}>Clear filters</button>
               )}
@@ -375,11 +375,11 @@ function Toolbar({ sort, setSort, phaseFilter, setPhaseFilter, typeFilter, setTy
         </div>
         <div className="search-wrap">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/>
+          <input aria-label="Search titles or characters" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/>
         </div>
-        <button className="reset-view" onClick={onResetView} title="Recenter view">⊙<span className="lg"> Recenter</span></button>
-        <window.AccountButton onPickCollection={setCollectionFilter}/>
+        <button className="reset-view" onClick={onResetView} title="Recenter view"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg><span className="reset-label">Recenter</span></button>
       </div>
+      <window.AccountButton onPickCollection={setCollectionFilter}/>
     </div>
   );
 }
@@ -576,10 +576,45 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
   );
 }
 
+// Display preferences (V3-SPEC D6): device-scoped, localStorage only, not tied to
+// the account and not cleared on sign-out. Saves the mobile view mode, the sort
+// mode and the order direction, on desktop and mobile. Filters, search and the
+// spatial camera deliberately start fresh each visit, so nobody returns to a
+// silently filtered catalog. Nothing is written until the visitor changes one of
+// these, so first visits keep following the defaults below. Missing, malformed or
+// unknown values fall back to those defaults.
+const PREFS_KEY = 'mcu.prefs.v1';
+const PREFS_VERSION = 1;
+const VIEW_MODE_VALUES = ['list', 'grid', 'spatial'];
+
+function readDisplayPrefs() {
+  const prefs = { viewMode: 'list', sort: 'release', sortDir: DEFAULT_SORT_DIR.release };
+  let parsed = null;
+  try {
+    parsed = JSON.parse(window.localStorage.getItem(PREFS_KEY) || 'null');
+  } catch (e) {
+    return prefs; // Storage disabled, or not valid JSON.
+  }
+  if (!parsed || typeof parsed !== 'object' || parsed.version !== PREFS_VERSION) return prefs;
+  if (VIEW_MODE_VALUES.indexOf(parsed.viewMode) !== -1) prefs.viewMode = parsed.viewMode;
+  if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, parsed.sort)) {
+    prefs.sort = parsed.sort;
+    prefs.sortDir = parsed.sortDir === 'asc' || parsed.sortDir === 'desc' ? parsed.sortDir : DEFAULT_SORT_DIR[parsed.sort];
+  }
+  return prefs;
+}
+
+function writeDisplayPrefs(prefs) {
+  try {
+    window.localStorage.setItem(PREFS_KEY, JSON.stringify({ version: PREFS_VERSION, ...prefs }));
+  } catch (e) { /* Quota or disabled storage: the choice lasts for this visit only. */ }
+}
+
 function App() {
-  const [sort, setSort] = useState('release');
-  const [sortDir, setSortDir] = useState(DEFAULT_SORT_DIR.release);
-  const changeSort = (v) => { setSort(v); setSortDir(DEFAULT_SORT_DIR[v] || 'asc'); };
+  const [initialPrefs] = useState(readDisplayPrefs);
+  const [sort, setSort] = useState(initialPrefs.sort);
+  const [sortDir, setSortDir] = useState(initialPrefs.sortDir);
+  const changeSort = (v) => { if (v === sort) return; setSort(v); setSortDir(DEFAULT_SORT_DIR[v] || 'asc'); };
   const [phaseFilter, setPhaseFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [budgetFilter, setBudgetFilter] = useState('all');
@@ -591,7 +626,14 @@ function App() {
   useEffect(() => { setMediaReady(true); }, []);
   const device = useDevice();
   const isTouch = device !== 'desktop';
-  const [viewMode, setViewMode] = useState('grid');
+  // Mobile opens in List unless the visitor chose another view before; desktop
+  // ignores viewMode (spatial only).
+  const [viewMode, setViewMode] = useState(initialPrefs.viewMode);
+  const prefsLoaded = useRef(false);
+  useEffect(() => {
+    if (!prefsLoaded.current) { prefsLoaded.current = true; return; }
+    writeDisplayPrefs({ viewMode, sort, sortDir });
+  }, [viewMode, sort, sortDir]);
   const [drawerId, setDrawerId] = useState(null);
   const [sheet, setSheet] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
@@ -608,6 +650,33 @@ function App() {
   const [view, setView] = useState({ x: 0, y: 0, scale: 1 });
   const [zoomEdit, setZoomEdit] = useState(null);
   const ZOOM_MIN = 0.05;
+
+  // Camera glide, for programmatic returns only (see the selection return
+  // below). Manual pan and zoom must stay instant, so any pointer or wheel input
+  // on the viewport cancels it.
+  const [cameraGlide, setCameraGlide] = useState(false);
+  const glideTimer = useRef(null);
+  const glideTo = useCallback((next) => {
+    clearTimeout(glideTimer.current);
+    setCameraGlide(true);
+    setView(next);
+    glideTimer.current = setTimeout(() => { glideTimer.current = null; setCameraGlide(false); }, 650);
+  }, []);
+  const stopGlide = useCallback(() => {
+    if (!glideTimer.current) return;
+    clearTimeout(glideTimer.current);
+    glideTimer.current = null;
+    setCameraGlide(false);
+  }, []);
+  // Where the camera was before a card was selected, so closing its details can
+  // return there instead of leaving the viewport on the focus ring (laid out
+  // near the canvas origin, i.e. the Phase 1 end of the timeline layouts).
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  const selectionReturnRef = useRef(null);
+  // False until resetView has framed the canvas; the mobile canvas only exists
+  // while Spatial is showing, so its camera is unframed after each visit.
+  const cameraFramedRef = useRef(false);
   const viewportRef = useRef(null);
   const panRef = useRef({ panning: false, sx: 0, sy: 0, ox: 0, oy: 0 });
 
@@ -654,7 +723,7 @@ function App() {
     return list;
   }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches]);
 
-  const layout = useMemo(() => computeLayout(filtered, sort), [filtered, sort]);
+  const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir]);
   const basePositions = layout.positions;
   const canvasW = layout.width;
   const canvasH = layout.height;
@@ -898,6 +967,9 @@ function App() {
 
   const resetView = useCallback(() => {
     if (!viewportRef.current) return;
+    // A layout change or Recenter supersedes any remembered pre-selection view.
+    selectionReturnRef.current = null;
+    cameraFramedRef.current = true;
     const rect = viewportRef.current.getBoundingClientRect();
     const colW = CARD_W + 60;
     const gridSort = sort === 'phase' || sort === 'title' || sort === 'imdb' || sort === 'rt';
@@ -909,7 +981,9 @@ function App() {
       ? Math.min(1, isTouch
           ? Math.max((rect.width - 32) / canvasW, rect.width / (colW * 3))
           : (rect.width - 32) / canvasW)
-      : Math.min(1, Math.max(ZOOM_MIN, rect.width / (colW * (isTouch ? 3.4 : 8.5))));
+      // Timeline layouts open at about 7.5 titles across on desktop and 2.5 on
+      // touch (one title step is CARD_W * 1.15), capped at 100%.
+      : Math.min(1, Math.max(ZOOM_MIN, rect.width / (CARD_W * 1.15 * (isTouch ? 2.5 : 7.5))));
 
     // A dimming filter is active: frame exactly what it matches. Card positions
     // are not touched — only the viewport moves — so this stays inside the rule
@@ -961,13 +1035,29 @@ function App() {
         scale,
       });
     } else {
-      // Timeline layouts: start at the beginning, showing a handful of cards at readable size
+      // Timeline layouts step down one phase band at a time as they move right,
+      // so anchoring the top-left corner left most of the screen empty. Centre
+      // vertically on the titles actually in view horizontally instead; if they
+      // are taller than the viewport, top-align them but keep the leading title
+      // (which may sit in a lower band in reverse order) on screen.
       const scale = defaultScale;
-      setView({
-        x: 14 - minX * scale,
-        y: canvasH * scale <= rect.height - 32 ? (rect.height - canvasH * scale) / 2 : 14 - minY * scale,
-        scale,
+      const left = minX - 14 / scale, right = left + rect.width / scale;
+      let y0 = Infinity, y1 = -Infinity, leading = null;
+      Object.values(basePositions).forEach(p => {
+        if (!leading || p.x < leading.x) leading = p;
+        if (p.x + CARD_W < left || p.x > right) return;
+        if (p.y < y0) y0 = p.y;
+        if (p.y + CARD_H > y1) y1 = p.y + CARD_H;
       });
+      let y = 14 - minY * scale;
+      if (isFinite(y0)) {
+        if ((y1 - y0) * scale <= rect.height - 28) y = rect.height / 2 - ((y0 + y1) / 2) * scale;
+        else {
+          y = 14 - y0 * scale;
+          if (leading && (leading.y + CARD_H) * scale + y > rect.height - 14) y = rect.height - 14 - (leading.y + CARD_H) * scale;
+        }
+      }
+      setView({ x: 14 - minX * scale, y, scale });
     }
   }, [canvasW, canvasH, basePositions, sort, isTouch]);
 
@@ -989,6 +1079,46 @@ function App() {
     if (selectedIdRef.current) return;
     resetView();
   }, [collectionFilter, highlightedChar, resetView]);
+
+  // Entering Spatial on touch mounts a fresh canvas whose camera was never
+  // framed (it previously opened at 100% on the top-left corner). Frame it,
+  // unless a card is already selected (opened from a detail sheet): the
+  // focus-ring auto-fit below owns the camera then.
+  useLayoutEffect(() => {
+    if (!isTouch) return;
+    if (viewMode !== 'spatial') { cameraFramedRef.current = false; return; }
+    if (!selectedIdRef.current) resetView();
+  }, [viewMode, isTouch]);
+
+  // Remember the camera when a card becomes selected; when the selection clears,
+  // glide back so the visitor returns to where they were (e.g. Phase 6) rather
+  // than the focus ring's spot near Phase 1. If they moved on to another card
+  // through the ring, centre that card's layout position at the original zoom.
+  // An unframed camera (selection opened straight into Spatial) gets a normal
+  // reset instead.
+  const prevSelectedRef = useRef(null);
+  useEffect(() => {
+    const prev = prevSelectedRef.current;
+    prevSelectedRef.current = selectedId;
+    if (selectedId && !prev) {
+      selectionReturnRef.current = { view: cameraFramedRef.current ? viewRef.current : null, id: selectedId };
+      return;
+    }
+    if (selectedId || !prev) return;
+    const back = selectionReturnRef.current;
+    selectionReturnRef.current = null;
+    if (!back || !viewportRef.current) return;
+    if (!back.view) { resetView(); return; }
+    const p = basePositions[prev];
+    if (prev === back.id || !p) { glideTo(back.view); return; }
+    const rect = viewportRef.current.getBoundingClientRect();
+    const scale = back.view.scale;
+    glideTo({
+      x: rect.width / 2 - (p.x + CARD_W / 2) * scale,
+      y: rect.height / 2 - (p.y + CARD_H / 2) * scale,
+      scale,
+    });
+  }, [selectedId]);
 
   // Auto-fit view to focused layout when a card is selected
   useEffect(() => {
@@ -1146,6 +1276,8 @@ function App() {
     <div
       className="viewport"
       ref={viewportRef}
+      onPointerDownCapture={stopGlide}
+      onWheelCapture={stopGlide}
       onMouseDown={isTouch ? undefined : onMouseDown}
       onWheel={isTouch ? undefined : onWheel}
       onTouchStart={isTouch ? onTouchStart : undefined}
@@ -1160,6 +1292,7 @@ function App() {
           height: canvasH + 'px',
           transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
           transformOrigin: '0 0',
+          transition: cameraGlide ? 'transform 600ms cubic-bezier(.2,.8,.2,1)' : undefined,
         }}
       >
         <FloatingConnections
@@ -1227,13 +1360,13 @@ function App() {
           onOpenFilters={() => setSheet('filters')}
           filterCount={filterCount}
           showing={mobileShowing} total={window.TITLES.length}
-          sort={sort} setSort={changeSort} sortLabel={sortLabelFor(sort, sortDir)}
+          sort={sort} sortDir={sortDir} setSortDir={setSortDir} sortLabel={sortLabelFor(sort, sortDir)}
           onOpenAccount={() => setSheet('account')}
         />
         {charBanner}
         <div className="m-main">
-          {viewMode === 'grid' && <window.MobileGrid titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy}/>}
-          {viewMode === 'list' && <window.MobileList titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy}/>}
+          {viewMode === 'grid' && <window.MobileGrid titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
+          {viewMode === 'list' && <window.MobileList titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
@@ -1241,13 +1374,14 @@ function App() {
             </div>
           )}
         </div>
-        {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort}/>}        {sheet === 'filters' && (
+        {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort}/>}
+        {sheet === 'filters' && (
           <window.FilterSheet
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
             typeFilter={typeFilter} setTypeFilter={setTypeFilter}
             budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
             collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
-            sort={sort} setSort={changeSort}
+            sort={sort}
             sortDir={sortDir} setSortDir={setSortDir}
             showing={mobileShowing}
             onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setCollectionFilter('all'); }}
@@ -1277,7 +1411,7 @@ function App() {
   return (
     <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
       <Toolbar
-        sort={sort} setSort={changeSort}
+        sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}
         budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
