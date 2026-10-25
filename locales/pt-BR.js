@@ -86,8 +86,6 @@ window.MCU_LOCALES['pt-BR'] = {
     'search.aria': 'Buscar títulos ou personagens',
     'search.clear': 'Limpar busca',
 
-    'canvas.recenter': 'Recentralizar',
-    'canvas.recenterAria': 'Recentralizar visualização',
     'canvas.zoomIn': 'Aumentar zoom',
     'canvas.zoomOut': 'Diminuir zoom',
     'canvas.zoomTypeTouch': 'Toque para digitar o zoom',
