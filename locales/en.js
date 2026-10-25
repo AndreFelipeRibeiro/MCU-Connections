@@ -12,7 +12,6 @@ window.MCU_LOCALES.en = {
 
     'header.count': { one: '{n} title', other: '{n} titles' },
     'header.countOf': '{shown} of {total}',
-    'header.countOfTitles': '{shown} of {total} titles',
     'header.seen': '{n} seen',
 
     'sort.navAria': 'Sort titles by',
@@ -28,11 +27,6 @@ window.MCU_LOCALES.en = {
     'sort.short.title': 'A–Z',
     'sort.short.imdb': 'IMDb',
     'sort.short.rt': 'RT',
-    'sort.by.release': 'by release',
-    'sort.by.chrono': 'chronological',
-    'sort.by.phase': 'by phase',
-    'sort.by.imdb': 'by IMDb',
-    'sort.by.rt': 'by Tomatometer',
 
     'order.label': 'Order',
     'order.aria': 'Sort order: {label}',
@@ -76,6 +70,11 @@ window.MCU_LOCALES.en = {
     'filters.all': 'All',
     'filters.clear': 'Clear filters',
     'filters.clearAll': 'Clear all',
+    'context.filters': { one: '{n} filter', other: '{n} filters' },
+    'context.clear': 'Clear',
+    'context.remove': 'Remove filter: {label}',
+    'canvas.recenter': 'Recenter',
+    'canvas.recenterAria': 'Recenter the view on the titles shown',
     'filters.show': { one: 'Show {n} title', other: 'Show {n} titles' },
     'budget.format': '${n}M',
     'budget.low': '<$50M',

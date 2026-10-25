@@ -11,7 +11,6 @@ window.MCU_LOCALES['pt-BR'] = {
 
     'header.count': { one: '{n} título', other: '{n} títulos' },
     'header.countOf': '{shown} de {total}',
-    'header.countOfTitles': '{shown} de {total} títulos',
     'header.seen': { one: '{n} visto', other: '{n} vistos' },
 
     'sort.navAria': 'Ordenar títulos por',
@@ -27,11 +26,6 @@ window.MCU_LOCALES['pt-BR'] = {
     'sort.short.title': 'A–Z',
     'sort.short.imdb': 'IMDb',
     'sort.short.rt': 'RT',
-    'sort.by.release': 'por estreia',
-    'sort.by.chrono': 'cronológica',
-    'sort.by.phase': 'por fase',
-    'sort.by.imdb': 'por IMDb',
-    'sort.by.rt': 'por Tomatometer',
 
     'order.label': 'Ordem',
     'order.aria': 'Ordem: {label}',
@@ -75,6 +69,11 @@ window.MCU_LOCALES['pt-BR'] = {
     'filters.all': 'Todos',
     'filters.clear': 'Limpar filtros',
     'filters.clearAll': 'Limpar tudo',
+    'context.filters': { one: '{n} filtro', other: '{n} filtros' },
+    'context.clear': 'Limpar',
+    'context.remove': 'Remover filtro: {label}',
+    'canvas.recenter': 'Recentralizar',
+    'canvas.recenterAria': 'Recentralizar a visualização nos títulos exibidos',
     'filters.show': { one: 'Mostrar {n} título', other: 'Mostrar {n} títulos' },
     'budget.format': 'US$ {n} mi',
     'budget.low': '< US$ 50 mi',

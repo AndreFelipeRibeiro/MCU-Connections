@@ -12,6 +12,63 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Context summary on every screen size
+
+Recorded: 2026-10-25 11:47:47 EDT (-0400).
+
+- New context summary for what the view is showing. Desktop: a bar under the
+  toolbar with the matching count, sort and seen count, one removable chip per
+  active filter (search, collection, type, phase, budget), Clear all and a
+  Recenter button (restored). Phones: one line at the top of List and Grid
+  (count · seen · N filters, Clear) that scrolls with the list, and a pill at the
+  top-left of Spatial clear of the zoom control; the line also shows above the
+  empty state.
+- The logo subtitles are gone on desktop and mobile, which also resolves the
+  320px mobile subtitle overflow. The count is now the titles matching every
+  filter, including the collection filter, on every surface (Spatial previously
+  also counted cards the collection filter only dims). Below 360px the language
+  globe hides so the app name fits.
+- Locales: added `context.*`, restored `canvas.recenter*`; removed the unused
+  `header.countOfTitles` and `sort.by.*` keys.
+- Verification: headless Chromium, en-US and pt-BR. Fit sweep at 20 desktop and 4
+  phone widths with All and Watchlist active: no overflow, overlaps, clipping,
+  horizontal scroll or console errors. Desktop: chips match the filters, removing
+  one resets its control, Clear all resets everything, Recenter restores the
+  start camera after a pan, count equals the undimmed cards. Mobile: count equals
+  list rows, Clear resets search and collection, empty state keeps the line, the
+  Spatial pill does not overlap the zoom control and its Clear does not select a
+  card. Camera regression and language scripts pass (the camera script now
+  measures the card actually selected in its A→B step). The user reviewed
+  screenshots and approved committing, pushing and merging to main.
+- Limits: the desktop bar adds about 40px; the compact collection switch at 320px
+  in Portuguese remains tight (pre-existing); no physical-device check.
+
+## V3 maintenance — Even Spatial card layout; backlog priority rule
+
+Recorded: 2026-10-25 09:44:26 EDT (-0400).
+
+- Spatial cards sit on an even grid. Each card used to get a pseudo-random
+  offset (±18–30px) for an "organic" look, which broke row alignment and made
+  gaps uneven: Release/Chrono neighbours ranged from 8px overlapping to 57px
+  apart, grid sorts from 15 to 110px. Gaps are now constant (25px in
+  Release/Chrono, 60px in Phase/A–Z/IMDb/RT) and rows share a top edge.
+- Card footers reserve room for a two-line title plus the year and story rows
+  (92px), so every poster is the same height (176px) and the status buttons and
+  rating badges line up; a one-line title previously left a taller poster
+  (177–209px). Cards showing a search match badge shrink their posters equally.
+- AGENTS.md: backlog priority is the order of the Backlog column in the Notion
+  All tasks board (Notion keeps a separate manual order per view, so the Queue
+  table's order is not the priority).
+- Verification: headless Chromium at 1440px in all six sorts: no overlapping
+  cards; neighbour gaps 25–26px (Release/Chrono) and 60px (grid sorts). Footer
+  92px and poster 176px on all 64 cards in en-US, pt-BR and mobile Spatial; no
+  card overflow while searching. Camera regression script (desktop
+  select/close/glide/wheel/sort, mobile enter/select/restore/re-enter) unchanged;
+  its mobile half was updated for the view menu. The user reviewed screenshots
+  and approved committing and pushing to `version/3.0`.
+- Limits: posters were blocked in the test browser, so poster cropping at the
+  new height was not checked there; the canvas looks less scattered by design.
+
 ## V3 maintenance — Desktop navigation grouped like mobile
 
 Recorded: 2026-10-25 00:57:40 EDT (-0400).
