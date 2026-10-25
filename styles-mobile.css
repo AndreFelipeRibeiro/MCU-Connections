@@ -4,7 +4,14 @@
 
 /* APP BAR */
 .m-appbar { flex: 0 0 auto; padding: 10px 14px 11px; border-bottom: 1px solid var(--border); background: rgba(10,12,20,.94); backdrop-filter: blur(12px); display: flex; flex-direction: column; gap: 10px; z-index: 30; }
-.m-appbar-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.m-appbar-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* Let the brand shrink so the language menu and avatar always fit; the
+   subtitle truncates instead of running under them on narrow phones. */
+.m-brandrow { flex: 1 1 auto; min-width: 0; }
+.m-brandrow > div:last-child { min-width: 0; }
+.m-bsub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-appbar-top .lang-menu { flex: 0 0 auto; }
+.m-appbar-top .lang-menu .sort-order-trigger { height: 38px; padding: 0 9px; gap: 5px; font-size: 12px; }
 .m-brandrow { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .m-mark { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 7px; position: relative; background: conic-gradient(from 45deg,#d4a05a,#4a8de8,#d04040,#a05cd0,#5fa856,#d4a05a); }
 .m-mark::after { content: ''; position: absolute; inset: 5px; border-radius: 3px; background: var(--bg); }

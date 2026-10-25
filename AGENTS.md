@@ -8,6 +8,13 @@ test runner. Shared cross-file APIs use window.*; CDN dependencies are pinned
 with SRI. Preserve permanent catalog title ids and the spatial-filter invariants.
 Email/password Phase 6 and merges to main require separate explicit approval.
 
+User-facing text is translated: never hard-code UI strings in components. Add
+a key to locales/en.js (the complete base), translate it in every other
+locales/*.js file, and read it with `tr()` (app.jsx), `mtr()` (mobile.jsx) or
+`window.MCU_I18N.tr()`. Show titles and character names through
+`MCU_I18N.titleName()` / `charName()`; search should keep matching every
+language's names. New catalog titles need an official local title per locale.
+
 ## Change records and attribution
 
 - Keep iterations local and uncommitted until the user explicitly approves

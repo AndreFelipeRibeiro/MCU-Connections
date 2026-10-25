@@ -10,7 +10,12 @@ const PHASE_COLORS = {
   5: '#5fa856',
   6: '#c8384a',
 };
-const PHASE_LABELS = { 1: 'PHASE 1', 2: 'PHASE 2', 3: 'PHASE 3', 4: 'PHASE 4', 5: 'PHASE 5', 6: 'PHASE 6' };
+// Text goes through the i18n runtime (i18n.js); `tr` avoids clashing with the
+// `t` used for titles throughout this file.
+const I18N = window.MCU_I18N;
+const tr = (key, vars) => I18N.tr(key, vars);
+const phaseLabel = (n) => I18N.upper(tr('phase.label', { n }));
+const typeLabel = (type) => tr(type === 'film' ? 'type.film.one' : 'type.series.one');
 
 const CARD_W = 170;
 const CARD_H = 270;
@@ -46,28 +51,31 @@ function useDevice() {
   return device;
 }
 
-const SORT_LABEL = { release: 'by release', chrono: 'chronological', phase: 'by phase', title: 'A–Z', imdb: 'by IMDb', rt: 'by Tomatometer' };
 
 // Default direction per sort mode, chosen to match each mode's natural/prior default
 // (e.g. ratings default to highest-first, dates/phase default to earliest-first).
 const DEFAULT_SORT_DIR = { release: 'asc', chrono: 'asc', phase: 'asc', imdb: 'desc', rt: 'desc', title: 'asc' };
 
-function sortDirectionLabels(sort) {
-  if (sort === 'title') return ['A–Z', 'Z–A'];
-  if (sort === 'release') return ['Oldest first', 'Newest first'];
-  if (sort === 'chrono') return ['Earliest first', 'Latest first'];
+// Full labels for both directions of a sort; `short` gives the compact form
+// shown on the mobile order button.
+function sortDirectionLabels(sort, short = false) {
+  const sfx = short ? 'Short' : '';
+  if (sort === 'title') return [tr('order.title.asc'), tr('order.title.desc')];
+  if (sort === 'release') return [tr('order.release.asc' + sfx), tr('order.release.desc' + sfx)];
+  if (sort === 'chrono') return [tr('order.chrono.asc' + sfx), tr('order.chrono.desc' + sfx)];
   if (sort === 'phase') {
     const phases = window.TITLES.map(t => t.phase);
     const low = Math.min(...phases), high = Math.max(...phases);
-    return [`Phase ${low} → ${high}`, `Phase ${high} → ${low}`];
+    const key = short ? 'order.phase.rangeShort' : 'order.phase.range';
+    return [tr(key, { from: low, to: high }), tr(key, { from: high, to: low })];
   }
-  return ['Lowest rated first', 'Highest rated first'];
+  return [tr('order.rating.asc' + sfx), tr('order.rating.desc' + sfx)];
 }
 window.sortDirectionLabels = sortDirectionLabels;
 
 function sortLabelFor(sort, dir) {
   const direction = sortDirectionLabels(sort)[dir === 'desc' ? 1 : 0];
-  return sort === 'title' ? direction : `${SORT_LABEL[sort]} · ${direction.toLowerCase()}`;
+  return sort === 'title' ? direction : `${tr('sort.by.' + sort)} · ${direction.toLocaleLowerCase(document.documentElement.lang || 'en')}`;
 }
 
 function sortTitles(list, sort, dir = 'asc') {
@@ -80,7 +88,7 @@ function sortTitles(list, sort, dir = 'asc') {
       return mul * (a[sort] - b[sort]);
     }
     if (sort === 'chrono') return mul * (a.chronOrder - b.chronOrder);
-    if (sort === 'title') return mul * a.title.localeCompare(b.title);
+    if (sort === 'title') return mul * I18N.compare(I18N.titleName(a), I18N.titleName(b));
     if (sort === 'phase') return mul * ((a.phase - b.phase) || a.release.localeCompare(b.release));
     return mul * a.release.localeCompare(b.release);
   });
@@ -181,21 +189,21 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
       <div className="card-poster">
         <PosterArt title={title}/>
         <div className="card-badges">
-          <span className="badge type-badge">{title.type === 'film' ? 'FILM' : 'SERIES'}</span>
-          <span className="badge phase-badge" style={{background: phaseColor, color:'#0a0c14'}}>{PHASE_LABELS[title.phase]}</span>
+          <span className="badge type-badge">{I18N.upper(typeLabel(title.type))}</span>
+          <span className="badge phase-badge" style={{background: phaseColor, color:'#0a0c14'}}>{phaseLabel(title.phase)}</span>
         </div>
         {showActions
           ? <window.TitleStatusActions title={title} className="card-tsa"/>
           : <span className="card-seen-mark"><window.SeenMarker seen={status === 'seen'}/></span>}
         <div className="rating-row">
           {title.imdb != null && (
-            <div className="card-rating imdb" title={title.type === 'series' ? 'IMDb whole-series rating (shared across seasons)' : 'IMDb movie rating'}>
+            <div className="card-rating imdb" title={tr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}>
               <span className="imdb-tag">IMDb</span>
               {title.imdb.toFixed(1)}
             </div>
           )}
           {title.rt != null && (
-            <div className="card-rating rt" title="Rotten Tomatoes Tomatometer">
+            <div className="card-rating rt" title={tr('score.rt')}>
               <span className="rt-tag">RT</span>
               {title.rt}%
             </div>
@@ -203,11 +211,11 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
         </div>
       </div>
       <div className="card-meta">
-        <div className="card-title"><window.Highlight text={title.title} query={searchQuery}/></div>
+        <div className="card-title"><window.Highlight text={I18N.titleName(title)} query={searchQuery}/></div>
         <div className="card-year">
           <span>{title.year}</span>
           {title.budget != null && (
-            <span className="card-budget">${title.budget < 1 ? title.budget : Math.round(title.budget)}M</span>
+            <span className="card-budget">{I18N.budget(title.budget)}</span>
           )}
         </div>
         <window.StoryYear title={title} className="card-story"/>
@@ -223,16 +231,16 @@ function CastDrawer({ title, onClose, onCharacterClick, hoveredCharacter, onChar
     <aside className="drawer open">
       <header className="drawer-header">
         <div>
-          <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{PHASE_LABELS[title.phase]} · {title.type.toUpperCase()} · {title.year}</div>
-          <h2 className="drawer-title">{title.title}</h2>
+          <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{phaseLabel(title.phase)} · {I18N.upper(typeLabel(title.type))} · {title.year}</div>
+          <h2 className="drawer-title">{I18N.titleName(title)}</h2>
           <window.StoryYear title={title} detail className="drawer-story"/>
           <window.TitleStatusActions title={title} variant="inline" className="drawer-tsa"/>
         </div>
-        <button className="drawer-close" onClick={onClose} aria-label="Close">×</button>
+        <button className="drawer-close" onClick={onClose} aria-label={tr('details.close')}>×</button>
       </header>
-      <div className="drawer-section-label">Featured cast · {title.cast.length}</div>
+      <div className="drawer-section-label">{tr('details.cast', { n: title.cast.length })}</div>
       <div className="cast-list">
-        {title.cast.length === 0 && <div className="empty-cast">No major recurring cast tracked.</div>}
+        {title.cast.length === 0 && <div className="empty-cast">{tr('details.noCast')}</div>}
         {title.cast.map(ch => {
           const c = window.CHARACTERS[ch];
           if (!c) return null;
@@ -247,13 +255,13 @@ function CastDrawer({ title, onClose, onCharacterClick, hoveredCharacter, onChar
             >
               <div className="portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
                 {window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch] ? (
-                  <img src={window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]} alt={c.name} loading="lazy"/>
+                  <img src={window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]} alt={I18N.charName(ch)} loading="lazy"/>
                 ) : (
                   <span>{c.initials}</span>
                 )}
               </div>
               <div className="cast-text">
-                <div className="char-name">{c.name}</div>
+                <div className="char-name">{I18N.charName(ch)}</div>
                 <div className="actor-name">{c.actor}</div>
               </div>
               <div className="cast-color-dot" style={{background:c.color}}/>
@@ -265,14 +273,8 @@ function CastDrawer({ title, onClose, onCharacterClick, hoveredCharacter, onChar
   );
 }
 
-const SORT_OPTIONS = [
-  ['release','Release','Release','▤'],
-  ['chrono','Chronological','Chrono','⇄'],
-  ['phase','By Phase','Phase','◫'],
-  ['title','A–Z','A–Z','⇅'],
-  ['imdb','IMDb Rating','IMDb','★'],
-  ['rt','Tomatometer','RT','◉'],
-];
+// [sort, icon]; labels come from the active language (sort.* / sort.short.*).
+const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
 function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch, total, showing, onResetView }) {
   const [popOpen, setPopOpen] = useState(false);
@@ -294,23 +296,23 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
         <div className="brand">
           <div className="brand-mark"/>
           <div>
-            <div className="brand-title">MCU Connections</div>
+            <div className="brand-title">{tr('app.name')}</div>
             <div className="brand-sub">
-              {showing} of {total} titles
-              {progress.seenReleased > 0 && ` · ${progress.seenReleased} seen`}
+              {tr('header.countOfTitles', { shown: showing, total })}
+              {progress.seenReleased > 0 && ` · ${tr('header.seen', { n: progress.seenReleased })}`}
             </div>
           </div>
         </div>
         <div className="control-group tb-sort-controls">
           <div className="segmented">
-            {SORT_OPTIONS.map(([v,l,s,ic])=>(
-              <button key={v} className={sort===v?'on':''} onClick={()=>setSort(v)} aria-pressed={sort===v} title={l}>
-                <span className="si">{ic}</span><span className="lg">{l}</span><span className="sm">{s}</span>
+            {SORT_OPTIONS.map(([v,ic])=>(
+              <button key={v} className={sort===v?'on':''} onClick={()=>setSort(v)} aria-pressed={sort===v} title={tr('sort.' + v)}>
+                <span className="si">{ic}</span><span className="lg">{tr('sort.' + v)}</span><span className="sm">{tr('sort.short.' + v)}</span>
               </button>
             ))}
           </div>
           <div className="tb-order-control">
-            <span className="tb-order-label">Order</span>
+            <span className="tb-order-label">{tr('order.label')}</span>
             <window.SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir}/>
           </div>
         </div>
@@ -318,39 +320,40 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
       <div className="tb-row tb-secondary-row">
         <div className="control-group tb-type-controls">
           <div className="segmented">
-            {[['all','All'],['film','Films'],['series','Series']].map(([v,l])=>(
-              <button key={v} className={typeFilter===v?'on':''} onClick={()=>setTypeFilter(v)}>{l}</button>
+            {[['all','type.all'],['film','type.films'],['series','type.series']].map(([v,k])=>(
+              <button key={v} className={typeFilter===v?'on':''} onClick={()=>setTypeFilter(v)}>{tr(k)}</button>
             ))}
           </div>
         </div>
         <window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter}/>
         <div className="filters-pop-wrap" ref={popRef}>
-          <button className={`filters-pill${popOpen?' open':''}${activeFilters?' active':''}`} onClick={()=>setPopOpen(o=>!o)}>
+          <button className={`filters-pill${popOpen?' open':''}${activeFilters?' active':''}`} onClick={()=>setPopOpen(o=>!o)}
+            aria-label={activeFilters ? tr('filters.aria', { n: activeFilters }) : tr('filters.title')} title={tr('filters.title')}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-            Filters{activeFilters ? <span className="fcount">{activeFilters}</span> : null}
+            <span className="filters-label">{tr('filters.title')}</span>{activeFilters ? <span className="fcount">{activeFilters}</span> : null}
           </button>
           {popOpen && (
             <div className="filters-pop">
               <div className="control-group">
-                <label>Phase</label>
+                <label>{tr('filters.phase')}</label>
                 <div className="segmented">
                   {['all','1','2','3','4','5','6'].map(p=>(
                     <button key={p} className={phaseFilter===p?'on':''} onClick={()=>setPhaseFilter(p)}
                       style={p!=='all' && phaseFilter===p ? {background:PHASE_COLORS[p],color:'#0a0c14',borderColor:PHASE_COLORS[p]} : {}}
-                    >{p==='all'?'All':p}</button>
+                    >{p==='all'?tr('filters.all'):p}</button>
                   ))}
                 </div>
               </div>
               <div className="control-group">
-                <label>Budget</label>
+                <label>{tr('filters.budget')}</label>
                 <div className="segmented">
-                  {[['all','All'],['low','<$50M'],['mid','$50–200M'],['high','$200–300M'],['mega','$300M+']].map(([v,l])=>(
-                    <button key={v} className={budgetFilter===v?'on':''} onClick={()=>setBudgetFilter(v)}>{l}</button>
+                  {[['all','filters.all'],['low','budget.low'],['mid','budget.mid'],['high','budget.high'],['mega','budget.mega']].map(([v,k])=>(
+                    <button key={v} className={budgetFilter===v?'on':''} onClick={()=>setBudgetFilter(v)}>{tr(k)}</button>
                   ))}
                 </div>
               </div>
               <div className="control-group">
-                <label>Order</label>
+                <label>{tr('order.label')}</label>
                 <div className="segmented">
                   {sortDirectionLabels(sort).map((label, i) => (
                     <button key={label} className={sortDir===(i===0?'asc':'desc')?'on':''}
@@ -360,18 +363,21 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
                 </div>
               </div>
               {activeFilters > 0 && (
-                <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); }}>Clear filters</button>
+                <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); }}>{tr('filters.clear')}</button>
               )}
             </div>
           )}
         </div>
         <div className="search-wrap">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-          <input aria-label="Search titles or characters" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/>
+          <input aria-label={tr('search.aria')} value={search} onChange={e=>setSearch(e.target.value)} placeholder={tr('search.placeholder')}/>
         </div>
-        <button className="reset-view" onClick={onResetView} title="Recenter view" aria-label="Recenter view"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg><span className="reset-label">Recenter</span></button>
+        <button className="reset-view" onClick={onResetView} title={tr('canvas.recenterAria')} aria-label={tr('canvas.recenterAria')}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg><span className="reset-label">{tr('canvas.recenter')}</span></button>
       </div>
-      <window.AccountButton onPickCollection={setCollectionFilter}/>
+      <div className="tb-end">
+        <window.LanguageMenu/>
+        <window.AccountButton onPickCollection={setCollectionFilter}/>
+      </div>
     </div>
   );
 }
@@ -471,7 +477,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
         // Spread labels along the curve based on N: t in (0.15..0.85)
         const t = N === 1 ? 0.5 : 0.15 + (i / (N - 1)) * 0.7;
         const lp = pointOnCurve(p1, p2, offset, t);
-        const labelText = charObj.name;
+        const labelText = I18N.charName(ch);
         const labelW = Math.max(60, labelText.length * 6.4 + 18);
         labels.push({ x: lp.x, y: lp.y, w: labelW, h: 22, color: charObj.color, text: labelText, key: conn.a + '__' + conn.b + '__' + ch });
       }
@@ -603,6 +609,8 @@ function writeDisplayPrefs(prefs) {
 }
 
 function App() {
+  // Re-render the whole tree when the language changes.
+  const { lang } = window.useI18n();
   const [initialPrefs] = useState(readDisplayPrefs);
   const [sort, setSort] = useState(initialPrefs.sort);
   const [sortDir, setSortDir] = useState(initialPrefs.sortDir);
@@ -680,11 +688,12 @@ function App() {
     if (!q) return null;
     const m = {};
     window.TITLES.forEach(t => {
+      // Names in every language match, whichever language is showing.
       const chars = t.cast.filter(c => {
         const ch = window.CHARACTERS[c];
-        return ch && (ch.name.toLowerCase().includes(q) || ch.actor.toLowerCase().includes(q));
+        return ch && (I18N.charNames(c).some(n => n.toLowerCase().includes(q)) || ch.actor.toLowerCase().includes(q));
       });
-      if (t.title.toLowerCase().includes(q) || chars.length) m[t.id] = chars;
+      if (I18N.titleNames(t).some(n => n.toLowerCase().includes(q)) || chars.length) m[t.id] = chars;
     });
     return m;
   }, [search]);
@@ -715,7 +724,7 @@ function App() {
     return list;
   }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches]);
 
-  const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir]);
+  const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
   const canvasW = layout.width;
   const canvasH = layout.height;
@@ -798,7 +807,7 @@ function App() {
 
   const selectedTitle = selectedId ? window.TITLES.find(t => t.id === selectedId) : null;
   const drawerTitle = drawerId ? window.TITLES.find(t => t.id === drawerId) : null;
-  const ordered = useMemo(() => sortTitles(filtered, sort, sortDir), [filtered, sort, sortDir]);
+  const ordered = useMemo(() => sortTitles(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
 
   // Real filtering, but only for the flat mobile grid/list — they have no layout
   // or viewport to disturb. Derived from `ordered` so the canvas keeps every card.
@@ -1245,8 +1254,8 @@ function App() {
   const charBanner = activeChar ? (
     <div className="char-banner">
       <div className="banner-dot" style={{background: window.CHARACTERS[activeChar].color}}/>
-      <span>Highlighting <b>{window.CHARACTERS[activeChar].name}</b> · {highlightedIds ? highlightedIds.size : 0} visible titles</span>
-      <button onClick={() => { setHighlightedChar(null); setHoveredCharacter(null); }}>Clear</button>
+      <span>{tr('canvas.highlighting')} <b>{I18N.charName(activeChar)}</b> · {tr('canvas.visibleTitles', { n: highlightedIds ? highlightedIds.size : 0 })}</span>
+      <button onClick={() => { setHighlightedChar(null); setHoveredCharacter(null); }}>{tr('canvas.clear')}</button>
     </div>
   ) : null;
 
@@ -1328,7 +1337,7 @@ function App() {
         })}
       </div>
       <div className={`zoom-ctl${isTouch ? ' touch' : ''}`}>
-        <button className="zoom-btn" onClick={()=>applyScale(s=>s/1.15)} disabled={view.scale <= ZOOM_MIN + 1e-4} aria-label="Zoom out">&minus;</button>
+        <button className="zoom-btn" onClick={()=>applyScale(s=>s/1.15)} disabled={view.scale <= ZOOM_MIN + 1e-4} aria-label={tr('canvas.zoomOut')}>&minus;</button>
         {zoomEdit != null
           ? <input className="zoom-val edit" autoFocus value={zoomEdit} inputMode="decimal"
               onChange={e=>setZoomEdit(e.target.value)} onBlur={commitZoomEdit}
@@ -1336,8 +1345,8 @@ function App() {
           : <button className="zoom-val"
               onClick={isTouch ? ()=>setZoomEdit(String(Math.round(view.scale*100))) : undefined}
               onDoubleClick={isTouch ? undefined : ()=>setZoomEdit(String(Math.round(view.scale*100)))}
-              title={isTouch ? 'Tap to type a zoom level' : 'Double-click to type a zoom level'}>{Math.round(view.scale * 100)}%</button>}
-        <button className="zoom-btn" onClick={()=>applyScale(s=>s*1.15)} disabled={view.scale >= 2 - 1e-4} aria-label="Zoom in">+</button>
+              title={tr(isTouch ? 'canvas.zoomTypeTouch' : 'canvas.zoomTypeDesktop')}>{Math.round(view.scale * 100)}%</button>}
+        <button className="zoom-btn" onClick={()=>applyScale(s=>s*1.15)} disabled={view.scale >= 2 - 1e-4} aria-label={tr('canvas.zoomIn')}>+</button>
       </div>
       {focusPop}
     </div>
@@ -1420,13 +1429,13 @@ function App() {
 
       {hoveredConnection && (
         <div className="line-tooltip" style={{left: hoveredConnection.x + 12, top: hoveredConnection.y + 12}}>
-          <div className="tt-label">Shared characters</div>
+          <div className="tt-label">{tr('canvas.sharedCharacters')}</div>
           {hoveredConnection.characters.map(c => {
             const ch = window.CHARACTERS[c];
             return (
               <div key={c} className="tt-row">
                 <span className="tt-dot" style={{background: ch.color}}/>
-                <span>{ch.name}</span>
+                <span>{I18N.charName(c)}</span>
               </div>
             );
           })}

@@ -1,14 +1,20 @@
 const { useState: mUseState } = React;
 
 const MPHASE_COLORS = { 1:'#d4a05a', 2:'#4a8de8', 3:'#d04040', 4:'#a05cd0', 5:'#5fa856', 6:'#c8384a' };
-const MPHASE_LABELS = { 1:'PHASE 1', 2:'PHASE 2', 3:'PHASE 3', 4:'PHASE 4', 5:'PHASE 5', 6:'PHASE 6' };
-const SORT_TABS = [['release','Release','▤'],['chrono','Chrono','⇄'],['phase','Phase','◫'],['title','A–Z','⇅'],['imdb','IMDb','★'],['rt','RT','◉']];
-const VIEW_MODES = [['list','List','☰'],['grid','Grid','▦'],['spatial','Spatial','◈']];
+// Text comes from the i18n runtime (i18n.js); `mtr` avoids clashing with the
+// `t` used for titles throughout this file.
+const MI18N = window.MCU_I18N;
+const mtr = (key, vars) => MI18N.tr(key, vars);
+const mPhaseLabel = (n) => MI18N.upper(mtr('phase.label', { n }));
+const mTypeLabel = (type) => MI18N.upper(mtr(type === 'film' ? 'type.film.one' : 'type.series.one'));
+// [value, icon]; labels come from sort.short.* and view.* in the active language.
+const SORT_TABS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
+const VIEW_MODES = [['list','☰'],['grid','▦'],['spatial','◈']];
 
 function ScoreBadges({ title, lead, compact }) {
-  const imdb = title.imdb != null ? <div className="m-sc imdb" key="i" title={title.type === 'series' ? 'IMDb whole-series rating (shared across seasons)' : 'IMDb movie rating'}><span className="tg">IMDb</span>{title.imdb.toFixed(1)}</div> : null;
-  const rt = title.rt != null ? <div className="m-sc rt" key="r" title="Rotten Tomatoes Tomatometer (critics)"><span className="tg">RT</span>{title.rt}%</div> : null;
-  if (!imdb && !rt) return <div className={`m-scores${compact?' compact':''}`}><div className="m-sc none">Not yet rated</div></div>;
+  const imdb = title.imdb != null ? <div className="m-sc imdb" key="i" title={mtr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}><span className="tg">IMDb</span>{title.imdb.toFixed(1)}</div> : null;
+  const rt = title.rt != null ? <div className="m-sc rt" key="r" title={mtr('score.rt')}><span className="tg">RT</span>{title.rt}%</div> : null;
+  if (!imdb && !rt) return <div className={`m-scores${compact?' compact':''}`}><div className="m-sc none">{mtr('score.none')}</div></div>;
   return <div className={`m-scores${compact?' compact':''}`}>{lead === 'rt' ? [rt, imdb] : [imdb, rt]}</div>;
 }
 
@@ -23,24 +29,25 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
         <div className="m-brandrow">
           <div className="m-mark"/>
           <div>
-            <div className="m-btitle">MCU Connections</div>
+            <div className="m-btitle">{mtr('app.name')}</div>
             <div className="m-bsub">
-              {showing === total ? `${total} titles` : `${showing} of ${total}`} · {sortLabel}
-              {progress.seenReleased > 0 && ` · ${progress.seenReleased} seen`}
+              {showing === total ? mtr('header.count', { n: total }) : mtr('header.countOf', { shown: showing, total })} · {sortLabel}
+              {progress.seenReleased > 0 && ` · ${mtr('header.seen', { n: progress.seenReleased })}`}
             </div>
           </div>
         </div>
+        <window.LanguageMenu compact/>
         <window.AccountAvatarButton onOpen={onOpenAccount}/>
       </div>
       <div className="m-searchrow">
         <div className="m-searchbar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-          <div className="m-search-input"><input aria-label="Search titles or characters" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search titles or characters…"/></div>
-          {search && <button className="m-clear" onClick={()=>setSearch('')} aria-label="Clear search">×</button>}
+          <div className="m-search-input"><input aria-label={mtr('search.aria')} value={search} onChange={e=>setSearch(e.target.value)} placeholder={mtr('search.placeholder')}/></div>
+          {search && <button className="m-clear" onClick={()=>setSearch('')} aria-label={mtr('search.clear')}>×</button>}
         </div>
         <SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir} mobile/>
         <button className={`m-fpill${filterCount?' act':''}`} onClick={onOpenFilters}
-          aria-label={filterCount ? `Filters, ${filterCount} active` : 'Filters'} title="Filters">
+          aria-label={filterCount ? mtr('filters.aria', { n: filterCount }) : mtr('filters.title')} title={mtr('filters.title')}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
           {filterCount ? <span className="m-fcount">{filterCount}</span> : null}
         </button>
@@ -60,11 +67,7 @@ function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
   const id = React.useId();
   const labels = window.sortDirectionLabels(sort);
   const index = sortDir === 'desc' ? 1 : 0;
-  const compact = sort === 'phase' ? labels[index].replace('Phase ', '')
-    : sort === 'title' ? labels[index]
-    : sort === 'release' ? ['Oldest', 'Newest'][index]
-    : sort === 'chrono' ? ['Earliest', 'Latest'][index]
-    : ['Lowest', 'Highest'][index];
+  const compact = window.sortDirectionLabels(sort, true)[index];
   React.useEffect(() => { setOpen(false); }, [sort]);
   React.useEffect(() => {
     if (!open) return;
@@ -89,15 +92,15 @@ function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
   return <div className={`sort-order${mobile ? ' mobile-order' : ''}`} ref={wrap}
     onBlur={e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
     <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
-      aria-label={`Sort order: ${labels[index]}`} onClick={() => setOpen(v => !v)}>
+      aria-label={mtr('order.aria', { label: labels[index] })} onClick={() => setOpen(v => !v)}>
       {compact}
       <svg className="sort-order-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="m6 9 6 6 6-6"/>
       </svg>
     </button>
-    {open && <div id={id} ref={choices} className="sort-order-pop" role="group" aria-label="Sort order">
-      <div className="sort-order-heading">Order</div>
+    {open && <div id={id} ref={choices} className="sort-order-pop" role="group" aria-label={mtr('order.label')}>
+      <div className="sort-order-heading">{mtr('order.label')}</div>
       {labels.map((label, i) => <button key={label} aria-pressed={index === i}
         onClick={() => { setSortDir(i === 0 ? 'asc' : 'desc'); setOpen(false); trigger.current?.focus(); }}>
         <span>{label}</span><span aria-hidden="true">{index === i ? '✓' : ''}</span>
@@ -107,6 +110,55 @@ function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
 }
 window.SortOrderMenu = SortOrderMenu;
 
+// Language picker in the header (desktop toolbar and mobile app bar). A menu
+// rather than a two-way toggle so more languages fit without layout changes;
+// each option is written in its own language. Same open/close behaviour as
+// SortOrderMenu, including ignoring Safari's null-relatedTarget blur on tap.
+function LanguageMenu({ compact = false }) {
+  const { lang, setLang, languages, tr } = window.useI18n();
+  const [open, setOpen] = React.useState(false);
+  const wrap = React.useRef(null), trigger = React.useRef(null), choices = React.useRef(null);
+  const id = React.useId();
+  const list = languages();
+  const current = list.find((l) => l.code === lang) || list[0];
+  React.useEffect(() => {
+    if (!open) return;
+    choices.current?.querySelector('[aria-pressed="true"]')?.focus();
+    const away = e => { if (!wrap.current?.contains(e.target)) setOpen(false); };
+    const escape = e => { if (e.key === 'Escape') { setOpen(false); trigger.current?.focus(); } };
+    document.addEventListener('pointerdown', away);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', away);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+  if (list.length < 2) return null;
+  return <div className={`sort-order lang-menu${compact ? ' mobile-order' : ''}`} ref={wrap}
+    onBlur={e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
+    <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
+      aria-label={tr('lang.aria', { name: current.name })} title={tr('lang.label')} onClick={() => setOpen(v => !v)}>
+      <svg className="lang-globe" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>
+      </svg>
+      <span>{current.short}</span>
+      <svg className="sort-order-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m6 9 6 6 6-6"/>
+      </svg>
+    </button>
+    {open && <div id={id} ref={choices} className="sort-order-pop" role="group" aria-label={tr('lang.label')}>
+      <div className="sort-order-heading">{tr('lang.label')}</div>
+      {list.map((l) => <button key={l.code} lang={l.code} aria-pressed={lang === l.code}
+        onClick={() => { setLang(l.code); setOpen(false); trigger.current?.focus(); }}>
+        <span>{l.name}</span><span aria-hidden="true">{lang === l.code ? '✓' : ''}</span>
+      </button>)}
+    </div>}
+  </div>;
+}
+window.LanguageMenu = LanguageMenu;
+
 // List / Grid / Spatial as one compact menu, so the second header row has room
 // for the collection switch. Same open/close behaviour as SortOrderMenu,
 // including ignoring Safari's null-relatedTarget blur on tap.
@@ -115,6 +167,7 @@ function ViewMenu({ viewMode, setViewMode }) {
   const wrap = React.useRef(null), trigger = React.useRef(null), choices = React.useRef(null);
   const id = React.useId();
   const current = VIEW_MODES.find(([v]) => v === viewMode) || VIEW_MODES[0];
+  const currentLabel = mtr('view.' + current[0]);
   React.useEffect(() => {
     if (!open) return;
     choices.current?.querySelector('[aria-pressed="true"]')?.focus();
@@ -130,18 +183,18 @@ function ViewMenu({ viewMode, setViewMode }) {
   return <div className="sort-order mobile-order view-menu" ref={wrap}
     onBlur={e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
     <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
-      aria-label={`View: ${current[1]}`} onClick={() => setOpen(v => !v)}>
-      <span className="vi" aria-hidden="true">{current[2]}</span>{current[1]}
+      aria-label={mtr('view.aria', { label: currentLabel })} onClick={() => setOpen(v => !v)}>
+      <span className="vi" aria-hidden="true">{current[1]}</span>{currentLabel}
       <svg className="sort-order-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="m6 9 6 6 6-6"/>
       </svg>
     </button>
-    {open && <div id={id} ref={choices} className="sort-order-pop" role="group" aria-label="View">
-      <div className="sort-order-heading">View</div>
-      {VIEW_MODES.map(([v, l, ic]) => <button key={v} aria-pressed={viewMode === v}
+    {open && <div id={id} ref={choices} className="sort-order-pop" role="group" aria-label={mtr('view.label')}>
+      <div className="sort-order-heading">{mtr('view.label')}</div>
+      {VIEW_MODES.map(([v, ic]) => <button key={v} aria-pressed={viewMode === v}
         onClick={() => { setViewMode(v); setOpen(false); trigger.current?.focus(); }}>
-        <span><span className="vi" aria-hidden="true">{ic}</span>{l}</span><span aria-hidden="true">{viewMode === v ? '✓' : ''}</span>
+        <span><span className="vi" aria-hidden="true">{ic}</span>{mtr('view.' + v)}</span><span aria-hidden="true">{viewMode === v ? '✓' : ''}</span>
       </button>)}
     </div>}
   </div>;
@@ -150,10 +203,10 @@ function ViewMenu({ viewMode, setViewMode }) {
 function SortTabs({ sort, setSort }) {
   return (
     <div className="m-sort-footer">
-    <nav className="m-tabs" aria-label="Sort titles by">
-      {SORT_TABS.map(([v,l,ic])=>(
+    <nav className="m-tabs" aria-label={mtr('sort.navAria')}>
+      {SORT_TABS.map(([v,ic])=>(
         <button key={v} className={`m-tab${sort===v?' on':''}`} onClick={()=>setSort(v)} aria-pressed={sort===v}>
-          <span className="ti">{ic}</span>{l}
+          <span className="ti">{ic}</span>{mtr('sort.short.' + v)}
         </button>
       ))}
     </nav>
@@ -183,12 +236,12 @@ function MatchBadge({ matchedChars, query }) {
     ? (window.mediaURL ? window.mediaURL('a', id, window.MEDIA.profile_base + window.MEDIA.actors[id]) : window.MEDIA.profile_base + window.MEDIA.actors[id])
     : null;
   return (
-    <div className="card-match" style={{'--match-color': c.color}} title={matchedChars.map(mid => window.CHARACTERS[mid].name).join(', ')}>
+    <div className="card-match" style={{'--match-color': c.color}} title={matchedChars.map(mid => MI18N.charName(mid)).join(', ')}>
       <div className="card-match-portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-        {portrait ? <img src={portrait} alt={c.name} loading="lazy"/> : <span>{c.initials}</span>}
+        {portrait ? <img src={portrait} alt={MI18N.charName(id)} loading="lazy"/> : <span>{c.initials}</span>}
       </div>
       <div className="card-match-text">
-        <div className="card-match-char"><Highlight text={c.name} query={query}/>{matchedChars.length > 1 ? ` +${matchedChars.length - 1}` : ''}</div>
+        <div className="card-match-char"><Highlight text={MI18N.charName(id)} query={query}/>{matchedChars.length > 1 ? ` +${matchedChars.length - 1}` : ''}</div>
         <div className="card-match-actor"><Highlight text={c.actor} query={query}/></div>
       </div>
     </div>
@@ -322,16 +375,18 @@ function Hourglass() {
 
 function StoryYear({ title, detail = false, className = '' }) {
   if (!title || !title.story) return null;
-  const note = title.storyNote;
+  const story = MI18N.storyLabel(title.story);
+  const note = MI18N.storyNote(title);
   // "Set in 1995", but "Outside time" / "Multiverse" stand on their own.
-  const lead = /^(c\. )?\d/.test(title.story) ? 'Set in ' : '';
+  const isTime = /^(c\. )?\d/.test(title.story);
+  const full = isTime ? mtr('story.setIn', { story }) : story;
   return (
     <span className={`story-year${detail ? ' detail' : ''}${className ? ' ' + className : ''}`}
-      title={`In-story timeframe: ${title.story}${note ? ' · ' + note : ''}`}>
+      title={`${mtr('story.tooltip', { story })}${note ? ' · ' + note : ''}`}>
       <Hourglass/>
       {detail
-        ? <span>{lead}{title.story}{note && <span className="story-note"> · {note}</span>}</span>
-        : <span>{lead && <span className="story-sr">{lead}</span>}{title.story}</span>}
+        ? <span>{full}{note && <span className="story-note"> · {note}</span>}</span>
+        : <span><span className="story-sr">{full}</span><span aria-hidden="true">{story}</span></span>}
     </span>
   );
 }
@@ -356,14 +411,14 @@ function MobileGrid({ titles, onSelect, searchCharMatches, search, empty, orderK
               <button className="m-card-open" onClick={()=>onSelect(t.id)}>
                 <div className="m-pw">
                   <PosterArt title={t}/>
-                  <span className="m-pbadge" style={{background:MPHASE_COLORS[t.phase]}}>PH {t.phase}</span>
+                  <span className="m-pbadge" style={{background:MPHASE_COLORS[t.phase]}}>{mtr('phase.short', { n: t.phase })}</span>
                   <ScoreBadges title={t} compact/>
                 </div>
                 <div className="m-cmeta">
-                  <div className="m-ctitle"><Highlight text={t.title} query={search}/></div>
+                  <div className="m-ctitle"><Highlight text={MI18N.titleName(t)} query={search}/></div>
                   <div className="m-cyear">
                     <span>{t.year}</span>
-                    {t.budget != null && <b>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</b>}
+                    {t.budget != null && <b>{MI18N.budget(t.budget)}</b>}
                   </div>
                   <StoryYear title={t} className="m-cstory"/>
                   <MatchBadge matchedChars={matchedChars} query={search}/>
@@ -391,7 +446,7 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, 
   const chrono = sort === 'chrono';
   if (chrono) {
     titles.forEach(t => {
-      const label = t.story || 'Timeframe TBA';
+      const label = t.story ? MI18N.storyLabel(t.story) : mtr('story.tba');
       const last = groups[groups.length-1];
       if (last && last.label === label) last.items.push(t);
       else groups.push({ key: 's:' + label + '#' + groups.length, label, story: true, items: [t] });
@@ -408,7 +463,7 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, 
       const key = String(t.phase);
       const last = groups[groups.length-1];
       if (last && last.key.startsWith('p' + key + '#')) last.items.push(t);
-      else groups.push({ key: 'p' + key + '#' + groups.length, label: MPHASE_LABELS[t.phase], color: MPHASE_COLORS[t.phase], items: [t] });
+      else groups.push({ key: 'p' + key + '#' + groups.length, label: mPhaseLabel(t.phase), color: MPHASE_COLORS[t.phase], items: [t] });
     });
   } else {
     groups.push({ key: 'all', label: null, items: titles });
@@ -419,7 +474,7 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, 
       {groups.map(g => (
         <div className="m-group" key={g.key}>
           {g.label && <div className={`m-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.key} style={g.color?{color:g.color}:null}>
-            {g.story && <Hourglass/>}{g.story && <span className="story-sr">Set in </span>}{g.label}
+            {g.story && <Hourglass/>}{g.label}
           </div>}
           <div className="m-list">
             {g.items.map(t => {
@@ -432,14 +487,14 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, 
                     {ranked && <div className="m-rank">{n}</div>}
                     <div className="m-lthumb"><PosterArt title={t}/></div>
                     <div className="m-ltext">
-                      <div className="m-ltitle"><Highlight text={t.title} query={search}/></div>
+                      <div className="m-ltitle"><Highlight text={MI18N.titleName(t)} query={search}/></div>
                       <div className="m-lmeta">
-                        {!ranked && <span>{t.type.toUpperCase()}</span>}
-                        {chrono && <><span className="m-dot"/><span title="Release year">{t.year}</span></>}
+                        {!ranked && <span>{mTypeLabel(t.type)}</span>}
+                        {chrono && <><span className="m-dot"/><span title={mtr('story.releaseYear')}>{t.year}</span></>}
                         {ranked && <span>{t.year}</span>}
                         <span className="m-dot"/>
-                        <span style={{color:MPHASE_COLORS[t.phase]}}>{MPHASE_LABELS[t.phase]}</span>
-                        {t.budget != null && <><span className="m-dot"/><span>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</span></>}
+                        <span style={{color:MPHASE_COLORS[t.phase]}}>{mPhaseLabel(t.phase)}</span>
+                        {t.budget != null && <><span className="m-dot"/><span>{MI18N.budget(t.budget)}</span></>}
                         {t.story && !chrono && <><span className="m-dot"/><StoryYear title={t}/></>}
                       </div>
                       <ScoreBadges title={t} lead={lead}/>
@@ -461,8 +516,8 @@ function EmptyState({ title, sub, mark }) {
   return (
     <div className="m-empty">
       <div className="m-empty-mark">{mark || '◍'}</div>
-      <div className="m-empty-t">{title || 'No titles match'}</div>
-      <div className="m-empty-s">{sub || 'Try clearing a filter or the search box.'}</div>
+      <div className="m-empty-t">{title || mtr('empty.title')}</div>
+      <div className="m-empty-s">{sub || mtr('empty.sub')}</div>
     </div>
   );
 }
@@ -505,8 +560,8 @@ function Sheet({ children, onClose, tall, label }) {
   return (
     <>
       <div className="m-scrim" onClick={onClose} aria-hidden="true"/>
-      <div ref={ref} className={`m-sheet${tall?' tall':''}`} role="dialog" aria-modal="true" aria-label={label || 'Details'} tabIndex={-1}>
-        <button className="m-grab" onClick={onClose} aria-label="Close"/>
+      <div ref={ref} className={`m-sheet${tall?' tall':''}`} role="dialog" aria-modal="true" aria-label={label || mtr('details.label')} tabIndex={-1}>
+        <button className="m-grab" onClick={onClose} aria-label={mtr('details.close')}/>
         <div className="m-sheet-body">{children}</div>
       </div>
     </>
@@ -515,40 +570,40 @@ function Sheet({ children, onClose, tall, label }) {
 
 function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, sort, sortDir, setSortDir, onClose, showing, onClear }) {
   return (
-    <Sheet onClose={onClose} tall label="Filters">
+    <Sheet onClose={onClose} tall label={mtr('filters.title')}>
       <div className="m-sh-head">
-        <div className="m-sh-title">Filters</div>
-        <button className="m-sh-clear" onClick={onClear}>Clear all</button>
+        <div className="m-sh-title">{mtr('filters.title')}</div>
+        <button className="m-sh-clear" onClick={onClear}>{mtr('filters.clearAll')}</button>
       </div>
       <div className="m-fgroup">
-        <div className="m-flab">Phase</div>
+        <div className="m-flab">{mtr('filters.phase')}</div>
         <div className="m-chips">
           {['all','1','2','3','4','5','6'].map(p=>(
             <button key={p} className={`m-chip ph${phaseFilter===p?' on':''}`} onClick={()=>setPhaseFilter(p)}
               style={p!=='all' && phaseFilter===p ? {background:MPHASE_COLORS[p], borderColor:MPHASE_COLORS[p], color:'#0a0c14'} : null}>
-              {p==='all'?'All':p}
+              {p==='all'?mtr('filters.all'):p}
             </button>
           ))}
         </div>
       </div>
       <div className="m-fgroup">
-        <div className="m-flab">Type</div>
+        <div className="m-flab">{mtr('filters.type')}</div>
         <div className="m-chips">
-          {[['all','All'],['film','Films'],['series','Series']].map(([v,l])=>(
-            <button key={v} className={`m-chip${typeFilter===v?' on':''}`} onClick={()=>setTypeFilter(v)}>{l}</button>
+          {[['all','type.all'],['film','type.films'],['series','type.series']].map(([v,k])=>(
+            <button key={v} className={`m-chip${typeFilter===v?' on':''}`} onClick={()=>setTypeFilter(v)}>{mtr(k)}</button>
           ))}
         </div>
       </div>
       <div className="m-fgroup">
-        <div className="m-flab">Budget</div>
+        <div className="m-flab">{mtr('filters.budget')}</div>
         <div className="m-chips">
-          {[['all','All'],['low','<$50M'],['mid','$50–200M'],['high','$200–300M'],['mega','$300M+']].map(([v,l])=>(
-            <button key={v} className={`m-chip${budgetFilter===v?' on':''}`} onClick={()=>setBudgetFilter(v)}>{l}</button>
+          {[['all','filters.all'],['low','budget.low'],['mid','budget.mid'],['high','budget.high'],['mega','budget.mega']].map(([v,k])=>(
+            <button key={v} className={`m-chip${budgetFilter===v?' on':''}`} onClick={()=>setBudgetFilter(v)}>{mtr(k)}</button>
           ))}
         </div>
       </div>
       <div className="m-fgroup">
-        <div className="m-flab">Order</div>
+        <div className="m-flab">{mtr('order.label')}</div>
         <div className="m-chips">
           {window.sortDirectionLabels(sort).map((label, i) => {
             const dir = i === 0 ? 'asc' : 'desc';
@@ -557,7 +612,7 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
           })}
         </div>
       </div>
-      <button className="m-apply" onClick={onClose}>Show {showing} {showing === 1 ? 'title' : 'titles'}</button>
+      <button className="m-apply" onClick={onClose}>{mtr('filters.show', { n: showing })}</button>
     </Sheet>
   );
 }
@@ -566,20 +621,20 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
   if (!title) return null;
   const PosterArt = window.PosterArt;
   return (
-    <Sheet onClose={onClose} tall label={`${title.title} details`}>
+    <Sheet onClose={onClose} tall label={mtr('details.sheetLabel', { title: MI18N.titleName(title) })}>
       <div className="m-cast-hero">
         <div className="m-hero-th"><PosterArt title={title}/></div>
         <div className="m-hero-text">
-          <div className="m-eyebrow" style={{color:MPHASE_COLORS[title.phase]}}>{MPHASE_LABELS[title.phase]} · {title.type.toUpperCase()} · {title.year}</div>
-          <h2 className="m-dtitle">{title.title}</h2>
+          <div className="m-eyebrow" style={{color:MPHASE_COLORS[title.phase]}}>{mPhaseLabel(title.phase)} · {mTypeLabel(title.type)} · {title.year}</div>
+          <h2 className="m-dtitle">{MI18N.titleName(title)}</h2>
           <StoryYear title={title} detail className="m-hero-story"/>
           <ScoreBadges title={title}/>
           <window.TitleStatusActions title={title} variant="inline" className="m-hero-tsa"/>
         </div>
       </div>
-      <div className="m-flab">Featured cast · {title.cast.length}</div>
+      <div className="m-flab">{mtr('details.cast', { n: title.cast.length })}</div>
       <div className="m-castlist">
-        {title.cast.length === 0 && <div className="m-empty-cast">No major recurring cast tracked.</div>}
+        {title.cast.length === 0 && <div className="m-empty-cast">{mtr('details.noCast')}</div>}
         {title.cast.map(ch => {
           const c = window.CHARACTERS[ch];
           if (!c) return null;
@@ -587,11 +642,11 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
             <button key={ch} className={`m-crow${activeChar===ch?' on':''}`} onClick={()=>onCharacterClick(ch)}>
               <div className="m-port" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
                 {window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch]
-                  ? <img src={window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]} alt={c.name} loading="lazy"/>
+                  ? <img src={window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]} alt={MI18N.charName(ch)} loading="lazy"/>
                   : <span>{c.initials}</span>}
               </div>
               <div className="m-ctext">
-                <div className="m-cn">{c.name}</div>
+                <div className="m-cn">{MI18N.charName(ch)}</div>
                 <div className="m-an">{c.actor}</div>
               </div>
               <span className="m-cdot" style={{background:c.color}}/>
@@ -600,7 +655,7 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
         })}
       </div>
       {!inSpatial && (
-        <button className="m-apply ghost" onClick={onGoSpatial}>◈ See connections in Spatial</button>
+        <button className="m-apply ghost" onClick={onGoSpatial}>{mtr('details.goSpatial')}</button>
       )}
     </Sheet>
   );
@@ -617,13 +672,13 @@ function FocusPop({ title, x, y, onOpenCast }) {
       <button className="m-fp-open" onClick={onOpenCast}>
         <div className="m-fp-poster">
           <PosterArt title={title}/>
-          <span className="m-pbadge" style={{background:MPHASE_COLORS[title.phase]}}>PH {title.phase}</span>
+          <span className="m-pbadge" style={{background:MPHASE_COLORS[title.phase]}}>{mtr('phase.short', { n: title.phase })}</span>
         </div>
         <div className="m-fp-meta">
-          <div className="m-fp-title">{title.title}</div>
+          <div className="m-fp-title">{MI18N.titleName(title)}</div>
           <StoryYear title={title} className="m-fp-story"/>
           <ScoreBadges title={title}/>
-          <div className="m-fp-cta">Tap for cast ›</div>
+          <div className="m-fp-cta">{mtr('details.tapForCast')}</div>
         </div>
       </button>
       <window.TitleStatusActions title={title} className="m-fp-tsa"/>
@@ -635,8 +690,8 @@ function SpatialHint({ focused, sharedCount }) {
   return (
     <div className="m-ghint">
       {focused
-        ? <span><b>{sharedCount}</b> shared {sharedCount === 1 ? 'character' : 'characters'} · tap background to clear</span>
-        : <span>Tap a title to focus · pinch to zoom · double-tap to zoom in</span>}
+        ? <span><b>{sharedCount}</b> {mtr('canvas.hintShared', { n: sharedCount })} · {mtr('canvas.hintClear')}</span>
+        : <span>{mtr('canvas.hintIdle')}</span>}
     </div>
   );
 }

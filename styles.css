@@ -595,7 +595,11 @@ body {
 .tb-primary-row { display: contents; }
 .tb-primary-row > .brand { grid-column: 1; grid-row: 1; }
 .tb-primary-row > .tb-sort-controls { grid-column: 2 / -1; grid-row: 1; }
-.toolbar > .acct-wrap { grid-column: 3; grid-row: 2; justify-self: end; }
+/* Language menu + account share the last toolbar cell. */
+.toolbar > .tb-end { grid-column: 3; grid-row: 2; justify-self: end; display: flex; align-items: center; gap: 10px; }
+.lang-menu .sort-order-trigger { min-width: 0; gap: 6px; padding: 0 11px; }
+.lang-menu .lang-globe { flex: 0 0 auto; opacity: .8; }
+.lang-menu .sort-order-pop { min-width: 200px; }
 .tb-sort-controls > .segmented { flex: 1; }
 .tb-sort-controls > .segmented button { flex: 1; justify-content: center; white-space: nowrap; }
 .tb-secondary-row { grid-column: 1 / 3; grid-row: 2; gap: 12px; min-width: 0; }
@@ -625,11 +629,13 @@ body {
 .coll-compact .coll-label { display: none; }
 .coll-compact button:first-child .coll-label, .coll-compact button.on .coll-label { display: inline; }
 @media (min-width: 400px) { .coll-compact .coll-label { display: inline; } }
-/* Desktop toolbar: step the collection switch down where the row gets tight
-   (two-row layout below 1250px; joined single row from 1920px until its labels
-   have room). First label only All + the active option and drop Recenter's
-   text, then go icon-only and let search shrink a little. */
-@media (max-width: 1249px), (min-width: 1920px) and (max-width: 2399px) {
+/* Desktop toolbar: step the second row down where it gets tight (two-row
+   layout below 1440px; joined single row from 1920px until 2560px). Longer
+   translations (e.g. Portuguese) need the same room as the widest English
+   state, so the ranges are sized for both. First label only All + the active
+   option and drop Recenter's text; then go icon-only, drop the language
+   globe and let search shrink a little. */
+@media (max-width: 1439px), (min-width: 1920px) and (max-width: 2559px) {
   .tb-secondary-row .coll-switch button { padding: 0 10px; }
   .tb-secondary-row .coll-switch .coll-label { display: none; }
   .tb-secondary-row .coll-switch button:first-child .coll-label,
@@ -637,10 +643,15 @@ body {
   .tb-secondary-row .reset-view .reset-label { display: none; }
   .tb-secondary-row .reset-view { padding: 0 13px; }
 }
-@media (max-width: 999px) {
+@media (max-width: 1199px), (min-width: 1920px) and (max-width: 2199px) {
   .tb-secondary-row .coll-switch button.on:not(:first-child) .coll-label { display: none; }
   .tb-secondary-row > .search-wrap { min-width: 200px; }
+  .tb-end .lang-menu .lang-globe { display: none; }
 }
+@media (max-width: 999px) {
+  .tb-secondary-row .filters-pill .filters-label { display: none; }
+}
+
 @media (max-width: 1250px) {
   .tb-primary-row .segmented button .lg { display: none; }
   .tb-primary-row .segmented button .sm { display: inline; }
@@ -648,7 +659,7 @@ body {
 @media (min-width: 1920px) {
   .toolbar { grid-template-columns: max-content max-content minmax(0, 1fr) max-content; column-gap: 12px; }
   .tb-primary-row > .tb-sort-controls { grid-column: 2; }
-  .toolbar > .acct-wrap { grid-column: 4; grid-row: 1; }
+  .toolbar > .tb-end { grid-column: 4; grid-row: 1; }
   .tb-secondary-row { grid-column: 3; grid-row: 1; }
   .tb-sort-controls > .segmented { flex: none; }
   .tb-primary-row .segmented button .lg { display: none; }

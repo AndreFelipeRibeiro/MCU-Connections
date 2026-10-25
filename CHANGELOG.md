@@ -12,6 +12,34 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — English and Brazilian Portuguese
+
+Recorded: 2026-10-25 00:38:53 EDT (-0400).
+
+- Added a build-free language system: one catalog per language in `locales/`
+  (`en.js` is the complete base, 160 keys; `pt-BR.js` translates all of them)
+  and `i18n.js`, which picks the language (saved choice `mcu.lang.v1`, then the
+  browser/phone language, then English), falls back to English per key, handles
+  plurals, budget formatting and collation, and re-renders on change.
+- All interface text now goes through the catalogs. Portuguese shows official
+  Brazilian release titles for all 64 entries (with search aliases), Brazilian
+  character names where they differ, and translated story labels and notes.
+  Search matches titles and characters in every language; A–Z sorts by the
+  shown name.
+- Header language menu (EN / PT) on the desktop toolbar and the mobile app bar.
+  The mobile subtitle now truncates instead of running under the header
+  buttons; the desktop toolbar steps labels down sooner so both languages fit.
+- AGENTS.md requires new UI text to be added to every locale; README documents
+  adding a language; docs/CATALOG-AUDIT.md lists the Brazilian title sources.
+- Verification: headless Chromium with pt-BR and en-US browser locales: automatic
+  detection, menu switching and persistence; no leftover English or missing keys
+  across list, grid, spatial, filters, details, account and menus; cross-language
+  search; fit at 16 desktop widths (900–2560) and 4 phone widths (320–430) in
+  both languages with All and Watchlist active. No console errors. The user
+  reviewed and approved committing and merging to main.
+- Limits: Portuguese copy written by Claude; Supabase server error text stays in
+  its original language; no physical-device or OAuth check.
+
 ## V3 maintenance — Always-visible Unseen / Seen / Watchlist switch
 
 Recorded: 2026-10-24 23:48:23 EDT (-0400).

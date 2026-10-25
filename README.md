@@ -42,6 +42,10 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Phase, film/series and budget filters. All / Unseen / Seen / Watchlist is an
   always-visible switch (desktop toolbar; mobile second header row, beside the
   List/Grid/Spatial menu), with a dashed-ring, check and bookmark icon for each state.
+- English and Brazilian Portuguese. The first visit follows the browser/phone
+  language; a language menu in the header (desktop toolbar, mobile app bar)
+  overrides it per device. Portuguese shows official Brazilian release titles,
+  and search matches titles and characters in either language.
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
   Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
@@ -164,7 +168,8 @@ and [redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
 
 Guest marks use `localStorage` key `mcu.collection.v1`; the auth client uses
 `mcu.auth.v1`. Display preferences (mobile view, sort mode and order) use
-`mcu.prefs.v1` on that device only; filters and search are not saved. Signed-in rows load from Supabase. Guest merges write only changed
+`mcu.prefs.v1` on that device only; filters and search are not saved. The
+language choice uses `mcu.lang.v1`. Signed-in rows load from Supabase. Guest merges write only changed
 rows and clear guest storage only after success. Per-title write queues retain
 their original account scope, keep the latest intent, and prevent stale responses
 from changing a different account's UI. Writes are optimistic; failures roll back
@@ -187,6 +192,23 @@ remain guest data.
 **Free-tier policy: accept pauses; no keep-alive automation.** Restore a paused
 project from the Supabase dashboard when needed. Guest tracking continues during
 an outage. See [Supabase project pausing](https://supabase.com/docs/guides/platform/free-project-pausing).
+
+## Languages
+
+Each language is one file in `locales/` that registers itself on
+`window.MCU_LOCALES`; `i18n.js` loads after them. English (`locales/en.js`) holds
+every key and is the fallback for anything another language omits (missing keys
+are reported once in the console on localhost). Strings use `{placeholders}`;
+`{ one, other }` objects are plural forms chosen with `Intl.PluralRules`.
+Besides interface text, a locale may provide `titles` (official local release
+names by title id), `titleAliases` (other names people search for),
+`characters`, `storyWords` and `storyNotes`.
+
+To add a language: copy `locales/pt-BR.js` to `locales/<code>.js`, set its
+`meta` (name in that language, short code, `htmlLang`, matching browser
+prefixes), translate it, and add its `<script>` tag to `index.html` before
+`i18n.js`. The header menu lists it automatically. Check long labels at the
+narrowest desktop and phone widths; the toolbar steps down labels by width.
 
 ## Deploying and releasing
 
@@ -228,6 +250,8 @@ an outage. See [Supabase project pausing](https://supabase.com/docs/guides/platf
 | `CHANGELOG.md` | Dated commit summaries, release context and verification links |
 | `AGENTS.md` | Contributor workflow, shared Codex/Claude working tree, attribution and privacy instructions |
 | `CLAUDE.md` | Points Claude to `AGENTS.md` so both agents follow one rule set |
+| `i18n.js` | Language runtime: detection, `tr()` lookup with English fallback, plurals, title/character names, formatting |
+| `locales/en.js` / `locales/pt-BR.js` | One catalog per language: UI strings, official titles, search aliases, character names, story labels |
 | `docs/PRIVACY-REVIEW.md` | Source/history review, findings and proposed historical cleanup |
 
 ## Manual verification
