@@ -12,7 +12,6 @@ window.MCU_LOCALES.en = {
 
     'header.count': { one: '{n} title', other: '{n} titles' },
     'header.countOf': '{shown} of {total}',
-    'header.seen': '{n} seen',
 
     'sort.navAria': 'Sort titles by',
     'sort.release': 'Release',
@@ -73,8 +72,6 @@ window.MCU_LOCALES.en = {
     'context.filters': { one: '{n} filter', other: '{n} filters' },
     'context.clear': 'Clear',
     'context.remove': 'Remove filter: {label}',
-    'canvas.recenter': 'Recenter',
-    'canvas.recenterAria': 'Recenter the view on the titles shown',
     'filters.show': { one: 'Show {n} title', other: 'Show {n} titles' },
     'budget.format': '${n}M',
     'budget.low': '<$50M',

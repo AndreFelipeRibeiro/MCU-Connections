@@ -649,19 +649,19 @@ body {
 }
 
 /* Context summary (ContextSummary in app.jsx). Shared pieces, then the desktop
-   bar under the toolbar; the phone line and Spatial pill are in styles-mobile.css. */
+   floating group at the top-left of Spatial; the phone line and Spatial pill are
+   in styles-mobile.css. */
 .ctx { display: flex; align-items: center; gap: 6px 8px; font-size: 11.5px; color: var(--text-dim); }
 .ctx-text { display: inline-flex; flex-wrap: wrap; column-gap: 1ch; min-width: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 16px; color: var(--text-dim); }
 .ctx-seg { white-space: nowrap; }
 .ctx-text b { color: var(--text); font-weight: 600; }
-.ctx-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 7px 0 10px; border: 1px solid var(--border-strong); border-radius: 13px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 11.5px; white-space: nowrap; cursor: pointer; }
-.ctx-chip span { opacity: .6; font-size: 14px; line-height: 1; }
-.ctx-chip:hover span { opacity: 1; }
 .ctx-clear { flex: 0 0 auto; height: 26px; padding: 0 4px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 11.5px; white-space: nowrap; cursor: pointer; }
-.ctx-chip:focus-visible, .ctx-clear:focus-visible, .ctx-recenter:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.ctx-bar { flex: 0 0 auto; position: relative; z-index: 45; justify-content: space-between; gap: 16px; min-height: 40px; box-sizing: border-box; padding: 6px 22px; border-bottom: 1px solid var(--border); background: rgba(10,12,20,.85); }
-.ctx-main { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
-.ctx-end { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-.ctx-recenter { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-dim); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; }
-.ctx-recenter:hover { color: var(--text); border-color: var(--border-strong); }
-@media (max-width: 1560px) { .ctx-bar { padding: 6px 16px; } }
+.ctx-chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px 0 11px; border: 1px solid var(--border-strong); border-radius: 14px; background: rgba(22,25,36,.88); color: var(--text); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; backdrop-filter: blur(6px); }
+.ctx-chip span { opacity: .6; font-size: 14px; line-height: 1; }
+.ctx-chip:hover { border-color: var(--text-dim); }
+.ctx-chip:hover span { opacity: 1; }
+.ctx-chip:focus-visible, .ctx-clear:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctx-float { position: absolute; top: 14px; left: 16px; max-width: min(760px, calc(100% - 32px)); z-index: 40; flex-wrap: wrap; pointer-events: none; }
+.ctx-float > * { pointer-events: auto; }
+.ctx-count { display: inline-flex; align-items: center; height: 28px; box-sizing: border-box; padding: 0 11px; border: 1px solid var(--border); border-radius: 14px; background: rgba(10,12,20,.82); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 600; white-space: nowrap; backdrop-filter: blur(6px); }
+.ctx-float .ctx-clear { height: 28px; padding: 0 11px; border-radius: 14px; background: rgba(10,12,20,.82); backdrop-filter: blur(6px); }

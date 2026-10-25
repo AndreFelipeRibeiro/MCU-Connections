@@ -12,6 +12,31 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Floating desktop context summary
+
+Recorded: 2026-10-25 12:15:11 EDT (-0400).
+
+- The desktop context summary no longer takes a strip under the toolbar. It
+  floats at the top-left of Spatial like the mobile pill: a count pill ("64
+  titles" / "8 of 64"), one removable chip per active filter and Clear all when
+  two or more are on. The desktop header returns to its previous height.
+- Removed text the controls already show (sort and order) and the seen count on
+  every screen size (seen without watchlist was arbitrary). Phones now read
+  "24 of 64 · 2 filters · Clear".
+- Removed the Recenter button again and its strings, plus the unused
+  `header.seen`.
+- Verification: headless Chromium, en-US and pt-BR. Fit sweep at 20 desktop and 4
+  phone widths with All and Watchlist active: no overflow, overlaps, clipping,
+  horizontal scroll or console errors; header 121px from 1280px, 177px below.
+  Desktop: count matches the undimmed cards, chips match the filters, removing
+  one resets its control, Clear all appears only with two or more chips and
+  resets everything, the floating group covers no card at the default framing.
+  Mobile: count matches rows, Clear works from the line, empty state and Spatial
+  pill. Camera regression and language scripts pass. The user reviewed
+  screenshots and approved committing and merging to main.
+- Limits: many filters can wrap the chips to a second row over the top of the
+  canvas; no physical-device check.
+
 ## V3 maintenance — Context summary on every screen size
 
 Recorded: 2026-10-25 11:47:47 EDT (-0400).

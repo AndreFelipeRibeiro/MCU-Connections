@@ -27,11 +27,12 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   between them, and labels shorten step by step on narrower desktops. The account
   control shows Sign in or the signed-in user's name, shortened visually when
   space is limited.
-- A context summary says what the view is showing: the number of matching
-  titles, the sort and the seen count. On desktop it is a bar under the toolbar
-  with a removable chip per active filter (search, collection, type, phase,
-  budget), Clear all and Recenter. On phones it is one line at the top of List
-  and Grid (count, seen, how many filters, Clear) and a small pill in Spatial.
+- A context summary shows what the controls don't: how many titles match and
+  which filters are on. On desktop it floats at the top-left of Spatial: the
+  count, a removable chip per active filter (search, collection, type, phase,
+  budget) and Clear all when two or more are on. On phones it is one line at the
+  top of List and Grid and a small pill in Spatial (count, how many filters,
+  Clear).
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.
 - Each released title shows its in-story timeframe (e.g. "Set in 1943–1945") on
   cards, list rows and details, alongside the release year. Chronological order

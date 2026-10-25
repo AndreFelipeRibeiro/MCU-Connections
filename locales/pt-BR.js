@@ -11,7 +11,6 @@ window.MCU_LOCALES['pt-BR'] = {
 
     'header.count': { one: '{n} título', other: '{n} títulos' },
     'header.countOf': '{shown} de {total}',
-    'header.seen': { one: '{n} visto', other: '{n} vistos' },
 
     'sort.navAria': 'Ordenar títulos por',
     'sort.release': 'Estreia',
@@ -72,8 +71,6 @@ window.MCU_LOCALES['pt-BR'] = {
     'context.filters': { one: '{n} filtro', other: '{n} filtros' },
     'context.clear': 'Limpar',
     'context.remove': 'Remover filtro: {label}',
-    'canvas.recenter': 'Recentralizar',
-    'canvas.recenterAria': 'Recentralizar a visualização nos títulos exibidos',
     'filters.show': { one: 'Mostrar {n} título', other: 'Mostrar {n} títulos' },
     'budget.format': 'US$ {n} mi',
     'budget.low': '< US$ 50 mi',
