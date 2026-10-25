@@ -609,6 +609,38 @@ body {
 .tb-primary-row .segmented button .sm { display: none; }
 .tb-primary-row .segmented button .si { margin-right: 6px; }
 .sort-order-chevron { display: block; flex: 0 0 12px; }
+
+/* Collection switch (CollectionSwitch in tracking.jsx) and its state icons. */
+.coll-ic { display: inline-flex; width: 13px; height: 13px; flex: 0 0 13px; }
+.coll-ic svg { width: 100%; height: 100%; }
+.acct-links .coll-ic { margin-right: 7px; vertical-align: -2px; }
+.coll-switch { display: flex; gap: 2px; padding: 3px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; flex: 0 0 auto; }
+.coll-switch button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text-dim); font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.coll-switch button:hover { color: var(--text); }
+.coll-switch button.on { background: var(--surface-2); color: var(--text); border-color: var(--border-strong); }
+.coll-switch button.on .coll-ic { color: var(--accent); }
+/* Compact (mobile): label All and the active option; others are icons. */
+.coll-compact button { flex: 1 1 auto; min-width: 0; padding: 0 8px; }
+.coll-compact button.on { flex-grow: 2; }
+.coll-compact .coll-label { display: none; }
+.coll-compact button:first-child .coll-label, .coll-compact button.on .coll-label { display: inline; }
+@media (min-width: 400px) { .coll-compact .coll-label { display: inline; } }
+/* Desktop toolbar: step the collection switch down where the row gets tight
+   (two-row layout below 1250px; joined single row from 1920px until its labels
+   have room). First label only All + the active option and drop Recenter's
+   text, then go icon-only and let search shrink a little. */
+@media (max-width: 1249px), (min-width: 1920px) and (max-width: 2399px) {
+  .tb-secondary-row .coll-switch button { padding: 0 10px; }
+  .tb-secondary-row .coll-switch .coll-label { display: none; }
+  .tb-secondary-row .coll-switch button:first-child .coll-label,
+  .tb-secondary-row .coll-switch button.on .coll-label { display: inline; }
+  .tb-secondary-row .reset-view .reset-label { display: none; }
+  .tb-secondary-row .reset-view { padding: 0 13px; }
+}
+@media (max-width: 999px) {
+  .tb-secondary-row .coll-switch button.on:not(:first-child) .coll-label { display: none; }
+  .tb-secondary-row > .search-wrap { min-width: 200px; }
+}
 @media (max-width: 1250px) {
   .tb-primary-row .segmented button .lg { display: none; }
   .tb-primary-row .segmented button .sm { display: inline; }

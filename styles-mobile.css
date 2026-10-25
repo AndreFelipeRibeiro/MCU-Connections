@@ -10,11 +10,6 @@
 .m-mark::after { content: ''; position: absolute; inset: 5px; border-radius: 3px; background: var(--bg); }
 .m-btitle { font-size: 15px; font-weight: 600; line-height: 1.15; white-space: nowrap; }
 .m-bsub { font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 2px; white-space: nowrap; }
-.m-viewswitch { display: flex; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 3px; flex: 0 0 auto; }
-.m-viewswitch button { display: flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 9px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text-dim); font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; }
-.m-viewswitch button.on { background: var(--surface-2); color: var(--text); border-color: var(--border-strong); }
-.m-viewswitch .vi { font-size: 13px; line-height: 1; }
-.m-viewswitch .vl { display: none; }
 .m-searchrow { display: flex; align-items: center; gap: 8px; }
 .m-searchbar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
 /* Render at 13px while retaining a 16px input to avoid iOS focus zoom. */
@@ -22,7 +17,9 @@
 .m-searchbar input { position: absolute; inset: 0 auto 0 0; width: 123.076923%; height: 24px; padding: 0; box-sizing: border-box; background: transparent; border: 0; outline: 0; color: var(--text); font: inherit; font-size: 16px; transform: scale(.8125); transform-origin: left center; }
 .m-searchbar input::placeholder { color: var(--text-muted); }
 .m-clear { width: 24px; height: 24px; border: 0; border-radius: 12px; background: var(--surface-2); color: var(--text-dim); font-size: 15px; line-height: 1; cursor: pointer; }
-.m-fpill { display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 13px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+/* Icon-only Filters button beside the order menu; the count sits on its corner. */
+.m-fpill { position: relative; display: flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; min-height: 44px; padding: 0; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); font: inherit; cursor: pointer; }
+.m-fpill .m-fcount { position: absolute; top: -4px; right: -4px; }
 .m-fpill.act { background: rgba(74,141,232,.14); border-color: #3f6ba8; color: #9cc3f5; }
 .m-fcount { min-width: 17px; height: 17px; border-radius: 9px; background: var(--accent); color: #0a0c14; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; font-family: 'JetBrains Mono', monospace; }
 .m-tabletsort { display: none; }
@@ -154,7 +151,6 @@
 /* Wider phones / landscape: a little more room, same single mobile treatment */
 @media (min-width: 600px) {
   .m-appbar { padding: 12px 20px 13px; }
-  .m-viewswitch .vl { display: inline; }
   .m-scrollarea { padding: 18px 20px 24px; }
   .m-grid { grid-template-columns: repeat(3, 1fr); }
   .m-sheet { left: auto; right: 0; width: min(440px, 100%); }
@@ -252,9 +248,11 @@
    vertical padding of its own) and lets the labels show even on narrow phones. */
 
 .m-viewrow { display: flex; align-items: center; gap: 8px; }
-.m-viewrow .m-viewswitch { flex: 1; min-width: 0; }
-.m-viewrow .m-viewswitch button { flex: 1; justify-content: center; padding: 0 6px; }
-.m-viewrow .m-viewswitch .vl { display: inline; }
+.m-viewrow .view-menu .sort-order-trigger { gap: 7px; min-width: 0; }
+.view-menu .vi { font-size: 13px; line-height: 1; opacity: .8; }
+.view-menu .sort-order-pop .vi { margin-right: 9px; }
+.view-menu .sort-order-pop { min-width: 180px; }
+.m-viewrow .coll-switch { flex: 1; min-width: 0; }
 
 .m-acct {
   position: relative; flex: 0 0 auto;
@@ -281,7 +279,7 @@
 .m-sheet .acct-action { min-height: 46px; font-size: 13.5px; }
 
 /* Visible keyboard focus in the sheet, filters and view controls. */
-.m-sheet button:focus-visible, .m-viewswitch button:focus-visible,
+.m-sheet button:focus-visible, .coll-switch button:focus-visible,
 .m-fpill:focus-visible, .acct-links button:focus-visible, .acct-action:focus-visible, .filters-pop button:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 2px;
 }
@@ -295,4 +293,3 @@
 
 .m-sort-footer { position: relative; flex: 0 0 auto; z-index: 30; background: var(--bg); }
 .mobile-order .sort-order-pop { top: calc(100% + 8px); bottom: auto; }
-.sort-order-prefix { color: var(--text-muted); }

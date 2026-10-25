@@ -15,7 +15,7 @@ function ScoreBadges({ title, lead, compact }) {
 // The app bar is already three rows deep on a phone, so the view switch moved
 // off m-appbar-top (where the account avatar now sits) onto its own tight row
 // rather than becoming a fourth control crammed into the brand row.
-function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters, filterCount, showing, total, sortLabel, sort, sortDir, setSortDir, onOpenAccount }) {
+function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters, filterCount, showing, total, sortLabel, sort, sortDir, setSortDir, onOpenAccount, collectionFilter, setCollectionFilter }) {
   const { progress } = window.useCollection();
   return (
     <div className="m-appbar">
@@ -39,19 +39,15 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onOpenFilters,
           {search && <button className="m-clear" onClick={()=>setSearch('')} aria-label="Clear search">×</button>}
         </div>
         <SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir} mobile/>
+        <button className={`m-fpill${filterCount?' act':''}`} onClick={onOpenFilters}
+          aria-label={filterCount ? `Filters, ${filterCount} active` : 'Filters'} title="Filters">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+          {filterCount ? <span className="m-fcount">{filterCount}</span> : null}
+        </button>
       </div>
       <div className="m-viewrow">
-        <div className="m-viewswitch">
-          {VIEW_MODES.map(([v,l,ic]) => (
-            <button key={v} className={viewMode===v?'on':''} onClick={()=>setViewMode(v)} aria-label={l} aria-pressed={viewMode===v} title={l}>
-              <span className="vi">{ic}</span><span className="vl">{l}</span>
-            </button>
-          ))}
-        </div>
-        <button className={`m-fpill${filterCount?' act':''}`} onClick={onOpenFilters}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-          Filters{filterCount ? <span className="m-fcount">{filterCount}</span> : null}
-        </button>
+        <window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter} variant="compact"/>
+        <ViewMenu viewMode={viewMode} setViewMode={setViewMode}/>
       </div>
     </div>
   );
@@ -94,7 +90,7 @@ function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
     onBlur={e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
     <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
       aria-label={`Sort order: ${labels[index]}`} onClick={() => setOpen(v => !v)}>
-      {mobile && <span className="sort-order-prefix">Order:</span>}{compact}
+      {compact}
       <svg className="sort-order-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="m6 9 6 6 6-6"/>
@@ -110,6 +106,46 @@ function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
   </div>;
 }
 window.SortOrderMenu = SortOrderMenu;
+
+// List / Grid / Spatial as one compact menu, so the second header row has room
+// for the collection switch. Same open/close behaviour as SortOrderMenu,
+// including ignoring Safari's null-relatedTarget blur on tap.
+function ViewMenu({ viewMode, setViewMode }) {
+  const [open, setOpen] = React.useState(false);
+  const wrap = React.useRef(null), trigger = React.useRef(null), choices = React.useRef(null);
+  const id = React.useId();
+  const current = VIEW_MODES.find(([v]) => v === viewMode) || VIEW_MODES[0];
+  React.useEffect(() => {
+    if (!open) return;
+    choices.current?.querySelector('[aria-pressed="true"]')?.focus();
+    const away = e => { if (!wrap.current?.contains(e.target)) setOpen(false); };
+    const escape = e => { if (e.key === 'Escape') { setOpen(false); trigger.current?.focus(); } };
+    document.addEventListener('pointerdown', away);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', away);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+  return <div className="sort-order mobile-order view-menu" ref={wrap}
+    onBlur={e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
+    <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
+      aria-label={`View: ${current[1]}`} onClick={() => setOpen(v => !v)}>
+      <span className="vi" aria-hidden="true">{current[2]}</span>{current[1]}
+      <svg className="sort-order-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m6 9 6 6 6-6"/>
+      </svg>
+    </button>
+    {open && <div id={id} ref={choices} className="sort-order-pop" role="group" aria-label="View">
+      <div className="sort-order-heading">View</div>
+      {VIEW_MODES.map(([v, l, ic]) => <button key={v} aria-pressed={viewMode === v}
+        onClick={() => { setViewMode(v); setOpen(false); trigger.current?.focus(); }}>
+        <span><span className="vi" aria-hidden="true">{ic}</span>{l}</span><span aria-hidden="true">{viewMode === v ? '✓' : ''}</span>
+      </button>)}
+    </div>}
+  </div>;
+}
 
 function SortTabs({ sort, setSort }) {
   return (
@@ -477,25 +513,12 @@ function Sheet({ children, onClose, tall, label }) {
   );
 }
 
-function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, sort, sortDir, setSortDir, onClose, showing, onClear }) {
-  const { progress } = window.useCollection();
+function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, sort, sortDir, setSortDir, onClose, showing, onClear }) {
   return (
     <Sheet onClose={onClose} tall label="Filters">
       <div className="m-sh-head">
         <div className="m-sh-title">Filters</div>
         <button className="m-sh-clear" onClick={onClear}>Clear all</button>
-      </div>
-      <div className="m-fgroup">
-        <div className="m-flab">Collection</div>
-        <div className="m-chips">
-          {window.COLLECTION_OPTIONS.map(([v,l])=>(
-            <button key={v} className={`m-chip${collectionFilter===v?' on':''}`} aria-pressed={collectionFilter===v} onClick={()=>setCollectionFilter(v)}>{l}</button>
-          ))}
-        </div>
-        <div className="m-progress">
-          {progress.seenReleased} of {progress.releasedTotal} released titles seen
-          {progress.watchlist > 0 && <> · {progress.watchlist} on watchlist</>}
-        </div>
       </div>
       <div className="m-fgroup">
         <div className="m-flab">Phase</div>

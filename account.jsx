@@ -310,9 +310,9 @@ function AccountPanel({ onPickCollection, onClose }) {
       )}
 
       <div className="acct-links">
-        <button disabled={collectionLoading} onClick={pick('unseen')}>Show unseen</button>
-        <button disabled={collectionLoading} onClick={pick('seen')}>Show seen</button>
-        <button disabled={collectionLoading} onClick={pick('watchlist')}>Show watchlist</button>
+        <button disabled={collectionLoading} onClick={pick('unseen')}><span className="coll-ic"><window.CollectionIcon kind="unseen"/></span>Show unseen</button>
+        <button disabled={collectionLoading} onClick={pick('seen')}><span className="coll-ic"><window.CollectionIcon kind="seen"/></span>Show seen</button>
+        <button disabled={collectionLoading} onClick={pick('watchlist')}><span className="coll-ic"><window.CollectionIcon kind="watchlist"/></span>Show watchlist</button>
       </div>
 
       {syncError && (

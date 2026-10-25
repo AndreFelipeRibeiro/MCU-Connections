@@ -12,6 +12,29 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Always-visible Unseen / Seen / Watchlist switch
+
+Recorded: 2026-10-24 23:48:23 EDT (-0400).
+
+- All / Unseen / Seen / Watchlist moved out of Filters into an always-visible
+  switch with icons (dashed ring = Unseen, check = Seen, bookmark = Watchlist).
+  Desktop: second toolbar row beside All / Films / Series, stepping down to
+  All + active label (and icon-only Recenter) below 1250px and on the joined
+  1920–2399px row, icon-only below 1000px.
+- Mobile header reorganised: search · order menu (no "Order:" text) · icon-only
+  Filters on row two; collection switch · List/Grid/Spatial menu on row three.
+  The switch labels All and the active option (all four from 400px).
+- Collection no longer appears in the Filters popover/sheet, badge or Clear
+  actions. Account modal "Show …" links gained the icons.
+- Verification: headless Chromium with All and Watchlist active at desktop 900,
+  1000, 1100, 1250, 1251, 1440, 1600, 1919, 1920, 2099, 2100 and 2560 and mobile
+  320, 360, 390 and 430: no off-screen controls, row overflow or overlaps.
+  Mobile list filtered 64 → 52 / 12 / 4; desktop dimmed 52 cards for Seen; view
+  menu stayed on screen and switched to Grid. No console errors. The user
+  approved committing and merging to main.
+- Limits: the existing 320px title/subtitle overflow (e.g. with RT selected)
+  is unchanged; no physical-phone, OAuth or cloud-write check by Claude.
+
 ## V3 maintenance — Remove mobile List rating bars
 
 Recorded: 2026-10-24 23:15 EDT (-0400).

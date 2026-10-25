@@ -532,6 +532,37 @@ function BookmarkIcon({ filled }) {
   return <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 3.5h12v17l-6-4.2-6 4.2z"/></svg>;
 }
 
+// A dashed ring: "not yet" beside the check for seen.
+function UnseenIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeDasharray="3.2 3.2" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/></svg>;
+}
+
+// One icon per collection state, used everywhere the states are offered.
+function CollectionIcon({ kind }) {
+  if (kind === 'seen') return <CheckIcon/>;
+  if (kind === 'watchlist') return <BookmarkIcon/>;
+  if (kind === 'unseen') return <UnseenIcon/>;
+  return null;
+}
+
+// All / Unseen / Seen / Watchlist, always visible in the toolbar (desktop) and
+// the second header row (mobile) rather than inside Filters. `variant` only
+// changes layout: 'toolbar' keeps every label where there is room; 'compact'
+// labels just All and the active option, leaving the others as icons.
+function CollectionSwitch({ value, onChange, variant = 'toolbar' }) {
+  return (
+    <div className={`coll-switch coll-${variant}`} role="group" aria-label="Show titles">
+      {COLLECTION_OPTIONS.map(([v, l]) => (
+        <button key={v} className={value === v ? 'on' : ''} aria-pressed={value === v}
+          aria-label={l} title={l} onClick={() => onChange(v)}>
+          {v !== 'all' && <span className="coll-ic"><CollectionIcon kind={v}/></span>}
+          <span className="coll-label">{l}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // Toggles, not checkboxes — so <button aria-pressed> rather than <input>.
 //
 // `variant` is 'overlay' (icon-only, sits on a poster) or 'inline' (icon plus
@@ -625,6 +656,8 @@ Object.assign(window, {
   matchesCollection,
   collectionEmptyCopy,
   COLLECTION_OPTIONS,
+  CollectionIcon,
+  CollectionSwitch,
   releasedCount,
   todayISO,
   TSA_MIN_SCALE,
