@@ -90,6 +90,11 @@ window.MCU_LOCALES['pt-BR'] = {
     'search.placeholder': 'Buscar títulos ou personagens…',
     'search.aria': 'Buscar títulos ou personagens',
     'search.clear': 'Limpar busca',
+    'suggest.label': 'Sugestões',
+    'suggest.actors': 'Atores',
+    'suggest.characters': 'Personagens',
+    'suggest.titles': 'Títulos',
+    'suggest.as': 'como {names}',
 
     'canvas.zoomIn': 'Aumentar zoom',
     'canvas.zoomOut': 'Diminuir zoom',

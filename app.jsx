@@ -329,7 +329,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
 const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
-function Toolbar({ desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
+function Toolbar({ onPickTitle, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   // Collection has its own always-visible switch, so it is not counted here.
@@ -356,7 +356,8 @@ function Toolbar({ desktopView, setDesktopView, sort, setSort, sortDir, setSortD
         <div className="tb-filter-row">
           <div className="search-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-            <input aria-label={tr('search.aria')} value={search} onChange={e=>setSearch(e.target.value)} placeholder={tr('search.placeholder')}/>
+            <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle}
+              ariaLabel={tr('search.aria')} placeholder={tr('search.placeholder')}/>
           </div>
           <div className="tb-order-control">
             <span className="tb-order-label">{tr('order.label')}</span>
@@ -1325,6 +1326,12 @@ function App() {
   // flat views actually drop non-matching rows and count what they render.
   // Switching to Spatial with a title open in the drawer selects that card, so
   // the canvas opens on its connections; switching to List keeps the drawer.
+  // A title picked from the search suggestions opens its details (and, in
+  // desktop Spatial, selects its card so the canvas shows its connections).
+  const pickTitle = (id) => {
+    setDrawerId(id);
+    if (!isTouch && desktopView === 'spatial') setSelectedId(id);
+  };
   const changeDesktopView = (v) => {
     if (v === desktopView) return;
     setSelectedId(v === 'spatial' ? drawerId : null);
@@ -1451,7 +1458,7 @@ function App() {
         <window.MobileTopBar
           device={device}
           viewMode={viewMode} setViewMode={(v) => { setViewMode(v); if (v !== 'spatial') setSelectedId(null); }}
-          search={search} setSearch={setSearch}
+          search={search} setSearch={setSearch} onPickTitle={pickTitle}
           onOpenFilters={() => setSheet('filters')}
           filterCount={filterCount}
           sort={sort} sortDir={sortDir} setSortDir={setSortDir}
@@ -1505,6 +1512,7 @@ function App() {
   return (
     <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
       <Toolbar
+        onPickTitle={pickTitle}
         desktopView={desktopView} setDesktopView={changeDesktopView}
         sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}

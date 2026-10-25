@@ -60,6 +60,10 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   in-story years, IMDb, RT) that stay in step with the sort row; a row opens the
   cast drawer, which sits below the toolbar. Columns drop as the List narrows.
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
+- Search suggestions: from two letters, a list under the search box previews
+  matching actors, characters and titles (names in every language). Picking a
+  person searches for them; picking a title also opens its details. Arrow keys,
+  Enter and Escape work; free-text search is unchanged.
   Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
   seen moves it to seen; un-seeing returns it to untracked.
@@ -254,6 +258,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `app.jsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
 | `mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
+| `search-suggest.jsx` | Search box with actor/character/title suggestions, shared by desktop and mobile |
 | `poster.jsx` | TMDB posters or generated abstract fallback |
 | `connections.jsx` | Standalone connection layer retained for reference; not wired into the app |
 | `styles.css` / `styles-mobile.css` | Desktop/touch layout, status treatments, focus and dialogs |
