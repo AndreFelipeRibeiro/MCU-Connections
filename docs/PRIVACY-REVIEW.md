@@ -27,7 +27,7 @@ outside the scanned Git refs. No user data was queried or exported.
 | Source access rules | Schema enables RLS; SELECT/DELETE use auth.uid() ownership, INSERT checks ownership, UPDATE checks both old/new ownership; anon grants are revoked. This review does not independently attest to today's deployed policy state. |
 | Public configuration | config.js contains a Supabase project URL and publishable key, which are intended for browser distribution. They are not a service-role/secret key. |
 | Git metadata | One personal email identity is present in existing author/committer metadata. It remains exposed in already published commit history. No address is copied into this report. |
-| Local paths | Machine-specific home-folder paths existed in three planning documents. The current V3 maintenance copies now use a portable placeholder. Existing main/history copies retain the old values until the relevant changes/history are separately addressed. |
+| Local paths | Machine-specific home-folder paths existed in three planning documents. Current copies use portable placeholders and are included in the approved main maintenance release. Historical copies retain the old values; no published-history rewrite was performed. |
 
 Supabase documents publishable keys as safe for public client source; access to
 private rows must be enforced through grants and RLS:

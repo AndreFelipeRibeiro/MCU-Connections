@@ -162,4 +162,6 @@ No API credentials or new runtime dependencies are added by this audit.
   bundler, runtime dependency or schema change. Source mapping is not loaded by
   the browser and adds no catalog network request.
 
-Production stays on V3 until a separate merge approval.
+The catalog maintenance is included in the V3 maintenance release approved for
+main on 2026-10-24. The research dates and limitations above are historical;
+this release does not represent a fresh ratings audit.

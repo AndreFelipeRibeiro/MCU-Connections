@@ -5,9 +5,12 @@ a spatial map, connected by shared actors and characters. V3 adds seen/watchlist
 tracking, Google sign-in and cloud sync across devices.
 
 - [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/)
-- [Production](https://mcu-connections.vercel.app/) — released V3 (`1f79b74`).
+- [Production](https://mcu-connections.vercel.app/) — V3 with the maintenance
+  release approved on 2026-10-24 (catalog, sorting, navigation and mobile improvements).
 - Catalog maintenance continues on `version/3.0`; [audit and sources](docs/CATALOG-AUDIT.md),
-  [current tasks](V3-TASKS.md). Follow-up changes require approval before merging.
+  [phase roadmap](V3-TASKS.md). The Notion V3 Tasks database holds the live queue.
+  Future changes still require review and approval before committing/pushing
+  and a separate approval before merging to main. Email/password Phase 6 is deferred.
 
 See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 [privacy review](docs/PRIVACY-REVIEW.md) for the repository audit and its limits.
@@ -22,6 +25,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Recenter and account below. The account control shows Sign in or the signed-in
   user's name, shortened visually when space is limited.
 - Six sort modes: release, chronology, phase, title, IMDb and Rotten Tomatoes.
+- Mobile view navigation is List / Grid / Spatial. List rows place IMDb and
+  Rotten Tomatoes together beneath their phase/budget metadata.
 - Choose direction from a separate order menu beside desktop sorting or beside
   mobile search on the second header row. Its label shows the current order
   (Newest, 6 → 1, Z–A). Mobile uses quieter search text and taller bottom sort tabs.

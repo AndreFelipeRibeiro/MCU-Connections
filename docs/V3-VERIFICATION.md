@@ -297,3 +297,21 @@ Email/password Phase 6 remains deferred and requires separate confirmation.
 
 Separate-profile isolation and spoken screen-reader checks remain unperformed;
 the README identifies those limits and the post-release production smoke check.
+
+## V3 maintenance release — 2026-10-24
+
+The user approved the mobile List layout/navigation changes and promoting all
+current V3 maintenance to main. Earlier checkpoints above remain historical;
+their pending merge gates were satisfied by this approval.
+
+- Final mobile layout checked in Chrome at 320, 390, 430, 768 and 899px across
+  Release, IMDb and RT: paired ratings under metadata, no row overflow, stable
+  List / Grid / Spatial ids and no nested buttons.
+- Unrated copy, details opening, separate seen/watchlist actions, view switching
+  and List persistence after reload passed. Temporary guest marks were cleared.
+  No browser console errors; no new runtime dependencies or schema changes.
+- Previous catalog, ordering, responsive navigation, animation, preferences,
+  Safari-tap emulation and camera checks are recorded in the changelog and
+  catalog audit. They were not all repeated for this release preparation.
+- Limits: no fresh physical-device, WebKit, spoken screen-reader, live Google
+  OAuth or cross-device cloud-sync acceptance test for this maintenance merge.

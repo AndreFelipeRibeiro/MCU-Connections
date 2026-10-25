@@ -11,17 +11,23 @@ to start Phase 6; Phases 1–5 remain Google-only.
 
 ## Current handoff — 2026-10-24
 
-Phases 1–5 were released to `main` at `1f79b74` after user approval.
-Catalog maintenance and further bugs/improvements continue on `version/3.0` in
-`<your-developer-folder>/MCU-V3`; this is not a new major release.
+Phases 1–5 were initially released to `main` at `1f79b74`.
+The subsequent V3 maintenance release was approved on 2026-10-24: catalog
+refresh, reverse sorting, responsive navigation, mobile List/animations,
+per-device preferences, Safari Order handling and spatial camera improvements.
+These changes are included in the current `main` release, not a new major version.
+Further development continues on `version/3.0` in
+`<your-developer-folder>/MCU-V3`. The Notion V3 Tasks database is the active
+backlog; the former checklist is archived.
 Current setup is in [README.md](README.md), catalog work and sources are in
 [docs/CATALOG-AUDIT.md](docs/CATALOG-AUDIT.md), and the original phase verification
 is in [docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
 
-**Next gates:** obtain fresh confirmation before merging these follow-up changes
-into `main` and publishing them. Continue the user's bugs/improvements before
-Phase 6. Email/password implementation and service setup still require their own
-plan and explicit approval; earlier release approval does not authorize them.
+**Next gates:** the user approved this maintenance merge on 2026-10-24.
+Future changes still require review before committing/pushing and a new approval
+before another main merge. Continue the user's bugs/improvements before Phase 6.
+Email/password implementation and service setup require their own plan and
+explicit approval; this maintenance release does not authorize them.
 
 ---
 
@@ -255,7 +261,7 @@ See [catalog audit](docs/CATALOG-AUDIT.md) and
 - [x] Commit the catalog change; consolidate it into the V3 branch and workflow.
 - [x] Schedule Review MCU catalog updates for Mondays at 9am Eastern in this chat.
       Prepare sourced patches for review; do not auto-apply, commit or publish.
-- [ ] Obtain confirmation before merging the maintenance changes into main.
+- [x] User approved the maintenance merge into main on 2026-10-24.
 
 The weekly task follows `version/3.0` while changes are being tested and main
 once merged. The deferred email/password phase below is a separate task from
@@ -281,9 +287,18 @@ Mobile Order now sits beside search on header row two; search renders at 13px,
 and the bottom sort tabs are 68px tall without a visible "Sort by" heading.
 
 - [x] Obtain user approval before committing/pushing the task and marking it done.
-- [ ] Merge into main only after a separate explicit merge approval.
+- [x] Separate explicit main-merge approval received on 2026-10-24.
 
 ---
+
+## V3 maintenance — Mobile List layout and view navigation
+
+- [x] Place IMDb and Rotten Tomatoes side by side beneath List metadata.
+- [x] Order the mobile view switch as List / Grid / Spatial, retaining stable ids.
+- [x] Check 320–899px layouts, ranked/unrated rows, details, independent status
+      buttons, view switching and saved-view reload behavior.
+- [x] User approved both tasks, their commit/push and the complete V3 maintenance
+      merge on 2026-10-24. Commit and closure evidence is kept in Notion.
 
 ## Phase 6 — Email/password accounts (deferred; confirmation required)
 

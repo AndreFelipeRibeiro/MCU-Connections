@@ -8,17 +8,23 @@ anything has drifted.
 
 ## Current handoff — 2026-10-24
 
-Phases 1–5 were released to `main` at `1f79b74` after user approval.
-Catalog maintenance and further bugs/improvements continue on `version/3.0` in
-`<your-developer-folder>/MCU-V3`; this is not a new major release.
+Phases 1–5 were initially released to `main` at `1f79b74`.
+The subsequent V3 maintenance release was approved on 2026-10-24: catalog
+refresh, reverse sorting, responsive navigation, mobile List/animations,
+per-device preferences, Safari Order handling and spatial camera improvements.
+These changes are included in the current `main` release, not a new major version.
+Further development continues on `version/3.0` in
+`<your-developer-folder>/MCU-V3`. The Notion V3 Tasks database is the active
+backlog; the former checklist is archived.
 Current setup is in [README.md](README.md), catalog work and sources are in
 [docs/CATALOG-AUDIT.md](docs/CATALOG-AUDIT.md), and the original phase verification
 is in [docs/V3-VERIFICATION.md](docs/V3-VERIFICATION.md).
 
-**Next gates:** obtain fresh confirmation before merging these follow-up changes
-into `main` and publishing them. Continue the user's bugs/improvements before
-Phase 6. Email/password implementation and service setup still require their own
-plan and explicit approval; earlier release approval does not authorize them.
+**Next gates:** the user approved this maintenance merge on 2026-10-24.
+Future changes still require review before committing/pushing and a new approval
+before another main merge. Continue the user's bugs/improvements before Phase 6.
+Email/password implementation and service setup require their own plan and
+explicit approval; this maintenance release does not authorize them.
 
 ---
 

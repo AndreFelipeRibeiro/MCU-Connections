@@ -11,6 +11,32 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — Mobile List layout and approved main release
+
+Recorded: 2026-10-24 22:16:01 EDT (-0400).
+
+- Move IMDb and Rotten Tomatoes together beneath List metadata, retaining
+  RT-first ordering on RT sorts, rank numbers/bars, search matches, the unrated
+  fallback and independent tracking/detail buttons.
+- Order the mobile view switch List / Grid / Spatial with stable view ids;
+  existing defaults and saved preferences continue to work.
+- User approved these two tasks and merging all current V3 maintenance into
+  main. The release includes the catalog refresh, reverse sorts, responsive
+  navigation, mobile animations/default List, saved preferences, Safari Order
+  fix and spatial camera/framing work recorded below. Preserve their original
+  commits and tool attribution.
+- Refresh README, spec/task/kickoff handoffs, catalog release status and the
+  verification record. Notion is the live task database; code-task closure
+  records approval, completion date and implementation commit after the push.
+- Verification for this mobile change: Chrome at 320, 390, 430, 768 and 899px
+  with Release/IMDb/RT sorts; ratings were below metadata and paired inline,
+  with no row overflow or nested buttons. Checked unrated copy, details,
+  seen/watchlist actions without opening details, Grid/Spatial/List switching
+  and List persistence after reload. No console errors; whitespace check passed.
+- Limits: physical phone/Safari keyboard, live sign-in and cloud sync were not
+  repeated. Earlier maintenance checks below are preserved as historical
+  evidence, not claimed as newly rerun. Email/password Phase 6 stays deferred.
+
 ## V3 maintenance — Spatial keeps your place and opens bolder
 
 Recorded: 2026-10-24 22:07:27 EDT (-0400).

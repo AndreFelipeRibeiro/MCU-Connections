@@ -3,7 +3,7 @@ const { useState: mUseState } = React;
 const MPHASE_COLORS = { 1:'#d4a05a', 2:'#4a8de8', 3:'#d04040', 4:'#a05cd0', 5:'#5fa856', 6:'#c8384a' };
 const MPHASE_LABELS = { 1:'PHASE 1', 2:'PHASE 2', 3:'PHASE 3', 4:'PHASE 4', 5:'PHASE 5', 6:'PHASE 6' };
 const SORT_TABS = [['release','Release','▤'],['chrono','Chrono','⇄'],['phase','Phase','◫'],['title','A–Z','⇅'],['imdb','IMDb','★'],['rt','RT','◉']];
-const VIEW_MODES = [['grid','Grid','▦'],['list','List','☰'],['spatial','Spatial','◈']];
+const VIEW_MODES = [['list','List','☰'],['grid','Grid','▦'],['spatial','Spatial','◈']];
 
 function ScoreBadges({ title, lead, compact }) {
   const imdb = title.imdb != null ? <div className="m-sc imdb" key="i" title={title.type === 'series' ? 'IMDb whole-series rating (shared across seasons)' : 'IMDb movie rating'}><span className="tg">IMDb</span>{title.imdb.toFixed(1)}</div> : null;
@@ -361,12 +361,12 @@ function MobileList({ titles, sort, onSelect, searchCharMatches, search, empty, 
                         <span style={{color:MPHASE_COLORS[t.phase]}}>{MPHASE_LABELS[t.phase]}</span>
                         {t.budget != null && <><span className="m-dot"/><span>${t.budget < 1 ? t.budget : Math.round(t.budget)}M</span></>}
                       </div>
+                      <ScoreBadges title={t} lead={lead}/>
                       <MatchBadge matchedChars={matchedChars} query={search}/>
                       {ranked && score != null && (
                         <div className="m-barw"><div className="m-barf" style={{width:score+'%', background: lead==='rt' ? '#fa320a' : '#f5c518'}}/></div>
                       )}
                     </div>
-                    <ScoreBadges title={t} lead={lead}/>
                   </button>
                   <window.TitleStatusActions title={t} className="m-lrow-tsa"/>
                 </div>
