@@ -73,8 +73,9 @@ time. Uncommitted changes are the hand-off point, so treat them carefully.
 The user's Notion **V3 Tasks** database (under the MCU - V3 page) is the backlog;
 the old checklist is a read-only archive. Priority is the order of the **Backlog**
 column in the **All tasks** board view, top first: take the top unclaimed task
-unless the user names another. Notion keeps a separate manual order per view, so
-the **Queue** table lists the same tasks but its order is not the priority.
+unless the user names another. The user sets that order by dragging cards; do
+not add priority numbers. Notion keeps a separate manual order per view, so the
+**Queue** table lists the same tasks but its order is not the priority.
 Work on one task at a time.
 
 - Claim: set **Assigned to** to your agent and **Status** to **In progress**, then
@@ -83,10 +84,18 @@ Work on one task at a time.
 - Ready: set **Status** to **Awaiting review**. Keep the request, changes, actual
   verification and remaining limits in the task page body.
 - Complete code tasks only after explicit user approval and once the approved
-  change is committed and pushed: set **Status** to **Completed**, **Completed
-  on** to the America/New_York date and **Latest commit** to the final
-  implementation commit; list every related commit in the page body. Completed
-  tasks move to the Completed view automatically.
+  change is committed and pushed: set **Status** to **Completed**, **Latest
+  commit** to the final implementation commit, and list every related commit in
+  the page body. Completed tasks move to the Completed view automatically.
+- Completion time and order: set **Completed on** to the actual completion date
+  and time in America/New_York (include the time, `is_datetime = 1`). Never use
+  the task's creation or last-edited time. Query the database first, then set
+  **Completion order** to the highest existing value plus one; tasks closed
+  together take their confirmed completion sequence. Older date-only records
+  (and the backfilled Completion order estimates) stay as they are unless the
+  real time can be verified. The **All tasks** board and the **Completed** view
+  both sort by Completed on descending, then Completion order descending, so the
+  latest completion is first in the Completed column.
 - Notion-only tasks still need the user's review but no code commit. Phase 6
   (email/password) stays **Deferred** until its own plan and approval.
   Completion on V3 does not approve a main merge.

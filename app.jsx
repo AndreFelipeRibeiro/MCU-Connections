@@ -10,6 +10,7 @@ const PHASE_COLORS = {
   5: '#5fa856',
   6: '#c8384a',
 };
+window.PHASE_COLORS = PHASE_COLORS; // desktop-list.jsx
 // Text goes through the i18n runtime (i18n.js); `tr` avoids clashing with the
 // `t` used for titles throughout this file.
 const I18N = window.MCU_I18N;
@@ -83,14 +84,14 @@ function sortTitles(list, sort, dir = 'asc') {
 // show on their own controls, so they are not repeated here. Variants:
 //   'float' - desktop Spatial, top-left of the canvas: the count, one removable
 //             chip per filter (search, collection, type, phase, budget) and
-//             Clear all.
+//             Clear all. With `inList` it sits at the top of the desktop List.
 //   'line'  - top of the mobile List/Grid (scrolls away with it).
 //   'pill'  - mobile Spatial, top-left of the canvas clear of the zoom control.
 // Phones show the count and how many filters, plus Clear; the search box,
 // collection switch and Filters badge already name them.
 // `showing` counts titles matching every filter, including the collection one,
 // which only dims cards in Spatial.
-function ContextSummary({ variant, showing, total, filters: f }) {
+function ContextSummary({ variant, inList, showing, total, filters: f }) {
   const chips = [];
   const query = f.search.trim();
   if (query) chips.push(['search', `“${query}”`, () => f.setSearch('')]);
@@ -108,7 +109,7 @@ function ContextSummary({ variant, showing, total, filters: f }) {
 
   if (variant === 'float') {
     return (
-      <div className="ctx ctx-float" onMouseDown={stop} onWheel={stop}>
+      <div className={`ctx ctx-float${inList ? ' ctx-static' : ''}`} onMouseDown={stop} onWheel={stop}>
         <span className="ctx-count" role="status">{count}</span>
         {chips.map(([key, label, clear]) => (
           <button key={key} className="ctx-chip" onClick={clear} title={tr('context.remove', { label })}
@@ -264,14 +265,26 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
   );
 }
 
-function CastDrawer({ title, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar }) {
+function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, search }) {
+  // Slide in and out: mount closed and open on the next frame, and keep showing
+  // the last title while it slides away. Switching titles swaps the content.
+  const [title, setTitle] = useState(current);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!current) { setOpen(false); return; }
+    setTitle(current);
+    let inner = 0;
+    const outer = requestAnimationFrame(() => { inner = requestAnimationFrame(() => setOpen(true)); });
+    return () => { cancelAnimationFrame(outer); cancelAnimationFrame(inner); };
+  }, [current]);
   if (!title) return null;
   return (
-    <aside className="drawer open">
+    <aside className={`drawer${open ? ' open' : ''}`} aria-hidden={!open}
+      onTransitionEnd={e => { if (!current && e.target === e.currentTarget) setTitle(null); }}>
       <header className="drawer-header">
         <div>
           <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{phaseLabel(title.phase)} · {I18N.upper(typeLabel(title.type))} · {title.year}</div>
-          <h2 className="drawer-title">{I18N.titleName(title)}</h2>
+          <h2 className="drawer-title"><window.Highlight text={I18N.titleName(title)} query={search}/></h2>
           <window.StoryYear title={title} detail className="drawer-story"/>
           <window.TitleStatusActions title={title} variant="inline" className="drawer-tsa"/>
         </div>
@@ -287,6 +300,7 @@ function CastDrawer({ title, onClose, onCharacterClick, hoveredCharacter, onChar
           return (
             <button
               key={ch}
+              style={{ '--match-color': c.color }}
               className={`cast-row ${isActive ? 'active' : ''}`}
               onClick={() => onCharacterClick(ch)}
               onMouseEnter={() => onCharacterHover(ch)}
@@ -300,8 +314,8 @@ function CastDrawer({ title, onClose, onCharacterClick, hoveredCharacter, onChar
                 )}
               </div>
               <div className="cast-text">
-                <div className="char-name">{I18N.charName(ch)}</div>
-                <div className="actor-name">{c.actor}</div>
+                <div className="char-name"><window.Highlight text={I18N.charName(ch)} query={search}/></div>
+                <div className="actor-name"><window.Highlight text={c.actor} query={search}/></div>
               </div>
               <div className="cast-color-dot" style={{background:c.color}}/>
             </button>
@@ -315,7 +329,7 @@ function CastDrawer({ title, onClose, onCharacterClick, hoveredCharacter, onChar
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
 const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
-function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
+function Toolbar({ desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   // Collection has its own always-visible switch, so it is not counted here.
@@ -414,6 +428,14 @@ function Toolbar({ sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilt
           </div>
         </div>
         <window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter}/>
+        <div className="segmented tb-view-switch" role="group" aria-label={tr('view.label')}>
+          {[['spatial', '◈'], ['list', '☰']].map(([v, ic]) => (
+            <button key={v} className={desktopView === v ? 'on' : ''} aria-pressed={desktopView === v}
+              title={tr('view.' + v)} aria-label={tr('view.' + v)} onClick={() => setDesktopView(v)}>
+              <span className="vi" aria-hidden="true">{ic}</span><span className="vl">{tr('view.' + v)}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -612,8 +634,8 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
 }
 
 // Display preferences (V3-SPEC D6): device-scoped, localStorage only, not tied to
-// the account and not cleared on sign-out. Saves the mobile view mode, the sort
-// mode and the order direction, on desktop and mobile. Filters, search and the
+// the account and not cleared on sign-out. Saves the mobile view mode, the
+// desktop view (Spatial or List), the sort mode and the order direction. Filters, search and the
 // spatial camera deliberately start fresh each visit, so nobody returns to a
 // silently filtered catalog. Nothing is written until the visitor changes one of
 // these, so first visits keep following the defaults below. Missing, malformed or
@@ -621,9 +643,10 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
 const PREFS_KEY = 'mcu.prefs.v1';
 const PREFS_VERSION = 1;
 const VIEW_MODE_VALUES = ['list', 'grid', 'spatial'];
+const DESKTOP_VIEW_VALUES = ['spatial', 'list'];
 
 function readDisplayPrefs() {
-  const prefs = { viewMode: 'list', sort: 'release', sortDir: DEFAULT_SORT_DIR.release };
+  const prefs = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release };
   let parsed = null;
   try {
     parsed = JSON.parse(window.localStorage.getItem(PREFS_KEY) || 'null');
@@ -632,6 +655,7 @@ function readDisplayPrefs() {
   }
   if (!parsed || typeof parsed !== 'object' || parsed.version !== PREFS_VERSION) return prefs;
   if (VIEW_MODE_VALUES.indexOf(parsed.viewMode) !== -1) prefs.viewMode = parsed.viewMode;
+  if (DESKTOP_VIEW_VALUES.indexOf(parsed.desktopView) !== -1) prefs.desktopView = parsed.desktopView;
   if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, parsed.sort)) {
     prefs.sort = parsed.sort;
     prefs.sortDir = parsed.sortDir === 'asc' || parsed.sortDir === 'desc' ? parsed.sortDir : DEFAULT_SORT_DIR[parsed.sort];
@@ -663,14 +687,15 @@ function App() {
   useEffect(() => { setMediaReady(true); }, []);
   const device = useDevice();
   const isTouch = device !== 'desktop';
-  // Mobile opens in List unless the visitor chose another view before; desktop
-  // ignores viewMode (spatial only).
+  // Mobile opens in List unless the visitor chose another view before. Desktop
+  // has its own choice (Spatial by default, or List) so the two never fight.
   const [viewMode, setViewMode] = useState(initialPrefs.viewMode);
+  const [desktopView, setDesktopView] = useState(initialPrefs.desktopView);
   const prefsLoaded = useRef(false);
   useEffect(() => {
     if (!prefsLoaded.current) { prefsLoaded.current = true; return; }
-    writeDisplayPrefs({ viewMode, sort, sortDir });
-  }, [viewMode, sort, sortDir]);
+    writeDisplayPrefs({ viewMode, desktopView, sort, sortDir });
+  }, [viewMode, desktopView, sort, sortDir]);
   const [drawerId, setDrawerId] = useState(null);
   const [sheet, setSheet] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
@@ -726,10 +751,13 @@ function App() {
     const m = {};
     window.TITLES.forEach(t => {
       // Names in every language match, whichever language is showing.
+      // Character-name matches come before actor-name ones, so "Sam" shows Sam
+      // Wilson ahead of Nick Fury (Samuel L. Jackson) in the match badge.
+      const byName = c => I18N.charNames(c).some(n => n.toLowerCase().includes(q));
       const chars = t.cast.filter(c => {
         const ch = window.CHARACTERS[c];
-        return ch && (I18N.charNames(c).some(n => n.toLowerCase().includes(q)) || ch.actor.toLowerCase().includes(q));
-      });
+        return ch && (byName(c) || ch.actor.toLowerCase().includes(q));
+      }).sort((a, b) => byName(b) - byName(a));
       if (I18N.titleNames(t).some(n => n.toLowerCase().includes(q)) || chars.length) m[t.id] = chars;
     });
     return m;
@@ -1118,15 +1146,30 @@ function App() {
     resetView();
   }, [collectionFilter, highlightedChar, resetView]);
 
-  // Entering Spatial on touch mounts a fresh canvas whose camera was never
-  // framed (it previously opened at 100% on the top-left corner). Frame it,
-  // unless a card is already selected (opened from a detail sheet): the
-  // focus-ring auto-fit below owns the camera then.
+  // Entering Spatial (from List or Grid on touch, from List on desktop) mounts a
+  // fresh canvas whose camera was never framed (it would open at 100% on the
+  // top-left corner). Frame it, unless a card is already selected (opened from a
+  // detail sheet or the List's drawer): the focus-ring auto-fit owns it then.
+  const spatialShown = isTouch ? viewMode === 'spatial' : desktopView === 'spatial';
+
+  // The desktop details drawer opens below the toolbar (its height changes with
+  // the width and language), so the view switch, language and account stay
+  // usable while a title is open.
   useLayoutEffect(() => {
-    if (!isTouch) return;
-    if (viewMode !== 'spatial') { cameraFramedRef.current = false; return; }
+    if (isTouch) return;
+    const bar = document.querySelector('.toolbar');
+    if (!bar) return;
+    const set = () => document.documentElement.style.setProperty('--tb-h', bar.offsetHeight + 'px');
+    set();
+    if (!window.ResizeObserver) return;
+    const ro = new ResizeObserver(set);
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, [isTouch]);
+  useLayoutEffect(() => {
+    if (!spatialShown) { cameraFramedRef.current = false; return; }
     if (!selectedIdRef.current) resetView();
-  }, [viewMode, isTouch]);
+  }, [spatialShown]);
 
   // Remember the camera when a card becomes selected; when the selection clears,
   // glide back so the visitor returns to where they were (e.g. Phase 6) rather
@@ -1280,8 +1323,15 @@ function App() {
   const filterCount = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
   // Spatial keeps every card on screen (dimmed), so it counts `filtered`; the
   // flat views actually drop non-matching rows and count what they render.
-  const contextSummary = (variant) => (
-    <ContextSummary variant={variant} showing={visible.length} total={window.TITLES.length}
+  // Switching to Spatial with a title open in the drawer selects that card, so
+  // the canvas opens on its connections; switching to List keeps the drawer.
+  const changeDesktopView = (v) => {
+    if (v === desktopView) return;
+    setSelectedId(v === 'spatial' ? drawerId : null);
+    setDesktopView(v);
+  };
+  const contextSummary = (variant, inList) => (
+    <ContextSummary variant={variant} inList={inList} showing={visible.length} total={window.TITLES.length}
       filters={{ search, setSearch, collectionFilter, setCollectionFilter, typeFilter, setTypeFilter,
         phaseFilter, setPhaseFilter, budgetFilter, setBudgetFilter }}/>
   );
@@ -1440,7 +1490,7 @@ function App() {
         )}
         {drawerTitle && (
           <window.CastSheet
-            title={drawerTitle}
+            title={drawerTitle} search={search}
             inSpatial={viewMode === 'spatial'}
             onClose={() => setDrawerId(null)}
             onCharacterClick={(ch) => setHighlightedChar(highlightedChar === ch ? null : ch)}
@@ -1455,6 +1505,7 @@ function App() {
   return (
     <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
       <Toolbar
+        desktopView={desktopView} setDesktopView={changeDesktopView}
         sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}
@@ -1465,7 +1516,12 @@ function App() {
 
       {charBanner}
 
-      {canvasEl}
+      {desktopView === 'list'
+        ? <window.DesktopList titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
+            search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar}
+            onOpen={(id) => setDrawerId(drawerId === id ? null : id)}
+            header={contextSummary('float', true)} empty={emptyCopy}/>
+        : canvasEl}
 
       {hoveredConnection && (
         <div className="line-tooltip" style={{left: hoveredConnection.x + 12, top: hoveredConnection.y + 12}}>
@@ -1489,6 +1545,7 @@ function App() {
         hoveredCharacter={hoveredCharacter}
         onCharacterHover={setHoveredCharacter}
         activeChar={activeChar}
+        search={search}
       />
     </div>
   );

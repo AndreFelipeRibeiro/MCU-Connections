@@ -12,6 +12,55 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — Desktop List view
+
+Recorded: 2026-10-25 14:22:35 EDT (-0400).
+
+- Desktop gets a List view beside Spatial (switch at the end of the sort row,
+  remembered as `desktopView` in `mcu.prefs.v1`, Spatial by default). New
+  `desktop-list.jsx`: one row per title with poster, title, type, phase,
+  release, in-story years, budget, IMDb, RT, character faces and status
+  buttons; group headers follow the sort and rating sorts are ranked. Title,
+  Phase, Released, Set in, IMDb and RT headers sort the list (click again to
+  reverse) and stay in step with the sort row and Order menu. Columns drop by
+  the List's own width (container queries). No desktop Grid: it would echo
+  Spatial.
+- A row opens the cast drawer, which now slides in and out and opens below the
+  toolbar so the view switch, language and account stay usable. From 1280px the
+  List makes room for it. Switching to Spatial with a title open selects that
+  card; re-entering Spatial frames the camera like a fresh load.
+- Search: a match badge under each List title shows the matched character at
+  every width; character-name matches now come before actor-name ones (also on
+  Spatial cards and mobile); the drawer and mobile details sheet underline
+  matched names in the character's colour.
+- Verification: headless Chromium, en-US and pt-BR. List: default Spatial,
+  switch and reload persistence, mobile/desktop view independence, invalid
+  value fallback, header sorting and reversal synced with the sort row, row
+  open/highlight, status toggle without opening, character dimming, Spatial
+  hand-off selection, filters/search/empty state, Spatial re-entry framing.
+  No row overflow or clipped headers at 900–1920px with and without the drawer.
+  Drawer slide traced frame by frame. Toolbar fit sweep, context summary,
+  camera and language scripts pass (the camera script's wheel-cancels-glide
+  step is timing-flaky on old and new code alike). The user reviewed and
+  approved committing and merging to main.
+- Limits: posters and actor photos were not loadable in the test browser;
+  below 1280px the open drawer overlays the List's right-hand columns; no
+  physical tablet check.
+
+## V3 workflow — Completion time and order rules
+
+Recorded: 2026-10-25 12:35:17 EDT (-0400).
+
+- AGENTS.md (Backlog workflow) now matches the MCU - V3 Notion page: priority is
+  the drag order of the Backlog column in the All tasks board (no priority
+  numbers); closing a task records the actual America/New_York date and time and
+  the next Completion order (highest existing value plus one, queried first),
+  never creation or last-edited time; All tasks and Completed sort by Completed
+  on, then Completion order, both descending. The Notion page's stale "Queue
+  sorted by Order" instruction was replaced to match.
+- Documentation only; no application change. Verified by re-reading both
+  documents and querying the All tasks view (latest completion listed first).
+
 ## V3 maintenance — Floating desktop context summary
 
 Recorded: 2026-10-25 12:15:11 EDT (-0400).

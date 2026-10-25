@@ -612,7 +612,7 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
   );
 }
 
-function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, inSpatial }) {
+function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, inSpatial, search }) {
   if (!title) return null;
   const PosterArt = window.PosterArt;
   return (
@@ -634,15 +634,15 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
           const c = window.CHARACTERS[ch];
           if (!c) return null;
           return (
-            <button key={ch} className={`m-crow${activeChar===ch?' on':''}`} onClick={()=>onCharacterClick(ch)}>
+            <button key={ch} className={`m-crow${activeChar===ch?' on':''}`} style={{'--match-color': c.color}} onClick={()=>onCharacterClick(ch)}>
               <div className="m-port" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
                 {window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch]
                   ? <img src={window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]} alt={MI18N.charName(ch)} loading="lazy"/>
                   : <span>{c.initials}</span>}
               </div>
               <div className="m-ctext">
-                <div className="m-cn">{MI18N.charName(ch)}</div>
-                <div className="m-an">{c.actor}</div>
+                <div className="m-cn"><Highlight text={MI18N.charName(ch)} query={search}/></div>
+                <div className="m-an"><Highlight text={c.actor} query={search}/></div>
               </div>
               <span className="m-cdot" style={{background:c.color}}/>
             </button>
