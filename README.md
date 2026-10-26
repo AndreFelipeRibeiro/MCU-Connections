@@ -87,6 +87,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   connection brings its two titles side by side (Escape or a background click
   restores the layout); links between titles in the same row arc below it.
   Hovering a character in the drawer lights only that character's lines.
+- On phones, Spatial's grid layouts (Phase, A–Z, IMDb, RT) open with three
+  whole columns and the next column and row peeking past the right and bottom
+  edges, so it's clear the canvas pans; the first row sits below the count pill.
 - Marking a title seen or adding it to the watchlist pops the button and shows a
   toast with Undo; completing every released title in a phase (or the whole MCU)
   adds confetti. Seen and Watchlist show a count badge (hidden at zero) that

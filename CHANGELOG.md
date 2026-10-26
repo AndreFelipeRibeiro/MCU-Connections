@@ -12,6 +12,25 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 fix — mobile Spatial grids peek at the edges
+
+Recorded: 2026-10-26 13:00:55 EDT (-0400).
+
+- On phones, Spatial's grid layouts (Phase, A–Z, IMDb, RT) opened at exactly
+  three columns' width, so the canvas looked complete. The opening view now
+  picks a zoom (80–100% of the previous one) and top offset that keep three whole
+  columns on screen while the next column and row peek past the right and bottom
+  edges (allowing for the hint bar), and puts the first row below the count
+  pill. Release/Chrono and grids that fit the screen are unchanged.
+- Verification: headless Chromium at 360×640, 390×760 and 430×880 for Phase,
+  A–Z and IMDb: three full columns in every case, right peek 21–60% and bottom
+  peek 18–67% of a card, the count pill never over a card, zoom 47–57% (was
+  52–62%). Regression scripts listed above pass. Before/after screenshots
+  reviewed by the user, who approved committing and merging to main.
+- Limits: cards open about 8–15% smaller; on short phones A–Z leaves up to
+  ~70px above the first row, and at 430×880 its bottom peek is about a fifth of
+  a card. Not checked on a physical phone.
+
 ## V3 Spatial — chronological eras and connection labels
 
 Recorded: 2026-10-26 13:00:42 EDT (-0400).

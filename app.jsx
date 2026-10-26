@@ -1212,7 +1212,44 @@ function App() {
     Object.values(basePositions).forEach(p => { if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y; });
     if (!isFinite(minX)) { minX = 0; minY = 0; }
     // Aim for a legible card size rather than fitting the whole canvas.
-    if (gridSort) {
+    if (gridSort && isTouch && canvasW * defaultScale > rect.width - 32) {
+      // Phones: a grid that fits three columns exactly looks complete, so pick a
+      // zoom and top offset where the next column and row visibly peek past the
+      // right and bottom edges, signalling that the canvas pans. Three whole
+      // columns stay on screen. The top offset also clears the count pill.
+      const xs = [], ys = [];
+      Object.values(basePositions).forEach(p => { if (!xs.includes(p.x)) xs.push(p.x); if (!ys.includes(p.y)) ys.push(p.y); });
+      xs.sort((a, b) => a - b); ys.sort((a, b) => a - b);
+      // The hint bar fades in over the bottom of the canvas and its text covers
+      // most of it: count all but its faint top quarter as hidden.
+      const hint = document.querySelector('.m-ghint');
+      const hintH = hint && hint.getClientRects().length ? hint.getBoundingClientRect().height : 0;
+      const bottom = rect.height - hintH * 0.75;
+      // How much of the first card cut by an edge shows, as a share of the card
+      // (0 when the edge falls in a gap, so nothing peeks).
+      const peek = (starts, size, origin, s, edge) => {
+        for (const v of starts) {
+          const a = origin + (v - starts[0]) * s, b = a + size * s;
+          if (b > edge) return Math.max(0, (edge - a) / (size * s));
+        }
+        return null; // everything fits: nothing needs to peek
+      };
+      const miss = (f, lo, hi) => f === null ? 0 : f < lo ? lo - f : f > hi ? f - hi : 0;
+      const pill = 44;
+      let best = null;
+      for (let s = Math.min(1, defaultScale); s >= defaultScale * 0.8; s -= 0.0025) {
+        if (xs.length > 3 && 14 + (xs[2] - xs[0]) * s + CARD_W * s > rect.width) continue;
+        const ph = peek(xs, CARD_W, 14, s, rect.width);
+        for (let top = pill + 6; top <= pill + 70; top += 2) {
+          const pv = peek(ys, CARD_H, top, s, bottom);
+          const score = miss(ph, 0.22, 0.6) * 4 + miss(pv, 0.25, 0.6) * 4
+            + (1 - s / defaultScale) + (top - pill) / 400;
+          if (!best || score < best.score) best = { score, s, top };
+        }
+      }
+      const scale = best ? best.s : defaultScale;
+      setView({ x: 14 - xs[0] * scale, y: (best ? best.top : 14) - ys[0] * scale, scale });
+    } else if (gridSort) {
       // Grid layouts: match the grid's width (mobile keeps a legibility floor of ~3 columns)
       const scale = defaultScale;
       const zoomed = canvasW * scale > rect.width - 32;
