@@ -1684,6 +1684,7 @@ function App() {
           />
         )}
         {sheet === 'about' && <window.AboutSheet onClose={() => setSheet(null)}/>}
+        <window.StatusToast touch/>
         {welcome && !sheet && !drawerTitle && <window.AboutSheet welcome onClose={() => setWelcome(false)}/>}
         {drawerTitle && (
           <window.CastSheet
@@ -1752,6 +1753,7 @@ function App() {
         activeChar={activeChar}
         search={search}
       />
+      <window.StatusToast touch={false}/>
       {(aboutOpen || welcome) && <window.AboutDialog welcome={welcome && !aboutOpen}
         onClose={() => { setAboutOpen(false); setWelcome(false); }}/>}
     </div>

@@ -86,7 +86,7 @@ const TITLES = [
   { id: 'wonder-man', title: 'Wonder Man', year: 2026, phase: 6, type: 'series', release: '2026-01-27', chronOrder: 47, story: '2025–2027', accent: '#c02a4a', cast: ['simon', 'trevor'] },
   { id: 'daredevil-born-again-s2', title: 'Daredevil: Born Again Season 2', year: 2026, phase: 6, type: 'series', release: '2026-03-24', chronOrder: 58, story: '2027', accent: '#a02020', cast: ['matt', 'fisk'] },
   { id: 'brand-new-day', title: 'Spider-Man: Brand New Day', year: 2026, phase: 6, type: 'film', release: '2026-07-31', chronOrder: 59, story: '2028', accent: '#a02020', cast: ['peter', 'bruce', 'yelena', 'frank'] },
-  { id: 'visionquest', title: 'VisionQuest', year: 2026, phase: 6, type: 'series', release: '2026-10-13', chronOrder: 60, story: 'c. 2028', accent: '#9b3030', cast: ['ultron', 'white-vision', 'tommy'] },
+  { id: 'visionquest', title: 'VisionQuest', year: 2026, phase: 6, type: 'series', release: '2026-10-13', chronOrder: 60, story: 'c. 2028', accent: '#9b3030', cast: ['ultron', 'white-vision', 'tommy', 'paladin'] },
   { id: 'friendly-spidey-s2', title: 'Your Friendly Neighborhood Spider-Man Season 2', year: 2027, phase: 6, type: 'series', release: '2027-01-13', chronOrder: 61, accent: '#a02020', cast: ['peter'] },
   { id: 'doomsday', title: 'Avengers: Doomsday', year: 2026, phase: 6, type: 'film', release: '2026-12-18', chronOrder: 62, accent: '#704040', cast: ['shangchi', 'mbaku', 'reed', 'sue', 'johnny', 'ben', 'doom', 'peggy', 'thor', 'loki', 'sam', 'scott', 'bucky', 'steve', 'peter', 'yelena', 'alexei', 'shuri'] },
   { id: 'daredevil-born-again-s3', title: 'Daredevil: Born Again Season 3', year: 2027, phase: 6, type: 'series', release: '2027-03', chronOrder: 63, accent: '#a02020', cast: ['matt', 'fisk'] },
@@ -150,6 +150,7 @@ const CHARACTERS = {
 
   frank:     { name: 'Frank Castle',      actor: 'Jon Bernthal',        color: '#b4b7bc', initials: 'FC' },
   tommy:     { name: 'Tommy Shepherd',    actor: 'Ruaridh Mollica',     color: '#54b6a0', initials: 'TS' },
+  paladin:   { name: 'Paladin',           actor: 'Todd Stashwick',     color: '#557d87', initials: 'PA' },
   'silver-surfer': { name: 'Shalla-Bal / Silver Surfer', actor: 'Julia Garner', color: '#a6bbd2', initials: 'SS' },
 
   // — Variant identities —
@@ -212,6 +213,7 @@ window.BUDGETS = BUDGETS;
 
 // IMDb weighted movie/whole-series ratings, checked 2026-10-24. Released
 // seasons share the series score; these are NOT averages of episode scores.
+// Brand New Day refreshed 2026-10-26 from indexed IMDb ratings-page evidence.
 // Sources, scopes and evidence limits: docs/CATALOG-AUDIT.md / CATALOG-SOURCES.json.
 const IMDB_RATINGS = {
   'iron-man': 7.9, 'incredible-hulk': 6.6, 'iron-man-2': 6.9, 'thor': 7.0,
@@ -228,7 +230,7 @@ const IMDB_RATINGS = {
   'echo': 5.9, 'deadpool-3': 7.5, 'agatha': 7.2, 'what-if-s3': 7.3,
   'friendly-spidey': 7.5, 'cap-brave': 5.6, 'daredevil-born-again': 8.1, 'thunderbolts': 7.1,
   'ironheart': 4.5, 'fantastic-four': 6.8, 'eyes-of-wakanda': 6.2, 'marvel-zombies': 7.0,
-  'wonder-man': 7.4, 'daredevil-born-again-s2': 8.1, 'brand-new-day': 8.0, 'visionquest': 8.0,
+  'wonder-man': 7.4, 'daredevil-born-again-s2': 8.1, 'brand-new-day': 7.9, 'visionquest': 8.0,
 };
 
 // Rotten Tomatoes Tomatometer (critics), %, checked 2026-10-24.

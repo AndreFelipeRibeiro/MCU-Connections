@@ -12,6 +12,64 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — Seen/Watchlist counters and celebrations
+
+Recorded: 2026-10-26 10:39:08 EDT (-0400).
+
+- Count badges on Seen and Watchlist in the collection switch (desktop and
+  phones): green and amber, hidden at zero and never on Unseen; they pop in when
+  they first appear and bump with the number rolling up or down (not on load).
+- Marking a title seen or adding it to the watchlist pops the tapped button with
+  a coloured ring (lifted above the neighbouring button so the ring is never
+  hidden) and shows a toast with Undo (restores the previous state, including the
+  watchlist) and dismiss, paused while hovered or focused. Removals only update
+  the counters. The toast stays clear of the desktop drawer, the phone sort bar
+  and character pill, moves to the top while a phone sheet is open, and renders
+  outside the app so sheets don't block Undo.
+- Confetti only for milestones newly completed by the tap: every released title
+  in a phase ("Phase 1 complete!") or every released title ("You're all caught
+  up!"). New `celebrate.jsx`; `tracking.jsx` announces only taps on the
+  seen/watchlist buttons, never sync or merges. English and Brazilian Portuguese.
+  Pop, badge motion and confetti are skipped with reduced motion.
+- Verification: headless Chromium. Desktop List: watchlist badge 4→5 and toast;
+  seen + Undo; watchlisted title seen then Undo returns it to the watchlist;
+  Ant-Man completing Phase 2 and re-marking The Avengers completing Phase 1
+  (confetti removed after ~2 s); auto-hide; toast centred beside the open drawer;
+  fresh visitor has no badges until the first mark; the popping button sits above
+  its neighbour (z-index 2 vs auto) on rows and cards. Phone 390px: badges on the
+  icon-only switch, toast 11px above the sort bar, at the top inside a details
+  sheet with a working Undo. Fit, context, panel, language, List, suggestions,
+  layering, animation, About and welcome scripts pass, with the October 26 catalog
+  data loaded. Recorded clips reviewed by the user, who approved committing and
+  merging to main.
+- Limits: not checked on a physical phone; milestone confetti was checked with
+  seeded collections, not a real account.
+
+## V3 catalog — October 26 review
+
+Recorded: 2026-10-26 10:31:09 EDT (-0400).
+
+- VisionQuest now includes Paladin / Todd Stashwick, confirmed by Disney's
+  publisher article. Adds the character id `paladin`, with the existing initials
+  portrait and proper-name fallback in English and Portuguese. All 64 title ids
+  are preserved; the documented character count is now 84.
+- Spider-Man: Brand New Day IMDb 8.0 → 7.9, from a newer indexed primary
+  ratings-page snapshot (363,885 votes). Rechecked October 26; direct access
+  returned 403 and an older title-page index still shows 8.0. This is not live
+  verification. Evidence and per-entry checked dates are in the catalog audit
+  and source mapping; other scores and release dates are unchanged.
+- Verification: Node VM checks passed for stable title ids, 84 characters, cast
+  references, the new IMDb value, unchanged release/RT values and upcoming
+  unrated entries. Browser checks: desktop and 390px mobile VisionQuest cast
+  shows four entries including Paladin / Todd Stashwick; mobile Brand New Day
+  shows IMDb 7.9 / RT 90 in English and Portuguese; Portuguese Paladin search
+  returns VisionQuest with the correct actor. `git diff --check` passed.
+- An initially stale cached entry page omitted the language scripts and failed
+  to render; loading the current entry page with a fresh query parameter
+  resolved that issue without code changes. No physical-device, auth, cloud
+  write or production checks were performed. The user approved committing and
+  merging to main on 2026-10-26; this record is not a deployment timestamp.
+
 ## V3 feature — About and first-visit welcome
 
 Recorded: 2026-10-26 10:02:00 EDT (-0400).

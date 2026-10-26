@@ -230,3 +230,30 @@ titles (cinema or Disney+ Brasil). Checked 2026-10-25.
   Nebulosa, Valquíria, Aquele Que Permanece, Kang, o Conquistador, Capitã
   Carter, Surfista Prateada); personal names stay as in `data.js`.
 
+
+## Weekly maintenance — 2026-10-26
+
+- VisionQuest: add Paladin / Todd Stashwick, explicitly identified in
+  [Disney's launch article](https://thewaltdisneycompany.com/news/marvel-television-visionquest-disney-plus/),
+  retrieved October 26. Adds the permanent character id `paladin`; all 64 title
+  ids and existing character ids remain unchanged. Uses the existing initials
+  portrait and untranslated-name fallback in both languages; no verified
+  Brazilian localized name was found.
+- Spider-Man: Brand New Day: IMDb 8.0 → 7.9, from the newer search-indexed
+  [IMDb ratings page](https://www.imdb.com/de/title/tt22084616/ratings/)
+  (363,885 votes), rechecked October 26. The older main-title index still shows
+  8.0 / 305K votes. Direct retrieval returned 403; this is an indexed primary
+  snapshot, not live verification or a personal/episode rating.
+- RT scores, release dates/windows and upcoming unrated entries are unchanged.
+  Source-map per-entry checked dates distinguish these updates from the
+  historical catalog-wide audit; its global checkedAt stays October 24.
+
+Verification for this local update: Node VM checks confirm 64 stable title ids,
+84 characters, valid cast references, IMDb 7.9 for Brand New Day, unchanged RT
+and release values, and upcoming entries still unrated. Desktop and 390px
+mobile cast displays show Paladin / Todd Stashwick. Mobile Brand New Day shows
+7.9 / 90 in English and Portuguese; Portuguese character search returns
+VisionQuest for Paladin. Cached entry HTML initially omitted language scripts;
+a fresh query parameter loaded the current entry page and resolved rendering
+without a code change. No fresh physical-phone, auth, cloud-write or production
+checks. Changes remain local pending commit/push approval.
