@@ -79,6 +79,11 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   sheet and show a floating pill above the sort bar (character, actor, stepper)
   and always show only that character's titles.
 - Phone sheets close with the × button, a tap on the handle, or a swipe down.
+- About MCU Connections (account menu footer on desktop, account sheet on phones,
+  for guests too): what the app is, ways to explore it, and credits. A future
+  Settings entry will join it there. First-time visitors see it once as a
+  welcome (a browser with no saved preferences, language, collection or sign-in);
+  to see it again, use a private/incognito window or add `?welcome` to the URL.
 - Search suggestions: from two letters, a list under the search box previews
   matching actors, characters and titles (names in every language). Picking a
   person searches for them; picking a title also opens its details. Arrow keys,
@@ -98,7 +103,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 
 - **64 titles** spanning Phases 1–6, 2008–2027 (40 films, 24 series)
 - **83 characters**, connecting titles through shared character identities
-- Posters and actor portraits sourced from TMDB
+- Posters and actor portraits sourced from TMDB (credited in About with TMDB's
+  notice; TMDB also asks for its logo there, not added yet)
 - IMDb and Rotten Tomatoes scores where available
 
 Titles and cast lists are maintained by hand in [`data.js`](data.js) against Wikipedia's per-character MCU filmographies — this isn't pulled from a live API, so it reflects whatever was true as of the last update. Unreleased titles (anything past a "Not yet rated" badge) carry pre-release cast announcements, which can and do change before release.
@@ -275,6 +281,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `supabase-client.js` | Shared client as `window.mcuSupabase`, or graceful unavailability |
 | `tracking.jsx` | Guest/account state, merge, request deadlines, queues, progress, status actions |
 | `account.jsx` | Google auth/session state, account UI, sign-out and degraded-mode recovery |
+| `about.jsx` | About dialog (desktop) and sheet (phones) with credits |
 | `app.jsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
 | `mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |

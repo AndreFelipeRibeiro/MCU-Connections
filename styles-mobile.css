@@ -338,3 +338,9 @@
   padding: 0; border: 1px solid var(--border); border-radius: 50%; background: rgba(255,255,255,.04); color: var(--text-dim); font: inherit; font-size: 17px; line-height: 1; cursor: pointer; }
 .m-sheet-x:active { background: rgba(255,255,255,.1); }
 .m-sheet { touch-action: pan-y; }
+/* About sheet on phones. */
+.m-sheet .about-head { padding-right: 40px; }
+.m-sheet .about-title { font-size: 18px; }
+.m-sheet .about-lead { font-size: 13.5px; }
+.m-sheet .acct-foot-link { min-height: 40px; font-size: 13px; }
+.m-sheet:focus { outline: none; }

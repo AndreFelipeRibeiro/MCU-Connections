@@ -603,15 +603,17 @@ function Sheet({ children, onClose, tall, label }) {
     previous.forEach(([el]) => { el.inert = true; });
     const overflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const focusable = () => Array.from(sheet.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]')).filter((el) => el.getClientRects().length);
-    (focusable()[0] || sheet).focus();
+    const focusable = () => Array.from(sheet.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]')).filter((el) => el.tabIndex >= 0 && el.getClientRects().length);
+    // Focus the sheet itself: screen readers announce it, Tab moves into it, and
+    // no focus ring appears on a control the visitor didn't choose.
+    sheet.focus();
     const keys = (e) => {
       if (e.key === 'Escape') { e.preventDefault(); closeRef.current(); }
       if (e.key !== 'Tab') return;
       const items = focusable();
       const first = items[0] || sheet;
       const last = items[items.length - 1] || sheet;
-      if (e.shiftKey && (document.activeElement === first || !sheet.contains(document.activeElement))) {
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === sheet || !sheet.contains(document.activeElement))) {
         e.preventDefault(); last.focus();
       } else if (!e.shiftKey && (document.activeElement === last || !sheet.contains(document.activeElement))) {
         e.preventDefault(); first.focus();

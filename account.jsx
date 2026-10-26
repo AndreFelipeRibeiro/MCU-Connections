@@ -265,7 +265,7 @@ function GoogleMark() {
 
 // The body shared by the desktop popover and the mobile sheet, so the two can
 // never drift apart in what they say about the same account.
-function AccountPanel({ onPickCollection, onClose }) {
+function AccountPanel({ onPickCollection, onClose, onAbout }) {
   const { tr } = window.useI18n();
   const { status, profile, error, syncAvailable, unavailableReason, signIn, signOut } = useAccount();
   const { progress, loading: collectionLoading, syncError, retrySync } = window.useCollection();
@@ -340,6 +340,16 @@ function AccountPanel({ onPickCollection, onClose }) {
             </button>
           )
       )}
+
+      {/* App-level links, for guests too. A future Settings entry joins About here. */}
+      {onAbout && (
+        <div className="acct-foot">
+          <button className="acct-foot-link" onClick={() => { if (onClose) onClose(); onAbout(); }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.2"/></svg>
+            {tr('about.link')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -348,7 +358,7 @@ function AccountPanel({ onPickCollection, onClose }) {
 // Desktop — a compact control at the right edge of tb-row
 // ---------------------------------------------------------------------------
 
-function AccountButton({ onPickCollection }) {
+function AccountButton({ onPickCollection, onAbout }) {
   const { status, profile, syncAvailable } = useAccount();
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef(null);
@@ -394,7 +404,7 @@ function AccountButton({ onPickCollection }) {
       </button>
       {open && (
         <div className="acct-pop">
-          <AccountPanel onPickCollection={onPickCollection} onClose={() => setOpen(false)}/>
+          <AccountPanel onPickCollection={onPickCollection} onClose={() => setOpen(false)} onAbout={onAbout}/>
         </div>
       )}
     </div>
@@ -424,14 +434,14 @@ function AccountAvatarButton({ onOpen }) {
   );
 }
 
-function AccountSheet({ onClose, onPickCollection }) {
+function AccountSheet({ onClose, onPickCollection, onAbout }) {
   const Sheet = window.Sheet;
   return (
     <Sheet onClose={onClose} label={window.MCU_I18N.tr('account.title')}>
       <div className="m-sh-head">
         <div className="m-sh-title">{window.MCU_I18N.tr('account.title')}</div>
       </div>
-      <AccountPanel onPickCollection={onPickCollection} onClose={onClose}/>
+      <AccountPanel onPickCollection={onPickCollection} onClose={onClose} onAbout={onAbout}/>
     </Sheet>
   );
 }
