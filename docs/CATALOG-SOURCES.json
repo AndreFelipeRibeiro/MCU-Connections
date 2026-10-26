@@ -425,7 +425,10 @@
         "https://www.sonypictures.com/movies/spidermanbrandnewday",
         "https://www.imdb.com/title/tt22084616/"
       ],
-      "budgetSource": "https://www.imdb.com/title/tt22084616/"
+      "budgetSource": "https://www.imdb.com/title/tt22084616/",
+      "imdbCheckedAt": "2026-10-26",
+      "imdbRatingUrl": "https://www.imdb.com/de/title/tt22084616/ratings/",
+      "imdbEvidence": "Search-indexed primary weighted movie rating: 7.9 from 363,885 votes, rechecked 2026-10-26. Direct requests returned 403. Older main-title index shows 8.0 from 305K votes; use the newer ratings-page snapshot. Not live verification."
     },
     "visionquest": {
       "imdbUrl": "https://www.imdb.com/title/tt23112594/",
@@ -440,8 +443,11 @@
       },
       "castSources": [
         "https://www.imdb.com/title/tt38934479/",
-        "https://www.imdb.com/news/ni66066201/"
-      ]
+        "https://www.imdb.com/news/ni66066201/",
+        "https://thewaltdisneycompany.com/news/marvel-television-visionquest-disney-plus/"
+      ],
+      "castCheckedAt": "2026-10-26",
+      "castEvidence": "Publisher page retrieved 2026-10-26 identifies Todd Stashwick as Paladin. Existing character names remain unchanged."
     },
     "friendly-spidey-s2": {
       "imdbUrl": "https://www.imdb.com/title/tt16027074/",

@@ -12,6 +12,31 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 catalog — October 26 review
+
+Recorded: 2026-10-26 10:31:09 EDT (-0400).
+
+- VisionQuest now includes Paladin / Todd Stashwick, confirmed by Disney's
+  publisher article. Adds the character id `paladin`, with the existing initials
+  portrait and proper-name fallback in English and Portuguese. All 64 title ids
+  are preserved; the documented character count is now 84.
+- Spider-Man: Brand New Day IMDb 8.0 → 7.9, from a newer indexed primary
+  ratings-page snapshot (363,885 votes). Rechecked October 26; direct access
+  returned 403 and an older title-page index still shows 8.0. This is not live
+  verification. Evidence and per-entry checked dates are in the catalog audit
+  and source mapping; other scores and release dates are unchanged.
+- Verification: Node VM checks passed for stable title ids, 84 characters, cast
+  references, the new IMDb value, unchanged release/RT values and upcoming
+  unrated entries. Browser checks: desktop and 390px mobile VisionQuest cast
+  shows four entries including Paladin / Todd Stashwick; mobile Brand New Day
+  shows IMDb 7.9 / RT 90 in English and Portuguese; Portuguese Paladin search
+  returns VisionQuest with the correct actor. `git diff --check` passed.
+- An initially stale cached entry page omitted the language scripts and failed
+  to render; loading the current entry page with a fresh query parameter
+  resolved that issue without code changes. No physical-device, auth, cloud
+  write or production checks were performed. The user approved committing and
+  merging to main on 2026-10-26; this record is not a deployment timestamp.
+
 ## V3 feature — About and first-visit welcome
 
 Recorded: 2026-10-26 10:02:00 EDT (-0400).
