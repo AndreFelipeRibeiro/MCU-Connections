@@ -102,7 +102,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                 const cast = [...matched, ...t.cast.filter(c => !matched.includes(c))];
                 const dim = activeChar && !t.cast.includes(activeChar);
                 return (
-                  <div key={t.id} role="row" onClick={() => onOpen(t.id)}
+                  <div key={t.id} role="row" data-row-id={t.id} onClick={() => onOpen(t.id)}
                     className={`dl-row${seen ? ' seen' : ''}${openId === t.id ? ' on' : ''}${dim ? ' dim' : ''}`}>
                     {ranked && <span className="c-rank" role="cell">{n}</span>}
                     <span className="c-poster" role="cell"><span className="dl-thumb"><PosterArt title={t}/></span></span>

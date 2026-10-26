@@ -197,7 +197,7 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   return { positions, width: maxX + 120, height: maxY + 120 };
 }
 
-function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isDragging, matchedChars, searchQuery, scale }) {
+function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
   const phaseColor = PHASE_COLORS[title.phase];
   const downRef = useRef({ x: 0, y: 0, moved: false });
   const { statusOf } = window.useCollection();
@@ -207,10 +207,11 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
   const showActions = (scale || 1) >= window.TSA_MIN_SCALE;
   return (
     <div
-      className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}`}
+      className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}${isCurrent ? ' current' : ''}`}
       style={{
         '--phase-color': phaseColor,
-        transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
+        ...(isCurrent && curColor ? { '--cur-color': curColor } : {}),
+        transform: `translate3d(${pos.x}px, ${pos.y}px, 0) scale(var(--lift, 1))`,
         width: CARD_W + 'px',
         height: CARD_H + 'px',
       }}
@@ -286,6 +287,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
           <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{phaseLabel(title.phase)} · {I18N.upper(typeLabel(title.type))} · {title.year}</div>
           <h2 className="drawer-title"><window.Highlight text={I18N.titleName(title)} query={search}/></h2>
           <window.StoryYear title={title} detail className="drawer-story"/>
+          <window.Synopsis title={title} className="drawer-synopsis"/>
           <window.TitleStatusActions title={title} variant="inline" className="drawer-tsa"/>
         </div>
         <button className="drawer-close" onClick={onClose} aria-label={tr('details.close')}>×</button>
@@ -704,6 +706,13 @@ function App() {
   const [hoveredCharacter, setHoveredCharacter] = useState(null);
   const [hoveredConnection, setHoveredConnection] = useState(null);
   const [highlightedChar, setHighlightedChar] = useState(null);
+  // Pinned character: show only their titles (default) or everything, dimmed.
+  const [charOnly, setCharOnly] = useState(true);
+  // The title the highlight stepper (‹ ›) is on.
+  const [stepId, setStepId] = useState(null);
+  // Set while pinning a character: the canvas glides to this title (or '*' to
+  // frame the set) once the new layout exists, instead of resetting first.
+  const pendingStepRef = useRef(null);
   // Per-card position overrides from dragging
   const [overrides, setOverrides] = useState({});
   const [draggingId, setDraggingId] = useState(null);
@@ -787,8 +796,14 @@ function App() {
       });
     }
     if (searchCharMatches) list = list.filter(t => searchCharMatches[t.id] !== undefined);
+    // "Their titles": a pinned character narrows the layout like search does.
+    // Deliberate (the visitor pins or toggles it), so re-laying out is expected.
+    if (highlightedChar && (charOnly || isTouch)) {
+      const prime = primeOf(highlightedChar);
+      list = list.filter(t => t.cast.some(c => primeOf(c) === prime));
+    }
     return list;
-  }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches]);
+  }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches, highlightedChar, charOnly, isTouch]);
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
@@ -1129,7 +1144,7 @@ function App() {
   }, [canvasW, canvasH, basePositions, sort, isTouch]);
 
   // Reset view whenever layout changes
-  useLayoutEffect(() => { resetView(); }, [resetView]);
+  useLayoutEffect(() => { if (!pendingStepRef.current) resetView(); }, [resetView]);
 
   // Recentering because the user changed a filter is intentional. Recentering
   // because the *contents* of the match set changed — someone marked a title
@@ -1143,7 +1158,7 @@ function App() {
     prevFocusKey.current = key;
     // A selected card owns the viewport — the ring-layout auto-fit below is
     // driving it, and stepping on that would fight it mid-animation.
-    if (selectedIdRef.current) return;
+    if (selectedIdRef.current || pendingStepRef.current) return;
     resetView();
   }, [collectionFilter, highlightedChar, resetView]);
 
@@ -1169,7 +1184,7 @@ function App() {
   }, [isTouch]);
   useLayoutEffect(() => {
     if (!spatialShown) { cameraFramedRef.current = false; return; }
-    if (!selectedIdRef.current) resetView();
+    if (!selectedIdRef.current && !pendingStepRef.current) resetView();
   }, [spatialShown]);
 
   // Remember the camera when a card becomes selected; when the selection clears,
@@ -1306,6 +1321,14 @@ function App() {
   };
 
   const onCardTap = (id) => {
+    // With a character pinned the canvas keeps their layout: a tap makes the
+    // title current (if it is theirs) and opens its details, without the
+    // connections ring.
+    if (highlightedChar) {
+      if (pinnedCharIds && pinnedCharIds.has(id)) setStepId(id);
+      setDrawerId(!isTouch && drawerId === id ? null : id);
+      return;
+    }
     if (!isTouch) {
       const next = selectedId === id ? null : id;
       setSelectedId(next);
@@ -1330,11 +1353,11 @@ function App() {
   // desktop Spatial, selects its card so the canvas shows its connections).
   const pickTitle = (id) => {
     setDrawerId(id);
-    if (!isTouch && desktopView === 'spatial') setSelectedId(id);
+    if (!isTouch && desktopView === 'spatial' && !highlightedChar) setSelectedId(id);
   };
   const changeDesktopView = (v) => {
     if (v === desktopView) return;
-    setSelectedId(v === 'spatial' ? drawerId : null);
+    setSelectedId(v === 'spatial' && !highlightedChar ? drawerId : null);
     setDesktopView(v);
   };
   const contextSummary = (variant, inList) => (
@@ -1350,13 +1373,163 @@ function App() {
     return t.cast.filter(c => charToTitleIds[primeOf(c)] && charToTitleIds[primeOf(c)].size > 1).length;
   }, [selectedId, charToTitleIds]);
 
-  const charBanner = activeChar ? (
-    <div className="char-banner">
-      <div className="banner-dot" style={{background: window.CHARACTERS[activeChar].color}}/>
-      <span>{tr('canvas.highlighting')} <b>{I18N.charName(activeChar)}</b> · {tr('canvas.visibleTitles', { n: highlightedIds ? highlightedIds.size : 0 })}</span>
-      <button onClick={() => { setHighlightedChar(null); setHoveredCharacter(null); }}>{tr('canvas.clear')}</button>
-    </div>
-  ) : null;
+  // Character highlight. Pinning a character (from the details cast list) shows
+  // their photo, a Their titles / All titles switch and a stepper that visits
+  // each of their titles in the current order. Hovering a cast row previews the
+  // same banner without the controls.
+  const pinnedTitles = useMemo(() => {
+    if (!pinnedCharIds) return [];
+    return (spatialShown ? ordered : visible).filter(t => pinnedCharIds.has(t.id));
+  }, [pinnedCharIds, ordered, visible, spatialShown]);
+  // Pinning a character switches the canvas to their titles in the current
+  // order (the connections ring belongs to a selected title) and starts the
+  // stepper on the title it was pinned from. Phones close the sheet so the
+  // change is visible.
+  const pinCharacter = (ch) => {
+    if (highlightedChar === ch) { unpinCharacter(); return; }
+    const from = drawerId;
+    const ids = charToTitleIds[primeOf(ch)];
+    const start = from && ids && ids.has(from) ? from : null;
+    setHighlightedChar(ch);
+    setHoveredCharacter(null);
+    setStepId(start);
+    if (selectedIdRef.current) { selectionReturnRef.current = null; setSelectedId(null); }
+    pendingStepRef.current = start || '*';
+    if (isTouch) setDrawerId(null);
+  };
+  const unpinCharacter = () => {
+    setHighlightedChar(null);
+    setHoveredCharacter(null);
+    setStepId(null);
+    // Desktop details still open: back to that title's connections.
+    if (!isTouch && spatialShown && drawerId) setSelectedId(drawerId);
+  };
+  const stepCurrent = stepId || drawerId;
+  const stepIndex = stepCurrent ? pinnedTitles.findIndex(t => t.id === stepCurrent) : -1;
+  const stepTo = (id) => {
+    setStepId(id);
+    // Desktop opens each title's details; on phones the sheet would cover the
+    // view, so the step only moves to the title (tap it to open).
+    if (!isTouch) setDrawerId(id);
+    if (spatialShown && viewportRef.current) {
+      // A selected card's focus ring would fight the glide: let it go without
+      // its return trip.
+      if (selectedIdRef.current) { selectionReturnRef.current = null; setSelectedId(null); }
+      const p = basePositions[id];
+      if (!p) return;
+      const rect = viewportRef.current.getBoundingClientRect();
+      // A camera that was never framed (Spatial just opened) sits at 100%.
+      const floor = isTouch ? 0.6 : 0.7;
+      const scale = cameraFramedRef.current ? Math.max(viewRef.current.scale, floor) : floor;
+      cameraFramedRef.current = true;
+      const drawerSpace = isTouch ? 0 : 380;
+      glideTo({
+        x: (rect.width - drawerSpace) / 2 - (p.x + CARD_W / 2) * scale,
+        y: rect.height / 2 - (p.y + CARD_H / 2) * scale,
+        scale,
+      });
+    } else {
+      requestAnimationFrame(() => {
+        const row = document.querySelector(`[data-row-id="${id}"]`);
+        if (row) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    }
+  };
+  const stepBy = (dir) => {
+    const n = pinnedTitles.length;
+    if (!n) return;
+    const i = stepIndex < 0 ? (dir > 0 ? 0 : n - 1) : (stepIndex + dir + n) % n;
+    stepTo(pinnedTitles[i].id);
+  };
+  useEffect(() => {
+    const id = pendingStepRef.current;
+    if (!id) return;
+    pendingStepRef.current = null;
+    if (id !== '*' && pinnedTitles.some(t => t.id === id)) stepTo(id);
+    else if (spatialShown) resetView();
+  }, [pinnedTitles]);
+  // Left/right arrows step too, unless typing or inside a menu.
+  const stepRef = useRef(null);
+  stepRef.current = highlightedChar ? stepBy : null;
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!stepRef.current || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.altKey || e.metaKey || e.ctrlKey) return;
+      const el = e.target;
+      if (el instanceof Element && el.closest('input, textarea, select, [contenteditable="true"], [role="listbox"], [role="group"]')) return;
+      e.preventDefault();
+      stepRef.current(e.key === 'ArrowRight' ? 1 : -1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const charBanner = activeChar ? (() => {
+    const c = window.CHARACTERS[activeChar];
+    const media = window.MEDIA;
+    const path = media && media.actors && media.actors[activeChar];
+    const photo = path && (window.mediaURL ? window.mediaURL('a', activeChar, media.profile_base + path) : media.profile_base + path);
+    const pinned = !!highlightedChar && activeChar === highlightedChar;
+    const count = (charToTitleIds[primeOf(activeChar)] || new Set()).size;
+    return (
+      <div className={`char-banner${pinned ? ' pinned' : ''}`} style={{ '--char-color': c.color }}>
+        <span className="cb-photo" style={{ background: c.color }}>
+          {photo ? <img src={photo} alt="" loading="lazy"/> : <span aria-hidden="true">{c.initials}</span>}
+        </span>
+        <span className="cb-who">
+          <b>{I18N.charName(activeChar)}</b>
+          <span className="cb-sub">{c.actor} · {tr('header.count', { n: count })}</span>
+        </span>
+        {pinned && <>
+          <div className="segmented cb-mode" role="group" aria-label={tr('highlight.modeAria')}>
+            <button className={charOnly ? 'on' : ''} aria-pressed={charOnly} onClick={() => setCharOnly(true)}>{tr('highlight.only')}</button>
+            <button className={!charOnly ? 'on' : ''} aria-pressed={!charOnly} onClick={() => setCharOnly(false)}>{tr('highlight.all')}</button>
+          </div>
+          <div className="cb-step">
+            <button onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!pinnedTitles.length}>‹</button>
+            <span className="cb-pos" aria-live="polite">{stepIndex >= 0
+              ? tr('highlight.position', { i: stepIndex + 1, n: pinnedTitles.length })
+              : tr('header.count', { n: pinnedTitles.length })}</span>
+            <button onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!pinnedTitles.length}>›</button>
+          </div>
+        </>}
+        <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')}
+          onClick={unpinCharacter}>×</button>
+      </div>
+    );
+  })() : null;
+
+  // Phones: the pinned character floats as a pill near the bottom (thumb
+  // reach) instead of a banner. Phones always show only their titles, so there
+  // is no Their titles / All titles switch here.
+  const charPill = isTouch && highlightedChar ? (() => {
+    const ch = highlightedChar;
+    const c = window.CHARACTERS[ch];
+    const media = window.MEDIA;
+    const path = media && media.actors && media.actors[ch];
+    const photo = path && (window.mediaURL ? window.mediaURL('a', ch, media.profile_base + path) : media.profile_base + path);
+    const n = pinnedTitles.length;
+    return (
+      <div className="char-pill" style={{ '--char-color': c.color }}>
+        <div className="cp-bar">
+          <span className="cp-who">
+            <span className="cb-photo" style={{ background: c.color }}>
+              {photo ? <img src={photo} alt="" loading="lazy"/> : <span aria-hidden="true">{c.initials}</span>}
+            </span>
+            <span className="cp-text">
+              <span className="cp-name">{I18N.charName(ch)}</span>
+              <span className="cp-actor">{c.actor}</span>
+            </span>
+          </span>
+          <div className="cb-step">
+            <button onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!n}>‹</button>
+            <span className="cb-pos" aria-live="polite">{tr('highlight.short', { i: stepIndex >= 0 ? stepIndex + 1 : '–', n })}</span>
+            <button onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!n}>›</button>
+          </div>
+          <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={unpinCharacter}>×</button>
+        </div>
+      </div>
+    );
+  })() : null;
 
   const focusPop = (() => {
     if (!isTouch || viewMode !== 'spatial' || !selectedId) return null;
@@ -1428,6 +1601,8 @@ function App() {
               isDimmed={isDimmed}
               isCollDimmed={isCollDimmed}
               isDragging={draggingId === t.id}
+              isCurrent={!!highlightedChar && stepId === t.id}
+              curColor={highlightedChar ? window.CHARACTERS[highlightedChar].color : null}
               matchedChars={searchCharMatches ? searchCharMatches[t.id] : null}
               searchQuery={search}
               scale={view.scale}
@@ -1465,16 +1640,17 @@ function App() {
           onOpenAccount={() => setSheet('account')}
           collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         />
-        {charBanner}
-        <div className="m-main">
-          {viewMode === 'grid' && <window.MobileGrid header={contextSummary('line')} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
-          {viewMode === 'list' && <window.MobileList header={contextSummary('line')} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
+        <div className={`m-main${charPill ? ' has-pill' : ''}`}
+          style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
+          {viewMode === 'grid' && <window.MobileGrid header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
+          {viewMode === 'list' && <window.MobileList header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
               <window.SpatialHint focused={!!selectedId} sharedCount={sharedCharCount}/>
             </div>
           )}
+          {charPill}
         </div>
         {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort}/>}
         {sheet === 'filters' && (
@@ -1500,9 +1676,15 @@ function App() {
             title={drawerTitle} search={search}
             inSpatial={viewMode === 'spatial'}
             onClose={() => setDrawerId(null)}
-            onCharacterClick={(ch) => setHighlightedChar(highlightedChar === ch ? null : ch)}
+            onCharacterClick={pinCharacter}
             activeChar={activeChar}
-            onGoSpatial={() => { setViewMode('spatial'); setSelectedId(drawerId); setDrawerId(null); }}
+            onGoSpatial={() => {
+              setViewMode('spatial');
+              if (highlightedChar) {
+                if (pinnedCharIds && pinnedCharIds.has(drawerId)) { setStepId(drawerId); pendingStepRef.current = drawerId; }
+              } else setSelectedId(drawerId);
+              setDrawerId(null);
+            }}
           />
         )}
       </div>
@@ -1549,7 +1731,7 @@ function App() {
       <CastDrawer
         title={drawerTitle}
         onClose={() => { setSelectedId(null); setDrawerId(null); }}
-        onCharacterClick={(ch) => setHighlightedChar(highlightedChar === ch ? null : ch)}
+        onCharacterClick={pinCharacter}
         hoveredCharacter={hoveredCharacter}
         onCharacterHover={setHoveredCharacter}
         activeChar={activeChar}

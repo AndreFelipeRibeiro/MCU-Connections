@@ -223,6 +223,32 @@ function Highlight({ text, query }) {
   return parts.map((part, i) => i % 2 === 1 ? <mark key={i} className="hl">{part}</mark> : part);
 }
 
+// Synopsis for the details drawer (desktop) and sheet (mobile). Clamped to
+// three lines so the cast list stays in view; "See more" appears only when the
+// text is longer than that. Collapses again when the title changes.
+function Synopsis({ title, className = '' }) {
+  const text = MI18N.synopsis(title);
+  const ref = React.useRef(null);
+  const [open, setOpen] = React.useState(false);
+  const [long, setLong] = React.useState(false);
+  React.useEffect(() => { setOpen(false); }, [title && title.id]);
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || open) return;
+    setLong(el.scrollHeight > el.clientHeight + 1);
+  }, [text, open]);
+  if (!text) return null;
+  return (
+    <div className={`synopsis ${className}`}>
+      <p ref={ref} className={open ? 'open' : ''}>{text}</p>
+      {(long || open) && <button className="synopsis-more" aria-expanded={open} onClick={() => setOpen(v => !v)}>
+        {mtr(open ? 'details.less' : 'details.more')}
+      </button>}
+    </div>
+  );
+}
+window.Synopsis = Synopsis;
+
 function MatchBadge({ matchedChars, query }) {
   if (!matchedChars || !matchedChars.length) return null;
   const id = matchedChars[0];
@@ -391,7 +417,7 @@ function StoryYear({ title, detail = false, className = '' }) {
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
 // so tapping anywhere except the toggles opens the cast sheet exactly as before.
-function MobileGrid({ header, titles, onSelect, searchCharMatches, search, empty, orderKey }) {
+function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, search, empty, orderKey }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
   const flipRef = useReorderAnimation(orderKey);
@@ -404,7 +430,7 @@ function MobileGrid({ header, titles, onSelect, searchCharMatches, search, empty
           const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
           const seen = statusOf(t.id) === 'seen';
           return (
-            <div key={t.id} data-flip-id={t.id} className={`m-card${seen ? ' seen' : ''}`}>
+            <div key={t.id} data-flip-id={t.id} data-row-id={t.id} className={`m-card${seen ? ' seen' : ''}${currentId === t.id ? ' current' : ''}`}>
               <button className="m-card-open" onClick={()=>onSelect(t.id)}>
                 <div className="m-pw">
                   <PosterArt title={t}/>
@@ -430,7 +456,7 @@ function MobileGrid({ header, titles, onSelect, searchCharMatches, search, empty
   );
 }
 
-function MobileList({ header, titles, sort, onSelect, searchCharMatches, search, empty, orderKey }) {
+function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatches, search, empty, orderKey }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
   const flipRef = useReorderAnimation(orderKey);
@@ -480,7 +506,7 @@ function MobileList({ header, titles, sort, onSelect, searchCharMatches, search,
               const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
               const seen = statusOf(t.id) === 'seen';
               return (
-                <div key={t.id} data-flip-id={t.id} className={`m-lrow${seen ? ' seen' : ''}`}>
+                <div key={t.id} data-flip-id={t.id} data-row-id={t.id} className={`m-lrow${seen ? ' seen' : ''}${currentId === t.id ? ' current' : ''}`}>
                   <button className="m-lrow-open" onClick={()=>onSelect(t.id)}>
                     {ranked && <div className="m-rank">{n}</div>}
                     <div className="m-lthumb"><PosterArt title={t}/></div>
@@ -555,11 +581,69 @@ function Sheet({ children, onClose, tall, label }) {
       if (opener && opener.isConnected) opener.focus();
     };
   }, []);
+  // Swipe down to close: from the handle or header, or from the content once
+  // it is scrolled to the top. Past about a third of the sheet (or a quick
+  // flick) it slides away; otherwise it springs back.
+  React.useEffect(() => {
+    const sheet = ref.current;
+    const body = sheet.querySelector('.m-sheet-body');
+    const scrim = sheet.previousElementSibling;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let s = null;
+    const place = (y, animate) => {
+      const tr = animate && !reduce ? '200ms cubic-bezier(.2,.8,.2,1)' : '';
+      sheet.style.transition = tr ? 'transform ' + tr : 'none';
+      sheet.style.transform = y ? `translateY(${y}px)` : '';
+      if (scrim) {
+        scrim.style.transition = tr ? 'opacity ' + tr : 'none';
+        scrim.style.opacity = y ? String(Math.max(0, 1 - y / sheet.offsetHeight)) : '';
+      }
+    };
+    const start = (e) => {
+      if (e.touches.length !== 1) { s = null; return; }
+      const t = e.touches[0];
+      s = { x: t.clientX, y: t.clientY, t: performance.now(), inBody: body.contains(e.target), drag: false, dy: 0 };
+    };
+    const move = (e) => {
+      if (!s) return;
+      const t = e.touches[0];
+      const dy = t.clientY - s.y;
+      if (!s.drag) {
+        if (Math.abs(t.clientX - s.x) > Math.abs(dy) + 2 || dy < -6 || (s.inBody && body.scrollTop > 0)) { s = null; return; }
+        if (dy < 8) return;
+        s.drag = true;
+      }
+      e.preventDefault();
+      s.dy = Math.max(0, dy);
+      place(s.dy, false);
+    };
+    const end = () => {
+      const d = s;
+      s = null;
+      if (!d || !d.drag) return;
+      const fast = d.dy > 40 && d.dy / (performance.now() - d.t) > 0.6;
+      if (fast || d.dy > Math.min(160, sheet.offsetHeight * 0.33)) {
+        place(sheet.offsetHeight, true);
+        setTimeout(() => closeRef.current(), reduce ? 0 : 190);
+      } else place(0, true);
+    };
+    sheet.addEventListener('touchstart', start, { passive: true });
+    sheet.addEventListener('touchmove', move, { passive: false });
+    sheet.addEventListener('touchend', end);
+    sheet.addEventListener('touchcancel', end);
+    return () => {
+      sheet.removeEventListener('touchstart', start);
+      sheet.removeEventListener('touchmove', move);
+      sheet.removeEventListener('touchend', end);
+      sheet.removeEventListener('touchcancel', end);
+    };
+  }, []);
   return (
     <>
       <div className="m-scrim" onClick={onClose} aria-hidden="true"/>
       <div ref={ref} className={`m-sheet${tall?' tall':''}`} role="dialog" aria-modal="true" aria-label={label || mtr('details.label')} tabIndex={-1}>
-        <button className="m-grab" onClick={onClose} aria-label={mtr('details.close')}/>
+        <button className="m-grab" onClick={onClose} aria-label={mtr('details.close')} tabIndex={-1}/>
+        <button className="m-sheet-x" onClick={onClose} aria-label={mtr('details.close')} title={mtr('details.close')}>×</button>
         <div className="m-sheet-body">{children}</div>
       </div>
     </>
@@ -630,6 +714,7 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
           <window.TitleStatusActions title={title} variant="inline" className="m-hero-tsa"/>
         </div>
       </div>
+      <Synopsis title={title} className="m-synopsis"/>
       <div className="m-flab">{mtr('details.cast', { n: title.cast.length })}</div>
       <div className="m-castlist">
         {title.cast.length === 0 && <div className="m-empty-cast">{mtr('details.noCast')}</div>}

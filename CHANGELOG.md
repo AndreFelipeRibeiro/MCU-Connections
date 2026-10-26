@@ -12,6 +12,44 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — Synopses and character highlighting
+
+Recorded: 2026-10-25 21:12:20 EDT (-0400).
+
+- Synopses: a short, spoiler-light summary for each of the 64 titles in English
+  and Brazilian Portuguese (`synopses` locale tables, `MCU_I18N.synopsis()`),
+  written for this app rather than copied. Unreleased titles state only what has
+  been announced; Daredevil: Born Again S3 and Secret Wars say the plot has not
+  been announced. Shown under the title in the desktop drawer and above the cast
+  in the phone sheet, clamped to three lines with See more / See less.
+- Character highlighting: picking a character in the details pins them. Their
+  titles are laid out in the current order (the connection rings stay with a
+  selected title) and the stepper (‹ ›, or the arrow keys) starts on the title it
+  was pinned from, gliding or scrolling to each and opening its details on
+  desktop. The current card gets a ring in the character's colour and a slight
+  lift; their other titles step back. Clicking a card while pinned makes it
+  current without the rings; unpinning with details open returns to them.
+- Desktop: banner with photo, actor and title count, Their titles / All titles
+  switch, stepper and clear. Phones: picking a character closes the sheet and a
+  floating pill above the sort bar shows the character, actor, stepper and clear;
+  phones always show only that character's titles.
+- Phone sheets gain a close (×) button and swipe-down to close (from the handle,
+  or the content when scrolled to the top; short drags spring back).
+- AGENTS.md: new catalog titles also need a written synopsis per locale.
+- Verification: headless Chromium. Synopsis clamp/toggle and reset on title
+  change (en, pt-BR, phone). Desktop: Iron Man → pin Tony Stark gives 12 cards,
+  no selection, "1 of 12" on Iron Man; stepping through all 12 keeps the current
+  card centred on its layout position (0 px offset; the first build's CSS
+  `scale` lift drifted up to ~125 px, fixed before commit); card click and unpin
+  behave as above. Phone 390px: × and swipe close (a 50 px drag springs back);
+  pin closes the sheet, pill 48 px tall without overflow; stepping in List and
+  Spatial (0 px offset). Toolbar fit sweeps (en, pt-BR), context summary, List,
+  panel, search, suggestions and language scripts pass. The user reviewed the
+  desktop and phone flows and approved committing and merging to main.
+- Limits: swipe tested with synthetic touch events, not on a physical phone;
+  posters and photos were not loadable in the test browser; the camera script's
+  passive-listener warning also occurs on the previous code.
+
 ## V3 feature — Search suggestions
 
 Recorded: 2026-10-25 14:41:47 EDT (-0400).

@@ -131,6 +131,12 @@
     return table(lang, 'storyNotes')[title.id] || title.storyNote || null;
   }
 
+  // Synopsis in the current language, falling back to English.
+  function synopsis(title) {
+    if (!title) return null;
+    return table(lang, 'synopses')[title.id] || table('en', 'synopses')[title.id] || null;
+  }
+
   function budget(millions) {
     const n = millions < 1 ? millions : Math.round(millions);
     return tr('budget.format', { n: n.toLocaleString(tag(lang)) });
@@ -145,7 +151,7 @@
 
   const api = {
     get lang() { return lang; },
-    setLang, tr, titleName, titleNames, charName, charNames, storyLabel, storyNote,
+    setLang, tr, titleName, titleNames, charName, charNames, storyLabel, storyNote, synopsis,
     budget, upper, compare, languages, detect,
   };
 
