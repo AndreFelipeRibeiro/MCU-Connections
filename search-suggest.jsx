@@ -88,7 +88,7 @@ function SsThumb({ item }) {
 
 // `portalTo` (optional element) renders the list there instead of beside the
 // input: the mobile box is too small to anchor it, so it spans the search row.
-function SearchInput({ value, onChange, onPickTitle, placeholder, ariaLabel, portalTo }) {
+function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, ariaLabel, portalTo }) {
   const I = window.MCU_I18N;
   const { tr, lang } = window.useI18n();
   const [focused, setFocused] = React.useState(false);
@@ -100,7 +100,16 @@ function SearchInput({ value, onChange, onPickTitle, placeholder, ariaLabel, por
   const open = focused && !dismissed && items.length > 0;
   React.useEffect(() => { setActive(-1); }, [value]);
 
-  const pick = (item) => {
+  const pick = (item, viaKeyboard = false) => {
+    // A character (or an actor who plays one) opens the character view, with
+    // its stepper, instead of becoming a text search; the box is cleared.
+    if (item.kind !== 'title' && onPickPerson && onPickPerson(item, { viaKeyboard })) {
+      onChange('');
+      if (inputRef.current) inputRef.current.blur();
+      setDismissed(true);
+      setActive(-1);
+      return;
+    }
     onChange(item.label);
     if (item.kind === 'title' && onPickTitle) {
       onPickTitle(item.id);
@@ -126,7 +135,7 @@ function SearchInput({ value, onChange, onPickTitle, placeholder, ariaLabel, por
       });
       return;
     }
-    if (e.key === 'Enter' && open && active >= 0) { e.preventDefault(); pick(items[active]); }
+    if (e.key === 'Enter' && open && active >= 0) { e.preventDefault(); pick(items[active], true); }
   };
   const secondary = (item) => {
     if (item.kind === 'actor') return tr('suggest.as', { names: item.chars.map(id => I.charName(id)).join(', ') });

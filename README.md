@@ -76,7 +76,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   dimmed) and a stepper (‹ ›, or the arrow keys) that starts on the title you
   came from and visits each of their titles. The current title is ringed in the
   character's colour. Desktop shows this in a banner; phones close the details
-  sheet and show a floating pill above the sort bar (character, actor, stepper)
+  sheet and show a floating pill above the sort bar (character, actor, stepper;
+  before the first step it shows how many titles they have)
   and always show only that character's titles; stepping in List or Grid scrolls
   the current title fully into view, clear of the pill and the top edge.
 - On phones' All tab, each run of two or more consecutive seen titles gets an
@@ -110,8 +111,10 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   to see it again, use a private/incognito window or add `?welcome` to the URL.
 - Search suggestions: from two letters, a list under the search box previews
   matching actors, characters and titles (names in every language). Picking a
-  person searches for them; picking a title also opens its details. Arrow keys,
-  Enter and Escape work; free-text search is unchanged.
+  character (or an actor who plays one character) opens that character's view,
+  with Their titles / All titles and the stepper, and clears the box; an actor
+  with two roles stays a text search. Picking a title also opens its details.
+  Arrow keys, Enter and Escape work; free-text search is unchanged.
   Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
   seen moves it to seen; un-seeing returns it to untracked.

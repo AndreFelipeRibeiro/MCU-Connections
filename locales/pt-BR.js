@@ -141,6 +141,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'highlight.next': 'Próximo título',
     'highlight.position': '{i} de {n}',
     'highlight.clear': 'Limpar destaque',
+    'highlight.titlesWord': { one: 'título', other: 'títulos' },
     'highlight.short': '{i}/{n}',
     'details.more': 'Ver mais',
     'details.less': 'Ver menos',

@@ -21,7 +21,7 @@ function ScoreBadges({ title, lead, compact }) {
 // The app bar is already three rows deep on a phone, so the view switch moved
 // off m-appbar-top (where the account avatar now sits) onto its own tight row
 // rather than becoming a fourth control crammed into the brand row.
-function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, collectionFilter, setCollectionFilter }) {
+function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, collectionFilter, setCollectionFilter }) {
   // The suggestions list spans the whole search row (see SearchInput).
   const [searchRow, setSearchRow] = React.useState(null);
   return (
@@ -37,7 +37,7 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, o
       <div className="m-searchrow" ref={setSearchRow}>
         <div className="m-searchbar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-          <div className="m-search-input"><window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle}
+          <div className="m-search-input"><window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson}
             ariaLabel={mtr('search.aria')} placeholder={mtr('search.placeholder')} portalTo={searchRow}/></div>
           {search && <button className="m-clear" onClick={()=>setSearch('')} aria-label={mtr('search.clear')}>×</button>}
         </div>

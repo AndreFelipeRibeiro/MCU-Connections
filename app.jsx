@@ -364,7 +364,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
 const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
-function Toolbar({ onAbout, onPickTitle, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
+function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   // Collection has its own always-visible switch, so it is not counted here.
@@ -391,7 +391,7 @@ function Toolbar({ onAbout, onPickTitle, desktopView, setDesktopView, sort, setS
         <div className="tb-filter-row">
           <div className="search-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-            <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle}
+            <window.SearchInput value={search} onChange={setSearch} onPickTitle={onPickTitle} onPickPerson={onPickPerson}
               ariaLabel={tr('search.aria')} placeholder={tr('search.placeholder')}/>
           </div>
           <div className="tb-order-control">
@@ -1508,6 +1508,32 @@ function App() {
     setDrawerId(id);
     if (!isTouch && desktopView === 'spatial' && !highlightedChar) setSelectedId(id);
   };
+  // A character picked from the search suggestions opens the character view
+  // (photo, Their titles / All titles, stepper) rather than a text search, as
+  // if pinned from a cast list. An actor counts when they play one character
+  // (variants included); otherwise (two roles) the pick stays a text search.
+  const pickPerson = (item, how = {}) => {
+    let ch = null;
+    if (item.kind === 'character') ch = item.id;
+    else if (item.kind === 'actor') {
+      const primes = new Set(item.chars.map(primeOf));
+      if (primes.size !== 1) return false;
+      const prime = [...primes][0];
+      ch = item.chars.includes(prime) ? prime : item.chars[0];
+    }
+    // Checked against the whole catalog: another character may be pinned (so
+    // the current titles are theirs) when this one is picked.
+    if (!ch || !window.TITLES.some(t => t.cast.some(c => primeOf(c) === primeOf(ch)))) return false;
+    setSearch('');
+    if (highlightedChar !== ch) pinCharacter(ch);
+    // The search box lets go of focus; after a keyboard pick on desktop, hand
+    // it to the stepper so keyboard users can carry on through the titles.
+    if (!isTouch && how.viaKeyboard) requestAnimationFrame(() => requestAnimationFrame(() => {
+      const next = document.querySelector('.char-banner.pinned .cb-step button:last-child');
+      if (next) next.focus();
+    }));
+    return true;
+  };
   const changeDesktopView = (v) => {
     if (v === desktopView) return;
     setSelectedId(v === 'spatial' && !highlightedChar ? drawerId : null);
@@ -1708,7 +1734,11 @@ function App() {
           </span>
           <div className="cb-step">
             <button onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!n}>‹</button>
-            <span className="cb-pos" aria-live="polite">{tr('highlight.short', { i: stepIndex >= 0 ? stepIndex + 1 : '–', n })}</span>
+            {/* Before the first step: the number of titles, stacked so it
+                takes no more room than "1/9" and the name keeps its space. */}
+            {stepIndex >= 0
+              ? <span className="cb-pos" aria-live="polite">{tr('highlight.short', { i: stepIndex + 1, n })}</span>
+              : <span className="cb-pos total" aria-live="polite"><b>{n}</b> <small>{tr('highlight.titlesWord', { n })}</small></span>}
             <button onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!n}>›</button>
           </div>
           <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={unpinCharacter}>×</button>
@@ -1847,7 +1877,7 @@ function App() {
             setViewMode(v);
             if (v !== 'spatial') setSelectedId(null);
           }}
-          search={search} setSearch={setSearch} onPickTitle={pickTitle}
+          search={search} setSearch={setSearch} onPickTitle={pickTitle} onPickPerson={pickPerson}
           onOpenFilters={() => { if (viewMode !== 'spatial') window.captureFlip(); setSheet('filters'); }}
           filterCount={filterCount}
           sort={sort} sortDir={sortDir} setSortDir={setSortDir}
@@ -1913,7 +1943,7 @@ function App() {
     <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
       <Toolbar
         onAbout={() => setAboutOpen(true)}
-        onPickTitle={pickTitle}
+        onPickTitle={pickTitle} onPickPerson={pickPerson}
         desktopView={desktopView} setDesktopView={changeDesktopView}
         sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}

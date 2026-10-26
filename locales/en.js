@@ -142,6 +142,7 @@ window.MCU_LOCALES.en = {
     'highlight.next': 'Next title',
     'highlight.position': '{i} of {n}',
     'highlight.clear': 'Clear highlight',
+    'highlight.titlesWord': { one: 'title', other: 'titles' },
     'highlight.short': '{i}/{n}',
     'details.more': 'See more',
     'details.less': 'See less',
