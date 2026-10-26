@@ -12,6 +12,40 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 fix and improvement — Menu layering and filter animations
+
+Recorded: 2026-10-25 21:59:44 EDT (-0400).
+
+- Layering: the desktop toolbar was a sticky layer at z-index 50, below the
+  details drawer (60), so the language, order, filters and account menus and the
+  search suggestions opened under the drawer. The toolbar now sits at 70 (the
+  drawer starts below it). The Spatial zoom control, hidden under the open drawer,
+  now moves left of it. On phones the app bar (30) sat under the floating count
+  and character pills, covering search suggestions in Spatial; it is now 50
+  (sheets stay above).
+- Animations: the mobile Grid/List reorder animation now also runs for All /
+  Unseen / Seen / Watchlist and the phase, films/series and budget filters, and
+  between List and Grid (titles move from their old spot while the old layout
+  fades). The desktop List uses the same animation for sort tabs, column headers,
+  order, collection and filters; leaving rows fade in a layer inside the list so
+  they keep its columns. On phones, filter-sheet changes play when the sheet
+  closes. Returning from an empty result animates titles in. Off with reduced
+  motion; search typing does not animate.
+- Verification: headless Chromium. A layering audit (elementFromPoint over a 5x5
+  grid) of every toolbar menu, suggestions, zoom, count, banner controls and
+  drawer close at 1440 and 1100px in Spatial and List with details open and a
+  character pinned, and on a 390px phone in List and Spatial with the pill: all
+  clear after the change (menus under the drawer, hidden zoom and covered phone
+  suggestions before). Animation script: animations start and clean up for each
+  toggle, filter, sort, List/Grid switch and a scrolled desktop List (leaving
+  copies keep 11 columns); none while the phone filter sheet is open, played on
+  close, nothing when it closes unchanged. Fit sweeps, context summary, List,
+  panel, search, suggestions, synopsis, alignment and language scripts pass.
+  Recorded clips of the phone and desktop List animations were reviewed by the
+  user, who approved committing and merging to main.
+- Limits: below 1280px the drawer still overlays the desktop List by design;
+  marking a title seen while a filter hides it removes it without animation.
+
 ## V3 feature — Synopses and character highlighting
 
 Recorded: 2026-10-25 21:12:20 EDT (-0400).

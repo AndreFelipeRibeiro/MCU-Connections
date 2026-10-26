@@ -282,6 +282,10 @@ function MatchBadge({ matchedChars, query }) {
 // temporary copies (in a clipped, non-interactive layer) sliding toward their new
 // slot. Travel is capped to part of the viewport. Skipped entirely for
 // prefers-reduced-motion.
+// The same animation runs when the collection filter (All/Unseen/Seen/
+// Watchlist) changes, on the desktop List (its leaving copies stay inside the
+// list, `inside`, so they keep its columns), and between List and Grid on
+// phones (`morph`: titles move from their old spot while the old layout fades).
 const FLIP_EASE = 'cubic-bezier(.2,.8,.2,1)';
 const FLIP_MS = 520;
 let flipLayer = null;
@@ -299,7 +303,7 @@ function measureFlip(root) {
   return { view, rects, ghosts };
 }
 
-function playFlip(root, prev) {
+function playFlip(root, prev, opts = {}) {
   if (flipLayer) { flipLayer.remove(); flipLayer = null; }
   const view = root.getBoundingClientRect();
   const cap = view.height * 0.45;
@@ -317,7 +321,12 @@ function playFlip(root, prev) {
     const old = prev.rects.get(id);
     const wasVisible = prev.ghosts.has(id);
     let frames, delay = 0;
-    if (wasVisible) {
+    if (wasVisible && opts.morph) {
+      // List <-> Grid: centre to centre, fading in over the old layout.
+      const dx = (old.left + old.width / 2) - (now.left + now.width / 2);
+      const dy = (old.top + old.height / 2) - (now.top + now.height / 2);
+      frames = [{ opacity: 0, transform: `translate(${dx}px, ${clampY(dy)}px)` }, { opacity: 1, offset: 0.5 }, { opacity: 1, transform: 'none' }];
+    } else if (wasVisible) {
       const dx = old.left - now.left, dy = old.top - now.top;
       if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
       frames = [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }];
@@ -336,24 +345,31 @@ function playFlip(root, prev) {
     anim.id = 'm-flip';
   });
 
-  const leaving = [...prev.ghosts].filter(([id]) => !shown.has(id));
+  // On a List <-> Grid switch the whole old layout fades out in place.
+  const leaving = [...prev.ghosts].filter(([id]) => opts.morph || !shown.has(id));
   if (!leaving.length) return;
   const layer = document.createElement('div');
   layer.className = 'm-flip-layer';
   layer.setAttribute('aria-hidden', 'true');
   layer.inert = true;
-  Object.assign(layer.style, { left: view.left + 'px', top: view.top + 'px', width: view.width + 'px', height: view.height + 'px' });
+  // `inside`: the layer lives in the scrolling root (so the copies keep styles
+  // that depend on their container) and covers its visible part.
+  const at = opts.inside
+    ? { position: 'absolute', left: '0px', top: root.scrollTop + 'px', width: root.clientWidth + 'px', height: root.clientHeight + 'px' }
+    : { left: view.left + 'px', top: view.top + 'px', width: view.width + 'px', height: view.height + 'px' };
+  Object.assign(layer.style, at);
   const anims = leaving.map(([id, ghost]) => {
     const old = prev.rects.get(id);
     const to = next.get(id);
     ghost.removeAttribute('data-flip-id');
     Object.assign(ghost.style, { position: 'absolute', margin: '0', boxSizing: 'border-box',
-      left: (old.left - view.left) + 'px', top: (old.top - view.top) + 'px', width: old.width + 'px', height: old.height + 'px' });
+      left: (old.left - prev.view.left) + 'px', top: (old.top - prev.view.top) + 'px', width: old.width + 'px', height: old.height + 'px' });
     layer.appendChild(ghost);
+    if (opts.morph) return ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FLIP_MS * 0.5, easing: 'ease-out', fill: 'forwards' });
     const move = to ? `translate(${to.left - old.left}px, ${clampY(to.top - old.top)}px)` : 'scale(.97)';
     return ghost.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, offset: 0.75 }, { opacity: 0, transform: move }], { duration: FLIP_MS * 0.8, easing: FLIP_EASE, fill: 'forwards' });
   });
-  document.body.appendChild(layer);
+  (opts.inside ? root : document.body).appendChild(layer);
   flipLayer = layer;
   Promise.all(anims.map(a => a.finished)).catch(() => {}).then(() => {
     layer.remove();
@@ -361,20 +377,48 @@ function playFlip(root, prev) {
   });
 }
 
-function useReorderAnimation(orderKey) {
+const flipAllowed = () => typeof Element !== 'undefined' && !!Element.prototype.animate
+  && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+// Phones: called just before switching between List and Grid, so the view that
+// mounts next can animate from the one being replaced.
+let pendingSwitch = null;
+function captureViewFlip() {
+  pendingSwitch = measureFlip(document.querySelector('.m-main .m-scrollarea'));
+}
+
+// Phones: the filter sheet covers the list while filters change, so the list
+// is measured when the sheet opens (the view's flip is paused meanwhile) and
+// animated once it closes.
+let pendingFlip = null;
+function captureFlip() {
+  pendingFlip = measureFlip(document.querySelector('.m-main .m-scrollarea'));
+}
+function playPendingFlip() {
+  const prev = pendingFlip;
+  pendingFlip = null;
+  const root = document.querySelector('.m-main .m-scrollarea');
+  if (prev && root && flipAllowed()) playFlip(root, prev);
+}
+
+function useReorderAnimation(orderKey, opts = {}) {
   const ref = React.useRef(null);
   const lastKey = React.useRef(orderKey);
   const before = React.useRef(null);
   if (orderKey !== lastKey.current) {
     lastKey.current = orderKey;
-    before.current = measureFlip(ref.current);
+    if (!opts.paused) before.current = measureFlip(ref.current);
   }
+  React.useLayoutEffect(() => {
+    const prev = pendingSwitch;
+    pendingSwitch = null;
+    if (prev && ref.current && flipAllowed()) playFlip(ref.current, prev, { morph: true });
+  }, []);
   React.useLayoutEffect(() => {
     const prev = before.current;
     before.current = null;
-    if (!prev || !ref.current || typeof Element === 'undefined' || !Element.prototype.animate) return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    playFlip(ref.current, prev);
+    if (!prev || !ref.current || !flipAllowed()) return;
+    playFlip(ref.current, prev, opts);
   }, [orderKey]);
   return ref;
 }
@@ -417,11 +461,11 @@ function StoryYear({ title, detail = false, className = '' }) {
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
 // so tapping anywhere except the toggles opens the cast sheet exactly as before.
-function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, search, empty, orderKey }) {
+function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, search, empty, orderKey, flipPaused }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
-  const flipRef = useReorderAnimation(orderKey);
-  if (!titles.length) return <div className="m-scrollarea">{header}<EmptyState {...(empty || {})}/></div>;
+  const flipRef = useReorderAnimation(orderKey, { paused: flipPaused });
+  if (!titles.length) return <div className="m-scrollarea" ref={flipRef}>{header}<EmptyState {...(empty || {})}/></div>;
   return (
     <div className="m-scrollarea" ref={flipRef}>
       {header}
@@ -456,11 +500,11 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
   );
 }
 
-function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatches, search, empty, orderKey }) {
+function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatches, search, empty, orderKey, flipPaused }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
-  const flipRef = useReorderAnimation(orderKey);
-  if (!titles.length) return <div className="m-scrollarea">{header}<EmptyState {...(empty || {})}/></div>;
+  const flipRef = useReorderAnimation(orderKey, { paused: flipPaused });
+  if (!titles.length) return <div className="m-scrollarea" ref={flipRef}>{header}<EmptyState {...(empty || {})}/></div>;
   const ranked = sort === 'imdb' || sort === 'rt';
   const lead = sort === 'rt' ? 'rt' : 'imdb';
   // Group headers for the non-score sorts. Chrono groups by in-story timeframe
@@ -779,4 +823,4 @@ function SpatialHint({ focused, sharedCount }) {
   );
 }
 
-Object.assign(window, { MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, Highlight, StoryYear });
+Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, Highlight, StoryYear });
