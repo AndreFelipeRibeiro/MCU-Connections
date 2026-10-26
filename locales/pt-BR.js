@@ -107,6 +107,9 @@ window.MCU_LOCALES['pt-BR'] = {
     'canvas.hintClear': 'toque no fundo para limpar',
 
     'collection.groupAria': 'Mostrar títulos',
+    'list.seenRun': '{n} vistos',
+    'list.seenRunShow': 'Mostrar {n} títulos vistos',
+    'list.seenRunHide': 'Ocultar {n} títulos vistos',
     'collection.all': 'Todos',
     'collection.unseen': 'Não vistos',
     'collection.seen': 'Vistos',

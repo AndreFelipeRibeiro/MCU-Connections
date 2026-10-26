@@ -1856,8 +1856,8 @@ function App() {
         />
         <div className={`m-main${charPill ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
-          {viewMode === 'grid' && <window.MobileGrid header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
-          {viewMode === 'list' && <window.MobileList header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {viewMode === 'grid' && <window.MobileGrid collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {viewMode === 'list' && <window.MobileList collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
