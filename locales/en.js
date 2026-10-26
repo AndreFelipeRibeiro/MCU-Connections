@@ -108,6 +108,9 @@ window.MCU_LOCALES.en = {
     'canvas.hintClear': 'tap background to clear',
 
     'collection.groupAria': 'Show titles',
+    'list.seenRun': '{n} seen',
+    'list.seenRunShow': 'Show {n} seen titles',
+    'list.seenRunHide': 'Hide {n} seen titles',
     'collection.all': 'All',
     'collection.unseen': 'Unseen',
     'collection.seen': 'Seen',

@@ -12,6 +12,47 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — folded seen titles on phones
+
+Recorded: 2026-10-26 18:21:23 EDT (-0400).
+
+- Phones, All tab (no character pinned, no search): each run of two or more
+  consecutive seen titles gets an accordion header ("✓ 11 seen") that folds the
+  run into one summary row (stacked posters, count, first – last title). Order
+  never changes: a run only groups neighbours, and headings inside a folded run
+  hide with it (a group that continues after it repeats its heading).
+- List shows seen titles as compact rows (small poster, title, buttons side by
+  side); Grid keeps full cards, with each run as its own section, and cards
+  glide to their new cells when runs form or split. The Seen tab keeps full rows
+  and cards.
+- Rows shrink and grow when marked or unmarked, runs fold and unfold with a
+  height animation, and the header morphs between bar and summary. Motion
+  starts once the saved collection has loaded (new `ready` flag on the
+  collection context), so the list opens already compact; none with reduced
+  motion.
+- Folded runs are remembered on this device (`mcu.seenFolds.v1`, not synced to
+  the account) and shared by List and Grid. The folded titles are stored
+  rather than runs: a run is folded when most of its titles were.
+- Watchlisted titles have a thin amber outline on List rows and Grid cards
+  outside the Watchlist tab.
+- Folder headers fit the column (long summaries end in "…"), and the phone
+  list/grid area never scrolls sideways.
+- English and Brazilian Portuguese strings.
+- Verification: headless Chromium at 390×760 (and 320/360/375 where noted):
+  - marking Ant-Man seen shrank its row 95 → 52px over ~0.34s and merged the
+    runs (11 → 13); folding hid the run; unmarking restored it;
+  - folds stayed closed after a reload, matched across List/Grid switches
+    without reloading, and reopened state was remembered;
+  - order kept in Release, Phase, Chrono, IMDb and A–Z;
+  - no horizontal overflow in 48 combinations (320/360/390 × Grid/List × four
+    sorts × open/folded), where 40 overflowed before the guardrail;
+  - no console errors; regression scripts pass (test-camera's known
+    intermittent desktop timeout recurred once and passed on re-run).
+  - Videos and screenshots reviewed by the user, who approved committing and
+    merging to main.
+- Limits: fold memory is per device; a Grid run ending on an odd count leaves
+  the cell beside its last card empty; not checked on a physical phone.
+
 ## V3 fix — mobile stepping keeps the current title in view
 
 Recorded: 2026-10-26 13:37:21 EDT (-0400).

@@ -79,6 +79,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   sheet and show a floating pill above the sort bar (character, actor, stepper)
   and always show only that character's titles; stepping in List or Grid scrolls
   the current title fully into view, clear of the pill and the top edge.
+- On phones' All tab, each run of two or more consecutive seen titles gets an
+  accordion header that folds it into one summary row; order is never changed.
+  In List the seen titles are compact rows (headings inside a folded run hide
+  with it); in Grid each run is its own section and cards glide when runs form
+  or split. Folds stay closed across visits on this device (shared by List and
+  Grid). Rows shrink, grow and fold with an animation once the collection has
+  loaded (none with reduced motion). The Seen tab keeps full rows and cards.
+  Watchlisted titles have a thin amber outline outside the Watchlist tab.
 - Phone sheets close with the × button, a tap on the handle, or a swipe down.
 - Spatial timelines have labelled rows: Release by phase, Chronological by
   in-story era (Before 2008, 2008–2012, … 2027–2028), so both read as a

@@ -348,3 +348,70 @@
 .m-sheet .about-lead { font-size: 13.5px; }
 .m-sheet .acct-foot-link { min-height: 40px; font-size: 13px; }
 .m-sheet:focus { outline: none; }
+
+/* All tab: seen titles shrink to compact rows, and runs of them fold under an
+   accordion header. Every row, heading and run header sits in an .m-fx wrapper
+   that animates its height (grid-template-rows 1fr <-> 0fr), so the list
+   shrinks and folds in place. The inner box reaches 6px past the row on each
+   side so rings and focus outlines aren't clipped; its bottom padding is the
+   gap between rows, and folds away with it. */
+.m-flat, .m-gflat { display: flex; flex-direction: column; --fx: 0ms; --fx-fade: 0ms; --fx-ease: cubic-bezier(.2,.8,.2,1); }
+/* Motion starts once the collection has loaded (useSettled). */
+.m-flat.settled, .m-gflat.settled { --fx: 340ms; --fx-fade: 220ms; }
+/* Grid: sections keep the grid's 14px gap between them. */
+.m-gflat .m-fx:not(.shut) > .m-fx-in { padding-bottom: 14px; }
+.m-fx { display: grid; grid-template-rows: 1fr; grid-template-columns: minmax(0, 1fr); min-width: 0; opacity: 1;
+  transition: grid-template-rows var(--fx) var(--fx-ease), opacity var(--fx-fade) ease, visibility 0s; }
+.m-fx-in { min-height: 0; min-width: 0; margin: -6px -6px 0; padding: 6px 6px 9px;
+  transition: padding var(--fx) var(--fx-ease), margin var(--fx) var(--fx-ease); }
+.m-fx.shut { grid-template-rows: 0fr; opacity: 0; visibility: hidden;
+  transition: grid-template-rows var(--fx) var(--fx-ease), opacity var(--fx-fade) ease, visibility 0s var(--fx); }
+.m-fx.shut > .m-fx-in { padding-top: 0; padding-bottom: 0; margin-top: 0; }
+.m-fx.shut > .m-fx-in, .m-fx.moving > .m-fx-in { overflow: hidden; }
+.m-flat .m-glabel { margin: 7px 0 0; }
+.m-flat > .m-fx:first-child .m-glabel { margin-top: 0; }
+
+/* Compact seen row: small poster, title only, buttons side by side. */
+.m-flat .m-lrow { transition: min-height var(--fx) var(--fx-ease), padding var(--fx) var(--fx-ease); }
+.m-flat .m-lthumb { transition: width var(--fx) var(--fx-ease), height var(--fx) var(--fx-ease), flex-basis var(--fx) var(--fx-ease); }
+.m-flat .m-lmeta, .m-flat .m-lrow .m-scores { max-height: 48px; overflow: hidden;
+  transition: max-height var(--fx) var(--fx-ease), opacity var(--fx-fade) ease, margin var(--fx) var(--fx-ease); }
+.m-lrow.compact { min-height: 50px; padding-top: 6px; padding-bottom: 6px; }
+.m-lrow.compact .m-lthumb { width: 26px; height: 38px; flex-basis: 26px; }
+.m-lrow.compact .m-lmeta, .m-lrow.compact .m-scores { max-height: 0; opacity: 0; margin-top: 0; }
+.m-lrow.compact .m-lrow-tsa { flex-direction: row; }
+
+/* Run header: slim bar while open, summary row while folded. */
+.m-run { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; max-width: 100%; text-align: left; font: inherit; cursor: pointer;
+  color: var(--text-dim); background: transparent; border: 1px dashed transparent; border-radius: 12px; padding: 2px 4px 2px 2px;
+  transition: padding var(--fx) var(--fx-ease), background-color var(--fx) ease, border-color var(--fx) ease; }
+.m-run.shut { padding: 9px 12px 9px 10px; border-color: var(--border-strong); background: rgba(95,168,86,.06); color: var(--text); }
+.m-run:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.m-run-stack { display: flex; flex: 0 0 auto; max-width: 0; opacity: 0;
+  transition: max-width var(--fx) var(--fx-ease), opacity var(--fx-fade) ease; }
+.m-run.shut .m-run-stack { max-width: 80px; opacity: 1; }
+.m-run-thumb { width: 30px; height: 45px; flex: 0 0 30px; border-radius: 5px; overflow: hidden; background: #0d1018; box-shadow: 0 0 0 2px var(--bg); position: relative; }
+.m-run-thumb + .m-run-thumb { margin-left: -14px; }
+.m-run-thumb::after { content: ''; position: absolute; inset: 0; background: rgba(10,12,20,.45); }
+.m-run-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.m-run-text b { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #8fcf86; }
+.m-run-text b svg { width: 12px; height: 12px; }
+.m-run-range { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-height: 0; opacity: 0; transition: max-height var(--fx) var(--fx-ease), opacity var(--fx-fade) ease, margin var(--fx) ease; }
+.m-run.shut .m-run-range { max-height: 18px; opacity: 1; margin-top: 3px; }
+.m-run-chev { font-size: 18px; line-height: 1; color: var(--text-muted); transform: rotate(-90deg); transition: transform var(--fx) var(--fx-ease); }
+.m-run.shut .m-run-chev { transform: rotate(90deg); }
+
+/* Watchlisted titles (outside the Watchlist tab): a thin amber outline. */
+.m-lrow.watch, .m-card.watch { border-color: rgba(212,160,90,.75); }
+
+@media (prefers-reduced-motion: reduce) {
+  .m-fx, .m-fx.shut, .m-fx-in, .m-flat .m-lrow, .m-flat .m-lthumb, .m-flat .m-lmeta, .m-flat .m-lrow .m-scores,
+  .m-run, .m-run-stack, .m-run-range, .m-run-chev { transition: none; }
+}
+
+/* Guardrails against sideways scrolling on phones: wrappers and run headers
+   size to the column (their one-line summaries truncate instead of widening
+   it), and the scroll area never scrolls horizontally. */
+.m-flat, .m-gflat { min-width: 0; }
+.m-main .m-scrollarea { overflow-x: hidden; }

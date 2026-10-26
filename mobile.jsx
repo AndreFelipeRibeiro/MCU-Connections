@@ -461,49 +461,188 @@ function StoryYear({ title, detail = false, className = '' }) {
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
 // so tapping anywhere except the toggles opens the cast sheet exactly as before.
-function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, search, empty, orderKey, flipPaused }) {
+function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, markWatch, collapseSeen }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
-  const flipRef = useReorderAnimation(orderKey, { paused: flipPaused });
+  const folds = useSeenFolds();
+  const settled = useSettled();
+  // All tab: runs of seen titles sit under a full-width header and fold away.
+  // Each run breaks the grid into sections; when runs form or split the cards
+  // glide to their new cells (the run layout is part of the reorder key).
+  const runs = collapseSeen ? seenRuns(titles, statusOf) : [];
+  const runKey = runs.map(r => r[0].id + ':' + r.length).join(',');
+  const flipRef = useReorderAnimation(orderKey + '|' + runKey, { paused: flipPaused });
   if (!titles.length) return <div className="m-scrollarea" ref={flipRef}>{header}<EmptyState {...(empty || {})}/></div>;
+  const card = (t) => {
+    const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
+    const seen = statusOf(t.id) === 'seen';
+    const watch = markWatch && statusOf(t.id) === 'watchlist';
+    return (
+      <div key={t.id} data-flip-id={t.id} data-row-id={t.id} className={`m-card${seen ? ' seen' : ''}${watch ? ' watch' : ''}${currentId === t.id ? ' current' : ''}`}>
+        <button className="m-card-open" onClick={()=>onSelect(t.id)}>
+          <div className="m-pw">
+            <PosterArt title={t}/>
+            <span className="m-pbadge" style={{background:MPHASE_COLORS[t.phase]}}>{mtr('phase.short', { n: t.phase })}</span>
+            <ScoreBadges title={t} compact/>
+          </div>
+          <div className="m-cmeta">
+            <div className="m-ctitle"><Highlight text={MI18N.titleName(t)} query={search}/></div>
+            <div className="m-cyear">
+              <span>{t.year}</span>
+              {t.budget != null && <b>{MI18N.budget(t.budget)}</b>}
+            </div>
+            <StoryYear title={t} className="m-cstory"/>
+            <MatchBadge matchedChars={matchedChars} query={search}/>
+          </div>
+        </button>
+        <window.TitleStatusActions title={t} className="m-card-tsa"/>
+      </div>
+    );
+  };
+  if (!runs.length) {
+    return (
+      <div className="m-scrollarea" ref={flipRef}>
+        {header}
+        <div className="m-grid">{titles.map(card)}</div>
+      </div>
+    );
+  }
+  // Sections: plain cards between runs, and each run (header + its cards).
+  const sections = [];
+  const runOf = new Map();
+  runs.forEach(r => { const info = { key: r[0].id, items: r, shut: folds.isShut(r) }; r.forEach(t => runOf.set(t.id, info)); });
+  titles.forEach(t => {
+    const run = runOf.get(t.id) || null;
+    const last = sections[sections.length - 1];
+    if (last && last.run === run) last.items.push(t);
+    else sections.push({ run, items: [t] });
+  });
   return (
     <div className="m-scrollarea" ref={flipRef}>
       {header}
-      <div className="m-grid">
-        {titles.map(t => {
-          const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
-          const seen = statusOf(t.id) === 'seen';
-          return (
-            <div key={t.id} data-flip-id={t.id} data-row-id={t.id} className={`m-card${seen ? ' seen' : ''}${currentId === t.id ? ' current' : ''}`}>
-              <button className="m-card-open" onClick={()=>onSelect(t.id)}>
-                <div className="m-pw">
-                  <PosterArt title={t}/>
-                  <span className="m-pbadge" style={{background:MPHASE_COLORS[t.phase]}}>{mtr('phase.short', { n: t.phase })}</span>
-                  <ScoreBadges title={t} compact/>
-                </div>
-                <div className="m-cmeta">
-                  <div className="m-ctitle"><Highlight text={MI18N.titleName(t)} query={search}/></div>
-                  <div className="m-cyear">
-                    <span>{t.year}</span>
-                    {t.budget != null && <b>{MI18N.budget(t.budget)}</b>}
-                  </div>
-                  <StoryYear title={t} className="m-cstory"/>
-                  <MatchBadge matchedChars={matchedChars} query={search}/>
-                </div>
-              </button>
-              <window.TitleStatusActions title={t} className="m-card-tsa"/>
-            </div>
-          );
-        })}
+      <div className={`m-gflat${settled ? ' settled' : ''}`}>
+        {sections.map(sec => sec.run ? (
+          <React.Fragment key={'run:' + sec.run.key}>
+            <Fx appear={settled}>
+              <SeenRunHead items={sec.run.items} shut={sec.run.shut} onToggle={() => folds.toggle(sec.run.items)}/>
+            </Fx>
+            <Fx open={!sec.run.shut}><div className="m-grid">{sec.items.map(card)}</div></Fx>
+          </React.Fragment>
+        ) : (
+          <Fx key={'cards:' + sec.items[0].id}><div className="m-grid">{sec.items.map(card)}</div></Fx>
+        ))}
       </div>
     </div>
   );
 }
 
-function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatches, search, empty, orderKey, flipPaused }) {
+// Runs of seen titles on the All tab: two or more consecutive seen titles in
+// the current order. Order never changes; a run only groups neighbours.
+function seenRuns(titles, statusOf) {
+  const runs = [];
+  let run = [];
+  const close = () => { if (run.length >= 2) runs.push(run); run = []; };
+  titles.forEach(t => { if (statusOf(t.id) === 'seen') run.push(t); else close(); });
+  close();
+  return runs;
+}
+
+// Folded runs, remembered on this device across visits and shared by List and
+// Grid. Runs shift as titles are marked, so this keeps the titles that were
+// folded rather than the runs: a run is folded when most of its titles were.
+const SEEN_FOLDS_KEY = 'mcu.seenFolds.v1';
+const seenFolds = (() => {
+  try { return new Set(JSON.parse(window.localStorage.getItem(SEEN_FOLDS_KEY)) || []); } catch (e) { return new Set(); }
+})();
+const seenFoldListeners = new Set();
+function useSeenFolds() {
+  const [, bump] = React.useReducer(x => x + 1, 0);
+  React.useEffect(() => { seenFoldListeners.add(bump); return () => { seenFoldListeners.delete(bump); }; }, []);
+  const isShut = (items) => items.filter(t => seenFolds.has(t.id)).length * 2 > items.length;
+  const toggle = (items) => {
+    const shut = !isShut(items);
+    items.forEach(t => { if (shut) seenFolds.add(t.id); else seenFolds.delete(t.id); });
+    try { window.localStorage.setItem(SEEN_FOLDS_KEY, JSON.stringify([...seenFolds])); } catch (e) { /* not remembered */ }
+    seenFoldListeners.forEach(fn => fn());
+  };
+  return { isShut, toggle };
+}
+
+// Settles once the saved collection has loaded: lists only animate changes
+// after that, so they open already compact and folded.
+function useSettled() {
+  const { ready } = window.useCollection();
+  const [settled, setSettled] = React.useState(false);
+  React.useEffect(() => {
+    if (!ready || settled) return undefined;
+    let b;
+    const a = requestAnimationFrame(() => { b = requestAnimationFrame(() => setSettled(true)); });
+    return () => { cancelAnimationFrame(a); cancelAnimationFrame(b); };
+  }, [ready, settled]);
+  return settled;
+}
+
+// A collapsible wrapper: animates its content's height to and from zero. With
+// `appear`, it mounts closed and opens on the next frame (a row that just
+// joined the list). The wrapper element stays put, so its content keeps its
+// identity (and its own transitions) while opening or closing.
+function Fx({ open = true, appear = false, children }) {
+  const [ready, setReady] = React.useState(!appear);
+  React.useEffect(() => {
+    if (ready) return undefined;
+    let b;
+    const a = requestAnimationFrame(() => { b = requestAnimationFrame(() => setReady(true)); });
+    return () => { cancelAnimationFrame(a); cancelAnimationFrame(b); };
+  }, []);
+  const shut = !(open && ready);
+  // Content is clipped only while closed or opening/closing, so open content
+  // can glide across sections (Grid reorder) and keep its rings unclipped.
+  const was = React.useRef(shut);
+  const [moving, setMoving] = React.useState(false);
+  React.useEffect(() => {
+    if (was.current === shut) return undefined;
+    was.current = shut;
+    setMoving(true);
+    const id = setTimeout(() => setMoving(false), 420);
+    return () => clearTimeout(id);
+  }, [shut]);
+  return (
+    <div className={`m-fx${shut ? ' shut' : ''}${moving ? ' moving' : ''}`} aria-hidden={shut || undefined}>
+      <div className="m-fx-in">{children}</div>
+    </div>
+  );
+}
+
+// Header of a run of seen titles on the All tab: a slim bar while the run is
+// open, a summary row (stacked posters, count, first and last title) while it
+// is folded. One element morphs between the two.
+function SeenRunHead({ items, shut, onToggle }) {
+  const PosterArt = window.PosterArt;
+  const n = items.length;
+  const first = MI18N.titleName(items[0]), last = MI18N.titleName(items[n - 1]);
+  return (
+    <button className={`m-run${shut ? ' shut' : ''}`} onClick={onToggle} aria-expanded={!shut}
+      aria-label={mtr(shut ? 'list.seenRunShow' : 'list.seenRunHide', { n })}>
+      <span className="m-run-stack" aria-hidden="true">
+        {items.slice(0, 3).map(t => <span key={t.id} className="m-run-thumb"><PosterArt title={t}/></span>)}
+      </span>
+      <span className="m-run-text">
+        <b><window.CheckIcon/>{mtr('list.seenRun', { n })}</b>
+        <span className="m-run-range">{first} – {last}</span>
+      </span>
+      <span className="m-run-chev" aria-hidden="true">›</span>
+    </button>
+  );
+}
+
+function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, collapseSeen, markWatch }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
   const flipRef = useReorderAnimation(orderKey, { paused: flipPaused });
+  const folds = useSeenFolds();
+  // The collection arrives after the first paint: rows only animate (shrink,
+  // fold, appear) once it has loaded, so the list opens already compact.
+  const settled = useSettled();
   if (!titles.length) return <div className="m-scrollarea" ref={flipRef}>{header}<EmptyState {...(empty || {})}/></div>;
   const ranked = sort === 'imdb' || sort === 'rt';
   const lead = sort === 'rt' ? 'rt' : 'imdb';
@@ -535,43 +674,103 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
   } else {
     groups.push({ key: 'all', label: null, items: titles });
   }
+  const row = (t, rank, compact) => {
+    const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
+    const seen = statusOf(t.id) === 'seen';
+    const watch = markWatch && statusOf(t.id) === 'watchlist';
+    return (
+      <div data-flip-id={t.id} data-row-id={t.id} className={`m-lrow${seen ? ' seen' : ''}${compact ? ' compact' : ''}${watch ? ' watch' : ''}${currentId === t.id ? ' current' : ''}`}>
+        <button className="m-lrow-open" onClick={()=>onSelect(t.id)}>
+          {ranked && <div className="m-rank">{rank}</div>}
+          <div className="m-lthumb"><PosterArt title={t}/></div>
+          <div className="m-ltext">
+            <div className="m-ltitle"><Highlight text={MI18N.titleName(t)} query={search}/></div>
+            <div className="m-lmeta">
+              {!ranked && <span>{mTypeLabel(t.type)}</span>}
+              {chrono && <><span className="m-dot"/><span title={mtr('story.releaseYear')}>{t.year}</span></>}
+              {ranked && <span>{t.year}</span>}
+              <span className="m-dot"/>
+              <span style={{color:MPHASE_COLORS[t.phase]}}>{mPhaseLabel(t.phase)}</span>
+              {t.budget != null && <><span className="m-dot"/><span>{MI18N.budget(t.budget)}</span></>}
+              {t.story && !chrono && <><span className="m-dot"/><StoryYear title={t}/></>}
+            </div>
+            <ScoreBadges title={t} lead={lead}/>
+            <MatchBadge matchedChars={matchedChars} query={search}/>
+          </div>
+        </button>
+        <window.TitleStatusActions title={t} className="m-lrow-tsa"/>
+      </div>
+    );
+  };
+  const label = (g) => (
+    <div className={`m-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.key} style={g.color?{color:g.color}:null}>
+      {g.story && <Hourglass/>}{g.label}
+    </div>
+  );
+
+  if (collapseSeen) {
+    // All tab: seen titles are compact rows, and each run of two or more
+    // consecutive seen titles (with any headings between them) gets a header
+    // that folds the run into one row. Everything is one flat column of
+    // collapsible wrappers so rows keep their element while they shrink, grow,
+    // join a run or fold away.
+    const entries = [];
+    groups.forEach(g => {
+      if (g.label) entries.push({ kind: 'label', g, key: 'g:' + g.key });
+      g.items.forEach(t => entries.push({ kind: 'row', t, g, key: t.id }));
+    });
+    const rowOf = new Map(entries.filter(e => e.kind === 'row').map(e => [e.t.id, e]));
+    seenRuns(entries.filter(e => e.kind === 'row').map(e => e.t), statusOf).forEach(items => {
+      const r = items.map(t => rowOf.get(t.id));
+      const info = { key: items[0].id, items, shut: folds.isShut(items) };
+      const a = entries.indexOf(r[0]), b = entries.indexOf(r[r.length - 1]);
+      for (let i = a; i <= b; i++) entries[i].run = info;
+      r[0].head = info;
+      // A heading folded inside the run whose group carries on after it is
+      // repeated after the run while the run is folded.
+      const next = entries[b + 1];
+      if (next && next.kind === 'row' && next.g.label && entries.indexOf(entries.find(e => e.kind === 'label' && e.g === next.g)) > a) {
+        next.repeatLabel = info;
+      }
+    });
+    const appear = settled;
+    let rank = 0;
+    return (
+      <div className="m-scrollarea" ref={flipRef}>
+        {header}
+        <div className={`m-flat${settled ? ' settled' : ''}`}>
+          {entries.map(e => {
+            const shut = e.run && e.run.shut;
+            if (e.kind === 'label') return <Fx key={e.key} open={!shut}>{label(e.g)}</Fx>;
+            rank += 1;
+            return (
+              <React.Fragment key={e.key}>
+                {e.repeatLabel && <Fx key={'again:' + e.key} open={e.repeatLabel.shut}>{label(e.g)}</Fx>}
+                {e.head && (
+                  <Fx key={'run:' + e.head.key} appear={appear}>
+                    <SeenRunHead items={e.head.items} shut={e.head.shut} onToggle={() => folds.toggle(e.head.items)}/>
+                  </Fx>
+                )}
+                <Fx open={!shut}>{row(e.t, rank, statusOf(e.t.id) === 'seen')}</Fx>
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   let n = 0;
   return (
     <div className="m-scrollarea" ref={flipRef}>
       {header}
       {groups.map(g => (
         <div className="m-group" key={g.key}>
-          {g.label && <div className={`m-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.key} style={g.color?{color:g.color}:null}>
-            {g.story && <Hourglass/>}{g.label}
-          </div>}
+          {g.label && label(g)}
           <div className="m-list">
             {g.items.map(t => {
               n += 1;
-              const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
-              const seen = statusOf(t.id) === 'seen';
-              return (
-                <div key={t.id} data-flip-id={t.id} data-row-id={t.id} className={`m-lrow${seen ? ' seen' : ''}${currentId === t.id ? ' current' : ''}`}>
-                  <button className="m-lrow-open" onClick={()=>onSelect(t.id)}>
-                    {ranked && <div className="m-rank">{n}</div>}
-                    <div className="m-lthumb"><PosterArt title={t}/></div>
-                    <div className="m-ltext">
-                      <div className="m-ltitle"><Highlight text={MI18N.titleName(t)} query={search}/></div>
-                      <div className="m-lmeta">
-                        {!ranked && <span>{mTypeLabel(t.type)}</span>}
-                        {chrono && <><span className="m-dot"/><span title={mtr('story.releaseYear')}>{t.year}</span></>}
-                        {ranked && <span>{t.year}</span>}
-                        <span className="m-dot"/>
-                        <span style={{color:MPHASE_COLORS[t.phase]}}>{mPhaseLabel(t.phase)}</span>
-                        {t.budget != null && <><span className="m-dot"/><span>{MI18N.budget(t.budget)}</span></>}
-                        {t.story && !chrono && <><span className="m-dot"/><StoryYear title={t}/></>}
-                      </div>
-                      <ScoreBadges title={t} lead={lead}/>
-                      <MatchBadge matchedChars={matchedChars} query={search}/>
-                    </div>
-                  </button>
-                  <window.TitleStatusActions title={t} className="m-lrow-tsa"/>
-                </div>
-              );
+              return <React.Fragment key={t.id}>{row(t, n, false)}</React.Fragment>;
             })}
           </div>
         </div>

@@ -473,6 +473,9 @@ function CollectionProvider({ children }) {
   const value = React.useMemo(() => ({
     states,
     loading,
+    // The saved collection is in (local, or the account's rows), even if
+    // sign-in is still initializing: lists can start animating changes.
+    ready: loadedScope === scope && !(mode === 'account' && remoteLoading),
     mode,
     syncError,
     retrySync,
@@ -486,7 +489,7 @@ function CollectionProvider({ children }) {
     toggleWatchlist,
     clearAll,
     progress,
-  }), [states, loading, mode, syncError, retrySync, loadedScope, scope, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, progress]);
+  }), [states, loading, mode, syncError, retrySync, loadedScope, scope, remoteLoading, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, progress]);
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>;
 }
