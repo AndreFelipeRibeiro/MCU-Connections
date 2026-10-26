@@ -331,6 +331,10 @@
 .char-pill button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Keep the last rows clear of the pill; the spatial hint makes way for it. */
 .m-main.has-pill .m-scrollarea { padding-bottom: 84px; }
+/* Stepping scrolls the current title into view: keep its 2px outline clear of
+   the top edge and the whole row clear of the floating character pill. */
+.m-scrollarea { scroll-padding-top: 10px; }
+.m-main.has-pill .m-scrollarea { scroll-padding-bottom: 84px; }
 .m-main.has-pill .m-ghint { display: none; }
 .m-lrow.current, .m-card.current { box-shadow: 0 0 0 2px var(--cur-color, var(--accent)); border-radius: 12px; }
 /* Close button on every sheet, beside the drag handle. */
