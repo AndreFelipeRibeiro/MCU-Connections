@@ -12,6 +12,24 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 fix — mobile stepping keeps the current title in view
+
+Recorded: 2026-10-26 13:37:21 EDT (-0400).
+
+- On phones, stepping through a character's titles (‹ › on the floating pill)
+  in List or Grid scrolled each title flush with the scroll area's edges: from
+  about the fifth result the current row sat under the pill, and stepping back
+  to the first title clipped its 2px ring at the top. The scroll area now has
+  scroll padding (10px at the top, and 84px at the bottom while the pill shows),
+  so the browser keeps the current title clear of both. CSS only.
+- Verification: headless Chromium, Wong with the IMDb sort, stepping ten times
+  at 390×760 and 375×667 (List) and 390×760 (Grid): the current row went from
+  60px under the pill to at least 24px clear of it, and the first title's ring
+  from 2px above the scroll area to 8px inside it. No console errors; the
+  regression scripts pass. Before/after screenshots reviewed by the user, who
+  approved committing and merging to main.
+- Limits: not checked on a physical phone or in Safari.
+
 ## V3 fix — mobile Spatial grids peek at the edges
 
 Recorded: 2026-10-26 13:00:55 EDT (-0400).

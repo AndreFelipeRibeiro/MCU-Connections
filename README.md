@@ -77,7 +77,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   came from and visits each of their titles. The current title is ringed in the
   character's colour. Desktop shows this in a banner; phones close the details
   sheet and show a floating pill above the sort bar (character, actor, stepper)
-  and always show only that character's titles.
+  and always show only that character's titles; stepping in List or Grid scrolls
+  the current title fully into view, clear of the pill and the top edge.
 - Phone sheets close with the × button, a tap on the handle, or a swipe down.
 - Spatial timelines have labelled rows: Release by phase, Chronological by
   in-story era (Before 2008, 2008–2012, … 2027–2028), so both read as a
