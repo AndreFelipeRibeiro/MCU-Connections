@@ -31,6 +31,17 @@ function isReleased(title, today) {
   return /^\d{4}-\d{2}-\d{2}$/.test(title.release) && title.release <= (today || todayISO());
 }
 
+// Taps on the seen/watchlist buttons, for the celebration toast and confetti
+// (celebrate.jsx). Only user actions are announced, never sync or merges.
+const statusListeners = new Set();
+function onStatusChange(fn) {
+  statusListeners.add(fn);
+  return () => { statusListeners.delete(fn); };
+}
+function emitStatusChange(e) {
+  statusListeners.forEach((fn) => { try { fn(e); } catch (err) { /* one listener must not stop the rest */ } });
+}
+
 // The completion denominator. Computed from release dates every time rather
 // than stored, so it moves on its own as the slate ships.
 function releasedCount() {
@@ -550,17 +561,40 @@ function CollectionIcon({ kind }) {
 // the second header row (mobile) rather than inside Filters. `variant` only
 // changes layout: 'toolbar' keeps every label where there is room; 'compact'
 // labels just All and the active option, leaving the others as icons.
+// Count badge on Seen and Watchlist. Hidden at zero; pops in when it first
+// appears and rolls up or down when the number changes.
+function CountBadge({ n, kind, appeared }) {
+  const prev = React.useRef(n);
+  const dir = n > prev.current ? 'up' : n < prev.current ? 'down' : '';
+  React.useEffect(() => { prev.current = n; }, [n]);
+  return (
+    <span key={n} className={`coll-count ${kind}${appeared ? ' new' : ''}${dir ? ' ' + dir : ''}`} aria-hidden="true">
+      <span className="coll-num">{n}</span>
+    </span>
+  );
+}
+
 function CollectionSwitch({ value, onChange, variant = 'toolbar' }) {
   const { tr } = window.useI18n();
+  const { progress, loading } = useCollection();
+  const counts = { seen: loading ? 0 : progress.seenTotal, watchlist: loading ? 0 : progress.watchlist };
+  // Counts from the previous render, so a badge that just appeared can pop in
+  // (but not on first load).
+  const last = React.useRef(null);
+  const before = last.current;
+  React.useEffect(() => { last.current = loading ? null : counts; });
   return (
     <div className={`coll-switch coll-${variant}`} role="group" aria-label={tr('collection.groupAria')}>
       {COLLECTION_OPTIONS.map(([v]) => {
         const l = tr('collection.' + v);
+        const n = counts[v] || 0;
+        const label = n ? tr('collection.countAria', { label: l, n }) : l;
         return (
         <button key={v} className={value === v ? 'on' : ''} aria-pressed={value === v}
-          aria-label={l} title={l} onClick={() => onChange(v)}>
+          aria-label={label} title={label} onClick={() => onChange(v)}>
           {v !== 'all' && <span className="coll-ic"><CollectionIcon kind={v}/></span>}
           <span className="coll-label">{l}</span>
+          {n > 0 && <CountBadge n={n} kind={v} appeared={!!before && !before[v]}/>}
         </button>
         );
       })}
@@ -573,7 +607,9 @@ function CollectionSwitch({ value, onChange, variant = 'toolbar' }) {
 // `variant` is 'overlay' (icon-only, sits on a poster) or 'inline' (icon plus
 // text label, for drawers and sheets where there is room).
 function TitleStatusActions({ title, variant, className }) {
-  const { statusOf, pendingOf, errorOf, toggleSeen, toggleWatchlist, loading } = useCollection();
+  const { states, statusOf, pendingOf, errorOf, toggleSeen, toggleWatchlist, loading } = useCollection();
+  // The button just switched on pops (CSS), until its animation ends.
+  const [pop, setPop] = React.useState(null);
   const status = statusOf(title.id);
   const seen = status === 'seen';
   const listed = status === 'watchlist';
@@ -591,10 +627,16 @@ function TitleStatusActions({ title, variant, className }) {
   // both have to be swallowed. Touch is stopped too, because the spatial
   // viewport begins a pan from touchstart.
   const swallow = (e) => { e.stopPropagation(); };
-  const act = (fn) => (e) => {
+  const act = (fn, kind) => (e) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!loading) fn(title.id);
+    if (loading) return;
+    const from = statusOf(title.id);
+    const on = kind === 'seen' ? 'seen' : 'watchlist';
+    const to = from === on ? 'none' : on;
+    fn(title.id);
+    setPop(to === 'none' ? null : kind);
+    emitStatusChange({ title, from, to, states });
   };
 
   const cls = [
@@ -611,28 +653,30 @@ function TitleStatusActions({ title, variant, className }) {
          title={error ? window.MCU_I18N.tr('status.notSaved', { error }) : undefined}>
       <button
         type="button"
-        className={`tsa-btn seen${seen ? ' on' : ''}`}
+        className={`tsa-btn seen${seen ? ' on' : ''}${pop === 'seen' ? ' pop' : ''}`}
+        onAnimationEnd={(e) => { if (e.animationName === 'tsa-ring') setPop(null); }}
         disabled={loading}
         aria-busy={loading || busy}
         aria-pressed={loading ? undefined : seen}
         aria-label={window.MCU_I18N.tr(loading ? 'status.loadingSeen' : seen ? 'status.unmarkSeenAria' : 'status.markSeenAria', { title: window.MCU_I18N.titleName(title) })}
         title={window.MCU_I18N.tr(seen ? 'status.markedSeen' : 'status.markSeenTip')}
         onMouseDown={swallow}
-        onClick={act(toggleSeen)}
+        onClick={act(toggleSeen, 'seen')}
       >
         <CheckIcon/>
         {inline && <span className="tsa-lab">{window.MCU_I18N.tr(seen ? 'status.seen' : 'status.markSeen')}</span>}
       </button>
       <button
         type="button"
-        className={`tsa-btn watch${listed ? ' on' : ''}`}
+        className={`tsa-btn watch${listed ? ' on' : ''}${pop === 'watch' ? ' pop' : ''}`}
+        onAnimationEnd={(e) => { if (e.animationName === 'tsa-ring') setPop(null); }}
         disabled={loading}
         aria-busy={loading || busy}
         aria-pressed={loading ? undefined : listed}
         aria-label={window.MCU_I18N.tr(loading ? 'status.loadingWatch' : listed ? 'status.removeWatchAria' : 'status.addWatchAria', { title: window.MCU_I18N.titleName(title) })}
         title={window.MCU_I18N.tr(listed ? 'status.onWatchTip' : 'status.addWatchTip')}
         onMouseDown={swallow}
-        onClick={act(toggleWatchlist)}
+        onClick={act(toggleWatchlist, 'watch')}
       >
         <BookmarkIcon filled={listed}/>
         {inline && <span className="tsa-lab">{window.MCU_I18N.tr(listed ? 'status.onWatch' : 'status.watchlist')}</span>}
@@ -665,5 +709,9 @@ Object.assign(window, {
   CollectionSwitch,
   releasedCount,
   todayISO,
+  onStatusChange,
+  CheckIcon,
+  BookmarkIcon,
+  MCU_isReleased: (title) => isReleased(title),
   TSA_MIN_SCALE,
 });

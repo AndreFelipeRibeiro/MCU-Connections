@@ -79,6 +79,10 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   sheet and show a floating pill above the sort bar (character, actor, stepper)
   and always show only that character's titles.
 - Phone sheets close with the × button, a tap on the handle, or a swipe down.
+- Marking a title seen or adding it to the watchlist pops the button and shows a
+  toast with Undo; completing every released title in a phase (or the whole MCU)
+  adds confetti. Seen and Watchlist show a count badge (hidden at zero) that
+  animates as it changes. Motion is skipped with reduced motion.
 - About MCU Connections (account menu footer on desktop, account sheet on phones,
   for guests too): what the app is, ways to explore it, and credits. A future
   Settings entry will join it there. First-time visitors see it once as a
@@ -282,6 +286,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `tracking.jsx` | Guest/account state, merge, request deadlines, queues, progress, status actions |
 | `account.jsx` | Google auth/session state, account UI, sign-out and degraded-mode recovery |
 | `about.jsx` | About dialog (desktop) and sheet (phones) with credits |
+| `celebrate.jsx` | Status toast with Undo and milestone confetti |
 | `app.jsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
 | `mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
