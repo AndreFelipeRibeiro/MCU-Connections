@@ -12,6 +12,37 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — picking a character from search opens the character view
+
+Recorded: 2026-10-26 19:07:38 EDT (-0400).
+
+- Picking a character in the search suggestions now opens the character view,
+  as if pinned from a cast list: photo, Their titles / All titles (desktop) and
+  the stepper. The search box clears. An actor suggestion does the same when the
+  actor plays one character (variants included). Robert Downey Jr. (Tony Stark
+  and Doom) stays a text search. Title suggestions and free-text search are
+  unchanged. Picking a new character while another is pinned switches to it.
+  After a keyboard pick on desktop, focus moves to the stepper.
+- Phone pill: before the first step it shows the number of titles (stacked "13
+  / titles") instead of "–/13"; new `highlight.titlesWord` string in English and
+  Brazilian Portuguese.
+- Desktop banner: Their titles / All titles is now as tall as the stepper
+  buttons (34px).
+- Verification: headless Chromium at 1440×900 and 320/360/390px phones (English
+  and Portuguese):
+  - Peter Parker (Tom Holland) shows 13 titles, then › gives 1 of 13; Benedict
+    Wong shows 9 titles; Wanda by keyboard pins and focuses the stepper;
+    Robert Downey Jr. stays a text search; Iron Man 3 opens its details.
+  - Pill counts "9 titles", "13 títulos", "1 title", then "1/9" after ›.
+  - The banner switch and stepper buttons are both 34px and aligned.
+  - No console errors; regression scripts pass.
+  - Screenshots reviewed by the user, who approved committing and merging to
+    main.
+- Limits: Peter Parker (Raimi) and (Webb) are variants of Peter Parker, so
+  picking them shows all of Peter Parker's titles while the suggestion says "1
+  title" (same as pinning them from a cast list). At 320px long names still
+  truncate in the pill. Not checked on a physical phone.
+
 ## V3 feature — folded seen titles on phones
 
 Recorded: 2026-10-26 18:21:23 EDT (-0400).

@@ -156,10 +156,11 @@ body {
 .cb-who { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
 .cb-who b { font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cb-sub { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cb-mode { flex: 0 0 auto; }
-.cb-mode button { white-space: nowrap; }
+/* As tall as the stepper buttons beside it, with room for the text. */
+.cb-mode { flex: 0 0 auto; box-sizing: border-box; height: 34px; padding: 3px; }
+.cb-mode button { white-space: nowrap; padding: 0 13px; font-size: 13px; }
 .cb-step { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
-.cb-step button, .cb-close { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;
+.cb-step button, .cb-close { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 0;
   border: 1px solid var(--border-strong); border-radius: 8px; background: transparent; color: var(--text-dim); font: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
 .cb-step button:hover, .cb-close:hover { color: var(--text); border-color: var(--text-dim); }
 .cb-step button:disabled { opacity: .35; cursor: default; }
