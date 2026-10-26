@@ -46,8 +46,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Filters offers the two full order labels for the current mode without repeating
   the sort navigation; mobile A–Z is now a main navigation tab. Grid, List and
   Spatial use the same order; unrated titles stay last for either rating direction.
-  Changing the sort mode or order animates mobile Grid/List: titles glide to their
-  new slots, echoing Spatial (off with reduced motion).
+  Changing the sort mode, order, All / Unseen / Seen / Watchlist or the phase,
+  films/series and budget filters animates mobile Grid/List and the desktop List:
+  titles glide to their new slots, echoing Spatial. On phones, changes made in the
+  filter sheet play when the sheet closes.
+  Switching between List and Grid on phones moves each title from its old spot
+  while the old layout fades (all off with reduced motion).
+- Menus in the desktop toolbar (language, order, filters, account, search
+  suggestions) open over the details drawer; the zoom control moves left of it.
 - Phase, film/series and budget filters. All / Unseen / Seen / Watchlist is an
   always-visible switch (desktop toolbar; mobile second header row, beside the
   List/Grid/Spatial menu), with a dashed-ring, check and bookmark icon for each state.

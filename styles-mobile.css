@@ -3,7 +3,7 @@
 .app.touch .toolbar, .app.touch .drawer, .app.touch .zoom-readout, .app.touch .line-tooltip { display: none; }
 
 /* APP BAR */
-.m-appbar { flex: 0 0 auto; padding: 10px 14px 11px; border-bottom: 1px solid var(--border); background: rgba(10,12,20,.94); backdrop-filter: blur(12px); display: flex; flex-direction: column; gap: 10px; z-index: 30; }
+.m-appbar { flex: 0 0 auto; padding: 10px 14px 11px; border-bottom: 1px solid var(--border); background: rgba(10,12,20,.94); backdrop-filter: blur(12px); display: flex; flex-direction: column; gap: 10px; z-index: 50; }
 .m-appbar-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 /* Let the brand shrink so the language menu and avatar always fit. */
 .m-brandrow { flex: 1 1 auto; min-width: 0; }

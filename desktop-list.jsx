@@ -61,7 +61,7 @@ function DlSortHeader({ col, label, sort, sortDir, setSort, setSortDir }) {
   );
 }
 
-function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, header, empty }) {
+function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, header, empty, orderKey }) {
   const I = window.MCU_I18N;
   const tr = I.tr;
   const { statusOf } = window.useCollection();
@@ -74,9 +74,12 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
     imdb: 'IMDb', rt: 'RT', cast: tr('list.col.cast'), actions: '',
   };
   const typeLabel = t => tr(t.type === 'film' ? 'type.film.one' : 'type.series.one');
+  // Rows glide to their new places when the sort, order or collection filter
+  // changes (same animation as the phone List and Grid).
+  const flipRef = window.useReorderAnimation(orderKey, { inside: true });
   let n = 0;
   return (
-    <div className={`dlist${ranked ? ' ranked' : ''}`}>
+    <div className={`dlist${ranked ? ' ranked' : ''}`} ref={flipRef}>
       {header}
       {!titles.length ? (
         <div className="dl-empty">
@@ -93,7 +96,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
           </div>
           {groups.map(g => (
             <div key={g.id} role="rowgroup">
-              {g.label && <div className={`dl-glabel${g.story ? ' story' : ''}`} style={g.color ? { color: g.color } : null}>{g.label}</div>}
+              {g.label && <div className={`dl-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>{g.label}</div>}
               {g.items.map(t => {
                 n += 1;
                 const seen = statusOf(t.id) === 'seen';
@@ -102,7 +105,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                 const cast = [...matched, ...t.cast.filter(c => !matched.includes(c))];
                 const dim = activeChar && !t.cast.includes(activeChar);
                 return (
-                  <div key={t.id} role="row" data-row-id={t.id} onClick={() => onOpen(t.id)}
+                  <div key={t.id} role="row" data-row-id={t.id} data-flip-id={t.id} onClick={() => onOpen(t.id)}
                     className={`dl-row${seen ? ' seen' : ''}${openId === t.id ? ' on' : ''}${dim ? ' dim' : ''}`}>
                     {ranked && <span className="c-rank" role="cell">{n}</span>}
                     <span className="c-poster" role="cell"><span className="dl-thumb"><PosterArt title={t}/></span></span>

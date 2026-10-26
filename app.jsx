@@ -1344,6 +1344,9 @@ function App() {
   };
 
   // Collection has its own switch in the header, so the Filters badge skips it.
+  // Grid and List animate when any of these change: sort, order, collection,
+  // phase, films/series and budget. Search is left out so typing stays calm.
+  const flipKey = [sort, sortDir, collectionFilter, phaseFilter, typeFilter, budgetFilter].join(':');
   const filterCount = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
   // Spatial keeps every card on screen (dimmed), so it counts `filtered`; the
   // flat views actually drop non-matching rows and count what they render.
@@ -1632,9 +1635,13 @@ function App() {
       <div className={`app touch ${device}`}>
         <window.MobileTopBar
           device={device}
-          viewMode={viewMode} setViewMode={(v) => { setViewMode(v); if (v !== 'spatial') setSelectedId(null); }}
+          viewMode={viewMode} setViewMode={(v) => {
+            if (v !== viewMode && v !== 'spatial' && viewMode !== 'spatial') window.captureViewFlip();
+            setViewMode(v);
+            if (v !== 'spatial') setSelectedId(null);
+          }}
           search={search} setSearch={setSearch} onPickTitle={pickTitle}
-          onOpenFilters={() => setSheet('filters')}
+          onOpenFilters={() => { if (viewMode !== 'spatial') window.captureFlip(); setSheet('filters'); }}
           filterCount={filterCount}
           sort={sort} sortDir={sortDir} setSortDir={setSortDir}
           onOpenAccount={() => setSheet('account')}
@@ -1642,8 +1649,8 @@ function App() {
         />
         <div className={`m-main${charPill ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
-          {viewMode === 'grid' && <window.MobileGrid header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
-          {viewMode === 'list' && <window.MobileList header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={sort + ':' + sortDir}/>}
+          {viewMode === 'grid' && <window.MobileGrid header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {viewMode === 'list' && <window.MobileList header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
@@ -1662,7 +1669,7 @@ function App() {
             sortDir={sortDir} setSortDir={setSortDir}
             showing={mobileShowing}
             onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); }}
-            onClose={() => setSheet(null)}
+            onClose={() => { setSheet(null); requestAnimationFrame(() => window.playPendingFlip()); }}
           />
         )}
         {sheet === 'account' && (
@@ -1710,7 +1717,7 @@ function App() {
         ? <window.DesktopList titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar}
             onOpen={(id) => setDrawerId(drawerId === id ? null : id)}
-            header={contextSummary('float', true)} empty={emptyCopy}/>
+            header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey}/>
         : canvasEl}
 
       {hoveredConnection && (
