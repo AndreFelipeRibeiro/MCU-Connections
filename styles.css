@@ -906,3 +906,15 @@ body {
   .coll-count.new, .coll-count.up, .coll-count.down, .coll-count .coll-num, .tsa-btn.pop, .tsa-btn.pop::after { animation: none; }
   .mcu-toast { animation: none; }
 }
+
+/* Row labels on the Release (phase) and Chrono (era) timelines. */
+.band-label { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--text-muted); }
+.band-label.phase { color: var(--band); opacity: .85; }
+/* Connection labels draw above every card (cards go up to z-index 30). */
+.connection-labels { z-index: 35; }
+.band-label { text-shadow: 0 0 6px var(--bg), 0 0 2px var(--bg); }
+/* Line tooltip: the two titles the hovered line joins. */
+.tt-titles { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text); max-width: 280px; }
+.tt-titles span { color: var(--text-muted); font-weight: 400; }

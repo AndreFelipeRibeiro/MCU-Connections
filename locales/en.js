@@ -68,6 +68,7 @@ window.MCU_LOCALES.en = {
     'type.series.one': 'Series',
 
     'phase.label': 'Phase {n}',
+    'era.before': 'Before {year}',
     'phase.short': 'PH {n}',
 
     'filters.title': 'Filters',
