@@ -331,7 +331,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
 const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
-function Toolbar({ onPickTitle, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
+function Toolbar({ onAbout, onPickTitle, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   // Collection has its own always-visible switch, so it is not counted here.
@@ -417,7 +417,7 @@ function Toolbar({ onPickTitle, desktopView, setDesktopView, sort, setSort, sort
         </div>
         <div className="tb-end">
           <window.LanguageMenu/>
-          <window.AccountButton onPickCollection={setCollectionFilter}/>
+          <window.AccountButton onPickCollection={setCollectionFilter} onAbout={onAbout}/>
         </div>
       </div>
       <div className="tb-row tb-sort-row">
@@ -701,6 +701,10 @@ function App() {
   }, [viewMode, desktopView, sort, sortDir]);
   const [drawerId, setDrawerId] = useState(null);
   const [sheet, setSheet] = useState(null);
+  // Desktop About dialog (phones use the 'about' sheet).
+  const [aboutOpen, setAboutOpen] = useState(false);
+  // First visit: the same About content as a one-time welcome (about.jsx).
+  const [welcome, setWelcome] = useState(() => !!window.MCU_WELCOME);
   const [selectedId, setSelectedId] = useState(null);
   const [hoveredTitle, setHoveredTitle] = useState(null);
   const [hoveredCharacter, setHoveredCharacter] = useState(null);
@@ -1676,8 +1680,11 @@ function App() {
           <window.AccountSheet
             onClose={() => setSheet(null)}
             onPickCollection={setCollectionFilter}
+            onAbout={() => setSheet('about')}
           />
         )}
+        {sheet === 'about' && <window.AboutSheet onClose={() => setSheet(null)}/>}
+        {welcome && !sheet && !drawerTitle && <window.AboutSheet welcome onClose={() => setWelcome(false)}/>}
         {drawerTitle && (
           <window.CastSheet
             title={drawerTitle} search={search}
@@ -1701,6 +1708,7 @@ function App() {
   return (
     <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
       <Toolbar
+        onAbout={() => setAboutOpen(true)}
         onPickTitle={pickTitle}
         desktopView={desktopView} setDesktopView={changeDesktopView}
         sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
@@ -1744,6 +1752,8 @@ function App() {
         activeChar={activeChar}
         search={search}
       />
+      {(aboutOpen || welcome) && <window.AboutDialog welcome={welcome && !aboutOpen}
+        onClose={() => { setAboutOpen(false); setWelcome(false); }}/>}
     </div>
   );
 }

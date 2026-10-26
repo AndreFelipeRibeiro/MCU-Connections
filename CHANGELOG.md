@@ -12,6 +12,38 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — About and first-visit welcome
+
+Recorded: 2026-10-26 10:02:00 EDT (-0400).
+
+- New `about.jsx`: About MCU Connections, opened from a footer link in the account
+  menu (desktop) and account sheet (phones), for guests and signed-in users. The
+  footer is the planned home for a future Settings entry. Desktop shows a centred
+  dialog (focus kept inside; Escape, × or a click outside closes it; focus returns
+  to the account button); phones use the bottom sheet.
+- Content (English and Brazilian Portuguese): a short description, four ways to
+  explore in a 2 × 2 grid (one column on narrow screens) and credits: TMDB's
+  notice for posters and photos, IMDb and Rotten Tomatoes ratings, synopses
+  written for the site, and a fan-project disclaimer.
+- First-time visitors see the same content once as a welcome with a "Start
+  exploring" button. It is decided when the page loads, before anything is saved:
+  browsers with saved preferences, language, collection or a sign-in count as
+  returning and never see it; the result is kept in `mcu.welcome.v1`. A private
+  window counts as a first visit and `?welcome` forces it for testing. Not shown
+  when storage is unavailable.
+- Phone sheets and the About dialog now focus the sheet/dialog itself on open, so
+  no focus ring appears on a control the visitor didn't choose.
+- Verification: headless Chromium. Desktop en/pt-BR: footer link, dialog focus,
+  Tab/Shift+Tab containment, Escape/scrim close with focus return, no scrolling at
+  1440x900. Phones 390 (pt-BR) and 320 (en): About sheet without horizontal
+  overflow. Welcome: shown on a first visit, gone after Start exploring and
+  reload, forced by `?welcome`, never for a returning visitor, not shown with
+  storage blocked. Fit, context, panel, language, List, suggestions, layering,
+  animation and camera scripts pass. The user reviewed the screenshots and
+  approved committing and merging to main.
+- Limits: TMDB's terms also ask for its logo in this section; only the notice
+  text is shown for now. The welcome was not checked on a physical phone.
+
 ## V3 fix and improvement — Menu layering and filter animations
 
 Recorded: 2026-10-25 21:59:44 EDT (-0400).

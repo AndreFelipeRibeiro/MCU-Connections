@@ -799,3 +799,52 @@ body {
 /* Leaving rows of the List reorder animation sit in a layer inside the list. */
 .dlist { position: relative; }
 .dlist > .m-flip-layer { z-index: 4; }
+
+/* Account menu footer: app-level links (About now, Settings later). */
+.acct-foot { display: flex; gap: 6px; padding-top: 10px; margin-top: 2px; border-top: 1px solid var(--border); }
+.acct-foot-link { display: inline-flex; align-items: center; gap: 7px; padding: 4px 2px; border: 0; background: none; color: var(--text-dim);
+  font: inherit; font-size: 12px; cursor: pointer; }
+.acct-foot-link:hover { color: var(--text); }
+.acct-foot-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* About (about.jsx): a centred dialog on desktop, a sheet on phones. */
+.about-scrim { position: fixed; inset: 0; z-index: 110; background: rgba(5,7,12,.7); animation: about-fade 180ms ease; }
+.about-dialog { position: fixed; z-index: 111; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 48px)); max-height: calc(100vh - 64px); overflow-y: auto; box-sizing: border-box;
+  padding: 28px 30px 26px; background: var(--bg-2); border: 1px solid var(--border-strong); border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6); animation: about-rise 220ms cubic-bezier(.2,.8,.2,1); }
+.about-dialog:focus { outline: none; }
+.about-x { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border: 1px solid var(--border); border-radius: 50%; background: rgba(255,255,255,.04); color: var(--text-dim); font: inherit; font-size: 17px; cursor: pointer; }
+.about-x:hover { color: var(--text); border-color: var(--border-strong); }
+.about-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@keyframes about-fade { from { opacity: 0; } }
+@keyframes about-rise { from { opacity: 0; transform: translate(-50%, calc(-50% + 12px)); } }
+@media (prefers-reduced-motion: reduce) { .about-scrim, .about-dialog { animation: none; } }
+
+.about { color: var(--text); }
+.about-head { display: flex; align-items: center; gap: 14px; padding-right: 40px; }
+.about-head .brand-mark { flex: 0 0 auto; }
+.about-title { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.about-tag { margin-top: 3px; font-size: 12.5px; color: var(--text-muted); }
+.about-lead { margin: 18px 0 0; font-size: 14px; line-height: 1.6; color: var(--text-dim); text-wrap: pretty; }
+.about-h { margin: 22px 0 10px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--text-muted); }
+/* Ways to explore: a 2 x 2 grid of tiles; one column on narrow screens. */
+.about-ways { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.about-ways li { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; padding: 14px;
+  border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,.02); }
+@media (max-width: 520px) {
+  .about-ways { grid-template-columns: 1fr; }
+  .about-ways li { flex-direction: row; gap: 12px; padding: 0; border: 0; background: none; }
+}
+.about-ic { flex: 0 0 34px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); }
+.about-ways b { display: block; font-size: 13.5px; font-weight: 600; }
+.about-ways li span span { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.5; color: var(--text-dim); }
+.about-credits p { margin: 0 0 8px; font-size: 11.5px; line-height: 1.55; color: var(--text-muted); }
+.about-cta-row { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin-top: 20px; }
+.about-cta { min-height: 44px; border: 0; border-radius: 10px; background: #ffffff; color: #12141c; font: inherit;
+  font-size: 14px; font-weight: 600; cursor: pointer; }
+.about-cta:hover { background: #ececec; }
+.about-cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
