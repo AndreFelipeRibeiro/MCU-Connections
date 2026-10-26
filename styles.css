@@ -143,18 +143,29 @@ body {
 
 /* CHAR BANNER */
 .char-banner {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 28px; background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 22px; background: var(--surface);
+  border-bottom: 1px solid var(--border); box-shadow: inset 3px 0 0 var(--char-color, var(--accent));
   font-size: 13px;
 }
-.banner-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 12px currentColor; }
-.char-banner button {
-  margin-left: auto; background: transparent; border: 1px solid var(--border-strong);
-  color: var(--text-dim); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px;
-  font-family: inherit;
-}
-.char-banner button:hover { color: var(--text); border-color: var(--text-dim); }
+.cb-photo { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; overflow: hidden; display: inline-flex; align-items: center; justify-content: center;
+  color: #0a0c14; font-size: 12px; font-weight: 700; box-shadow: 0 0 0 2px var(--char-color, var(--accent)); }
+.cb-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cb-who { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
+.cb-who b { font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cb-sub { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cb-mode { flex: 0 0 auto; }
+.cb-mode button { white-space: nowrap; }
+.cb-step { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.cb-step button, .cb-close { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  border: 1px solid var(--border-strong); border-radius: 8px; background: transparent; color: var(--text-dim); font: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
+.cb-step button:hover, .cb-close:hover { color: var(--text); border-color: var(--text-dim); }
+.cb-step button:disabled { opacity: .35; cursor: default; }
+.cb-step button:focus-visible, .cb-close:focus-visible, .cb-mode button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cb-pos { min-width: 64px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-dim); white-space: nowrap; }
+.cb-close { font-size: 16px; }
+/* Keep the banner's controls clear of the open details drawer (desktop). */
+.app:not(.touch).drawer-open .char-banner { padding-right: 402px; }
 
 /* CARDS — absolutely positioned in canvas */
 .card {
@@ -758,3 +769,25 @@ body {
 .ss-main b { color: var(--text); font-weight: 700; }
 .ss-sub { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ss-count { flex: 0 0 auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); }
+
+/* Synopsis in the details drawer and sheet (Synopsis in mobile.jsx). */
+.synopsis p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text-dim); text-wrap: pretty;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.synopsis p.open { display: block; -webkit-line-clamp: unset; overflow: visible; }
+.synopsis-more { margin-top: 4px; padding: 2px 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: 12px; cursor: pointer; }
+.synopsis-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.drawer-synopsis { margin-top: 10px; }
+.m-synopsis { margin: 2px 0 14px; }
+
+/* The title the highlight stepper is on: a ring in the character's colour and
+   a slight lift; the pinned character's other titles step back a little.
+   After .card.highlighted so it wins. */
+.card.current {
+  border-color: var(--cur-color, var(--accent));
+  box-shadow: 0 0 0 3px var(--cur-color, var(--accent)),
+              0 0 44px 6px color-mix(in oklab, var(--cur-color, var(--accent)) 50%, transparent),
+              0 24px 50px -8px rgba(0,0,0,.65);
+  --lift: 1.08; z-index: 28; filter: none;
+}
+.canvas:has(.card.current) .card.highlighted:not(.current):not(:hover) { filter: brightness(.72) saturate(.8); box-shadow: none; border-color: var(--border); }
+@media (prefers-reduced-motion: reduce) { .card.current { --lift: 1; } }

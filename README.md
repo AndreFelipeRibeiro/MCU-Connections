@@ -60,6 +60,19 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   in-story years, IMDb, RT) that stay in step with the sort row; a row opens the
   cast drawer, which sits below the toolbar. Columns drop as the List narrows.
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
+- Details show a short, spoiler-light synopsis under the title (three lines, then
+  See more), written for this app in each language.
+- Selecting a title in Spatial arranges the titles that share its characters in
+  rings around it, closest when they share the most.
+- Picking a character in the details highlights them: their titles are laid out
+  in the current order (the rings belong to a selected title), with a Their
+  titles / All titles switch (only their titles, or everything with the rest
+  dimmed) and a stepper (‹ ›, or the arrow keys) that starts on the title you
+  came from and visits each of their titles. The current title is ringed in the
+  character's colour. Desktop shows this in a banner; phones close the details
+  sheet and show a floating pill above the sort bar (character, actor, stepper)
+  and always show only that character's titles.
+- Phone sheets close with the × button, a tap on the handle, or a swipe down.
 - Search suggestions: from two letters, a list under the search box previews
   matching actors, characters and titles (names in every language). Picking a
   person searches for them; picking a title also opens its details. Arrow keys,
@@ -219,7 +232,8 @@ are reported once in the console on localhost). Strings use `{placeholders}`;
 `{ one, other }` objects are plural forms chosen with `Intl.PluralRules`.
 Besides interface text, a locale may provide `titles` (official local release
 names by title id), `titleAliases` (other names people search for),
-`characters`, `storyWords` and `storyNotes`.
+`characters`, `storyWords`, `storyNotes` and `synopses` (English is the
+fallback for any title a language leaves out).
 
 To add a language: copy `locales/pt-BR.js` to `locales/<code>.js`, set its
 `meta` (name in that language, short code, `htmlLang`, matching browser

@@ -13,7 +13,9 @@ a key to locales/en.js (the complete base), translate it in every other
 locales/*.js file, and read it with `tr()` (app.jsx), `mtr()` (mobile.jsx) or
 `window.MCU_I18N.tr()`. Show titles and character names through
 `MCU_I18N.titleName()` / `charName()`; search should keep matching every
-language's names. New catalog titles need an official local title per locale.
+language's names. New catalog titles need an official local title and a short,
+spoiler-light synopsis (`synopses`) per locale; write synopses rather than
+copying studio or TMDB text.
 
 ## Change records and attribution
 
