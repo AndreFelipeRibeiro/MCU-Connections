@@ -20,6 +20,8 @@ const typeLabel = (type) => tr(type === 'film' ? 'type.film.one' : 'type.series.
 
 const CARD_W = 170;
 const CARD_H = 270;
+// Space between the two titles of the pair view (room for the labels).
+const PAIR_GAP = 380;
 
 // Variant handling: a character may declare `prime`, pointing at the "through-line"
 // identity it is a variant of (He Who Remains -> kang, Captain Carter -> peggy).
@@ -137,9 +139,30 @@ function ContextSummary({ variant, inList, showing, total, filters: f }) {
 // a top edge and neighbours are a constant distance apart (a per-card random
 // offset used to make gaps uneven and could make release neighbours overlap).
 // Release/chronology flow left-to-right in phase bands; the others use rows.
+// In-story eras for the Chrono rows. A title's era comes from the first year of
+// its story; titles without one (Multiverse, outside time, unannounced) stay in
+// the era of the title before them in story order, so rows only ever advance.
+const ERA_STARTS = [2008, 2013, 2016, 2019, 2025, 2027];
+function storyYear(t) {
+  const m = /(\d{3,4})/.exec(t.story || '');
+  if (!m) return null;
+  return /BC/.test(t.story) ? -Number(m[1]) : Number(m[1]);
+}
+function chronoEras(titles) {
+  const out = {};
+  let era = 0;
+  titles.slice().sort((a, b) => a.chronOrder - b.chronOrder).forEach(t => {
+    const y = storyYear(t);
+    if (y !== null) era = ERA_STARTS.filter(s => y >= s).length;
+    out[t.id] = era;
+  });
+  return out;
+}
+
 function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   const ordered = sortTitles(titles, sort, dir);
   const positions = {};
+  let layoutBands = [];
   const colW = CARD_W + 60;
   const rowH = CARD_H + 70;
 
@@ -174,18 +197,26 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
       };
     });
   } else {
-    // Release or chronology flows left-to-right in the selected direction.
-    // Place in timeline rows; phase determines vertical band
-    const phaseRow = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5 };
-    // To avoid horizontal collisions, count along x and bump y when too close
-    const lastXByRow = {0:-Infinity,1:-Infinity,2:-Infinity,3:-Infinity,4:-Infinity,5:-Infinity};
+    // Release or chronology flows left-to-right in the selected direction, one
+    // row per band: phases for Release, in-story eras for Chrono. Story order
+    // rises through the eras the way release order rises through the phases,
+    // so both read as a staircase (phase rows made Chrono zigzag, since e.g.
+    // Captain Marvel is Phase 3 but set in 1995).
+    const chrono = sort === 'chrono';
+    const eraOf = chrono ? chronoEras(titles) : null;
+    const bands = {};
     ordered.forEach((t, i) => {
-      const baseX = 80 + i * (CARD_W * 1.15);
-      const row = phaseRow[t.phase];
+      const x = 80 + i * (CARD_W * 1.15);
+      const row = chrono ? eraOf[t.id] : t.phase - 1;
       const y = 80 + row * (rowH * 1.25);
-      positions[t.id] = { x: baseX, y };
-      lastXByRow[row] = baseX;
+      positions[t.id] = { x, y };
+      const b = bands[row] || (bands[row] = { row, x, y, years: [] });
+      if (x < b.x) b.x = x;
+      if (chrono) { const yr = storyYear(t); if (yr !== null) b.years.push(yr); } else b.phase = t.phase;
     });
+    layoutBands = Object.values(bands).map(b => chrono
+      ? { x: b.x, y: b.y, era: b.row, from: b.years.length ? Math.min(...b.years) : null, to: b.years.length ? Math.max(...b.years) : null }
+      : { x: b.x, y: b.y, phase: b.phase });
   }
 
   // Compute canvas bounds
@@ -194,7 +225,7 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
     if (p.x + CARD_W > maxX) maxX = p.x + CARD_W;
     if (p.y + CARD_H > maxY) maxY = p.y + CARD_H;
   });
-  return { positions, width: maxX + 120, height: maxY + 120 };
+  return { positions, bands: layoutBands, width: maxX + 120, height: maxY + 120 };
 }
 
 function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
@@ -207,6 +238,7 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
   const showActions = (scale || 1) >= window.TSA_MIN_SCALE;
   return (
     <div
+      data-id={title.id}
       className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}${isCurrent ? ' current' : ''}`}
       style={{
         '--phase-color': phaseColor,
@@ -302,6 +334,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
           return (
             <button
               key={ch}
+              data-char={ch}
               style={{ '--match-color': c.color }}
               className={`cast-row ${isActive ? 'active' : ''}`}
               onClick={() => onCharacterClick(ch)}
@@ -445,7 +478,20 @@ function Toolbar({ onAbout, onPickTitle, desktopView, setDesktopView, sort, setS
 }
 
 // Connection layer with bolder lines and improved bezier control
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, onHoverConnection, hoveredConnection, selectedId, focusId }) {
+// Label pill width from the rendered name (11px Inter, dot + 20px on the
+// left, 12px on the right), so short and long names get the same padding.
+let labelMeasure = null;
+function labelPillWidth(text) {
+  try {
+    if (!labelMeasure) labelMeasure = document.createElement('canvas').getContext('2d');
+    labelMeasure.font = '500 11px Inter, sans-serif';
+    return Math.ceil(labelMeasure.measureText(text).width) + 32;
+  } catch (e) {
+    return Math.ceil(text.length * 6.6) + 32;
+  }
+}
+
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds }) {
   // Group appearances by prime identity so variants share one continuous thread,
   // but remember which specific variant appeared in each title.
   // One appearance per (prime, title): several variants of the same identity can share a
@@ -478,38 +524,67 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
   });
   const connections = Object.values(grouped);
 
-  function curve(p1, p2, offset) {
-    const x1 = p1.x + CARD_W/2;
-    const y1 = p1.y + CARD_H/2;
-    const x2 = p2.x + CARD_W/2;
-    const y2 = p2.y + CARD_H/2;
+  // Control point of a connection's curve. Titles on the same row (neighbours
+  // on a timeline or grid) would be joined by a line hidden behind the cards,
+  // so those arc below the row instead, one lane per character (`lane`).
+  // The pair view keeps its two cards apart with nothing between, so it uses
+  // the normal gentle curve.
+  function control(p1, p2, offset, lane, straight) {
+    const x1 = p1.x + CARD_W/2, y1 = p1.y + CARD_H/2;
+    const x2 = p2.x + CARD_W/2, y2 = p2.y + CARD_H/2;
     const dx = x2 - x1, dy = y2 - y1;
+    if (!straight && Math.abs(dy) < CARD_H * 0.5) {
+      const depth = CARD_H / 2 + 34 + lane * 9 + Math.min(70, Math.abs(dx) * 0.04);
+      return { x1, y1, x2, y2, cx: (x1 + x2) / 2, cy: Math.max(y1, y2) + depth * 2 };
+    }
     const dist = Math.hypot(dx, dy) || 1;
-    // Perpendicular offset
     const nx = -dy/dist, ny = dx/dist;
-    // Sag based on distance
     const sag = Math.min(120, 30 + dist * 0.15);
-    const mx = (x1+x2)/2 + nx * (sag*0.6 + offset);
-    const my = (y1+y2)/2 + ny * (sag*0.6 + offset);
-    return `M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`;
+    return { x1, y1, x2, y2, cx: (x1+x2)/2 + nx * (sag*0.6 + offset), cy: (y1+y2)/2 + ny * (sag*0.6 + offset) };
+  }
+  function curve(p1, p2, offset, lane, straight) {
+    const c = control(p1, p2, offset, lane, straight);
+    return `M ${c.x1} ${c.y1} Q ${c.cx} ${c.cy} ${c.x2} ${c.y2}`;
   }
 
   // Compute label point along curve at parameter t (0..1)
-  function pointOnCurve(p1, p2, offset, t) {
-    const x1 = p1.x + CARD_W/2, y1 = p1.y + CARD_H/2;
-    const x2 = p2.x + CARD_W/2, y2 = p2.y + CARD_H/2;
-    const dx = x2-x1, dy = y2-y1;
-    const dist = Math.hypot(dx, dy) || 1;
-    const nx = -dy/dist, ny = dx/dist;
-    const sag = Math.min(120, 30 + dist * 0.15);
-    const cx = (x1+x2)/2 + nx * (sag*0.6 + offset);
-    const cy = (y1+y2)/2 + ny * (sag*0.6 + offset);
+  function pointOnCurve(p1, p2, offset, t, lane, straight) {
+    const { x1, y1, x2, y2, cx, cy } = control(p1, p2, offset, lane, straight);
     // Quadratic bezier at t
     const u = 1 - t;
     return {
       x: u*u*x1 + 2*u*t*cx + t*t*x2,
       y: u*u*y1 + 2*u*t*cy + t*t*y2,
     };
+  }
+
+  // Card rectangles, so labels can avoid sitting on a card.
+  const cardRects = visibleTitles.filter(t => !avoidIds || avoidIds.has(t.id)).map(t => positions[t.id]).filter(Boolean)
+    .map(p => ({ x0: p.x - 6, y0: p.y - 6, x1: p.x + CARD_W + 6, y1: p.y + CARD_H + 6 }));
+  const coveredBy = (x, y, w, h) => cardRects.find(r => x + w / 2 > r.x0 && x - w / 2 < r.x1 && y + h / 2 > r.y0 && y - h / 2 < r.y1);
+  // Best spot for a label near point(t0) on its curve: the closest point along
+  // the curve that no card covers; failing that, just above or below the card
+  // in the way; failing that, the original point (labels draw above the cards
+  // either way, so they stay readable).
+  function placeLabel(point, t0, w, h) {
+    let best = null, bestCost = Infinity;
+    const steps = [0, -0.08, 0.08, -0.16, 0.16, -0.24, 0.24, -0.32, 0.32];
+    steps.forEach(d => {
+      const t = Math.min(0.92, Math.max(0.08, t0 + d));
+      const p = point(t);
+      const r = coveredBy(p.x, p.y, w, h);
+      if (!r) {
+        const cost = Math.abs(d);
+        if (cost < bestCost) { best = p; bestCost = cost; }
+        return;
+      }
+      [r.y0 - h / 2 - 2, r.y1 + h / 2 + 2].forEach(y => {
+        if (coveredBy(p.x, y, w, h)) return;
+        const cost = 0.4 + Math.abs(d) + Math.abs(y - p.y) / 400;
+        if (cost < bestCost) { best = { x: p.x, y }; bestCost = cost; }
+      });
+    });
+    return best || point(t0);
   }
 
   // First pass: render lines + endpoints, collect labels for collision resolution
@@ -519,11 +594,9 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     const p1 = positions[conn.a], p2 = positions[conn.b];
     if (!p1 || !p2) return null;
     const isHovered = hoveredConnection && hoveredConnection.a === conn.a && hoveredConnection.b === conn.b;
+    const isPair = pair && pair.a === conn.a && pair.b === conn.b;
     const involvesFocus = focusId && (focusId === conn.a || focusId === conn.b);
-    const involvesHoveredChar = activeChar && conn.characters.some(c => primeOf(c) === primeOf(activeChar));
-    const anyFocus = focusId || hoveredConnection || activeChar;
-    const emphasized = isHovered || involvesFocus || involvesHoveredChar;
-    const dimmed = anyFocus && !emphasized;
+    const anyFocus = focusId || hoveredConnection || activeChar || pair;
     const N = conn.characters.length;
 
     return conn.characters.map((ch, i) => {
@@ -531,33 +604,42 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       if (!charObj) return null;
       const offsetIdx = i - (N - 1) / 2;
       const offset = offsetIdx * 14;
+      // A hovered character narrows everything to that character's thread, so
+      // no other line stays lit while leading into a dimmed card. Otherwise the
+      // pair view, a hovered line or the focused title's lines are lit.
+      const isChar = activeChar && primeOf(ch) === primeOf(activeChar);
+      const emphasized = pair ? isPair : activeChar ? isChar : (isHovered || involvesFocus);
+      const dimmed = anyFocus && !emphasized;
       const baseOpacity = dimmed ? 0.05 : (emphasized ? 1 : 0.55);
       const strokeW = emphasized ? 3 : 1.8;
-      const showLabel = emphasized && involvesFocus;
+      const showLabel = emphasized && (isPair || involvesFocus);
 
       if (showLabel) {
-        // Spread labels along the curve based on N: t in (0.15..0.85)
-        const t = N === 1 ? 0.5 : 0.15 + (i / (N - 1)) * 0.7;
-        const lp = pointOnCurve(p1, p2, offset, t);
+        // Spread labels along the curve based on N: t in (0.15..0.85), then
+        // move each to the nearest spot not covered by a card (see placeLabel).
+        const t0 = N === 1 ? 0.5 : 0.15 + (i / (N - 1)) * 0.7;
         const labelText = I18N.charName(ch);
-        const labelW = Math.max(60, labelText.length * 6.4 + 18);
+        const labelW = labelPillWidth(labelText);
+        const lp = placeLabel(t => pointOnCurve(p1, p2, offset, t, i, isPair), t0, labelW, 22);
         labels.push({ x: lp.x, y: lp.y, w: labelW, h: 22, color: charObj.color, text: labelText, key: conn.a + '__' + conn.b + '__' + ch });
       }
 
       return (
         <g key={ch+i+conn.a+conn.b}>
           {emphasized && (
-            <path d={curve(p1,p2,offset)} fill="none" stroke={charObj.color} strokeWidth={strokeW + 6} opacity={0.25} filter="url(#strong-glow)" strokeLinecap="round"/>
+            <path d={curve(p1,p2,offset,i,isPair)} fill="none" stroke={charObj.color} strokeWidth={strokeW + 6} opacity={0.25} filter="url(#strong-glow)" strokeLinecap="round"/>
           )}
           <path
-            d={curve(p1,p2,offset)}
+            d={curve(p1,p2,offset,i,isPair)}
+            data-a={conn.a} data-b={conn.b} data-ch={ch} data-em={emphasized ? '1' : '0'}
+            onClick={(e) => { e.stopPropagation(); if (onPickConnection) onPickConnection({ a: conn.a, b: conn.b }); }}
+            style={{transition:'opacity 220ms, stroke-width 220ms', cursor: 'pointer'}}
             fill="none"
             stroke={charObj.color}
             strokeWidth={strokeW}
             opacity={baseOpacity}
             strokeLinecap="round"
             filter={emphasized ? 'url(#line-glow)' : undefined}
-            style={{transition:'opacity 220ms, stroke-width 220ms'}}
             pointerEvents="stroke"
             onMouseEnter={(e)=>onHoverConnection({a:conn.a,b:conn.b,characters:conn.characters,x:e.clientX,y:e.clientY})}
             onMouseLeave={()=>onHoverConnection(null)}
@@ -610,14 +692,16 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
 
   const labelEls = labels.map(l => (
     <g key={'lbl_' + l.key} style={{pointerEvents:'none'}}>
+      <rect x={l.x - l.w/2} y={l.y - l.h/2 + 2} width={l.w} height={l.h} rx={l.h/2} fill="#000" opacity="0.45"/>
       <rect x={l.x - l.w/2} y={l.y - l.h/2} width={l.w} height={l.h} rx={l.h/2}
-        fill="#0a0c14" stroke={l.color} strokeWidth="1.2" opacity="0.96"/>
+        fill="#0a0c14" stroke={l.color} strokeWidth="1.2" opacity="0.97"/>
       <circle cx={l.x - l.w/2 + 11} cy={l.y} r={3.5} fill={l.color}/>
       <text x={l.x - l.w/2 + 20} y={l.y + 3.6} fontSize="11" fontFamily="Inter, sans-serif" fontWeight="500" fill="#e6e8f0">{l.text}</text>
     </g>
   ));
 
   return (
+    <>
     <svg className="connection-layer" style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
       <defs>
         <filter id="line-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -630,9 +714,13 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
         </filter>
       </defs>
       {lineEls}
-      {labelEls}
       <style>{`.connection-layer path { pointer-events: stroke; }`}</style>
     </svg>
+    {/* Labels above the cards (z-index in styles.css), so none hides behind one. */}
+    <svg className="connection-labels" style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}}>
+      {labelEls}
+    </svg>
+    </>
   );
 }
 
@@ -709,6 +797,8 @@ function App() {
   const [hoveredTitle, setHoveredTitle] = useState(null);
   const [hoveredCharacter, setHoveredCharacter] = useState(null);
   const [hoveredConnection, setHoveredConnection] = useState(null);
+  // A clicked connection: its two titles are brought side by side.
+  const [pair, setPair] = useState(null);
   const [highlightedChar, setHighlightedChar] = useState(null);
   // Pinned character: show only their titles (default) or everything, dimmed.
   const [charOnly, setCharOnly] = useState(true);
@@ -822,10 +912,13 @@ function App() {
     const focusTitle = window.TITLES.find(t => t.id === focusId);
     if (!focusTitle) return null;
     const set = new Set([focusId]);
-    const focusCast = new Set(focusTitle.cast);
+    // Matched on the character's core identity, as the connection lines are
+    // (Captain Carter joins Peggy Carter's thread), so every lit line ends in a
+    // lit title.
+    const focusCast = new Set(focusTitle.cast.map(primeOf));
     filtered.forEach(t => {
       if (t.id === focusId) return;
-      if (t.cast.some(c => focusCast.has(c))) set.add(t.id);
+      if (t.cast.some(c => focusCast.has(primeOf(c)))) set.add(t.id);
     });
     return set;
   }, [focusId, filtered]);
@@ -837,10 +930,10 @@ function App() {
     const ft = window.TITLES.find(t => t.id === hoverFocusId);
     if (!ft) return null;
     const set = new Set([hoverFocusId]);
-    const cast = new Set(ft.cast);
+    const cast = new Set(ft.cast.map(primeOf));
     filtered.forEach(t => {
       if (t.id === hoverFocusId) return;
-      if (t.cast.some(c => cast.has(c))) set.add(t.id);
+      if (t.cast.some(c => cast.has(primeOf(c)))) set.add(t.id);
     });
     return set;
   }, [hoverFocusId, filtered]);
@@ -849,13 +942,21 @@ function App() {
   const positions = useMemo(() => {
     const out = {};
     let focusLayout = null;
+    // Pair view: the two titles side by side where they meet, with room for the
+    // shared characters' labels between them; everything else stays put, dimmed.
+    if (pair && basePositions[pair.a] && basePositions[pair.b]) {
+      const pa = basePositions[pair.a], pb = basePositions[pair.b];
+      const mx = (pa.x + pb.x) / 2 + CARD_W / 2, my = (pa.y + pb.y) / 2 + CARD_H / 2;
+      const gap = PAIR_GAP;
+      focusLayout = { [pair.a]: { x: mx - gap / 2 - CARD_W / 2, y: my }, [pair.b]: { x: mx + gap / 2 + CARD_W / 2, y: my } };
+    } else
     if (focusId && relatedIds && relatedIds.size > 1) {
       const others = [...relatedIds].filter(id => id !== focusId);
       const focusTitle = window.TITLES.find(t => t.id === focusId);
-      const focusCast = new Set(focusTitle.cast);
+      const focusCast = new Set(focusTitle.cast.map(primeOf));
       const scored = others.map(id => {
         const t = window.TITLES.find(x => x.id === id);
-        const shared = t.cast.filter(c => focusCast.has(c)).length;
+        const shared = t.cast.filter(c => focusCast.has(primeOf(c))).length;
         return { id, shared };
       }).sort((a,b) => b.shared - a.shared);
       const cx = 800, cy = 560;
@@ -885,7 +986,7 @@ function App() {
       out[id] = o ? { x: o.x, y: o.y } : (f ? { x: f.x - CARD_W/2, y: f.y - CARD_H/2 } : p);
     });
     return out;
-  }, [basePositions, overrides, focusId, relatedIds, isTouch]);
+  }, [basePositions, overrides, focusId, relatedIds, isTouch, pair]);
 
   // Reset overrides when sort/filter changes the layout
   useEffect(() => { setOverrides({}); }, [sort, sortDir, phaseFilter, typeFilter, budgetFilter, search]);
@@ -1135,11 +1236,17 @@ function App() {
         if (p.y < y0) y0 = p.y;
         if (p.y + CARD_H > y1) y1 = p.y + CARD_H;
       });
-      let y = 14 - minY * scale;
+      // Each row has its label 40 units above it, and the count pill sits at the
+      // top-left of the viewport: keep the first label clear of it.
+      const pill = isTouch ? 44 : 52;
+      const top = pill + 40 * scale;
+      let y = top - minY * scale;
       if (isFinite(y0)) {
-        if ((y1 - y0) * scale <= rect.height - 28) y = rect.height / 2 - ((y0 + y1) / 2) * scale;
-        else {
-          y = 14 - y0 * scale;
+        const yTop = y0 - 40;
+        if ((y1 - yTop) * scale <= rect.height - 28 - pill) {
+          y = Math.max(rect.height / 2 - ((yTop + y1) / 2) * scale, pill - yTop * scale);
+        } else {
+          y = top - y0 * scale;
           if (leading && (leading.y + CARD_H) * scale + y > rect.height - 14) y = rect.height - 14 - (leading.y + CARD_H) * scale;
         }
       }
@@ -1321,10 +1428,12 @@ function App() {
       });
     } else {
       setSelectedId(null);
+      setPair(null);
     }
   };
 
   const onCardTap = (id) => {
+    setPair(null);
     // With a character pinned the canvas keeps their layout: a tap makes the
     // title current (if it is theirs) and opens its details, without the
     // connections ring.
@@ -1470,6 +1579,39 @@ function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Clicking a connection line opens the pair view and glides to it.
+  const pickConnection = (c) => {
+    if (selectedIdRef.current) { selectionReturnRef.current = null; setSelectedId(null); }
+    setHoveredConnection(null);
+    setPair(c);
+  };
+  useEffect(() => {
+    if (!pair || !viewportRef.current) return;
+    const pa = basePositions[pair.a], pb = basePositions[pair.b];
+    if (!pa || !pb) { setPair(null); return; }
+    const rect = viewportRef.current.getBoundingClientRect();
+    const side = !isTouch && drawerId ? 380 : 0;
+    const span = PAIR_GAP + CARD_W * 2 + 80;
+    const scale = Math.min(1, Math.max(viewRef.current.scale, 0.6), (rect.width - side) / span);
+    const mx = (pa.x + pb.x) / 2 + CARD_W / 2, my = (pa.y + pb.y) / 2 + CARD_H / 2;
+    cameraFramedRef.current = true;
+    glideTo({ x: (rect.width - side) / 2 - mx * scale, y: rect.height / 2 - my * scale, scale });
+  }, [pair]);
+  // Escape, or a new layout, leaves the pair view.
+  useEffect(() => {
+    if (!pair) return;
+    const onKey = (e) => { if (e.key === 'Escape') setPair(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [pair]);
+  useEffect(() => { setPair(null); }, [basePositions]);
+  // Labels steer clear of the cards that are lit; dimmed ones may sit under them.
+  const labelAvoidIds = useMemo(() => {
+    if (pair) return new Set([pair.a, pair.b]);
+    if (activeChar && highlightedIds) return highlightedIds;
+    return hoverRelatedIds;
+  }, [pair, activeChar, highlightedIds, hoverRelatedIds]);
+
   const charBanner = activeChar ? (() => {
     const c = window.CHARACTERS[activeChar];
     const media = window.MEDIA;
@@ -1564,6 +1706,13 @@ function App() {
       onTouchStart={isTouch ? onTouchStart : undefined}
       onTouchMove={isTouch ? onTouchMove : undefined}
       onTouchEnd={isTouch ? onTouchEnd : undefined}
+      onClick={(e) => {
+        // A click on the background (not a drag) leaves the pair view.
+        if (!pair || isTouch) return;
+        const s = panRef.current;
+        if (e.target.closest('.card') || e.target.closest('path') || (s && Math.hypot(e.clientX - s.sx, e.clientY - s.sy) > 4)) return;
+        setPair(null);
+      }}
     >
       <div className="canvas-bg"/>
       <div
@@ -1576,6 +1725,16 @@ function App() {
           transition: cameraGlide ? 'transform 600ms cubic-bezier(.2,.8,.2,1)' : undefined,
         }}
       >
+        {/* Row labels for the Release (phase) and Chrono (era) timelines. Hidden
+            while a title is selected: its connection rings move the cards. */}
+        {!selectedId && layout.bands.map(b => (
+          <div key={b.phase ? 'p' + b.phase : 'e' + b.era} className={`band-label${b.phase ? ' phase' : ''}`}
+            style={{ transform: `translate(${b.x}px, ${b.y - 40}px)`, ...(b.phase ? { '--band': PHASE_COLORS[b.phase] } : {}) }}>
+            {b.phase ? tr('phase.label', { n: b.phase })
+              : b.era === 0 ? tr('era.before', { year: ERA_STARTS[0] })
+              : b.from === null ? '' : b.from === b.to ? String(b.from) : `${b.from}–${b.to}`}
+          </div>
+        ))}
         <FloatingConnections
           visibleTitles={filtered}
           positions={positions}
@@ -1584,14 +1743,21 @@ function App() {
           onHoverConnection={setHoveredConnection}
           hoveredConnection={hoveredConnection}
           selectedId={selectedId}
-          focusId={hoverFocusId}
+          focusId={pair ? null : hoverFocusId}
+          pair={pair}
+          onPickConnection={pickConnection}
+          avoidIds={labelAvoidIds}
         />
         {filtered.map(t => {
           const charHL = highlightedIds ? highlightedIds.has(t.id) : false;
           const charDim = highlightedIds ? !highlightedIds.has(t.id) : false;
-          const hoverDim = hoverRelatedIds ? !hoverRelatedIds.has(t.id) : false;
-          const isDimmed = charDim || hoverDim;
-          const isHighlighted = charHL || (hoverFocusId === t.id);
+          // A hovered connection line lights up the two titles it joins; the
+          // pair view lights its two titles and dims everything else.
+          const onLine = hoveredConnection && (hoveredConnection.a === t.id || hoveredConnection.b === t.id);
+          const inPair = pair && (pair.a === t.id || pair.b === t.id);
+          const hoverDim = hoveredConnection ? !onLine : hoverRelatedIds ? !hoverRelatedIds.has(t.id) : false;
+          const isDimmed = pair ? !inPair : (charDim || hoverDim);
+          const isHighlighted = pair ? !!inPair : (charHL || (hoverFocusId === t.id) || !!onLine);
           // Visual only — the card stays in the layout so nothing reflows.
           const isCollDimmed = collectionFilter !== 'all'
             && !window.matchesCollection(collectionStates[t.id] || 'none', collectionFilter);
@@ -1731,6 +1897,10 @@ function App() {
 
       {hoveredConnection && (
         <div className="line-tooltip" style={{left: hoveredConnection.x + 12, top: hoveredConnection.y + 12}}>
+          {(() => {
+            const ta = window.TITLES.find(x => x.id === hoveredConnection.a), tb = window.TITLES.find(x => x.id === hoveredConnection.b);
+            return ta && tb ? <div className="tt-titles">{I18N.titleName(ta)} <span aria-hidden="true">↔</span> {I18N.titleName(tb)}</div> : null;
+          })()}
           <div className="tt-label">{tr('canvas.sharedCharacters')}</div>
           {hoveredConnection.characters.map(c => {
             const ch = window.CHARACTERS[c];

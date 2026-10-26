@@ -12,6 +12,43 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 Spatial — chronological eras and connection labels
+
+Recorded: 2026-10-26 13:00:42 EDT (-0400).
+
+- Chronological Spatial rows are in-story eras (Before 2008, 2008–2012, …
+  2027–2028, from the titles' own years); an undated title stays in the era of
+  the one before it, so Chrono reads as the same left-to-right staircase as
+  Release (phase rows made it zigzag). Both timelines label their rows ("Phase
+  1"… in phase colours, or the era years; translated), hidden while a title is
+  selected, and the opening view keeps the first label clear of the count pill.
+- Character labels on a hovered or selected title's connections draw in their
+  own layer above the cards, at the nearest point on the line no card covers
+  (or just above/below the row), with a soft shadow; pill widths come from the
+  measured name, so padding is even.
+- Hovering a connection line highlights the two titles it joins and names them
+  in its tooltip. Clicking a line opens a pair view: the two titles move side by
+  side, the rest dims and the camera glides to them; Escape, a background click,
+  tapping a card or a new layout restores it. Links between titles in the same
+  row arc below the row instead of running behind the cards between them.
+- Hovering a character in the drawer lights only that character's lines, and
+  related titles are judged by core identity (character variants such as Captain
+  Carter count as Peggy Carter), so a lit line never leads to a dimmed card.
+- Verification: headless Chromium at 1440×900 and 390px (pt-BR). QA sweep of
+  all 64 titles × 403 cast hovers: no lit line led to a dimmed card, no console
+  errors. Labels overlapping a card when hovering Iron Man 2 / The Avengers /
+  with a selection: 11/14/9 before, 1/2/2 after. Pair view: Fantastic Four ↔
+  Avengers: Doomsday side by side, 62 others dimmed, restored by Escape and a
+  background click. Fit, context, panel, language, List, suggestions, layering,
+  animation, celebration, alignment, About, welcome and camera scripts pass; the
+  camera script fails intermittently (about 1 in 4 runs) at a timing-dependent
+  step on both this and the previous revision. Screenshots reviewed by the user,
+  who approved committing and merging to main.
+- Limits: the pair view and line tooltips were checked on desktop only (lines
+  are hard to tap on phones); a few labels can still sit on a card when many
+  share one spot. Notion screenshots on the tickets could not be opened by
+  Claude, so the states were reproduced in the app.
+
 ## V3 feature — Seen/Watchlist counters and celebrations
 
 Recorded: 2026-10-26 10:39:08 EDT (-0400).

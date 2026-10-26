@@ -79,6 +79,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   sheet and show a floating pill above the sort bar (character, actor, stepper)
   and always show only that character's titles.
 - Phone sheets close with the × button, a tap on the handle, or a swipe down.
+- Spatial timelines have labelled rows: Release by phase, Chronological by
+  in-story era (Before 2008, 2008–2012, … 2027–2028), so both read as a
+  left-to-right staircase. Character labels on a hovered or selected title's
+  connections draw above the cards and avoid covering them; hovering a line
+  highlights the two titles it joins and names them in its tooltip. Clicking a
+  connection brings its two titles side by side (Escape or a background click
+  restores the layout); links between titles in the same row arc below it.
+  Hovering a character in the drawer lights only that character's lines.
 - Marking a title seen or adding it to the watchlist pops the button and shows a
   toast with Undo; completing every released title in a phase (or the whole MCU)
   adds confetti. Seen and Watchlist show a count badge (hidden at zero) that
