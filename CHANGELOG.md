@@ -12,6 +12,37 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — guest sign-in reminder
+
+Recorded: 2026-10-26 21:39:35 EDT (-0400).
+
+- A signed-out guest (when Google sign-in is available) is reminded that
+  signing in saves their list to an account and syncs it across devices: about
+  1.4s after the tap that brings their seen + watchlist marks to 3, and once
+  more at 10, never again after that and never on page load
+  (`mcu.signInNudge.v1`). It waits until any open sheet or dialog closes.
+- Dialog on desktop and sheet on phones, in the About style: "Keep your list on
+  every device", how many titles they've marked, "Everything you've marked so
+  far comes with you", then Sign in with Google (with the Google mark, as in
+  the account menu) and Not now. English and Brazilian Portuguese.
+- `about.jsx`: the About dialog's shell (scrim, focus trap, Escape, ×, focus
+  return) is now a shared `ModalDialog`; `account.jsx` exports `GoogleMark`.
+- Verification: headless Chromium.
+  - Desktop, fresh guest: nothing after 2 marks, shown after the 3rd, Not now
+    closes it, quiet through 9, shown at 10, Escape closes it, nothing at 11 or
+    after a reload.
+  - Phone (Portuguese): marking from a details sheet waits until the sheet
+    closes, then shows the sheet version.
+  - Sign in with Google starts the Supabase Google authorize redirect; Undo on
+    the status toast stays usable while the dialog is open.
+  - No console errors; regression scripts pass. Test helpers mark the reminder
+    as already shown unless a test asks for it.
+  - Screenshots reviewed by the user, who approved committing and merging to
+    main.
+- Limits: a guest who already has 10+ marks sees it once on their next mark,
+  then never again. A real Google sign-in wasn't completed in testing. Not
+  checked on a physical phone.
+
 ## V3 improvement — Order toggle and smoother Spatial reorders
 
 Recorded: 2026-10-26 20:47:14 EDT (-0400).

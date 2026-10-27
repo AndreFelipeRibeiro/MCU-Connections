@@ -1,4 +1,5 @@
-// Feedback when someone marks a title seen or adds it to the watchlist:
+// Feedback when someone marks a title seen or adds it to the watchlist (and,
+// further down, the guest sign-in reminder):
 // a toast with Undo (every time), and confetti for milestones (a whole phase,
 // or every released title, newly completed). Status changes arrive through
 // window.onStatusChange (tracking.jsx), which only fires for taps on the
@@ -134,4 +135,86 @@ function StatusToast({ touch }) {
   return ReactDOM.createPortal(<div className="mcu-toast-live" role="status" aria-live="polite">{body}</div>, document.body);
 }
 
-Object.assign(window, { StatusToast, burstConfetti });
+// Sign-in reminder: a guest who has marked a few titles (seen or watchlist) is
+// reminded that signing in saves them to an account and syncs them across
+// devices. Shown right after the tap that reaches 3 marks, and once more at 10;
+// either dismissal counts, and it never shows again after the second. Only
+// when Google sign-in is available and the visitor is signed out.
+const NUDGE_KEY = 'mcu.signInNudge.v1';
+const NUDGE_AT = [3, 10];
+function nudgeStage() {
+  try { return Number(window.localStorage.getItem(NUDGE_KEY)) || 0; } catch (e) { return NUDGE_AT.length; }
+}
+
+function NudgeIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2.5" y="4.5" width="13" height="9.5" rx="1.5"/><path d="M6 18h6M9 14v4"/>
+      <rect x="16.5" y="8.5" width="5" height="11" rx="1.2"/><path d="M18.6 17.2h.8"/>
+    </svg>
+  );
+}
+
+function SignInNudge({ touch }) {
+  const account = window.useAccount();
+  const { tr } = window.useI18n();
+  const accountRef = React.useRef(account);
+  accountRef.current = account;
+  const [pending, setPending] = React.useState(null);
+  const [open, setOpen] = React.useState(null);
+
+  React.useEffect(() => window.onStatusChange((e) => {
+    if (e.to === 'none') return;
+    const a = accountRef.current;
+    if (a.status !== 'signed_out' || !a.syncAvailable) return;
+    const stage = nudgeStage();
+    if (stage >= NUDGE_AT.length) return;
+    const after = Object.assign({}, e.states, { [e.title.id]: e.to });
+    const n = Object.values(after).filter(v => v && v !== 'none').length;
+    if (n < NUDGE_AT[stage]) return;
+    // Remember it now, so a reload or a quick second tap doesn't repeat it.
+    let next = stage;
+    while (next < NUDGE_AT.length && n >= NUDGE_AT[next]) next += 1;
+    try { window.localStorage.setItem(NUDGE_KEY, String(next)); } catch (err) { /* shown once this visit */ }
+    setPending({ n });
+  }), []);
+
+  // A moment after the tap, so the button's pop and the toast come first, and
+  // only once no sheet, dialog or confetti is on screen.
+  React.useEffect(() => {
+    if (!pending) return undefined;
+    let timer;
+    const check = () => {
+      if (document.querySelector('.m-sheet, .about-dialog, .mcu-confetti')) { timer = setTimeout(check, 700); return; }
+      if (accountRef.current.status !== 'signed_out') { setPending(null); return; }
+      setOpen(pending);
+      setPending(null);
+    };
+    timer = setTimeout(check, 1400);
+    return () => clearTimeout(timer);
+  }, [pending]);
+
+  if (!open) return null;
+  const close = () => setOpen(null);
+  const signIn = () => { setOpen(null); accountRef.current.signIn(); };
+  const titleId = touch ? 'nudge-sheet-title' : 'nudge-title';
+  const body = (
+    <div className="about nudge">
+      <div className="about-head">
+        <span className="about-ic nudge-ic"><NudgeIcon/></span>
+        <h2 id={titleId} className="about-title">{tr('nudge.title')}</h2>
+      </div>
+      <p className="about-lead">{tr('nudge.text', { n: open.n })}</p>
+      <p className="nudge-note">{tr('nudge.merge')}</p>
+      <div className="about-cta-row">
+        <button className="about-cta" onClick={signIn}><window.GoogleMark/>{tr('account.signInGoogle')}</button>
+        <button className="nudge-later" onClick={close}>{tr('nudge.later')}</button>
+      </div>
+    </div>
+  );
+  if (touch) return <window.Sheet onClose={close} label={tr('nudge.title')}>{body}</window.Sheet>;
+  return <window.ModalDialog onClose={close} labelledBy={titleId} className="nudge-dialog">{body}</window.ModalDialog>;
+}
+
+Object.assign(window, { StatusToast, burstConfetti, SignInNudge });

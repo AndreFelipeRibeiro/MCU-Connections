@@ -857,6 +857,19 @@ body {
 .about-cta:hover { background: #ececec; }
 .about-cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* Sign-in reminder (celebrate.jsx): About's dialog/sheet, narrower. */
+.about-dialog.nudge-dialog { width: min(440px, calc(100vw - 48px)); }
+.nudge .about-head { gap: 12px; }
+.nudge .nudge-ic { flex-basis: 40px; width: 40px; height: 40px; color: var(--text); }
+.nudge .about-title { font-size: 18px; }
+.nudge .about-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+.nudge .about-cta svg { flex: 0 0 auto; width: 17px; height: 17px; }
+.nudge-note { margin: 10px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--text-muted); }
+.nudge-later { min-height: 42px; border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--text-dim);
+  font: inherit; font-size: 13.5px; cursor: pointer; }
+.nudge-later:hover { color: var(--text); border-color: var(--border-strong); }
+.nudge-later:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 /* Seen / Watchlist count badges (CountBadge in tracking.jsx). */
 .coll-switch button { position: relative; }
 .coll-count { position: absolute; top: -7px; right: -6px; z-index: 1; min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box;

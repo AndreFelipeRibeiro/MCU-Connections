@@ -1942,6 +1942,7 @@ function App() {
         )}
         {sheet === 'about' && <window.AboutSheet onClose={() => setSheet(null)}/>}
         <window.StatusToast touch/>
+        <window.SignInNudge touch/>
         {welcome && !sheet && !drawerTitle && <window.AboutSheet welcome onClose={() => setWelcome(false)}/>}
         {drawerTitle && (
           <window.CastSheet
@@ -2015,6 +2016,7 @@ function App() {
         search={search}
       />
       <window.StatusToast touch={false}/>
+      <window.SignInNudge touch={false}/>
       {(aboutOpen || welcome) && <window.AboutDialog welcome={welcome && !aboutOpen}
         onClose={() => { setAboutOpen(false); setWelcome(false); }}/>}
     </div>
