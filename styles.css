@@ -628,6 +628,13 @@ body {
 .tb-sort-row .segmented button .sm { display: none; }
 .tb-sort-row .segmented button .si { margin-right: 6px; }
 .sort-order-chevron { display: block; flex: 0 0 12px; }
+/* Order toggle: the arrows turn with each flip. */
+.sort-order-flip { display: block; flex: 0 0 14px; color: var(--text-dim); }
+.sort-order-flip .bars { transform-origin: 50% 50%; transform-box: fill-box; transition: transform 320ms cubic-bezier(.2,.8,.2,1); }
+.sort-order-flip.desc .bars { transform: scaleY(-1); }
+.sort-order-toggle:hover .sort-order-flip { color: var(--text); }
+.sort-order-toggle:active { transform: scale(.97); }
+@media (prefers-reduced-motion: reduce) { .sort-order-flip .bars { transition: none; } }
 
 /* Collection switch (CollectionSwitch in tracking.jsx) and its state icons. */
 .coll-ic { display: inline-flex; width: 13px; height: 13px; flex: 0 0 13px; }
@@ -913,8 +920,16 @@ body {
   font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
   color: var(--text-muted); }
 .band-label.phase { color: var(--band); opacity: .85; }
+/* Row labels wait for the cards after a new layout or a closed selection, then
+   fade in with a small rise (lines-settling / bands-settling on the canvas). */
+.band-label { transition: opacity 320ms ease 60ms, top 420ms cubic-bezier(.2,.8,.2,1) 60ms; }
+.canvas.lines-settling .band-label, .canvas.bands-settling .band-label { opacity: 0; top: 10px; transition: none; }
+@media (prefers-reduced-motion: reduce) { .band-label { transition: opacity 200ms ease; } .canvas.lines-settling .band-label, .canvas.bands-settling .band-label { top: 0; } }
 /* Connection labels draw above every card (cards go up to z-index 30). */
 .connection-labels { z-index: 35; }
+/* Lines wait for the cards after a new layout (see linesSettling). */
+.connection-layer, .connection-labels { transition: opacity 300ms ease 60ms; }
+.canvas.lines-settling .connection-layer, .canvas.lines-settling .connection-labels { opacity: 0; transition: none; }
 .band-label { text-shadow: 0 0 6px var(--bg), 0 0 2px var(--bg); }
 /* Line tooltip: the two titles the hovered line joins. */
 .tt-titles { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text); max-width: 280px; }
