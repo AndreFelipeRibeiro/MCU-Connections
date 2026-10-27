@@ -228,7 +228,7 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   return { positions, bands: layoutBands, width: maxX + 120, height: maxY + 120 };
 }
 
-function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
+function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
   const phaseColor = PHASE_COLORS[title.phase];
   const downRef = useRef({ x: 0, y: 0, moved: false });
   const { statusOf } = window.useCollection();
@@ -239,7 +239,7 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
   return (
     <div
       data-id={title.id}
-      className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}${isCurrent ? ' current' : ''}`}
+      className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''}${isRingHidden ? ' ring-hidden' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}${isCurrent ? ' current' : ''}`}
       style={{
         '--phase-color': phaseColor,
         ...(isCurrent && curColor ? { '--cur-color': curColor } : {}),
@@ -935,6 +935,12 @@ function App() {
     return set;
   }, [focusId, filtered]);
 
+  // While a title's rings are showing, only it and its connected titles stay
+  // on the canvas: the rest fade out in place (in the grids they would sit
+  // under the rings), and the lines are drawn among the ring's titles alone.
+  const ringIds = !pair && relatedIds && relatedIds.size > 1 ? relatedIds : null;
+  const lineTitles = useMemo(() => ringIds ? filtered.filter(t => ringIds.has(t.id)) : filtered, [filtered, ringIds]);
+
   // Hover-focus is separate: used only for dimming/labels, not reflow.
   const hoverFocusId = hoveredTitle || selectedId;
   const hoverRelatedIds = useMemo(() => {
@@ -1458,7 +1464,7 @@ function App() {
       setView(v => ({ ...v, x: s.vx + dx, y: s.vy + dy }));
     }
   };
-  const onTouchEnd = () => {
+  const onTouchEnd = (e) => {
     const s = touchRef.current;
     touchRef.current = null;
     if (!s || s.mode !== 'pan' || s.moved) return;
@@ -1476,6 +1482,10 @@ function App() {
         return { x: mx - (mx - v.x) * r, y: my - (my - v.y) * r, scale: ns };
       });
     } else {
+      // Closing a title's rings brings the hidden cards straight back; the
+      // click the browser synthesizes after this tap would then land on
+      // whichever card is under the finger, so cancel it.
+      if (selectedIdRef.current && e && e.cancelable) e.preventDefault();
       setSelectedId(null);
       setPair(null);
     }
@@ -1827,7 +1837,7 @@ function App() {
           </div>
         ))}
         <FloatingConnections
-          visibleTitles={filtered}
+          visibleTitles={lineTitles}
           positions={positions}
           hoveredTitle={hoveredTitle}
           activeChar={activeChar}
@@ -1864,6 +1874,7 @@ function App() {
               isHighlighted={isHighlighted}
               isDimmed={isDimmed}
               isCollDimmed={isCollDimmed}
+              isRingHidden={!!ringIds && !ringIds.has(t.id)}
               isDragging={draggingId === t.id}
               isCurrent={!!highlightedChar && stepId === t.id}
               curColor={highlightedChar ? window.CHARACTERS[highlightedChar].color : null}

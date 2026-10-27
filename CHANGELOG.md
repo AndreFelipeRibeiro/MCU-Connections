@@ -12,6 +12,30 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 fix — Spatial rings hide unrelated cards
+
+Recorded: 2026-10-26 22:01:32 EDT (-0400).
+
+- While a selected title's rings are showing in Spatial, unrelated cards fade
+  out in place (no clicks, no tab stop) instead of staying dimmed under the
+  ring, which was most visible in the A–Z and Phase grids. They fade back when
+  the selection closes; nothing reflows. Lines are drawn among the ring's
+  titles only, so none lead to a hidden card. The pair view and a title with no
+  connections are unchanged.
+- Phones: closing the rings by tapping the background no longer lets the
+  browser's follow-up click select the card that reappears under the finger.
+- Verification: headless Chromium.
+  - Desktop A–Z with Black Panther: Wakanda Forever: 7 visible cards, 57
+    hidden, no overlaps, no lines to hidden cards, all 64 back after closing.
+  - Desktop Release with Iron Man 2: 24 visible, no orphan lines.
+  - Phone A–Z: same result; a tap on empty space over a hidden card closes the
+    selection without selecting anything.
+  - No console errors; regression scripts and the label test pass.
+  - Screenshot reviewed by the user, who approved committing and merging to
+    main.
+- Limits: an unrelated title can't be clicked while the rings are showing
+  (close the selection first). Not checked on a physical phone.
+
 ## V3 feature — guest sign-in reminder
 
 Recorded: 2026-10-26 21:39:35 EDT (-0400).

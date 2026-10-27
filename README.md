@@ -72,7 +72,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Details show a short, spoiler-light synopsis under the title (three lines, then
   See more), written for this app in each language.
 - Selecting a title in Spatial arranges the titles that share its characters in
-  rings around it, closest when they share the most.
+  rings around it, closest when they share the most. Unrelated cards fade out
+  while the rings show (and come back when it closes), and lines are drawn
+  among the ring's titles only.
 - Picking a character in the details highlights them: their titles are laid out
   in the current order (the rings belong to a selected title), with a Their
   titles / All titles switch (only their titles, or everything with the rest

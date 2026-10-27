@@ -175,7 +175,7 @@ body {
   position: absolute; top: 0; left: 0; z-index: 10;
   background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   overflow: hidden; cursor: grab;
-  transition: transform 600ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms, border-color 220ms, opacity 220ms, filter 220ms;
+  transition: transform 600ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms, border-color 220ms, opacity 220ms, filter 220ms, visibility 0s;
   display: flex; flex-direction: column;
   will-change: transform;
 }
@@ -484,6 +484,10 @@ body {
 
 /* Collection dimming — visual only, never removes a card from the layout. */
 .card.coll-dim { opacity: 0.26; filter: saturate(0.3); }
+/* A title's rings are showing: unrelated cards fade out where they are (no
+   clicks, no tab stop) and come back when the selection closes. */
+.card.ring-hidden { opacity: 0; visibility: hidden; pointer-events: none;
+  transition: transform 600ms cubic-bezier(.2,.8,.2,1), opacity 200ms, filter 200ms, visibility 0s 200ms; }
 
 .drawer-tsa { margin-top: 12px; }
 
