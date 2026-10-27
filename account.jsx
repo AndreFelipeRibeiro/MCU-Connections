@@ -453,5 +453,6 @@ Object.assign(window, {
   AccountAvatarButton,
   AccountSheet,
   AccountPanel,
+  GoogleMark,
   MCU_AUTH_CONTEXT: AccountContext,
 });

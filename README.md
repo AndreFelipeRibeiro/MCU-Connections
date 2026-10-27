@@ -123,6 +123,10 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   seen moves it to seen; un-seeing returns it to untracked.
 - Guest tracking saved in this browser; Google sign-in merges those marks and
   syncs the collection across devices. Merge precedence is seen > watchlist > none.
+  A signed-out guest (when sign-in is available) is reminded once, right after
+  marking a 3rd title, that signing in saves the list across devices, and once
+  more at 10 (`mcu.signInNudge.v1` remembers it; dialog on desktop, sheet on
+  phones; it waits until any open sheet or dialog closes).
 - Released-title completion computed from release dates and the local calendar
   date, with a separate watchlist count. Unreleased titles do not affect completion.
 - In Spatial view, collection filters dim non-matching titles in place; Grid/List
@@ -311,8 +315,8 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `supabase-client.js` | Shared client as `window.mcuSupabase`, or graceful unavailability |
 | `tracking.jsx` | Guest/account state, merge, request deadlines, queues, progress, status actions |
 | `account.jsx` | Google auth/session state, account UI, sign-out and degraded-mode recovery |
-| `about.jsx` | About dialog (desktop) and sheet (phones) with credits |
-| `celebrate.jsx` | Status toast with Undo and milestone confetti |
+| `about.jsx` | About dialog (desktop) and sheet (phones) with credits; shared dialog shell |
+| `celebrate.jsx` | Status toast with Undo, milestone confetti and the guest sign-in reminder |
 | `app.jsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
 | `mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |

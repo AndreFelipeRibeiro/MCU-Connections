@@ -188,6 +188,10 @@ window.MCU_LOCALES.en = {
     'error.signIn': 'Could not start sign-in. Please try again.',
     'error.signOut': 'Could not sign out. Please try again.',
 
+    'nudge.title': 'Keep your list on every device',
+    'nudge.text': { one: "You've marked {n} title in this browser. Sign in with Google to save it to your account and see it on your phone, tablet or computer.", other: "You've marked {n} titles in this browser. Sign in with Google to save them to your account and see them on your phone, tablet or computer." },
+    'nudge.merge': "Everything you've marked so far comes with you.",
+    'nudge.later': 'Not now',
     'account.title': 'Account',
     'account.signedIn': 'Signed in',
     'account.notSignedIn': 'Not signed in',

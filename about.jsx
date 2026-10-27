@@ -84,14 +84,13 @@ function AboutContent({ titleId, welcome, onClose }) {
   );
 }
 
-// Desktop dialog: scrim, focus kept inside, Escape or × closes, focus returns
-// to whatever opened it.
-function AboutDialog({ onClose, welcome }) {
+// Desktop dialog shell, shared by About and the sign-in reminder: scrim,
+// focus kept inside, Escape or × closes, focus returns to whatever opened it.
+function ModalDialog({ onClose, labelledBy, className = '', children }) {
   const tr = window.MCU_I18N.tr;
   const ref = React.useRef(null);
   const closeRef = React.useRef(onClose);
   closeRef.current = onClose;
-  const titleId = 'about-title';
   React.useEffect(() => {
     const box = ref.current;
     const opener = document.activeElement;
@@ -122,11 +121,19 @@ function AboutDialog({ onClose, welcome }) {
   return (
     <>
       <div className="about-scrim" onClick={onClose} aria-hidden="true"/>
-      <div ref={ref} className="about-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
+      <div ref={ref} className={`about-dialog${className ? ' ' + className : ''}`} role="dialog" aria-modal="true" aria-labelledby={labelledBy} tabIndex={-1}>
         <button className="about-x" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}>×</button>
-        <AboutContent titleId={titleId} welcome={welcome} onClose={onClose}/>
+        {children}
       </div>
     </>
+  );
+}
+
+function AboutDialog({ onClose, welcome }) {
+  return (
+    <ModalDialog onClose={onClose} labelledBy="about-title">
+      <AboutContent titleId="about-title" welcome={welcome} onClose={onClose}/>
+    </ModalDialog>
   );
 }
 
@@ -139,4 +146,4 @@ function AboutSheet({ onClose, welcome }) {
   );
 }
 
-Object.assign(window, { AboutDialog, AboutSheet });
+Object.assign(window, { AboutDialog, AboutSheet, ModalDialog });

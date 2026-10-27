@@ -187,6 +187,10 @@ window.MCU_LOCALES['pt-BR'] = {
     'error.signIn': 'Não foi possível iniciar o login. Tente novamente.',
     'error.signOut': 'Não foi possível sair. Tente novamente.',
 
+    'nudge.title': 'Leve sua lista para todos os dispositivos',
+    'nudge.text': { one: 'Você marcou {n} título neste navegador. Entre com o Google para salvá-lo na sua conta e vê-lo no celular, tablet ou computador.', other: 'Você marcou {n} títulos neste navegador. Entre com o Google para salvá-los na sua conta e vê-los no celular, tablet ou computador.' },
+    'nudge.merge': 'Tudo o que você já marcou vai junto.',
+    'nudge.later': 'Agora não',
     'account.title': 'Conta',
     'account.signedIn': 'Conectado',
     'account.notSignedIn': 'Não conectado',
