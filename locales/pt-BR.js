@@ -27,7 +27,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'sort.short.rt': 'RT',
 
     'order.label': 'Ordem',
-    'order.aria': 'Ordem: {label}',
+    'order.toggleAria': 'Ordem: {label}. Mudar para {next}.',
     'order.title.asc': 'A–Z',
     'order.title.desc': 'Z–A',
     'order.release.asc': 'Mais antigos primeiro',

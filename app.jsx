@@ -901,6 +901,18 @@ function App() {
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
+  // A new layout (sort, order, filters, a pinned character) makes the cards
+  // glide for 600ms while the lines would be drawn at their final places at
+  // once: hide the lines until the cards have landed, then fade them back in.
+  // A layout effect, so the new lines never paint before they are hidden.
+  const [linesSettling, setLinesSettling] = useState(false);
+  const laidOutRef = useRef(false);
+  useLayoutEffect(() => {
+    if (!laidOutRef.current) { laidOutRef.current = true; return undefined; }
+    setLinesSettling(true);
+    const id = setTimeout(() => setLinesSettling(false), 520);
+    return () => clearTimeout(id);
+  }, [basePositions]);
   const canvasW = layout.width;
   const canvasH = layout.height;
 
@@ -1660,6 +1672,18 @@ function App() {
     cameraFramedRef.current = true;
     glideTo({ x: (rect.width - side) / 2 - mx * scale, y: rect.height / 2 - my * scale, scale });
   }, [pair]);
+  // Row labels come back when a selection closes, while the cards glide home:
+  // they wait for the glide, as they do after a new layout.
+  const [bandsReturning, setBandsReturning] = useState(false);
+  const hadSelectionRef = useRef(false);
+  useLayoutEffect(() => {
+    const had = hadSelectionRef.current;
+    hadSelectionRef.current = !!selectedId;
+    if (!had || selectedId) return undefined;
+    setBandsReturning(true);
+    const id = setTimeout(() => setBandsReturning(false), 520);
+    return () => clearTimeout(id);
+  }, [selectedId]);
   // Escape, or a new layout, leaves the pair view.
   useEffect(() => {
     if (!pair) return;
@@ -1734,11 +1758,11 @@ function App() {
           </span>
           <div className="cb-step">
             <button onClick={() => stepBy(-1)} aria-label={tr('highlight.prev')} disabled={!n}>‹</button>
-            {/* Before the first step: the number of titles, stacked so it
-                takes no more room than "1/9" and the name keeps its space. */}
-            {stepIndex >= 0
-              ? <span className="cb-pos" aria-live="polite">{tr('highlight.short', { i: stepIndex + 1, n })}</span>
-              : <span className="cb-pos total" aria-live="polite"><b>{n}</b> <small>{tr('highlight.titlesWord', { n })}</small></span>}
+            {/* Before the first step just the number of titles (read out as
+                "13 titles"), so the name keeps its space; then "1/13". */}
+            <span className="cb-pos" aria-live="polite">{stepIndex >= 0
+              ? tr('highlight.short', { i: stepIndex + 1, n })
+              : <>{n}<span className="story-sr"> {tr('highlight.titlesWord', { n })}</span></>}</span>
             <button onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!n}>›</button>
           </div>
           <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={unpinCharacter}>×</button>
@@ -1783,7 +1807,7 @@ function App() {
     >
       <div className="canvas-bg"/>
       <div
-        className="canvas"
+        className={`canvas${linesSettling ? ' lines-settling' : ''}${bandsReturning ? ' bands-settling' : ''}`}
         style={{
           width: canvasW + 'px',
           height: canvasH + 'px',

@@ -40,9 +40,12 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Mobile view navigation is List / Grid / Spatial. List rows place IMDb and
   Rotten Tomatoes numeric badges together beneath their phase/budget metadata,
   with rank numbers when sorting by rating.
-- Choose direction from a separate order menu beside desktop sorting or beside
-  mobile search on the second header row. Its label shows the current order
-  (Newest, 6 → 1, Z–A). Mobile uses quieter search text and taller bottom sort tabs.
+- Flip the direction with the Order toggle beside desktop sorting or beside
+  mobile search on the second header row: every sort has two directions, so a
+  tap reverses the order. Its label shows the current order (Newest, 6 → 1,
+  Z–A) and its sort icon's bars flip with it. In Spatial, connection lines and
+  row labels wait for the cards to finish moving after a new layout (row labels
+  also after a selection closes), then fade back in. Mobile uses quieter search text and taller bottom sort tabs.
   Filters offers the two full order labels for the current mode without repeating
   the sort navigation; mobile A–Z is now a main navigation tab. Grid, List and
   Spatial use the same order; unrated titles stay last for either rating direction.
@@ -76,8 +79,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   dimmed) and a stepper (‹ ›, or the arrow keys) that starts on the title you
   came from and visits each of their titles. The current title is ringed in the
   character's colour. Desktop shows this in a banner; phones close the details
-  sheet and show a floating pill above the sort bar (character, actor, stepper;
-  before the first step it shows how many titles they have)
+  sheet and show a floating pill above the sort bar (character, actor, stepper:
+  their number of titles, then 1/13 and so on)
   and always show only that character's titles; stepping in List or Grid scrolls
   the current title fully into view, clear of the pill and the top edge.
 - On phones' All tab, each run of two or more consecutive seen titles gets an

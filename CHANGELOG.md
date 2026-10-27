@@ -12,6 +12,39 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — Order toggle and smoother Spatial reorders
+
+Recorded: 2026-10-26 20:47:14 EDT (-0400).
+
+- Order (desktop toolbar and phone search row) is now a toggle: every sort has
+  exactly two directions, so a tap reverses the order with no dropdown. It
+  shows the current direction (Oldest, Highest, 1 → 6, A–Z…) beside a sort icon
+  whose bars flip with the order. Its accessible name and tooltip say the
+  current order and what it switches to (`order.toggleAria` replaces
+  `order.aria`, English and Brazilian Portuguese). The Filters panel keeps its
+  explicit two-option choice.
+- Spatial: after a new layout (order, sort, filters, a pinned character) the
+  connection lines, their labels and the row labels are hidden before the next
+  paint and fade back in once the cards have finished gliding. Row labels also
+  wait for the cards to return after a selected title closes, and rise slightly
+  as they fade in (fade only with reduced motion).
+- Phone character pill: before the first step it shows just the number of
+  titles ("‹ 13 ›", read as "13 titles"), then "1/13".
+- Verification: headless Chromium.
+  - Toggle: desktop List Oldest ↔ Newest (first title Iron Man ↔ Avengers:
+    Secret Wars, choice saved); IMDb by Enter and Space; Spatial Earliest →
+    Latest; phone List Highest → Lowest with the reorder animation; phone Grid
+    in Portuguese 1 → 6 ↔ 6 → 1. No dropdown opens.
+  - Spatial: lines and row labels at opacity 0 while the cards move (to about
+    600ms), back by about 1s, for the toggle and Release → IMDb/Chrono; row
+    labels hidden while the cards return after closing a title.
+  - Pill reads "13" (accessible "13 titles"), then "1/13".
+  - No console errors; regression scripts and the label test pass (test-camera
+    still has its known intermittent desktop timeout).
+  - Videos and screenshots reviewed by the user, who approved committing and
+    merging to main.
+- Limits: not checked on a physical phone.
+
 ## V3 improvement — picking a character from search opens the character view
 
 Recorded: 2026-10-26 19:07:38 EDT (-0400).

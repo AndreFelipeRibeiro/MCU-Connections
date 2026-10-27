@@ -56,52 +56,27 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, o
   );
 }
 
-// Shared disclosure: full wording in the popover, compact current value outside.
+// Order: every sort has exactly two directions, so the control is a toggle
+// (desktop toolbar and phone search row): a tap flips the order. It shows the
+// current direction; its accessible name also says what a tap switches to.
+// The icon is a down arrow (reading order) beside bars that grow down the list
+// for the first direction (Oldest, Lowest, A–Z…) and shrink for the second;
+// the bars flip over as the order changes.
 function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
-  const [open, setOpen] = React.useState(false);
-  const wrap = React.useRef(null), trigger = React.useRef(null), choices = React.useRef(null);
-  const id = React.useId();
   const labels = window.sortDirectionLabels(sort);
   const index = sortDir === 'desc' ? 1 : 0;
   const compact = window.sortDirectionLabels(sort, true)[index];
-  React.useEffect(() => { setOpen(false); }, [sort]);
-  React.useEffect(() => {
-    if (!open) return;
-    choices.current?.querySelector('[aria-pressed="true"]')?.focus();
-    const away = e => { if (!wrap.current?.contains(e.target)) setOpen(false); };
-    const escape = e => {
-      if (e.key === 'Escape') { setOpen(false); trigger.current?.focus(); }
-    };
-    document.addEventListener('pointerdown', away);
-    document.addEventListener('keydown', escape);
-    return () => {
-      document.removeEventListener('pointerdown', away);
-      document.removeEventListener('keydown', escape);
-    };
-  }, [open]);
-  // Close when keyboard focus moves to something outside the menu. Safari (iOS
-  // and macOS) does not focus a tapped/clicked button: tapping an option blurs
-  // the focused one with relatedTarget null, and closing then would unmount the
-  // option before its click fires, so the choice was silently lost. A null
-  // relatedTarget is therefore ignored here; outside taps are handled by the
-  // pointerdown listener above, and Escape still closes.
-  return <div className={`sort-order${mobile ? ' mobile-order' : ''}`} ref={wrap}
-    onBlur={e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
-    <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
-      aria-label={mtr('order.aria', { label: labels[index] })} onClick={() => setOpen(v => !v)}>
+  const label = mtr('order.toggleAria', { label: labels[index], next: labels[1 - index] });
+  return <div className={`sort-order${mobile ? ' mobile-order' : ''}`}>
+    <button className="sort-order-trigger sort-order-toggle" aria-label={label} title={label}
+      onClick={() => setSortDir(index === 0 ? 'desc' : 'asc')}>
       {compact}
-      <svg className="sort-order-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="m6 9 6 6 6-6"/>
+      <svg className={`sort-order-flip${index ? ' desc' : ''}`} width="14" height="14" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+        <path d="M5 4v16M2 17l3 3 3-3" strokeLinejoin="round"/>
+        <g className="bars"><path d="M11 6h4M11 12h7M11 18h10"/></g>
       </svg>
     </button>
-    {open && <div id={id} ref={choices} className="sort-order-pop" role="group" aria-label={mtr('order.label')}>
-      <div className="sort-order-heading">{mtr('order.label')}</div>
-      {labels.map((label, i) => <button key={label} aria-pressed={index === i}
-        onClick={() => { setSortDir(i === 0 ? 'asc' : 'desc'); setOpen(false); trigger.current?.focus(); }}>
-        <span>{label}</span><span aria-hidden="true">{index === i ? '✓' : ''}</span>
-      </button>)}
-    </div>}
   </div>;
 }
 window.SortOrderMenu = SortOrderMenu;
