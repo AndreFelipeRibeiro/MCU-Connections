@@ -344,11 +344,9 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
               onMouseLeave={() => onCharacterHover(null)}
             >
               <div className="portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-                {window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch] ? (
-                  <img src={window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]} alt={I18N.charName(ch)} loading="lazy"/>
-                ) : (
-                  <span>{c.initials}</span>
-                )}
+                <window.Portrait
+                  url={window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch] ? (window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]) : null}
+                  alt={I18N.charName(ch)} initials={c.initials}/>
               </div>
               <div className="cast-text">
                 <div className="char-name"><window.Highlight text={I18N.charName(ch)} query={search}/></div>
@@ -1726,7 +1724,7 @@ function App() {
     return (
       <div className={`char-banner${pinned ? ' pinned' : ''}`} style={{ '--char-color': c.color }}>
         <span className="cb-photo" style={{ background: c.color }}>
-          {photo ? <img src={photo} alt="" loading="lazy"/> : <span aria-hidden="true">{c.initials}</span>}
+          <window.Portrait url={photo} alt="" initials={c.initials}/>
         </span>
         <span className="cb-who">
           <b>{I18N.charName(activeChar)}</b>
@@ -1766,7 +1764,7 @@ function App() {
         <div className="cp-bar">
           <span className="cp-who">
             <span className="cb-photo" style={{ background: c.color }}>
-              {photo ? <img src={photo} alt="" loading="lazy"/> : <span aria-hidden="true">{c.initials}</span>}
+              <window.Portrait url={photo} alt="" initials={c.initials}/>
             </span>
             <span className="cp-text">
               <span className="cp-name">{I18N.charName(ch)}</span>

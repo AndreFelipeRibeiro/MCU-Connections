@@ -142,6 +142,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - **84 characters**, connecting titles through shared character identities
 - Posters and actor portraits sourced from TMDB (credited in About with TMDB's
   notice; TMDB also asks for its logo there, not added yet)
+- A poster or portrait that fails to load falls back to generated art or the
+  character's initials
 - IMDb and Rotten Tomatoes scores where available
 
 Titles and cast lists are maintained by hand in [`data.js`](data.js) against Wikipedia's per-character MCU filmographies — this isn't pulled from a live API, so it reflects whatever was true as of the last update. Unreleased titles (anything past a "Not yet rated" badge) carry pre-release cast announcements, which can and do change before release.
@@ -324,7 +326,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
 | `search-suggest.jsx` | Search box with actor/character/title suggestions, shared by desktop and mobile |
-| `poster.jsx` | TMDB posters or generated abstract fallback |
+| `poster.jsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
 | `connections.jsx` | Standalone connection layer retained for reference; not wired into the app |
 | `styles.css` / `styles-mobile.css` | Desktop/touch layout, status treatments, focus and dialogs |
 | `schema.sql` | Watch-state table, constraints, trigger, grants and ownership RLS |

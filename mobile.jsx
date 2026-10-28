@@ -235,7 +235,7 @@ function MatchBadge({ matchedChars, query }) {
   return (
     <div className="card-match" style={{'--match-color': c.color}} title={matchedChars.map(mid => MI18N.charName(mid)).join(', ')}>
       <div className="card-match-portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-        {portrait ? <img src={portrait} alt={MI18N.charName(id)} loading="lazy"/> : <span>{c.initials}</span>}
+        <window.Portrait url={portrait} alt={MI18N.charName(id)} initials={c.initials}/>
       </div>
       <div className="card-match-text">
         <div className="card-match-char"><Highlight text={MI18N.charName(id)} query={query}/>{matchedChars.length > 1 ? ` +${matchedChars.length - 1}` : ''}</div>
@@ -997,9 +997,9 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
           return (
             <button key={ch} className={`m-crow${activeChar===ch?' on':''}`} style={{'--match-color': c.color}} onClick={()=>onCharacterClick(ch)}>
               <div className="m-port" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-                {window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch]
-                  ? <img src={window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]} alt={MI18N.charName(ch)} loading="lazy"/>
-                  : <span>{c.initials}</span>}
+                <window.Portrait
+                  url={window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch] ? (window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]) : null}
+                  alt={MI18N.charName(ch)} initials={c.initials}/>
               </div>
               <div className="m-ctext">
                 <div className="m-cn"><Highlight text={MI18N.charName(ch)} query={search}/></div>

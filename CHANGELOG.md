@@ -12,6 +12,25 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 fix — fallbacks for posters and cast photos that fail to load
+
+Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- A poster that fails to load now shows the generated poster art instead of a
+  broken image with spilling alt text. A cast photo that fails shows the
+  character's initials, in the desktop details, phone details and character
+  pills (new shared `window.Portrait`; the desktop List already had this).
+  Failed addresses are remembered for the session, so they are not requested
+  again when a card or sheet comes back.
+- Verification: headless Chromium, desktop and phone. With images blocked,
+  16 broken posters on desktop and 31 on the phone became generated art (0
+  broken), and all 5 portraits in details showed initials without overflow.
+  With images served, all posters and portraits render as images. Reopening
+  details makes no new requests for failed images. Regression scripts pass.
+- Limits: an image that fails while briefly offline stays on the fallback until
+  the page is reloaded. The Google account avatar is unchanged.
+
 ## V3 fix — browser Back closes phone sheets
 
 Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); not
