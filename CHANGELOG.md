@@ -14,8 +14,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V3 improvement — selected title drawn larger in the Spatial ring
 
-Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
 
 - On desktop, the title at the centre of an open connection ring is drawn 18%
   larger (its existing lift scale), above its neighbours. Phones keep their
@@ -27,8 +27,8 @@ merged to main.
 
 ## V3 improvement — startup screen with failure recovery
 
-Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
 
 - `index.html` shows the brand, a spinner and a localized "Loading…" inside
   `#root` until React's first render replaces it, instead of a blank page. New
@@ -45,8 +45,8 @@ merged to main.
 
 ## V3 improvement — click empty canvas to close a desktop selection
 
-Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
 
 - In desktop Spatial a click on empty background (not a drag) now steps back one
   level: out of the pair view, or else closes the selected title and its
@@ -61,8 +61,8 @@ merged to main.
 
 ## V3 fix — Spatial explains an empty result
 
-Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
 
 - When a search or filter leaves no titles, Spatial (desktop and phone) shows
   "No titles match" with one button that clears the search, the filters or both,
@@ -76,8 +76,8 @@ merged to main.
 
 ## V3 fix — search matches with or without accents
 
-Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
 
 - One shared `MCU_I18N.fold()` (case and accents removed) now drives the search
   filter behind Spatial, List and Grid, the suggestions and the highlights. Before,
@@ -93,8 +93,8 @@ merged to main.
 
 ## V3 improvement — production React and ReactDOM builds
 
-Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
 
 - `index.html` loads the production UMD builds of React and ReactDOM 18.3.1
   instead of the development builds, with the same pinned version,
@@ -113,8 +113,8 @@ merged to main.
 
 ## V3 fix — fallbacks for posters and cast photos that fail to load
 
-Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
 
 - A poster that fails to load now shows the generated poster art instead of a
   broken image with spilling alt text. A cast photo that fails shows the
@@ -132,8 +132,8 @@ merged to main.
 
 ## V3 fix — browser Back closes phone sheets
 
-Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
 
 - Back now closes the open phone sheet (details, Filters, Account, About, the
   welcome sheet and the sign-in reminder) instead of leaving the app. Each sheet
@@ -154,7 +154,8 @@ merged to main.
 ## V3 fix — zoomed-out Spatial no longer exhausts phone memory
 
 Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging) for
-testing on a phone; not merged to main.
+testing on a phone; merged to main (production) after user approval,
+2026-10-27 22:21 EDT.
 
 - Phones could reload or crash when panning Spatial zoomed out to about 5–10%.
   It was graphics memory, not a script error: the whole canvas was one GPU
