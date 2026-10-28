@@ -12,6 +12,31 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 fix — zoomed-out Spatial no longer exhausts phone memory
+
+Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging) for
+testing on a phone; not merged to main.
+
+- Phones could reload or crash when panning Spatial zoomed out to about 5–10%.
+  It was graphics memory, not a script error: the whole canvas was one GPU
+  layer (12,687×2,595 at full size) and every card, badge and seen-title wash
+  had its own layer as well, all on screen at once when zoomed out.
+- Cards are now positioned with a 2D transform and no `will-change`; the canvas
+  keeps its GPU layer only at 30% zoom and above (`LAYER_MIN_SCALE`) and below
+  that is drawn at screen resolution. Spatial cards no longer use backdrop
+  blur (the badges are opaque enough), and the seen wash desaturates the poster
+  itself instead of using a backdrop filter.
+- Verification: headless Chromium, 390×844 at 3× pixel density. At minimum zoom
+  223 compositor layers covering about 37 million pixels became 6 layers
+  covering 0.4 million; at the default zoom 340 became 8. Desktop Spatial
+  screenshots differ in 0.07% of pixels (anti-aliasing). Pan frame rate with
+  the CPU slowed 4× is unchanged at the default zoom and lower when fully zoomed
+  out with development React (23 → 17 fps). Regression scripts pass; two that
+  parsed `translate3d(` now accept both forms.
+- Limits: iOS Safari could not be run here, so the crash itself was not
+  reproduced; confirmation is pending on a real phone. Below 30% zoom each pan
+  frame is redrawn rather than moved as a cached layer.
+
 ## V3 fix — Spatial rings hide unrelated cards
 
 Recorded: 2026-10-26 22:01:32 EDT (-0400).

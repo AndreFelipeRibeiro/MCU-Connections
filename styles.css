@@ -54,8 +54,12 @@ body {
 .canvas {
   position: absolute; top: 0; left: 0;
   transition: none;
-  will-change: transform;
 }
+/* Nothing inside the Spatial canvas may ask for its own GPU layer: zoomed far
+   out every card is on screen, and per-card layers (backdrop blur on badges and
+   the seen wash) exhaust phone graphics memory. The badges are opaque enough
+   to read without the blur. */
+.canvas .card *, .canvas .card *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .zoom-readout {
   position: absolute; bottom: 16px; right: 16px;
   font-family: 'JetBrains Mono', monospace; font-size: 11px;
@@ -177,7 +181,6 @@ body {
   overflow: hidden; cursor: grab;
   transition: transform 600ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms, border-color 220ms, opacity 220ms, filter 220ms, visibility 0s;
   display: flex; flex-direction: column;
-  will-change: transform;
 }
 .card.dragging {
   cursor: grabbing;
@@ -476,9 +479,9 @@ body {
 .card.seen .card-poster::after {
   content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: rgba(10,12,20,0.34);
-  -webkit-backdrop-filter: saturate(0.35);
-  backdrop-filter: saturate(0.35);
 }
+/* Desaturate the art itself (a backdrop filter here cost a GPU layer per card). */
+.card.seen .card-poster > :first-child { filter: saturate(0.35); }
 .card.seen .card-meta { opacity: 0.82; }
 .card.listed { border-color: color-mix(in oklab, #d4a05a 45%, var(--border)); }
 

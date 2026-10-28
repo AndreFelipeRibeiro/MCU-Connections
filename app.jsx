@@ -243,7 +243,9 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
       style={{
         '--phase-color': phaseColor,
         ...(isCurrent && curColor ? { '--cur-color': curColor } : {}),
-        transform: `translate3d(${pos.x}px, ${pos.y}px, 0) scale(var(--lift, 1))`,
+        // 2D on purpose: a 3D transform would give each of the 64 cards its own
+        // GPU layer, which phones cannot afford when zoomed far out.
+        transform: `translate(${pos.x}px, ${pos.y}px) scale(var(--lift, 1))`,
         width: CARD_W + 'px',
         height: CARD_H + 'px',
       }}
@@ -816,6 +818,11 @@ function App() {
   const [view, setView] = useState({ x: 0, y: 0, scale: 1 });
   const [zoomEdit, setZoomEdit] = useState(null);
   const ZOOM_MIN = 0.05;
+  // Below this zoom the canvas is drawn at screen resolution instead of as one
+  // GPU layer. As a layer it is rasterized at full size, and zoomed far out the
+  // whole 12,000px-wide canvas is on screen at once: iOS Safari runs out of
+  // memory and reloads the tab when it is panned.
+  const LAYER_MIN_SCALE = 0.3;
 
   // Camera glide, for programmatic returns only (see the selection return
   // below). Manual pan and zoom must stay instant, so any pointer or wheel input
@@ -1821,7 +1828,9 @@ function App() {
         style={{
           width: canvasW + 'px',
           height: canvasH + 'px',
-          transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
+          transform: view.scale >= LAYER_MIN_SCALE
+            ? `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`
+            : `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
           transformOrigin: '0 0',
           transition: cameraGlide ? 'transform 600ms cubic-bezier(.2,.8,.2,1)' : undefined,
         }}
