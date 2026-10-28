@@ -12,6 +12,27 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — picking a title from search navigates to it instead of filtering by its name
+
+Recorded: 2026-10-28 17:08 EDT (-0400). Not pushed.
+
+- Picking a title put its name in the search box, which left a text filter
+  behind. On the Spatial canvas that narrowed 64 cards down to the one just
+  picked, stranding it with nothing to connect to — the one thing that view is
+  for. Codex reproduced it with Iron Man 2.
+- A title pick now clears the box and opens the title selected, so its rings
+  come up and it lands among its neighbours. Typing text without picking still
+  filters, exactly as before.
+- The phase, type and collection filters are **not** touched, so a deliberate
+  filter survives the pick rather than being silently reset.
+- Verification: checked in a real browser — picking Iron Man 2 leaves the box
+  empty, all 64 cards on the canvas, the card selected with its ring up and 41
+  unrelated cards hidden, the details open, and the count still reading "64
+  titles". `test-suggest` now asserts all three of those (empty box, catalog
+  intact, title selected); it already captured them and never checked them.
+- Limits: the phone path rests on `test-suggest`'s existing mobile case; no
+  phone-width browser pass.
+
 ## V3 improvement — the pinned banner holds its place when the details panel opens
 
 Recorded: 2026-10-28 16:55 EDT (-0400). Not pushed.

@@ -133,11 +133,20 @@ function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, 
       setActive(-1);
       return;
     }
-    onChange(item.label);
+    // Picking a title NAVIGATES to it rather than filtering by its name.
+    // Putting the name in the box left a text filter behind, which narrowed the
+    // canvas to that one title and stranded it with nothing to connect to —
+    // the one thing the Spatial view is for. Opening it selected also brings
+    // up its rings, so it lands among its neighbours.
+    // Typing text and not picking still filters, exactly as before, and the
+    // phase, type and collection filters are left alone either way.
     if (item.kind === 'title' && onPickTitle) {
+      onChange('');
       onPickTitle(item.id);
       // Details open now: let go of the box (and the phone keyboard).
       if (inputRef.current) inputRef.current.blur();
+    } else {
+      onChange(item.label);
     }
     setDismissed(true);
     setActive(-1);

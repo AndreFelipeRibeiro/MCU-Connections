@@ -20,7 +20,12 @@ const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v)
   out.afterClick = { value: await box.inputValue(), focused: await page.evaluate(() => document.activeElement.tagName) };
   await box.fill(''); await box.type('endg'); out.endg = await items(page);
   await page.locator('.ss-item', { hasText: 'Endgame' }).first().click(); await page.waitForTimeout(1200);
-  out.titlePick = await page.evaluate(() => ({ value: document.querySelector('.search-wrap input').value, drawer: (document.querySelector('.drawer.open .drawer-title') || {}).textContent, selected: (document.querySelector('.card.selected .card-title') || {}).textContent, focus: document.activeElement.tagName }));
+  out.titlePick = await page.evaluate(() => ({ value: document.querySelector('.search-wrap input').value, drawer: (document.querySelector('.drawer.open .drawer-title') || {}).textContent, selected: (document.querySelector('.card.selected .card-title') || {}).textContent, focus: document.activeElement.tagName, cards: document.querySelectorAll('.card').length }));
+  // Picking a title navigates to it; it must not leave a text filter behind.
+  // That used to strand the title alone on the canvas with nothing to connect to.
+  if (out.titlePick.value !== '') errors.push('picking a title left "' + out.titlePick.value + '" filtering the catalog');
+  if (out.titlePick.cards < 60) errors.push('only ' + out.titlePick.cards + ' cards left on the canvas after picking a title');
+  if (!out.titlePick.selected) errors.push('the picked title is not selected, so its connections are not shown');
   await box.click(); await box.fill('lok'); out.escBefore = await page.locator('.ss-pop').count(); await box.press('Escape'); out.escAfter = await page.locator('.ss-pop').count();
   await box.type('i'); out.reopen = await page.locator('.ss-pop').count();
   await page.mouse.click(700, 600); await page.waitForTimeout(200); out.blurClosed = await page.locator('.ss-pop').count();
