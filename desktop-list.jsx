@@ -79,9 +79,9 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   const ranked = sort === 'imdb' || sort === 'rt';
   const groups = dlGroups(titles, sort);
   const labels = {
-    poster: '', title: tr('list.col.title'), type: tr('list.col.type'), phase: tr('list.col.phase'),
+    poster: <span className="story-sr">{tr('list.col.poster')}</span>, title: tr('list.col.title'), type: tr('list.col.type'), phase: tr('list.col.phase'),
     release: tr('list.col.release'), story: tr('list.col.story'), budget: tr('list.col.budget'),
-    imdb: 'IMDb', rt: 'RT', cast: tr('list.col.cast'), actions: '',
+    imdb: 'IMDb', rt: 'RT', cast: tr('list.col.cast'), actions: <span className="story-sr">{tr('list.col.actions')}</span>,
   };
   const typeLabel = t => tr(t.type === 'film' ? 'type.film.one' : 'type.series.one');
   // Rows glide to their new places when the sort, order or collection filter
@@ -89,7 +89,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   const flipRef = window.useReorderAnimation(orderKey, { inside: true });
   let n = 0;
   return (
-    <div className={`dlist${ranked ? ' ranked' : ''}`} ref={flipRef}>
+    <div className={`dlist${ranked ? ' ranked' : ''}`} ref={flipRef} role="main" aria-label={tr('view.list')}>
       {header}
       {!titles.length ? (
         <div className="dl-empty">

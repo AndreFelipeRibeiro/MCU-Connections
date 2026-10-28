@@ -58,6 +58,8 @@ window.MCU_LOCALES.en = {
     'list.col.story': 'Set in',
     'list.col.budget': 'Budget',
     'list.col.cast': 'Characters',
+    'list.col.poster': 'Poster',
+    'list.col.actions': 'Seen and watchlist',
     'list.sortBy': 'Sort by {label}',
     'list.reverse': 'Reverse order',
 

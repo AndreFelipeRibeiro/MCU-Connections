@@ -57,6 +57,8 @@ window.MCU_LOCALES['pt-BR'] = {
     'list.col.story': 'Se passa em',
     'list.col.budget': 'Orçamento',
     'list.col.cast': 'Personagens',
+    'list.col.poster': 'Pôster',
+    'list.col.actions': 'Visto e para assistir',
     'list.sortBy': 'Ordenar por {label}',
     'list.reverse': 'Inverter a ordem',
 

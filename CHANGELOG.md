@@ -12,6 +12,19 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — page landmarks and List column labels
+
+Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- The app name is the page's `<h1>`; the desktop toolbar and phone app bar are
+  the banner; the Spatial canvas, the List or the phone's main area is `main`.
+  The List's blank poster and actions headers get screen-reader-only labels
+  (new keys `list.col.poster`, `list.col.actions`).
+- Verification: axe-core on the same 7 screens in both languages reports no
+  violations of any kind; screenshots are pixel-identical before and after.
+- Limits: not tried with VoiceOver or NVDA.
+
 ## V3 improvement — readable muted text and RT tags
 
 Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not

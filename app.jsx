@@ -382,11 +382,11 @@ function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopVi
   // narrower desktops the search group wraps onto its own row (CSS). Below it:
   // sort modes and the collection switch.
   return (
-    <div className="toolbar">
+    <div className="toolbar" role="banner">
       <div className="tb-row tb-top-row">
         <div className="brand">
           <div className="brand-mark"/>
-          <div className="brand-title">{tr('app.name')}</div>
+          <h1 className="brand-title">{tr('app.name')}</h1>
         </div>
         <div className="tb-filter-row">
           <div className="search-wrap">
@@ -1805,6 +1805,8 @@ function App() {
     <div
       className="viewport"
       ref={viewportRef}
+      role={isTouch ? undefined : 'main'}
+      aria-label={isTouch ? undefined : tr('view.spatial')}
       onPointerDownCapture={stopGlide}
       onWheelCapture={stopGlide}
       onMouseDown={isTouch ? undefined : onMouseDown}
@@ -1954,7 +1956,7 @@ function App() {
           onOpenAccount={() => setSheet('account')}
           collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         />
-        <div className={`m-main${charPill ? ' has-pill' : ''}`}
+        <div role="main" className={`m-main${charPill ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
           {viewMode === 'grid' && <window.MobileGrid collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'list' && <window.MobileList collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
