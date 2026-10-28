@@ -287,18 +287,24 @@ correct. Resulting search counts: Terrence Howard 1, Don Cheadle 10 (was 11),
 Edward Norton 1, Mark Ruffalo 11 (was 12), William Hurt 5, Harrison Ford 3
 (was 8).
 
-### Not verified, left on the default
+### The two animated credits, since sourced
 
-Two titles still show the default Harrison Ford for Thaddeus Ross and were
-**not** confirmed either way:
+Both were left on the default at first and have since been corrected, with
+sources supplied by the maintainer:
 
-- **What If…?** — Ross appears, but the voice credit for that season was not
-  established here.
-- **Your Friendly Neighborhood Spider-Man** — an animated series; the voice
-  credit was not established here.
+| Title | Character | Now | Source |
+|---|---|---|---|
+| What If…? | Thaddeus Ross | **Mike McGill** | MCU Fandom, Entertainment Weekly voice-cast guide, Behind The Voice Actors — McGill replaced William Hurt; Ross appears in episodes 3 and 6 |
+| Your Friendly Neighborhood Spider-Man | Thaddeus Ross | **Travis Willingham** | IMDb, ScreenRant character guide |
 
-Both are likely wrong and are deliberately left rather than guessed. Anyone
-picking this up should source them and add a `credits` entry.
+Both suspicions were right: the default Harrison Ford was wrong in each case.
+Thaddeus Ross now has four distinct performers across his eight titles —
+William Hurt 5, and one each for Harrison Ford, Mike McGill and Travis
+Willingham. Harrison Ford is credited in Brave New World alone.
+
+Worth noting for the recast sweep: a voice recast in an animated title counts
+exactly like a live-action one here, and animated series are where most of the
+remaining uncorrected cases are likely to be.
 
 No other recasts were audited. The catalogue holds several characters who have
 been recast or voiced by more than one performer elsewhere in the MCU; only the
