@@ -163,8 +163,8 @@ Connections chain on the prime, so *Loki* → *Quantumania* → *Loki Season 2* 
 ## Running it locally
 
 No package installation, npm, bundler, router, application server or test runner.
-The entry point is `index.html`. React, ReactDOM, Babel standalone and supabase-js
-load from pinned CDN scripts with SRI; JSX compiles in the browser. Files share
+The entry point is `index.html`. React and ReactDOM (production builds), Babel
+standalone and supabase-js load from pinned CDN scripts with SRI; JSX compiles in the browser. Files share
 exports through `window.*`, not ES modules.
 
 From the repository directory, run a static server:

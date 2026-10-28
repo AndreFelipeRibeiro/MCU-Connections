@@ -12,6 +12,26 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — production React and ReactDOM builds
+
+Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- `index.html` loads the production UMD builds of React and ReactDOM 18.3.1
+  instead of the development builds, with the same pinned version,
+  `crossorigin` and new SRI hashes computed from the npm package files (the
+  same method reproduces the old development hashes exactly). No npm, bundler
+  or precompile step.
+- Verification: headless Chromium, which enforces the SRI on every load.
+  About 214 KB less to download (gzipped). First title on screen locally:
+  desktop 3.5–4.1 s → 3.3–4.0 s; slowed-phone runs too noisy to show a
+  difference. Spatial panning with the CPU slowed 4×: 16–17 → 24–31 fps at the
+  default zoom and 13 → 28–29 fps fully zoomed out. All 14 regression scripts
+  pass on the four changes together; `test-camera` logs one desktop
+  passive-listener warning that the unchanged base logs too.
+- Limits: React's development warnings no longer appear in the console on the
+  live site. Not measured on a real network or device.
+
 ## V3 fix — fallbacks for posters and cast photos that fail to load
 
 Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); not
