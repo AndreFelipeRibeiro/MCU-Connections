@@ -48,9 +48,18 @@ design review**, which the ticket requires before this can merge.
 - One fix found by measuring rather than looking: `.pgh-up` had `opacity: .75`
   over `--text-muted`, which sits exactly at AA, so the fade would have pushed
   the "+N" hint under the line. The opacity is gone.
-- Limits: **no targeted `qa/` check yet**, and the full suite has not run
-  against this change. The phone Grid is outstanding. Screenshots still need
-  the user's approval before this merges.
+- `qa/test-progress.js` guards the rules that are easy to get subtly wrong:
+  one divider per phase, the denominator counting **released** titles only
+  (Phase 6 reads 0/7 with "+4"), a live update after marking, the count
+  **not** following the collection tab, and the headers standing down during
+  a text search and returning after it.
+- `qa/shots-progress.js` is a screenshot run, not part of regress.sh: it
+  captures all eight surfaces in both languages into `qa/shots/` for the
+  design review the ticket requires.
+- The full suite ran clean against the committed change — **all 25 check
+  runs clean, exit 0**, with nothing edited underneath it.
+- Limits: the phone Grid is outstanding and needs the user's decision, and
+  the screenshots still need their approval before this merges.
 
 ## V3 maintenance — five source-verified characters for the sparse series
 
