@@ -12,6 +12,23 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 fix — search matches with or without accents
+
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- One shared `MCU_I18N.fold()` (case and accents removed) now drives the search
+  filter behind Spatial, List and Grid, the suggestions and the highlights. Before,
+  suggestions ignored accents but the filter did not, so "Capitao" suggested
+  Captain America titles and then showed none. Highlights map folded matches back
+  to the original text, so "capitao" marks "Capitão".
+- Verification: headless Chromium, desktop Spatial and List, phone List and Grid,
+  English and Portuguese. "Capitao" 0 → 4 results (4 suggestions), "capitao
+  america" 0 → 4, "Viuva" 0 → 1; accented queries, actors and character names
+  unchanged. No console errors; regression scripts pass.
+- Limits: punctuation still matters ("homem formiga" without the hyphen finds
+  nothing, in suggestions and results alike).
+
 ## V3 improvement — production React and ReactDOM builds
 
 Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); not

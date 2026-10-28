@@ -190,12 +190,28 @@ function SortTabs({ sort, setSort }) {
 function Highlight({ text, query }) {
   if (text == null) return null;
   const str = String(text);
-  const q = query && query.trim();
+  const q = query ? MI18N.fold(query.trim()) : '';
   if (!q) return str;
-  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const parts = str.split(new RegExp(`(${escaped})`, 'ig'));
-  if (parts.length === 1) return str;
-  return parts.map((part, i) => i % 2 === 1 ? <mark key={i} className="hl">{part}</mark> : part);
+  // Fold one character at a time (case and accents, as the search does) and
+  // remember where each folded character came from, so "capitao" marks the
+  // "Capitão" it matched.
+  let folded = '';
+  const from = [];
+  for (let i = 0; i < str.length; i++) {
+    for (const ch of MI18N.fold(str[i])) { folded += ch; from.push(i); }
+  }
+  const out = [];
+  let last = 0, at = folded.indexOf(q);
+  while (at >= 0) {
+    const start = from[at], end = from[at + q.length - 1] + 1;
+    if (start > last) out.push(str.slice(last, start));
+    out.push(<mark key={start} className="hl">{str.slice(start, end)}</mark>);
+    last = end;
+    at = folded.indexOf(q, at + q.length);
+  }
+  if (!out.length) return str;
+  if (last < str.length) out.push(str.slice(last));
+  return out;
 }
 
 // Synopsis for the details drawer (desktop) and sheet (mobile). Clamped to

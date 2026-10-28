@@ -63,7 +63,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - English and Brazilian Portuguese. The first visit follows the browser/phone
   language; a language menu in the header (desktop toolbar, mobile app bar)
   overrides it per device. Portuguese shows official Brazilian release titles,
-  and search matches titles and characters in either language.
+  and search matches titles and characters in either language, with or without
+  accents ("Capitao" finds "Capitão").
 - Desktop has Spatial and List views (switch at the end of the sort row). The
   List is one row per title with sortable column headers (title, phase, release,
   in-story years, IMDb, RT) that stay in step with the sort row; a row opens the

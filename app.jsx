@@ -855,19 +855,19 @@ function App() {
   // search text (empty array if the title only matched on its own title text).
   // null when there's no active search.
   const searchCharMatches = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = I18N.fold(search.trim());
     if (!q) return null;
     const m = {};
     window.TITLES.forEach(t => {
       // Names in every language match, whichever language is showing.
       // Character-name matches come before actor-name ones, so "Sam" shows Sam
       // Wilson ahead of Nick Fury (Samuel L. Jackson) in the match badge.
-      const byName = c => I18N.charNames(c).some(n => n.toLowerCase().includes(q));
+      const byName = c => I18N.charNames(c).some(n => I18N.fold(n).includes(q));
       const chars = t.cast.filter(c => {
         const ch = window.CHARACTERS[c];
-        return ch && (byName(c) || ch.actor.toLowerCase().includes(q));
+        return ch && (byName(c) || I18N.fold(ch.actor).includes(q));
       }).sort((a, b) => byName(b) - byName(a));
-      if (I18N.titleNames(t).some(n => n.toLowerCase().includes(q)) || chars.length) m[t.id] = chars;
+      if (I18N.titleNames(t).some(n => I18N.fold(n).includes(q)) || chars.length) m[t.id] = chars;
     });
     return m;
   }, [search]);

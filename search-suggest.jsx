@@ -9,7 +9,7 @@ const SS_LIMIT = { actor: 4, character: 4, title: 4 };
 
 // Lower-case and strip accents, keeping the length so match offsets map back
 // onto the displayed (NFC) name.
-const ssFold = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const ssFold = s => window.MCU_I18N.fold(s);
 
 // 0: the name or one of its words starts with the query ("vinga" matches
 // "Os Vingadores"), 1: it appears inside a word.
