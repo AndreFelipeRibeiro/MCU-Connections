@@ -38,22 +38,30 @@ main (production) after user approval, 2026-10-28 11:30 EDT
 - Limits: no real-device work is claimed by this entry. The second half of its
   ticket, current iPhone/Safari and Android evidence, is not done.
 
-## V3 improvement — "Lançamento" and "Saiu" replace "Estreia" in Portuguese
+## V3 improvement — "Lançamento" and "Lançado" replace "Estreia" in Portuguese
 
 Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to
 main (production) after user approval, 2026-10-28 11:30 EDT
 (`088b9c1`).
 
 - "Estreia" alone reads as something still to come, the opposite of what the
-  release sort means. `sort.release` and `list.col.release` become
-  "Lançamento"; `sort.short.release` becomes "Saiu", which renders in the phone
-  sort tabs and the desktop compact span beside Crono, Fase, A–Z, IMDb and RT,
-  where ten characters would not fit.
-- Verification: `test-fit` in both languages (24 fields, all `errors: 0`),
-  `test-i18n`, `test-dlist`, `test-v2`, and the axe-core scan in Portuguese.
-  The painted label was read back at 1440, 1000, 390 and 320px.
-- Limits: not viewed by eye in a real browser; whether "Saiu" reads well to a
-  Brazilian user is a judgement the maintainer still owns.
+  release sort means. `sort.release` becomes "Lançamento";
+  `sort.short.release` and `list.col.release` become "Lançado", which fits the
+  phone sort tabs and the desktop compact span beside Crono, Fase, A–Z, IMDb
+  and RT, where "Lançamento" at ten characters would not.
+- **The commit message on `088b9c1` is wrong.** It says the short label became
+  "Saiu", because that is what the agent set and verified. The maintainer
+  edited the file to "Lançado" for both keys while the batch was being
+  prepared, and the agent staged the file without re-reading it, so the commit
+  shipped "Lançado" under a message describing "Saiu". The message cannot be
+  corrected in place now that it is in production; this entry is the record.
+- Verification: the earlier run covered the "Saiu" wording. What actually
+  shipped was re-checked afterwards: `test-fit` in Portuguese (24 fields, all
+  `errors: 0`), `test-i18n`, `test-dlist`, and the painted label read back at
+  1440, 390 and 320px with no horizontal overflow. "Lançado" is seven
+  characters, the same length as the "Estreia" it replaces.
+- Limits: not viewed by eye in a real browser; whether "Lançado" reads well to
+  a Brazilian user is a judgement the maintainer owns, and in this case made.
 
 ## V3 fix — the guest sign-in reminder stays true to the saved collection
 
