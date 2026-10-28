@@ -500,7 +500,7 @@
   },
   "creditSceneAudit": {
     "checkedAt": "2026-10-28",
-    "rule": "A character counts for a title only if they appear in the main feature. A character whose sole appearance is a mid- or post-credit scene is removed from that title's cast, which also removes the connection line it drew.",
+    "rule": "A character counts for a title only if they appear in the main feature. A character whose sole appearance is a mid- or post-credit scene is removed from that title's cast, which also removes the connection line it drew. What counts is a physical, in-story appearance by the performer: not a mention, not footage shown on a screen inside the film, and not invalidated by a later reveal that the character was someone else in disguise.",
     "primarySource": "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe",
     "removed": {
       "iron-man": {
@@ -635,6 +635,16 @@
           "https://www.gamesradar.com/entertainment/marvel-movies/every-deadpool-and-wolverine-cameo-explained-human-torch-lady-deadpool",
           "https://cinemablend.com/superheroes/marvel-cinematic-universe/happy-hogan-scene-deadpool-and-wolverine-movie-best-moments-very-different-robert-downey-jr"
         ]
+      },
+      "homecoming": {
+        "characters": [
+          "steve"
+        ],
+        "scene": "in-universe videos + post-credits",
+        "note": "Rogers appears only through low-budget in-universe educational videos shown inside the film, plus a post-credits gag. Never a physical live-action presence in the story. Decided by the user 2026-10-28.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
+        ]
       }
     },
     "keptAfterCheck": {
@@ -684,13 +694,15 @@
         ]
       }
     },
-    "openQuestions": [
+    "notAudited": "The unreleased titles (doomsday, secret-wars, brand-new-day, visionquest, friendly-spidey-s2, daredevil-born-again-s2/s3, wonder-man) cannot be audited; their casts are provisional. marvel-zombies was not checked scene by scene.",
+    "resolvedQuestions": [
       {
         "title": "far-from-home",
         "characters": [
           "fury"
         ],
-        "question": "The Fury seen throughout the main feature is Talos impersonating him; the real Fury appears only in the post-credits scene. Kept for now, because the connection a viewer experiences is Spider-Man to Fury.",
+        "decision": "kept",
+        "reason": "Samuel L. Jackson appears on screen through the main feature. The post-credits reveal that it was Talos changes who the character was, not whether the performance is in the film. Decided by the user 2026-10-28.",
         "sources": [
           "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
         ]
@@ -700,12 +712,12 @@
         "characters": [
           "steve"
         ],
-        "question": "Rogers appears in the main feature only as in-universe PSA videos, plus a post-credits gag. Kept, because he is on screen in the main feature.",
+        "decision": "removed",
+        "reason": "Appears only via in-universe PSA videos and a post-credits gag, not as a physical live-action appearance. Decided by the user 2026-10-28.",
         "sources": [
           "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
         ]
       }
-    ],
-    "notAudited": "The unreleased titles (doomsday, secret-wars, brand-new-day, visionquest, friendly-spidey-s2, daredevil-born-again-s2/s3, wonder-man) cannot be audited; their casts are provisional. marvel-zombies was not checked scene by scene."
+    ]
   }
 }

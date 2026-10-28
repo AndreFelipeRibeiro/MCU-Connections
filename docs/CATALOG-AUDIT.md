@@ -353,7 +353,7 @@ Primary source for the scene inventory:
 with per-case corroboration recorded in
 [CATALOG-SOURCES.json](CATALOG-SOURCES.json) under `creditSceneAudit`.
 
-### Removed — 18 cast entries across 12 titles
+### Removed — 19 cast entries across 13 titles
 
 | Title | Removed | Scene |
 |---|---|---|
@@ -368,6 +368,7 @@ with per-case corroboration recorded in
 | Captain Marvel | Steve Rogers, Natasha Romanoff, Bruce Banner, James Rhodes | mid-credits |
 | Shang-Chi | Bruce Banner, Carol Danvers | mid-credits |
 | Ms. Marvel | Carol Danvers | post-credits |
+| Spider-Man: Homecoming | Steve Rogers | PSA videos + post-credits |
 | Deadpool & Wolverine | Scott Lang | **absent entirely** |
 
 Two of those are not really credit-scene cases:
@@ -379,7 +380,7 @@ Two of those are not really credit-scene cases:
   is not in the picture.
 
 Resulting count drops: Nick Fury 14 → 11, Carol Danvers 7 → 4, Bruce Banner
-12 → 9, Steve Rogers 12 → 10, Bucky Barnes 12 → 10, Natasha 10 → 9, Rhodes
+12 → 9, Steve Rogers 12 → 9, Bucky Barnes 12 → 10, Natasha 10 → 9, Rhodes
 11 → 10, Thor 12 → 11, Wanda 9 → 8, Scott 10 → 9. No character was left with
 zero titles.
 
@@ -398,17 +399,25 @@ signal decoy. Only Rogers and Barnes are credits-only there.
 | Shang-Chi | Wong | Wong fights Abomination in the cage-fight sequence. |
 | Captain America: The Winter Soldier | Bucky Barnes | He is the title character; the Smithsonian scene is an extra credits scene. |
 
-### Two judgement calls left open
+### Two judgement calls, decided by the user on 2026-10-28
 
-Both are kept for now and flagged rather than decided quietly:
+Both were raised rather than settled quietly. The user decided each, and the
+two answers together sharpen the rule: **what counts is a physical, in-story
+appearance by the performer — not whether the character is referred to, and
+not whether the person on screen turns out to be someone else.**
 
-- **Nick Fury in Spider-Man: Far From Home.** The Fury on screen throughout the
-  main feature is Talos impersonating him; the real Fury appears only in the
-  post-credits scene. Kept, because the connection a viewer experiences is
-  Spider-Man to Fury — but by a strict reading of the rule he is not in it.
-- **Steve Rogers in Spider-Man: Homecoming.** He appears in the main feature
-  only as in-universe PSA videos, plus a post-credits gag. Kept, because he is
-  on screen in the main feature.
+- **Nick Fury in Spider-Man: Far From Home — kept.** The Fury on screen
+  through the main feature is Talos impersonating him, which the post-credits
+  scene reveals. He is kept because Samuel L. Jackson does appear in the film:
+  the later reveal changes who the character was, not whether the performance
+  is in the main feature.
+- **Steve Rogers in Spider-Man: Homecoming — removed.** He appears only
+  through a series of low-budget in-universe educational videos and a
+  post-credits gag, never as a physical live-action presence in the story.
+  Being shown on a screen inside the film is not being in it.
+
+That removal is the audit's **19th**, and takes Rogers from 10 titles to 9. It
+is in a separate commit from the first eighteen.
 
 ### Not audited
 

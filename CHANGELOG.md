@@ -12,6 +12,31 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — the two open credit-scene cases, decided
+
+Recorded: 2026-10-28 15:35 EDT (-0400). Not pushed.
+
+- The credit-scene audit left two cases for the user rather than deciding
+  them. Both are now settled, and together they sharpen the rule: what counts
+  is a **physical, in-story appearance by the performer** — not a mention, not
+  footage shown on a screen inside the film, and not invalidated by a later
+  reveal that the character was someone else in disguise.
+- **Nick Fury stays in Spider-Man: Far From Home.** The Fury on screen through
+  the main feature is Talos impersonating him, which the post-credits scene
+  reveals. Samuel L. Jackson is in the film; the reveal changes who the
+  character was, not whether the performance is there. No data change.
+- **Steve Rogers leaves Spider-Man: Homecoming.** He appears only through a
+  series of low-budget in-universe educational videos and a post-credits gag,
+  never as a physical live-action presence in the story. Being shown on a
+  screen inside the film is not being in it.
+- That is the audit's 19th removal, across 13 titles. Rogers drops from 10
+  titles to 9. No character was left with zero titles.
+- Verification: `test-pickperson`, `test-variant`, `test-suggest` and
+  `test-ctxfn2`, all `errors: []`. The full `qa/regress.sh` was still running
+  when this was committed; nothing is pushed until it is green.
+- Limits: no new browser pass for this one-entry change; it rests on the
+  checks and on the earlier desktop pass for the audit as a whole.
+
 ## V3 improvement — credit-scene-only cast comes out of the catalog
 
 Recorded: 2026-10-28 15:30 EDT (-0400). Not pushed.
