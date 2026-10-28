@@ -216,6 +216,12 @@ window.MCU_LOCALES.en = {
     'account.showWatchlist': 'Show watchlist',
     'account.syncError': "Couldn't sync — {error}. Anything you marked before signing in is still saved on this device. Collection editing is paused until sync succeeds.",
     'account.retrySync': 'Retry sync',
+    // Shown outside Account. 'synced' and 'guest' are read by screen readers
+    // only; the other two take space on screen because they need action.
+    'sync.loading': 'Syncing…',
+    'sync.failed': "Collection didn't sync",
+    'sync.synced': 'Collection synced to your account',
+    'sync.guest': 'Collection saved on this device',
     'account.unavailable': 'Sync unavailable{reason}. Your collection is still saved in this browser.',
     'account.retryConnection': 'Retry connection',
     'account.signOut': 'Sign out',

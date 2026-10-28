@@ -64,7 +64,7 @@ their "Handoff — 2026-10-24" sections are historical.
   and browsers can serve a cached copy on a plain refresh.
 - QA checks (`qa/`, details in qa/README.md): once per machine
   `bash qa/setup.sh` (needs Node 18+). Before handing work over for review, run
-  `bash qa/regress.sh` (23 check scripts in 24 runs, about 25 minutes; it exits non-zero and
+  `bash qa/regress.sh` (24 check scripts in 25 runs, about 25 minutes; it exits non-zero and
   marks failures with `!!`) and `node qa/a11y-scan.js` (expect no violations; add
   `LOC=pt-BR` for Portuguese). Also run the targeted check for the area you
   touched (for example `qa/test-kbspatial.js`), and update checks in the same

@@ -31,6 +31,7 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, o
           <div className="m-mark"/>
           <h1 className="m-btitle">{mtr('app.name')}</h1>
         </div>
+        <window.SyncStatus/>
         <window.LanguageMenu compact/>
         <window.AccountAvatarButton onOpen={onOpenAccount}/>
       </div>

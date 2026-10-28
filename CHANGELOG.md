@@ -12,6 +12,63 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — the pinned banner holds its place when the details panel opens
+
+Recorded: 2026-10-28 16:55 EDT (-0400). Not pushed.
+
+- The banner was indented by `padding-right: 402px` to clear the drawer, which
+  slid its mode toggle, stepper and close button 402px left the moment a title
+  opened. Stepping with `›` is what opens a title, so the controls moved at the
+  exact moment they were in use and the button left the cursor.
+- The pinned banner now spans the full width and the drawer opens **below** it:
+  `--cb-h` is measured with a ResizeObserver, like `--tb-h`, because the banner
+  wraps and is taller in Portuguese — a constant would be wrong for the same
+  reason it would be wrong for the toolbar.
+- **Only the pinned banner counts.** The hover banner comes and goes as the
+  cursor crosses a cast row *inside* the open drawer; tying the drawer's top to
+  that would slide it out from under the pointer. The hover banner keeps the
+  402px indent so its close button stays clear. The ticket did not anticipate
+  this case.
+- The cost is that the drawer's top moves on pin and unpin, which are
+  deliberate and occasional, instead of on every step. It is transitioned, and
+  `prefers-reduced-motion` keeps the slide-in but drops the reflow.
+- Verification: new `qa/test-bannerhold.js` asserts the stepper's box is
+  identical before and after the panel opens, that the panel starts at the
+  banner's bottom and still reaches the viewport floor, and that hovering a
+  cast row does not move it. `test-panel` and `test-camera`, which both measure
+  drawer geometry, still pass. axe-core clean on 7 screens in both languages.
+- Limits: desktop only by design; phones show a floating pill, not this banner.
+
+## V3 improvement — a failed collection sync is visible without opening Account
+
+Recorded: 2026-10-28 16:55 EDT (-0400). Not pushed.
+
+- A failed account-wide load was reported only inside the Account panel, so a
+  signed-in visitor browsed on with collection editing silently paused and no
+  way to retry without opening a menu. `SyncStatus` now sits in the desktop
+  toolbar and the phone app bar, and carries the Retry with it.
+- It takes space only when something needs attention — a failure, or an account
+  load in progress. Working sync and guest storage are reported through
+  `role="status"` to assistive technology and nothing more: a permanent "all
+  fine" chip is noise, and the Sign in button already says who you are.
+- On phones "Syncing…" loses its words and leaves the spinner to say it,
+  clipped rather than `display: none`, which would take the text from screen
+  readers too. A failure keeps its words; it is the state that must be legible.
+- It reuses `.acct-error`'s red rather than introducing a colour, so a failure
+  reads the same wherever it is met. Measured against the real composited
+  toolbar background: failure text 5.21:1, "Syncing…" 7.86:1, Retry 14.89:1 —
+  all above the 4.5:1 the standards section requires.
+- Verification: the guest path checked in a real browser (no visible chip, the
+  hidden status reading "Collection saved on this device", no console errors),
+  and axe-core clean on 7 screens in both languages. The two visible states'
+  styling and contrast were measured by injecting their markup.
+- **Limits, and this one matters:** the failure and loading states were **not**
+  exercised live. Reaching them needs a signed-in session whose network then
+  fails, which neither the headless checks (external requests are blocked) nor
+  a guest session can produce. The logic that picks the state is unverified at
+  runtime; only its rendering is. Worth one real signed-in test with the
+  network cut before this is called done.
+
 ## V3 improvement — one name for a recast character, everywhere, and one unbroken chain
 
 Recorded: 2026-10-28 16:37 EDT (-0400). Not pushed.

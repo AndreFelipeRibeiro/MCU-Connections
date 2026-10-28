@@ -497,6 +497,7 @@ function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopVi
           </div>
         </div>
         <div className="tb-end">
+          <window.SyncStatus/>
           <window.LanguageMenu/>
           <window.AccountButton onPickCollection={setCollectionFilter} onAbout={onAbout}/>
         </div>
@@ -1588,6 +1589,25 @@ function App() {
     ro.observe(bar);
     return () => ro.disconnect();
   }, [isTouch]);
+  // The pinned character banner spans the full width and the drawer opens below
+  // it, so its controls never move when stepping opens a title. Measured, not a
+  // constant, for the same reason as the toolbar: the banner wraps, and it is
+  // taller in Portuguese.
+  // Only the PINNED banner counts. The hover banner comes and goes as the
+  // cursor crosses a cast row inside the open drawer, and tying the drawer's
+  // top to that would slide it out from under the pointer.
+  useLayoutEffect(() => {
+    if (isTouch) return;
+    const root = document.documentElement;
+    const bar = document.querySelector('.char-banner.pinned');
+    if (!bar) { root.style.setProperty('--cb-h', '0px'); return; }
+    const set = () => root.style.setProperty('--cb-h', bar.offsetHeight + 'px');
+    set();
+    if (!window.ResizeObserver) return;
+    const ro = new ResizeObserver(set);
+    ro.observe(bar);
+    return () => { ro.disconnect(); root.style.setProperty('--cb-h', '0px'); };
+  }, [isTouch, highlightedChar]);
   useLayoutEffect(() => {
     if (!spatialShown) { cameraFramedRef.current = false; return; }
     if (!selectedIdRef.current && !pendingStepRef.current) resetView();
