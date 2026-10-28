@@ -14,8 +14,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V3 improvement — Spatial cards from the keyboard
 
-Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 23:30 EDT.
 
 - On desktop each Spatial card starts with an invisible button over the whole
   card, so Tab reaches the card before its Seen/Watchlist buttons and Enter or
@@ -32,8 +32,8 @@ merged to main.
 
 ## V3 improvement — favicon, home-screen icon and link previews
 
-Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 23:30 EDT.
 
 - New `favicon.png`, `apple-touch-icon.png` and `og-image.jpg` (1200×630),
   rendered from the app's brand mark with no studio imagery. `index.html` adds a
@@ -46,8 +46,8 @@ merged to main.
 
 ## V3 improvement — Escape and keyboard focus for desktop details
 
-Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 23:30 EDT.
 
 - Escape closes the open desktop details and selection unless the pair view,
   a text field, or an open menu, popover or dialog claims it first (listened in
@@ -65,8 +65,8 @@ merged to main.
 
 ## V3 improvement — page landmarks and List column labels
 
-Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 23:30 EDT.
 
 - The app name is the page's `<h1>`; the desktop toolbar and phone app bar are
   the banner; the Spatial canvas, the List or the phone's main area is `main`.
@@ -78,8 +78,8 @@ merged to main.
 
 ## V3 improvement — readable muted text and RT tags
 
-Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
-merged to main.
+Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 23:30 EDT.
 
 - `--text-muted` `#5c6278` → `#8389a1` (2.67–3.23:1 → 4.66–5.63:1 across the
   app's surfaces) and `--text-dim` `#8a90a6` → `#9ea4b8` so it stays a step
