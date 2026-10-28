@@ -1,5 +1,13 @@
 /* Mobile + tablet shell — desktop styles live in styles.css and are untouched */
 .app.touch { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+/* The shell is exactly one viewport tall and everything scrolls inside it
+   (.m-scrollarea for List and Grid, .m-sheet-body for sheets), so the document
+   itself must never move: dragging up from the sort bar used to scroll the
+   whole page and leave a band of background below it. Width-gated to match
+   useDevice()'s 900px breakpoint, so the desktop shell is untouched. */
+@media (max-width: 899px) {
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+}
 .app.touch .toolbar, .app.touch .drawer, .app.touch .zoom-readout, .app.touch .line-tooltip { display: none; }
 
 /* APP BAR */

@@ -20,7 +20,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression, 19 checks (about 20 min). Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
+| `bash qa/regress.sh` | Full regression, 22 checks (about 23 min). Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
 | `node qa/a11y-scan.js` | axe-core scan of 7 screens (desktop Spatial, details, List, account menu; phone List, details, Spatial). Add `LOC=pt-BR` for Portuguese. Expect no violations. |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
 | `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
@@ -42,7 +42,10 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   `test-variant` (character-variant scope), `test-nudgeundo` (the guest
   sign-in reminder against Undo), `test-pickperson` (every actor and character
   picked from the search opens the pinned widget), `test-escpin` (Escape
-  unwinds one layer per press, down to the pinned widget).
+  unwinds one layer per press, down to the pinned widget), `test-mviewport`
+  (the phone document does not scroll behind the shell), `test-inertia`
+  (panning decelerates on release and stops dead when grabbed),
+  `test-portrait` (a recast row never shows the default performer's face).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.
@@ -81,20 +84,29 @@ one.
   passive event listener"), which React causes by attaching wheel listeners
   passively at the root. `regress.sh` allows that one string by name, and
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
-- **`test-camera` currently fails, and did so before this batch.** Measured on
-  2026-10-28 over four runs (two on the working tree, two on an unmodified
-  export of `HEAD`): all four failed identically with `locator.click: Timeout
-  30000ms exceeded`. So the expected result of a full run right now is 16 of 17,
-  with `test-camera` the only failure.
-  The step is "sort change while selected", not the "wheel cancels the glide"
-  step this file used to blame — that one passed in every run. After the
-  preceding wheel-zoom step, the click on the centre card selects nothing
-  (`.card.selected` count 0, no open drawer), so the `.drawer-close` click that
-  follows has no target and times out. Whether that is brittleness in the check
-  or a real "click after a wheel zoom does not select" bug in the app is not yet
-  established; it needs its own ticket. Until then, do not read a `test-camera`
-  failure as a regression from your own change — compare against a clean copy
-  with `SITE=` first.
+- `test-camera` used to fail at "sort change while selected", and separately to
+  report a false "wheel cancels the glide" about one run in four. Both were the
+  check, not the app, and both are fixed. A full run should now be **22 of 22**;
+  treat any `test-camera` failure as real, and compare against a clean copy with
+  `SITE=` if in doubt.
+  - `page.mouse.click` moves the cursor and presses in the same tick. Hovering a
+    card re-lays the canvas out, so the press could land after the cards had
+    shifted and select nothing, leaving `.drawer-close` with no target. Card
+    clicks go through `clickCard()` (move, let the hover settle, then press),
+    and the two that must open a card go through `openCentreCard()`, which
+    waits for the drawer and re-measures if the press missed. It reports
+    `cardOpenAttempts`: more than one attempt is normal after a wheel zoom, and
+    a run of `"failed"` is worth looking at.
+  - The glide steps guessed at 60ms and 80ms. They now wait for the transition
+    to appear and to clear, which is what the "1 in 4" was.
+
+## Assertions have to be named "errors" to count
+
+`regress.sh` only reads fields whose name contains `errors`. A check that
+prints `"somethingWorked": false` therefore gates nothing — the run reports
+clean. `test-camera` had six such booleans, any of which could be false
+unnoticed; they are now collected into `assertErrors`. Worth remembering when
+writing a check: **an assertion that is not in an errors field is decorative.**
 - External images and fonts are blocked on purpose, so posters show their
   generated fallback art in screenshots.
 

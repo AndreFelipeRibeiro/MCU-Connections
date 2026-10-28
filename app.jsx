@@ -393,12 +393,12 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
             >
               <div className="portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
                 <window.Portrait
-                  url={window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch] ? (window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]) : null}
+                  url={window.castPortrait(current, ch)}
                   alt={I18N.charName(ch)} initials={c.initials}/>
               </div>
               <div className="cast-text">
                 <div className="char-name"><window.Highlight text={I18N.charName(ch)} query={search}/></div>
-                <div className="actor-name"><window.Highlight text={c.actor} query={search}/></div>
+                <div className="actor-name"><window.Highlight text={window.MCU_credit(current, ch)} query={search}/></div>
               </div>
               <div className="cast-color-dot" style={{background:c.color}}/>
             </button>
@@ -860,28 +860,53 @@ function App() {
   const [pinnedActor, setPinnedActor] = useState(null);
   // Characters an actor plays, catalogue-wide and busiest first. Read from
   // TITLES, not the filtered set, since a pin is what narrows that.
-  const charsByActor = useMemo(() => {
+  const performers = useMemo(() => {
     const seen = {};
     window.TITLES.forEach(t => t.cast.forEach(c => { seen[c] = (seen[c] || 0) + 1; }));
+    // Keyed per title, not per character, because a part can change hands:
+    // Rhodes is Terrence Howard in Iron Man and Don Cheadle after it, so each
+    // performer gets the titles they were actually credited in.
     const byActor = {};
-    Object.keys(window.CHARACTERS).forEach(id => {
-      if (!seen[id]) return;
-      const a = window.CHARACTERS[id].actor;
-      (byActor[a] = byActor[a] || []).push(id);
-    });
+    window.TITLES.forEach(t => t.cast.forEach(id => {
+      if (!window.CHARACTERS[id]) return;
+      const name = window.MCU_credit(t, id);
+      const p = byActor[name] || (byActor[name] = { chars: [], titles: new Set() });
+      if (p.chars.indexOf(id) === -1) p.chars.push(id);
+      p.titles.add(t.id);
+    }));
     // Busiest role first; on a tie the through-line identity leads, so the
     // banner's photo and colour come from the recognisable one (Jonathan
     // Majors' three roles are one title each, and Kang should head them).
     const rank = id => (window.CHARACTERS[id].prime ? 1 : 0);
-    Object.values(byActor).forEach(ids => ids.sort((x, y) =>
+    Object.values(byActor).forEach(p => p.chars.sort((x, y) =>
       (seen[y] - seen[x]) || (rank(x) - rank(y)) || x.localeCompare(y)));
     return byActor;
+  }, []);
+  const charsByActor = useMemo(() => {
+    const m = {};
+    Object.keys(performers).forEach(name => { m[name] = performers[name].chars; });
+    return m;
+  }, [performers]);
+  const charTitleTotals = useMemo(() => {
+    const m = {};
+    window.TITLES.forEach(t => t.cast.forEach(c => { m[c] = (m[c] || 0) + 1; }));
+    return m;
   }, []);
   // The characters the current pin covers: one, or all of a performer's.
   const pinnedChars = useMemo(() => {
     if (pinnedActor) return charsByActor[pinnedActor] || null;
     return highlightedChar ? [highlightedChar] : null;
   }, [pinnedActor, charsByActor, highlightedChar]);
+  // The titles it covers, catalogue-wide. A performer pin uses the titles they
+  // are credited in, so Terrence Howard gives Iron Man alone rather than every
+  // title Rhodes appears in.
+  const pinnedTitleIds = useMemo(() => {
+    if (pinnedActor) return (performers[pinnedActor] && performers[pinnedActor].titles) || null;
+    if (!highlightedChar) return null;
+    const s = new Set();
+    window.TITLES.forEach(t => { if (t.cast.indexOf(highlightedChar) !== -1) s.add(t.id); });
+    return s;
+  }, [pinnedActor, performers, highlightedChar]);
   // Pinned character: show only their titles (default) or everything, dimmed.
   const [charOnly, setCharOnly] = useState(true);
   // The title the highlight stepper (‹ ›) is on.
@@ -904,9 +929,10 @@ function App() {
   // memory and reloads the tab when it is panned.
   const LAYER_MIN_SCALE = 0.3;
 
-  // Camera glide, for programmatic returns only (see the selection return
-  // below). Manual pan and zoom must stay instant, so any pointer or wheel input
-  // on the viewport cancels it.
+  // Camera glide, for programmatic returns (see the selection return below).
+  // Manual panning has its own, lighter glide — see the inertia below — but
+  // both obey the same rule: any pointer or wheel input on the viewport
+  // cancels them, so the canvas is never moving when you reach for it.
   const [cameraGlide, setCameraGlide] = useState(false);
   const glideTimer = useRef(null);
   const glideTo = useCallback((next) => {
@@ -921,6 +947,65 @@ function App() {
     glideTimer.current = null;
     setCameraGlide(false);
   }, []);
+
+  // Inertia. A drag that ends with some speed keeps going and decelerates,
+  // rather than stopping dead with the finger. Light on purpose: a short glide
+  // that reads as polish, not a slide you have to chase back.
+  //
+  // This is a deliberate change to the rule above, which kept manual pan
+  // instant so that nothing fought the hand. The rule still holds for what it
+  // was protecting: a new press, touch or wheel kills the glide immediately,
+  // so the canvas is never moving when you reach for it.
+  const flickRef = useRef({ vx: 0, vy: 0, t: 0, px: 0, py: 0 });
+  const inertiaRef = useRef(0);
+  // A frame already queued can still run after cancelAnimationFrame, so the
+  // token makes any such frame a no-op and the glide stops exactly where the
+  // press caught it. (Belt and braces: the 17px drift this was first written
+  // for turned out to be the test reading across React's final flush.)
+  const inertiaGen = useRef(0);
+  const stopInertia = useCallback(() => {
+    inertiaGen.current += 1;
+    if (!inertiaRef.current) return;
+    cancelAnimationFrame(inertiaRef.current);
+    inertiaRef.current = 0;
+  }, []);
+  // Called on every pan move, from both the mouse and the touch path, so the
+  // release has a recent speed to work from rather than the whole drag's average.
+  const sampleFlick = useCallback((x, y) => {
+    const f = flickRef.current, now = performance.now(), dt = now - f.t;
+    if (f.t && dt > 0 && dt < 120) { f.vx = (x - f.px) / dt; f.vy = (y - f.py) / dt; }
+    f.t = now; f.px = x; f.py = y;
+  }, []);
+  const armFlick = useCallback((x, y) => {
+    flickRef.current = { vx: 0, vy: 0, t: performance.now(), px: x, py: y };
+  }, []);
+  const startInertia = useCallback(() => {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let { vx, vy } = flickRef.current;
+    let speed = Math.hypot(vx, vy);
+    // A slow release is a placement, not a throw: leave it exactly where it is.
+    if (speed < 0.35) return;
+    const MAX = 3;
+    if (speed > MAX) { vx = (vx / speed) * MAX; vy = (vy / speed) * MAX; }
+    let last = performance.now();
+    const gen = ++inertiaGen.current;
+    const step = (now) => {
+      if (gen !== inertiaGen.current) return;
+      // Clamped so a dropped frame cannot jump the canvas across the screen.
+      const dt = Math.min(32, now - last);
+      last = now;
+      const decay = Math.pow(0.0018, dt / 1000);
+      vx *= decay; vy *= decay;
+      if (Math.hypot(vx, vy) < 0.02) { inertiaRef.current = 0; return; }
+      setView(v => ({ ...v, x: v.x + vx * dt, y: v.y + vy * dt }));
+      inertiaRef.current = requestAnimationFrame(step);
+    };
+    inertiaRef.current = requestAnimationFrame(step);
+  }, []);
+  useEffect(() => stopInertia, [stopInertia]);
+  // Anything that reaches for the canvas stops both the programmatic glide and
+  // the inertia, so the camera is still under the hand.
+  const stopCamera = useCallback(() => { stopGlide(); stopInertia(); }, [stopGlide, stopInertia]);
   // Where the camera was before a card was selected, so closing its details can
   // return there instead of leaving the viewport on the focus ring (laid out
   // near the canvas origin, i.e. the Phase 1 end of the timeline layouts).
@@ -1002,11 +1087,11 @@ function App() {
     if (searchCharMatches) list = list.filter(t => searchCharMatches[t.id] !== undefined);
     // "Their titles": a pin narrows the layout like search does. Deliberate
     // (the visitor pins or toggles it), so re-laying out is expected.
-    if (pinnedChars && (charOnly || isTouch)) {
-      list = list.filter(t => pinnedChars.some(c => t.cast.includes(c)));
+    if (pinnedTitleIds && (charOnly || isTouch)) {
+      list = list.filter(t => pinnedTitleIds.has(t.id));
     }
     return list;
-  }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches, pinnedChars, charOnly, isTouch]);
+  }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches, pinnedTitleIds, charOnly, isTouch]);
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
@@ -1169,13 +1254,13 @@ function App() {
   }, [highlightedChar, pinnedChars, hoveredCharacter]);
   // One portrayal reuses its own set; a performer needs the union, memoised so
   // the canvas is not handed a fresh Set on every render.
-  const actorTitleIds = useMemo(() => {
-    if (!pinnedActor || !pinnedChars) return null;
+  const pinnedVisibleIds = useMemo(() => {
+    if (!pinnedTitleIds) return null;
     const s = new Set();
-    pinnedChars.forEach(c => { const ids = charToTitleIds[c]; if (ids) ids.forEach(id => s.add(id)); });
+    filtered.forEach(t => { if (pinnedTitleIds.has(t.id)) s.add(t.id); });
     return s;
-  }, [pinnedActor, pinnedChars, charToTitleIds]);
-  const highlightedIds = (highlightedChar ? actorTitleIds : null)
+  }, [pinnedTitleIds, filtered]);
+  const highlightedIds = (highlightedChar ? pinnedVisibleIds : null)
     || (activeChar && charToTitleIds[activeChar] ? charToTitleIds[activeChar] : null);
 
   // The ids the active canvas filters single out. Collection status and a pinned
@@ -1186,8 +1271,8 @@ function App() {
   // so passing the cursor over the cast list can't move the viewport.
   const pinnedCharIds = useMemo(() => {
     if (!highlightedChar) return null;
-    return actorTitleIds || charToTitleIds[highlightedChar] || null;
-  }, [highlightedChar, actorTitleIds, charToTitleIds]);
+    return pinnedVisibleIds || charToTitleIds[highlightedChar] || null;
+  }, [highlightedChar, pinnedVisibleIds, charToTitleIds]);
 
   const recenterFocusIds = useMemo(() => {
     const sets = [];
@@ -1259,9 +1344,14 @@ function App() {
       if (!panRef.current.panning) return;
       const dx = e.clientX - panRef.current.sx;
       const dy = e.clientY - panRef.current.sy;
+      sampleFlick(e.clientX, e.clientY);
       setView(v => ({ ...v, x: panRef.current.ox + dx, y: panRef.current.oy + dy }));
     };
-    const onUp = () => { panRef.current.panning = false; };
+    const onUp = () => {
+      if (!panRef.current.panning) return;
+      panRef.current.panning = false;
+      startInertia();
+    };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
@@ -1271,6 +1361,7 @@ function App() {
   const onMouseDown = (e) => {
     if (afterTouch()) return;
     if (e.target.closest('.card') || e.target.closest('.toolbar') || e.target.closest('.drawer')) return;
+    armFlick(e.clientX, e.clientY);
     panRef.current = { panning: true, sx: e.clientX, sy: e.clientY, ox: view.x, oy: view.y };
   };
 
@@ -1580,6 +1671,7 @@ function App() {
     } else if (e.touches.length === 1) {
       const t = e.touches[0];
       const el = e.target instanceof Element ? e.target : null;
+      armFlick(t.clientX, t.clientY);
       touchRef.current = {
         mode: 'pan', sx: t.clientX, sy: t.clientY, vx: view.x, vy: view.y, moved: false,
         onCard: !!(el && el.closest('.card, .m-focuspop')),
@@ -1600,6 +1692,7 @@ function App() {
       const dx = t.clientX - s.sx, dy = t.clientY - s.sy;
       if (!s.moved && Math.hypot(dx, dy) < 6) return;
       s.moved = true;
+      sampleFlick(t.clientX, t.clientY);
       setView(v => ({ ...v, x: s.vx + dx, y: s.vy + dy }));
     }
   };
@@ -1607,6 +1700,9 @@ function App() {
     touchActiveRef.current = Date.now();
     const s = touchRef.current;
     touchRef.current = null;
+    // A finger that was moving throws the canvas; a tap falls through to the
+    // tap and double-tap handling below.
+    if (s && s.mode === 'pan' && s.moved) { startInertia(); return; }
     if (!s || s.mode !== 'pan' || s.moved) return;
     const now = Date.now();
     const last = lastTapRef.current;
@@ -1682,7 +1778,7 @@ function App() {
     // the current titles are theirs) when this one is picked.
     if (!chars.length || !window.TITLES.some(t => chars.some(c => t.cast.includes(c)))) return false;
     setSearch('');
-    if (item.kind === 'actor' && chars.length > 1) pinActor(item.label);
+    if (item.kind === 'actor') pinActor(item.label);
     else if (pinnedActor || highlightedChar !== chars[0]) pinCharacter(chars[0]);
     // The search box lets go of focus; after a keyboard pick on desktop, hand
     // it to the stepper so keyboard users can carry on through the titles.
@@ -1738,13 +1834,16 @@ function App() {
     if (!pinnedActor && highlightedChar === ch) { unpinCharacter(); return; }
     pinSubject([ch], null);
   };
-  // A performer who plays one character pins as that character; the banner has
-  // nothing to add by naming them twice.
+  // A performer pins as the character only when they are that character's whole
+  // run — then the banner has nothing to add by naming them twice. A recast
+  // performer covers part of it (Terrence Howard is Rhodes in Iron Man alone),
+  // so they pin as themselves and keep their own titles.
   const pinActor = (name) => {
     if (pinnedActor === name) { unpinCharacter(); return; }
-    const chars = charsByActor[name];
-    if (!chars || !chars.length) return;
-    pinSubject(chars, chars.length > 1 ? name : null);
+    const p = performers[name];
+    if (!p || !p.chars.length) return;
+    const wholeRun = p.chars.length === 1 && p.titles.size === charTitleTotals[p.chars[0]];
+    pinSubject(p.chars, wholeRun ? null : name);
   };
   const unpinCharacter = () => {
     setPinnedActor(null);
@@ -1886,13 +1985,14 @@ function App() {
   const charBanner = activeChar ? (() => {
     const c = window.CHARACTERS[activeChar];
     const media = window.MEDIA;
-    const path = media && media.actors && media.actors[activeChar];
-    const photo = path && (window.mediaURL ? window.mediaURL('a', activeChar, media.profile_base + path) : media.profile_base + path);
     const pinned = !!highlightedChar && activeChar === highlightedChar;
+    const photo = (pinned && pinnedActor)
+      ? window.performerPortrait(pinnedActor, activeChar)
+      : window.performerPortrait(c.actor, activeChar);
     // A performer with several portrayals is named as themselves, with their
     // characters underneath, the way the search suggestion already reads.
     const asActor = pinned && !!pinnedActor;
-    const count = (asActor ? (actorTitleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
+    const count = (pinned ? (pinnedVisibleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
     const who = asActor ? pinnedActor : I18N.charName(activeChar);
     const sub = asActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') }) : c.actor;
     return (
@@ -1929,9 +2029,7 @@ function App() {
   const charPill = isTouch && highlightedChar ? (() => {
     const ch = highlightedChar;
     const c = window.CHARACTERS[ch];
-    const media = window.MEDIA;
-    const path = media && media.actors && media.actors[ch];
-    const photo = path && (window.mediaURL ? window.mediaURL('a', ch, media.profile_base + path) : media.profile_base + path);
+    const photo = window.performerPortrait(pinnedActor || c.actor, ch);
     const n = pinnedTitles.length;
     return (
       <div className="char-pill" style={{ '--char-color': c.color }}>
@@ -1986,8 +2084,8 @@ function App() {
       onScroll={(e) => { e.currentTarget.scrollLeft = 0; e.currentTarget.scrollTop = 0; }}
       role={isTouch ? undefined : 'main'}
       aria-label={isTouch ? undefined : tr('view.spatial')}
-      onPointerDownCapture={stopGlide}
-      onWheelCapture={stopGlide}
+      onPointerDownCapture={stopCamera}
+      onWheelCapture={stopCamera}
       onMouseDown={isTouch ? undefined : onMouseDown}
       onWheel={isTouch ? undefined : onWheel}
       onTouchStart={touchPan ? onTouchStart : undefined}

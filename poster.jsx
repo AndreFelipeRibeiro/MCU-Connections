@@ -172,5 +172,44 @@ function Portrait({ url, alt, initials }) {
     : <span aria-hidden="true">{initials}</span>;
 }
 
+// Which face belongs beside a cast row. A character's portrait is the default
+// performer's, so a part that changed hands must not reuse it: Iron Man credits
+// Terrence Howard and must not show Don Cheadle's photo under his name. Where
+// no portrait is known for the credited performer, this returns null and
+// Portrait falls back to initials — a plain row that is right beats a face that
+// is confidently wrong.
+function castPortrait(title, charId) {
+  const media = window.MEDIA;
+  if (!media) return null;
+  const character = window.CHARACTERS && window.CHARACTERS[charId];
+  const credited = window.MCU_credit ? window.MCU_credit(title, charId) : (character && character.actor);
+  const isDefault = !character || credited === character.actor;
+  const path = isDefault
+    ? (media.actors && media.actors[charId])
+    : (media.performers && media.performers[credited]);
+  if (!path) return null;
+  const url = media.profile_base + path;
+  return window.mediaURL ? window.mediaURL('a', isDefault ? charId : credited, url) : url;
+}
+
+// The face for a pinned subject. When the representative character's default
+// performer *is* this person, their own portrait already shows them — Jonathan
+// Majors pinned as a performer still gets Kang's photo, which is his face.
+// Otherwise it has to come from the performer map, or not at all.
+function performerPortrait(name, repCharId) {
+  const media = window.MEDIA;
+  if (!media) return null;
+  const character = window.CHARACTERS && window.CHARACTERS[repCharId];
+  const own = character && character.actor === name;
+  const path = own
+    ? (media.actors && media.actors[repCharId])
+    : (media.performers && media.performers[name]);
+  if (!path) return null;
+  const url = media.profile_base + path;
+  return window.mediaURL ? window.mediaURL('a', own ? repCharId : name, url) : url;
+}
+
 window.PosterArt = PosterArt;
 window.Portrait = Portrait;
+window.castPortrait = castPortrait;
+window.performerPortrait = performerPortrait;

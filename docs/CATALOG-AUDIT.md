@@ -257,3 +257,85 @@ VisionQuest for Paladin. Cached entry HTML initially omitted language scripts;
 a fresh query parameter loaded the current entry page and resolved rendering
 without a code change. No fresh physical-phone, auth, cloud-write or production
 checks. Changes remain local pending commit/push approval.
+
+## Per-title performer credits — 2026-10-28
+
+Characters carried a single `actor`, used wherever a performer was shown. That
+leaked the current performer into every title: Iron Man credited Don Cheadle as
+Rhodes, and The Incredible Hulk credited Mark Ruffalo as Banner and Harrison
+Ford as Ross.
+
+Titles may now carry `credits`, a map of character id to the performer actually
+credited in that production. The character keeps one identity — one colour, one
+portrait, one connection thread — and `CHARACTERS[id].actor` is only the
+default, used when a title says nothing.
+
+### Corrections applied
+
+| Title | Character | Was (default) | Now |
+|---|---|---|---|
+| Iron Man | James Rhodes | Don Cheadle | **Terrence Howard** |
+| The Incredible Hulk | Bruce Banner | Mark Ruffalo | **Edward Norton** |
+| The Incredible Hulk | Thaddeus Ross | Harrison Ford | **William Hurt** |
+| Captain America: Civil War | Thaddeus Ross | Harrison Ford | **William Hurt** |
+| Avengers: Infinity War | Thaddeus Ross | Harrison Ford | **William Hurt** |
+| Avengers: Endgame | Thaddeus Ross | Harrison Ford | **William Hurt** |
+| Black Widow | Thaddeus Ross | Harrison Ford | **William Hurt** |
+
+Captain America: Brave New World keeps Harrison Ford, which is the default and
+correct. Resulting search counts: Terrence Howard 1, Don Cheadle 10 (was 11),
+Edward Norton 1, Mark Ruffalo 11 (was 12), William Hurt 5, Harrison Ford 3
+(was 8).
+
+### The two animated credits, since sourced
+
+Both were left on the default at first and have since been corrected, with
+sources supplied by the maintainer:
+
+| Title | Character | Now | Source |
+|---|---|---|---|
+| What If…? | Thaddeus Ross | **Mike McGill** | MCU Fandom, Entertainment Weekly voice-cast guide, Behind The Voice Actors — McGill replaced William Hurt; Ross appears in episodes 3 and 6 |
+| Your Friendly Neighborhood Spider-Man | Thaddeus Ross | **Travis Willingham** | IMDb, ScreenRant character guide |
+
+Both suspicions were right: the default Harrison Ford was wrong in each case.
+Thaddeus Ross now has four distinct performers across his eight titles —
+William Hurt 5, and one each for Harrison Ford, Mike McGill and Travis
+Willingham. Harrison Ford is credited in Brave New World alone.
+
+Worth noting for the recast sweep: a voice recast in an animated title counts
+exactly like a live-action one here, and animated series are where most of the
+remaining uncorrected cases are likely to be.
+
+No other recasts were audited. The catalogue holds several characters who have
+been recast or voiced by more than one performer elsewhere in the MCU; only the
+cases named in the ticket, plus the rest of William Hurt's run, were corrected.
+A full sweep is a separate piece of work.
+
+### Portraits — since fixed
+
+This section first recorded a limit: `MEDIA.actors` is keyed by character, so a
+recast row showed the **default** performer's photo beside the corrected name.
+That is now resolved.
+
+`MEDIA.performers` maps a performer name to a TMDB profile path, alongside the
+character-keyed `MEDIA.actors`. A row uses the character's portrait when the
+credited performer is the default, the performer map when it is not, and no
+photo at all otherwise — never a different performer's face.
+
+Four profile paths were looked up on TMDB and each verified against that
+person's own credits before use (Iron Man for Howard, The Incredible Hulk for
+Norton, Civil War for Hurt, Your Friendly Neighborhood Spider-Man for
+Willingham), then checked to return HTTP 200:
+
+| Performer | TMDB person | Profile path |
+|---|---|---|
+| Terrence Howard | 18288 | `/wXWt2NSY23v7DHe2yZQ1C8TikBp.jpg` |
+| Edward Norton | 819 | `/8nytsqL59SFJTVYVrN72k6qkGgJ.jpg` |
+| William Hurt | 227 | `/j3mjmuHLBW4XQSw53C8Sh0Lh3ZQ.jpg` |
+| Travis Willingham | 1221888 | `/clvP30k6cUMf4hukRQqZD3k9z4S.jpg` |
+
+**Mike McGill is deliberately absent.** The only TMDB person of that name has
+no profile photo and no *What If…?* credit, so it is a different Mike McGill.
+What If…? therefore shows initials for Ross rather than a face — correct, and
+better than borrowing one. If a profile is found later, adding the name to
+`MEDIA.performers` is the whole change.

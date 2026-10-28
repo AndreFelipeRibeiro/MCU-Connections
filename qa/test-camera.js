@@ -70,6 +70,18 @@ const pickOrder = async (page, nth) => {
 
 const T = page => page.evaluate(() => document.querySelector('.canvas').style.transform);
 const TR = page => page.evaluate(() => document.querySelector('.canvas').style.transition || '');
+// A drag now ends with a short inertial glide, so a position read straight
+// after mouseup is mid-flight. Wait for the canvas to hold still.
+const settleCanvas = async (page, timeout = 2500) => {
+  let last = null, stable = 0;
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    const t = await T(page);
+    if (t === last) { if (++stable >= 2) return t; } else { stable = 0; last = t; }
+    await page.waitForTimeout(60);
+  }
+  return last;
+};
 const parse = t => { const m = t.match(/translate(?:3d)?\(([-\d.]+)px, ([-\d.]+)px.*scale\(([-\d.]+)\)/); return m ? { x: +m[1], y: +m[2], s: +m[3] } : null; };
 const near = (a, b, tol = 1.5) => a && b && Math.abs(a.x - b.x) < tol && Math.abs(a.y - b.y) < tol && Math.abs(a.s - b.s) < 0.002;
 async function emptyPoint(page, xs, ys) {
@@ -91,6 +103,35 @@ async function centerCard(page, exclude) {
     if (!pick) return null;
     return { x: pick.r.left + pick.r.width / 2, y: pick.r.top + pick.r.height * 0.8, title: pick.c.querySelector('.card-title, h3, .title') ? pick.c.querySelector('.card-title, h3, .title').textContent : pick.c.textContent.slice(0, 40) };
   }, exclude);
+}
+// page.mouse.click moves and presses in one go. Hovering a card re-lays the
+// canvas out, so in some states the press landed after the cards had shifted
+// and selected nothing. Move, let the hover settle, then press.
+async function clickCard(page, pt) {
+  await page.mouse.move(pt.x, pt.y);
+  await page.waitForTimeout(250);
+  await page.mouse.down();
+  await page.waitForTimeout(40);
+  await page.mouse.up();
+}
+// Select the centre card and make sure it actually opened, re-measuring if the
+// press missed. The canvas can still shift between measuring and pressing, and
+// the steps after this one click .drawer-close, which has no target if nothing
+// opened. Attempts are reported: a run that needs more than one is a signal,
+// not something to hide.
+async function openCentreCard(page, tally) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const pt = await centerCard(page);
+    if (!pt) break;
+    await clickCard(page, pt);
+    try {
+      await page.waitForFunction(() => !!document.querySelector('.drawer.open'), null, { timeout: 2500 });
+      tally.push(attempt);
+      return pt;
+    } catch (e) { /* missed: measure again and retry */ }
+  }
+  tally.push('failed');
+  return null;
 }
 const pickView = async (page, n) => { await page.locator('.view-menu .sort-order-trigger').click(); await page.locator('.view-menu .sort-order-pop button').nth(n).click(); };
 (async () => {
@@ -115,14 +156,14 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
     await page.mouse.move(p.x, p.y); await page.mouse.down();
     await page.mouse.move(p.x + mx, p.y + my, { steps: 4 }); await page.mouse.up();
   }
-  await page.waitForTimeout(200);
+  await settleCanvas(page);
   const before = parse(await T(page));
   out.pannedTo = before;
   const a = await centerCard(page);
   out.cardA = a && a.title;
   await page.screenshot({ path: path.join(S, 'shots', 'cam-before-click.png') });
   out.aPoint = a;
-  await page.mouse.click(a.x, a.y);
+  await clickCard(page, a);
   await page.waitForTimeout(900);
   out.drawerCount = await page.locator('.drawer-close').count();
   await page.screenshot({ path: path.join(S, 'shots', 'cam-after-click.png') });
@@ -137,11 +178,11 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
 
   // A -> B through the ring, then close: B centred at the original zoom
   const a2 = await centerCard(page);
-  await page.mouse.click(a2.x, a2.y);
+  await clickCard(page, a2);
   await page.waitForTimeout(900);
   const b = await centerCard(page, a2.title.slice(0, 12));
   out.cardB = b && b.title;
-  await page.mouse.click(b.x, b.y);
+  await clickCard(page, b);
   await page.waitForTimeout(900);
   // Measure whichever card the click actually selected (tiny ring cards overlap).
   b.title = await page.evaluate(() => document.querySelector('.card.selected .card-title').textContent);
@@ -158,22 +199,37 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
   }, b.title.trim().slice(0, 14));
 
   // Glide cancels on wheel
-  const c = await centerCard(page);
-  await page.mouse.click(c.x, c.y); await page.waitForTimeout(900);
+  const cardOpens = [];
+  await openCentreCard(page, cardOpens); await page.waitForTimeout(400);
   await page.mouse.move(600, 500);
-  await page.locator('.drawer-close').click(); await page.waitForTimeout(60);
+  await page.locator('.drawer-close').click();
+  const settle = async (want) => {
+    try { await page.waitForFunction(w => (document.querySelector('.canvas').style.transition || '') !== '' === w, want, { timeout: 2000 }); }
+    catch (e) { /* report whatever it actually is */ }
+  };
+  await settle(true);
   out.glideStartedBeforeWheel = (await TR(page)) !== '';
-  await page.mouse.move(600, 500); await page.mouse.wheel(0, -100); await page.waitForTimeout(80);
+  await page.mouse.move(600, 500); await page.mouse.wheel(0, -100);
+  await settle(false);
   out.glideCancelledByWheel = (await TR(page)) === '';
 
   // Sort change while selected clears the memory (no jump back into an old layout)
-  const d = await centerCard(page);
-  await page.mouse.click(d.x, d.y); await page.waitForTimeout(900);
+  await openCentreCard(page, cardOpens); await page.waitForTimeout(400);
+  out.cardOpenAttempts = cardOpens;
   await page.locator('.tb-sort-controls .segmented button', { hasText: 'IMDb' }).first().click();
   await page.waitForTimeout(400);
   const afterSort = parse(await T(page));
   await page.locator('.drawer-close').click(); await page.waitForTimeout(900);
   out.sortWhileSelected_noJump = near(parse(await T(page)), afterSort);
+  // regress.sh only reads fields whose name contains "errors", so these
+  // booleans were decorative: any of them could be false and the run still
+  // reported clean. Collect the failures into one, so they gate.
+  out.assertErrors = Object.entries({
+    selectedMoved: out.selectedMoved, restored: out.restored, abScaleKept: out.abScaleKept,
+    glideStartedBeforeWheel: out.glideStartedBeforeWheel,
+    glideCancelledByWheel: out.glideCancelledByWheel,
+    sortWhileSelected_noJump: out.sortWhileSelected_noJump,
+  }).filter(([, v]) => v !== true).map(([k, v]) => k + '=' + JSON.stringify(v));
   out.desktopErrors = errors;
   await ctx.close();
 

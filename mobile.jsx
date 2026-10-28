@@ -1014,12 +1014,12 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, 
             <button key={ch} className={`m-crow${(activeChars?activeChars.indexOf(ch)!==-1:activeChar===ch)?' on':''}`} style={{'--match-color': c.color}} onClick={()=>onCharacterClick(ch)}>
               <div className="m-port" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
                 <window.Portrait
-                  url={window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch] ? (window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]) : null}
+                  url={window.castPortrait(title, ch)}
                   alt={MI18N.charName(ch)} initials={c.initials}/>
               </div>
               <div className="m-ctext">
                 <div className="m-cn"><Highlight text={MI18N.charName(ch)} query={search}/></div>
-                <div className="m-an"><Highlight text={c.actor} query={search}/></div>
+                <div className="m-an"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
               </div>
               <span className="m-cdot" style={{background:c.color}}/>
             </button>

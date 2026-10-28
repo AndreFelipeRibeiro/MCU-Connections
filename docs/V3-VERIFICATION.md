@@ -390,7 +390,8 @@ reported behaviour is observed rather than assumed.
 `test-camera` was run four times, twice on the working tree and twice on an
 unmodified export of `HEAD`. All four failed identically with `locator.click:
 Timeout 30000ms exceeded`, so this is not a regression from this batch, and the
-expected result of a full run right now is 16 of 17.
+expected result of a full run at the time was 18 of 19. (Fixed in batch 5: the
+cause was the check, not the app — see that checkpoint.)
 
 The failing step is "sort change while selected", not the "wheel cancels the
 glide" step `qa/README.md` previously blamed — `glideCancelledByWheel` was true

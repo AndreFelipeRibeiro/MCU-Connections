@@ -32,14 +32,17 @@ function ssBuild(query) {
   if (q.length < 2) return [];
   const titlesOf = {};
   window.TITLES.forEach(t => t.cast.forEach(c => { (titlesOf[c] = titlesOf[c] || new Set()).add(t.id); }));
+  // Built per title, not per character, because a part can change hands: Rhodes
+  // is Terrence Howard in Iron Man and Don Cheadle after it, so searching
+  // either name has to return that performer's own titles and no others.
   const actors = {};
-  Object.keys(window.CHARACTERS).forEach(id => {
-    const c = window.CHARACTERS[id];
-    if (!titlesOf[id]) return;
-    const a = actors[c.actor] || (actors[c.actor] = { name: c.actor, chars: [], titles: new Set() });
-    a.chars.push(id);
-    titlesOf[id].forEach(t => a.titles.add(t));
-  });
+  window.TITLES.forEach(t => t.cast.forEach(id => {
+    if (!window.CHARACTERS[id]) return;
+    const name = window.MCU_credit(t, id);
+    const a = actors[name] || (actors[name] = { name, chars: [], titles: new Set() });
+    if (a.chars.indexOf(id) === -1) a.chars.push(id);
+    a.titles.add(t.id);
+  }));
   const out = [];
   Object.values(actors).forEach(a => {
     const s = ssScore(a.name, q);
