@@ -133,6 +133,10 @@ window.MCU_LOCALES['pt-BR'] = {
     'empty.title': 'Nenhum título encontrado',
     'empty.sub': 'Tente limpar um filtro ou a busca.',
     'empty.clearBoth': 'Limpar busca e filtros',
+    'boot.loading': 'Carregando…',
+    'boot.slow': 'Ainda carregando. Está demorando mais que o normal.',
+    'boot.failed': 'Não foi possível iniciar o MCU Connections. Verifique sua conexão e tente novamente.',
+    'boot.reload': 'Recarregar',
 
     'details.close': 'Fechar',
     'highlight.modeAria': 'Mostrar',

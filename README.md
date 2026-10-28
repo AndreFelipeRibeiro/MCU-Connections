@@ -171,6 +171,12 @@ The entry point is `index.html`. React and ReactDOM (production builds), Babel
 standalone and supabase-js load from pinned CDN scripts with SRI; JSX compiles in the browser. Files share
 exports through `window.*`, not ES modules.
 
+`boot.js` loads first and shows a startup screen inside `#root` (brand, spinner,
+"Loading…") until React's first render replaces it. A script that cannot load
+or an error before that render turns it into a short explanation with a Reload
+button; a slow start says so after 25 seconds. The locale files and `i18n.js`
+load before the CDN scripts so that screen is translated.
+
 From the repository directory, run a static server:
 
 ```bash
@@ -317,7 +323,8 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 
 | File | Purpose |
 |---|---|
-| `index.html` | Entry point; pinned/SRI CDN scripts and application script order |
+| `index.html` | Entry point; startup screen markup, pinned/SRI CDN scripts and application script order |
+| `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render |
 | `data.js` | Static titles/characters, ratings, phases, stable ids and variant links |
 | `media-data.js` | TMDB poster and actor-portrait paths |
 | `config.js` | Public Supabase project URL and publishable key |

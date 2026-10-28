@@ -171,4 +171,6 @@
   apply();
   window.MCU_I18N = api;
   window.useI18n = useI18n;
+  // The startup screen (boot.js) can show its words now.
+  if (window.MCU_BOOT) window.MCU_BOOT.refresh();
 })();

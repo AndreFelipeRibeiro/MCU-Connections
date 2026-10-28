@@ -12,6 +12,24 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — startup screen with failure recovery
+
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- `index.html` shows the brand, a spinner and a localized "Loading…" inside
+  `#root` until React's first render replaces it, instead of a blank page. New
+  `boot.js` (loaded first) turns it into "couldn't start" with Reload when a
+  script fails to load or startup errors, and into a "taking longer than usual"
+  note after 25 s. Locale files and `i18n.js` now load before the CDN scripts.
+- Verification: headless Chromium. Normal start in English and Portuguese; React
+  blocked and a tampered ReactDOM (SRI) both show the failure screen; a JSX
+  compile error in one file shows it only until the app renders; a held-back
+  Babel shows the slow note after a fast-forwarded 25 s. Image and font failures
+  never trigger it. All 14 regression scripts pass with this batch.
+- Limits: if even the locale files fail, the Reload button shows ↻ with an
+  English accessible name. Caching of HTML and scripts on Vercel is unchanged.
+
 ## V3 improvement — click empty canvas to close a desktop selection
 
 Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not

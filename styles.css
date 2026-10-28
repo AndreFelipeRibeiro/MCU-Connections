@@ -962,3 +962,16 @@ body {
 .spatial-empty-btn { margin-top: 14px; min-height: 36px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .spatial-empty-btn:hover { border-color: var(--accent); }
 .spatial-empty-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Startup screen (index.html, boot.js): replaced by the app's first render. */
+.boot { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; box-sizing: border-box; text-align: center; }
+.boot-mark { width: 48px; height: 48px; border-radius: 10px; position: relative; background: conic-gradient(from 45deg, #d4a05a, #4a8de8, #d04040, #a05cd0, #5fa856, #d4a05a); }
+.boot-mark::after { content: ''; position: absolute; inset: 9px; border-radius: 5px; background: var(--bg); }
+.boot-spinner { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-strong); border-top-color: var(--text-dim); animation: boot-spin 0.9s linear infinite; }
+.boot[data-state="failed"] .boot-spinner { display: none; }
+.boot-msg { margin: 0; max-width: 320px; min-height: 1.4em; font-size: 14px; line-height: 1.45; color: var(--text-dim); }
+.boot-reload { min-height: 40px; padding: 0 18px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.boot-reload:hover { border-color: var(--accent); }
+.boot-reload:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@keyframes boot-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .boot-spinner { animation-duration: 2.4s; } }

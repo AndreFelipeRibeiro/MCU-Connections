@@ -134,6 +134,10 @@ window.MCU_LOCALES.en = {
     'empty.title': 'No titles match',
     'empty.sub': 'Try clearing a filter or the search box.',
     'empty.clearBoth': 'Clear search and filters',
+    'boot.loading': 'Loading…',
+    'boot.slow': 'Still loading. This is taking longer than usual.',
+    'boot.failed': 'MCU Connections couldn’t start. Check your connection and try again.',
+    'boot.reload': 'Reload',
 
     'details.close': 'Close',
     'highlight.modeAria': 'Show',
