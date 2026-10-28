@@ -108,6 +108,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   connection brings its two titles side by side (Escape or a background click
   restores the layout); links between titles in the same row arc below it.
   Hovering a character in the drawer lights only that character's lines.
+- Escape closes the desktop details unless the search box, a menu or the pair
+  view claims it. Details opened from the keyboard take focus and give it back
+  when they close.
 - On phones, Spatial's grid layouts (Phase, A–Z, IMDb, RT) open with three
   whole columns and the next column and row peeking past the right and bottom
   edges, so it's clear the canvas pans; the first row sits below the count pill.

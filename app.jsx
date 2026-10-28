@@ -300,11 +300,39 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
   );
 }
 
+// How the visitor last interacted: the details drawer only takes focus when it
+// was opened from the keyboard, so a mouse or touch open shows no focus ring.
+let lastInput = 'pointer';
+document.addEventListener('keydown', (e) => { if (!e.metaKey && !e.ctrlKey && !e.altKey) lastInput = 'keyboard'; }, true);
+document.addEventListener('pointerdown', () => { lastInput = 'pointer'; }, true);
+
 function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, search }) {
   // Slide in and out: mount closed and open on the next frame, and keep showing
   // the last title while it slides away. Switching titles swaps the content.
   const [title, setTitle] = useState(current);
   const [open, setOpen] = useState(false);
+  // Keyboard flow for this modeless panel (no focus trap): remember what
+  // opened it, move focus to its heading once it is visible (keyboard opens
+  // only), and give focus
+  // back to the opener when it closes (if focus was still in the panel).
+  const asideRef = useRef(null);
+  const headingRef = useRef(null);
+  const openerRef = useRef(null);
+  useEffect(() => {
+    const aside = asideRef.current;
+    const active = document.activeElement;
+    const inPanel = !!(aside && active && aside.contains(active));
+    if (current) {
+      if (!openerRef.current && active && active !== document.body && !inPanel) openerRef.current = active;
+      return;
+    }
+    const opener = openerRef.current;
+    openerRef.current = null;
+    if (opener && opener.isConnected && (inPanel || active === document.body)) opener.focus({ preventScroll: true });
+  }, [current && current.id]);
+  useEffect(() => {
+    if (open && headingRef.current && lastInput === 'keyboard') headingRef.current.focus({ preventScroll: true });
+  }, [open, title && title.id]);
   useEffect(() => {
     if (!current) { setOpen(false); return; }
     setTitle(current);
@@ -314,12 +342,12 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
   }, [current]);
   if (!title) return null;
   return (
-    <aside className={`drawer${open ? ' open' : ''}`} aria-hidden={!open}
+    <aside ref={asideRef} className={`drawer${open ? ' open' : ''}`} aria-hidden={!open} aria-labelledby="drawer-title"
       onTransitionEnd={e => { if (!current && e.target === e.currentTarget) setTitle(null); }}>
       <header className="drawer-header">
         <div>
           <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{phaseLabel(title.phase)} · {I18N.upper(typeLabel(title.type))} · {title.year}</div>
-          <h2 className="drawer-title"><window.Highlight text={I18N.titleName(title)} query={search}/></h2>
+          <h2 className="drawer-title" id="drawer-title" ref={headingRef} tabIndex={-1}><window.Highlight text={I18N.titleName(title)} query={search}/></h2>
           <window.StoryYear title={title} detail className="drawer-story"/>
           <window.Synopsis title={title} className="drawer-synopsis"/>
           <window.TitleStatusActions title={title} variant="inline" className="drawer-tsa"/>
@@ -1706,6 +1734,25 @@ function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [pair]);
+  // Desktop: Escape closes the open details (and its selection) when nothing
+  // nearer claims it. The pair view, the search box and any open menu, popover
+  // or dialog handle Escape themselves, so this stands back for them; their
+  // own handlers, so this checks the page for them first.
+  useEffect(() => {
+    if (isTouch || (!drawerId && !selectedId)) return;
+    const onKey = (e) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || pair) return;
+      const t = e.target instanceof Element ? e.target : null;
+      if (t && t.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, [role="dialog"], [aria-modal="true"]')) return;
+      setSelectedId(null);
+      setDrawerId(null);
+    };
+    // Capture phase: runs before the menus' own handlers close them (React
+    // re-renders between listeners), so an open menu is still visible here.
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [isTouch, drawerId, selectedId, pair]);
   useEffect(() => { setPair(null); }, [basePositions]);
   // Labels steer clear of the cards that are lit; dimmed ones may sit under them.
   const labelAvoidIds = useMemo(() => {

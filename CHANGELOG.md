@@ -12,6 +12,25 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — Escape and keyboard focus for desktop details
+
+Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- Escape closes the open desktop details and selection unless the pair view,
+  a text field, or an open menu, popover or dialog claims it first (listened in
+  the capture phase so an open menu is still seen). Details opened from the
+  keyboard move focus to their title and give it back to the opener on close;
+  mouse and touch opens leave focus alone, so no focus ring appears (revised
+  after review).
+- Verification: headless Chromium. List: Enter → focus on the title, Escape →
+  closed with focus back on the row; Escape in the search box or with the
+  account menu open only closes those; Spatial: Escape closes the selection;
+  pair view first leaves the pair. A mouse open leaves no outline. No console
+  errors.
+- Limits: after the pair view, closing does not return the camera to its
+  pre-selection position; not tried with a screen reader.
+
 ## V3 improvement — page landmarks and List column labels
 
 Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
