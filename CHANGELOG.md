@@ -14,7 +14,7 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V3 improvement — picking a title from search navigates to it instead of filtering by its name
 
-Recorded: 2026-10-28 17:08 EDT (-0400). Not pushed.
+Recorded: 2026-10-28 16:59 EDT (-0400). Not pushed.
 
 - Picking a title put its name in the search box, which left a text filter
   behind. On the Spatial canvas that narrowed 64 cards down to the one just
