@@ -393,7 +393,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
             >
               <div className="portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
                 <window.Portrait
-                  url={window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch] ? (window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]) : null}
+                  url={window.castPortrait(current, ch)}
                   alt={I18N.charName(ch)} initials={c.initials}/>
               </div>
               <div className="cast-text">
@@ -1985,9 +1985,10 @@ function App() {
   const charBanner = activeChar ? (() => {
     const c = window.CHARACTERS[activeChar];
     const media = window.MEDIA;
-    const path = media && media.actors && media.actors[activeChar];
-    const photo = path && (window.mediaURL ? window.mediaURL('a', activeChar, media.profile_base + path) : media.profile_base + path);
     const pinned = !!highlightedChar && activeChar === highlightedChar;
+    const photo = (pinned && pinnedActor)
+      ? window.performerPortrait(pinnedActor, activeChar)
+      : window.performerPortrait(c.actor, activeChar);
     // A performer with several portrayals is named as themselves, with their
     // characters underneath, the way the search suggestion already reads.
     const asActor = pinned && !!pinnedActor;
@@ -2028,9 +2029,7 @@ function App() {
   const charPill = isTouch && highlightedChar ? (() => {
     const ch = highlightedChar;
     const c = window.CHARACTERS[ch];
-    const media = window.MEDIA;
-    const path = media && media.actors && media.actors[ch];
-    const photo = path && (window.mediaURL ? window.mediaURL('a', ch, media.profile_base + path) : media.profile_base + path);
+    const photo = window.performerPortrait(pinnedActor || c.actor, ch);
     const n = pinnedTitles.length;
     return (
       <div className="char-pill" style={{ '--char-color': c.color }}>

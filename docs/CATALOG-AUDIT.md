@@ -311,9 +311,31 @@ been recast or voiced by more than one performer elsewhere in the MCU; only the
 cases named in the ticket, plus the rest of William Hurt's run, were corrected.
 A full sweep is a separate piece of work.
 
-### Known limit: portraits
+### Portraits — since fixed
 
-`MEDIA.actors` is keyed by character, not by title, so a cast row for a recast
-part shows the **default** performer's photo beside the corrected name — Iron
-Man reads "Terrence Howard" under Don Cheadle's portrait. Fixing that needs
-per-title profile paths in `media-data.js` and is not attempted here.
+This section first recorded a limit: `MEDIA.actors` is keyed by character, so a
+recast row showed the **default** performer's photo beside the corrected name.
+That is now resolved.
+
+`MEDIA.performers` maps a performer name to a TMDB profile path, alongside the
+character-keyed `MEDIA.actors`. A row uses the character's portrait when the
+credited performer is the default, the performer map when it is not, and no
+photo at all otherwise — never a different performer's face.
+
+Four profile paths were looked up on TMDB and each verified against that
+person's own credits before use (Iron Man for Howard, The Incredible Hulk for
+Norton, Civil War for Hurt, Your Friendly Neighborhood Spider-Man for
+Willingham), then checked to return HTTP 200:
+
+| Performer | TMDB person | Profile path |
+|---|---|---|
+| Terrence Howard | 18288 | `/wXWt2NSY23v7DHe2yZQ1C8TikBp.jpg` |
+| Edward Norton | 819 | `/8nytsqL59SFJTVYVrN72k6qkGgJ.jpg` |
+| William Hurt | 227 | `/j3mjmuHLBW4XQSw53C8Sh0Lh3ZQ.jpg` |
+| Travis Willingham | 1221888 | `/clvP30k6cUMf4hukRQqZD3k9z4S.jpg` |
+
+**Mike McGill is deliberately absent.** The only TMDB person of that name has
+no profile photo and no *What If…?* credit, so it is a different Mike McGill.
+What If…? therefore shows initials for Ross rather than a face — correct, and
+better than borrowing one. If a profile is found later, adding the name to
+`MEDIA.performers` is the whole change.

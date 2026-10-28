@@ -1,5 +1,5 @@
 #!/bin/bash
-# Full regression: 21 headless checks across desktop and phone viewports,
+# Full regression: 22 headless checks across desktop and phone viewports,
 # English and Portuguese. Takes about 15 minutes. Under each script name every
 # errors field is listed, and all of them should read [] or 0. Lines marked !!
 # are failures; the run exits non-zero when there is any.
@@ -39,8 +39,8 @@ run(){
 }
 run "LOC=en-US MODE=all" test-fit.js
 run "LOC=pt-BR MODE=watch" test-fit.js
-for t in test-ctxfn2 test-panel test-i18n test-dlist test-suggest test-layers test-anim test-cel test-align2 test-about test-welcome test-camera test-v2 test-widetouch test-variant test-nudgeundo test-pickperson test-escpin test-mviewport test-inertia; do
+for t in test-ctxfn2 test-panel test-i18n test-dlist test-suggest test-layers test-anim test-cel test-align2 test-about test-welcome test-camera test-v2 test-widetouch test-variant test-nudgeundo test-pickperson test-escpin test-mviewport test-inertia test-portrait; do
   run X=1 $t.js
 done
-[ "$fail" -eq 0 ] && echo "=== all 21 checks clean" || echo "=== FAILURES ABOVE"
+[ "$fail" -eq 0 ] && echo "=== all 22 checks clean" || echo "=== FAILURES ABOVE"
 exit $fail
