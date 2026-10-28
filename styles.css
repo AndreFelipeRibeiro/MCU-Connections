@@ -598,6 +598,45 @@ body {
 }
 .acct-note { font-size: 11px; color: var(--text-muted); line-height: 1.45; }
 
+/* Group progress: one header shared by desktop List, phone List and Grid, and
+   the Spatial band labels. --pm is the group's colour (a phase colour, or the
+   accent for eras). Deliberately not the removed rating bars' look: a 3px rule
+   under the label, not a pill or a track with a glow. */
+.pgh { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.pgh-top { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+.pgh-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pgh-count {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .04em;
+  color: var(--text-muted); flex-shrink: 0;
+}
+.pgh.done .pgh-count { color: var(--pm, var(--accent)); }
+/* No opacity here: --text-muted is exactly at AA against these backgrounds, so
+   fading it would quietly drop the "+2 upcoming" hint below the line. */
+.pgh-up {
+  font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+  color: var(--text-muted); flex-shrink: 0;
+}
+.pgh-bar { display: block; height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; }
+.pgh-fill {
+  display: block; height: 100%; border-radius: 2px; background: var(--pm, var(--accent));
+  transition: width 600ms cubic-bezier(.2,.8,.2,1);
+}
+/* The bar animates only after the visitor's own marking, never on first paint
+   or a sort change, and never at all with reduced motion. */
+.flip-active .pgh-fill, .lines-settling .pgh-fill { transition: none; }
+@media (prefers-reduced-motion: reduce) { .pgh-fill { transition: none; } }
+/* On a Spatial band the label is already a floating pill, so the header only
+   has to sit inside it without stretching across the canvas. */
+/* Band labels live inside the canvas transform, so they shrink with the zoom.
+   The count and bar are sized up here to survive that: at the fitted zoom the
+   canvas sits near 70%, which took the 11px count down to about 8px. */
+.pgh.band { width: 210px; gap: 4px; }
+.pgh.band .pgh-label { font: inherit; letter-spacing: inherit; }
+.pgh.band .pgh-count { font-size: 13px; }
+.pgh.band .pgh-up { font-size: 12px; }
+.pgh.band .pgh-bar { height: 4px; }
+.pgh.band.done .pgh-count { font-size: 15px; line-height: 1; }
+
 /* Sync state in the toolbar and the phone app bar. Same red as .acct-error,
    so a failure reads the same wherever it is met. */
 .sync-status {
@@ -1035,3 +1074,20 @@ body {
 .card-open { position: absolute; inset: 0; z-index: 4; margin: 0; padding: 0; border: 0; border-radius: 10px; background: transparent; pointer-events: none; }
 .card-open:focus { outline: none; }
 .card-open:focus-visible { box-shadow: inset 0 0 0 3px var(--accent); }
+
+/* Release groups by year, so each phase opens with a divider above its first
+   year — a super-header for the years beneath it. It spans the table like the
+   existing group rows and leaves the columns untouched. */
+.dl-phase-divider {
+  padding: 18px 14px 7px; border-top: 1px solid var(--border);
+  margin-top: 4px; font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--pm, var(--text-muted));
+}
+.dl-phase-divider:first-child { border-top: none; margin-top: 0; padding-top: 6px; }
+.dl-phase-divider .pgh { max-width: 420px; }
+.dl-phase-divider .pgh-label { color: var(--pm); }
+/* The By Phase header already is the phase label, so the meter replaces it in
+   place rather than adding a second line above it. */
+.dl-glabel .pgh { max-width: 420px; }
+.dl-glabel .pgh-label { font: inherit; letter-spacing: inherit; color: inherit; }

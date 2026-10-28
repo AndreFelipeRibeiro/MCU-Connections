@@ -241,6 +241,47 @@ function Synopsis({ title, className = '' }) {
 }
 window.Synopsis = Synopsis;
 
+// One progress header for every surface that groups titles: desktop List
+// (phase headers and Release phase dividers), phone List and Grid, and the
+// Spatial band labels. Shared on purpose — five hand-made variants would drift
+// apart, and the ticket asks for one visual language.
+//
+// `label` and `color` belong to the caller (a phase name in its colour, an era
+// label in the accent). `action` is a slot the bulk-select ticket fills with
+// "Mark the rest as seen", so that work needs no change here.
+function ProgressHeader({ label, color, seen, released, upcoming, band, action }) {
+  const tr = mtr;
+  // Nothing released in this group yet: a bar would be a lie, so just the label.
+  if (!released) {
+    return (
+      <div className={`pgh${band ? ' band' : ''}`} style={color ? { '--pm': color } : null}>
+        <span className="pgh-top"><span className="pgh-label">{label}</span>
+          {upcoming ? <span className="pgh-up">{tr('progress.upcoming', { n: upcoming })}</span> : null}
+        </span>
+      </div>
+    );
+  }
+  const done = seen >= released;
+  const pct = Math.round((seen / released) * 100);
+  return (
+    <div className={`pgh${band ? ' band' : ''}${done ? ' done' : ''}`} style={color ? { '--pm': color } : null}>
+      <span className="pgh-top">
+        <span className="pgh-label">{label}</span>
+        {/* The glyph and the numbers are decoration; the sentence below is what
+            a screen reader reads, so colour is never the only signal. */}
+        <span className="pgh-count" aria-hidden="true">{done ? '✓' : `${seen}/${released}`}</span>
+        {upcoming ? <span className="pgh-up" aria-hidden="true">{tr('progress.upcoming', { n: upcoming })}</span> : null}
+        {action}
+      </span>
+      <span className="pgh-bar" aria-hidden="true"><span className="pgh-fill" style={{ width: pct + '%' }}/></span>
+      <span className="story-sr">
+        {tr('progress.seen', { seen, n: released })}
+        {upcoming ? ' ' + tr('progress.upcomingLong', { n: upcoming }) : ''}
+      </span>
+    </div>
+  );
+}
+
 // `title` is what makes the credit right: a card for The Incredible Hulk must
 // name Edward Norton, not the character's default performer. Without it the
 // badge was the last place still contradicting the details panel beside it.
@@ -633,7 +674,7 @@ function SeenRunHead({ items, shut, onToggle }) {
   );
 }
 
-function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, collapseSeen, markWatch }) {
+function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, collapseSeen, markWatch, progress }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
   const flipRef = useReorderAnimation(orderKey, { paused: flipPaused });
@@ -667,10 +708,19 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
       const key = String(t.phase);
       const last = groups[groups.length-1];
       if (last && last.key.startsWith('p' + key + '#')) last.items.push(t);
-      else groups.push({ key: 'p' + key + '#' + groups.length, label: mPhaseLabel(t.phase), color: MPHASE_COLORS[t.phase], items: [t] });
+      else groups.push({ key: 'p' + key + '#' + groups.length, label: mPhaseLabel(t.phase), color: MPHASE_COLORS[t.phase], phase: t.phase, items: [t] });
     });
   } else {
     groups.push({ key: 'all', label: null, items: titles });
+  }
+  // Release groups by year here too, so each phase opens with a divider above
+  // its first year — the same super-header the desktop List uses.
+  if (sort === 'release') {
+    let lastPhase = null;
+    groups.forEach(g => {
+      const phase = g.items[0].phase;
+      if (phase !== lastPhase) { g.phaseStart = phase; lastPhase = phase; }
+    });
   }
   const row = (t, rank, compact) => {
     const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
@@ -700,11 +750,24 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
       </div>
     );
   };
-  const label = (g) => (
-    <div className={`m-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.key} style={g.color?{color:g.color}:null}>
-      {g.story && <Hourglass/>}{g.label}
-    </div>
-  );
+  const pg = (phase) => (progress && progress.byPhase && progress.byPhase[phase]) || null;
+  const label = (g) => {
+    const p = g.phase ? pg(g.phase) : null;
+    return (
+      <div className={`m-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.key} style={g.color?{color:g.color}:null}>
+        {p ? <ProgressHeader label={g.label} color={g.color} {...p}/> : <>{g.story && <Hourglass/>}{g.label}</>}
+      </div>
+    );
+  };
+  const phaseDivider = (g) => {
+    const p = g.phaseStart ? pg(g.phaseStart) : null;
+    if (!p) return null;
+    return (
+      <div className="m-phase-divider" data-flip-id={'pd:' + g.key}>
+        <ProgressHeader label={mPhaseLabel(g.phaseStart)} color={MPHASE_COLORS[g.phaseStart]} {...p}/>
+      </div>
+    );
+  };
 
   if (collapseSeen) {
     // All tab: seen titles are compact rows, and each run of two or more
@@ -714,6 +777,10 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
     // join a run or fold away.
     const entries = [];
     groups.forEach(g => {
+      // The phase divider sits above its year heading and, unlike the heading,
+      // is never folded into a seen run: it is the super-header for the whole
+      // phase, so it has to stay put while runs underneath it collapse.
+      if (g.phaseStart) entries.push({ kind: 'divider', g, key: 'pd:' + g.key });
       if (g.label) entries.push({ kind: 'label', g, key: 'g:' + g.key });
       g.items.forEach(t => entries.push({ kind: 'row', t, g, key: t.id }));
     });
@@ -739,6 +806,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
         <div className={`m-flat${settled ? ' settled' : ''}`}>
           {entries.map(e => {
             const shut = e.run && e.run.shut;
+            if (e.kind === 'divider') return <React.Fragment key={e.key}>{phaseDivider(e.g)}</React.Fragment>;
             if (e.kind === 'label') return <Fx key={e.key} open={!shut}>{label(e.g)}</Fx>;
             rank += 1;
             return (
@@ -764,6 +832,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
       {header}
       {groups.map(g => (
         <div className="m-group" key={g.key}>
+          {phaseDivider(g)}
           {g.label && label(g)}
           <div className="m-list">
             {g.items.map(t => {
@@ -1075,4 +1144,4 @@ function SpatialHint({ focused, sharedCount }) {
   );
 }
 
-Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, Highlight, StoryYear });
+Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear });

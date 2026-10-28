@@ -18,11 +18,24 @@ function dlGroups(titles, sort) {
     let key = 'all', label = null, extra = {};
     if (sort === 'release') { key = 'y' + t.year; label = String(t.year); }
     else if (sort === 'chrono') { key = 's' + (t.story || '-'); label = t.story ? I.storyLabel(t.story) : I.tr('story.tba'); extra = { story: true }; }
-    else if (sort === 'phase') { key = 'p' + t.phase; label = I.upper(I.tr('phase.label', { n: t.phase })); extra = { color: window.PHASE_COLORS[t.phase] }; }
+    else if (sort === 'phase') { key = 'p' + t.phase; label = I.upper(I.tr('phase.label', { n: t.phase })); extra = { color: window.PHASE_COLORS[t.phase], phase: t.phase }; }
     const last = groups[groups.length - 1];
     if (last && last.key === key) last.items.push(t);
     else groups.push({ key, id: key + '#' + groups.length, label, ...extra, items: [t] });
   });
+  // Release groups by year, so a phase spans several of them. Mark the group
+  // that opens each phase: it gets a divider above its year, acting as a
+  // super-header. Every phase is one continuous run in release order today, so
+  // this fires once per phase; if a later catalog entry breaks that, the
+  // divider simply appears again with the same whole-phase count rather than
+  // splitting the phase in two.
+  if (sort === 'release') {
+    let seen = null;
+    groups.forEach(g => {
+      const phase = g.items[0].phase;
+      if (phase !== seen) { g.phaseStart = phase; seen = phase; }
+    });
+  }
   return groups;
 }
 
@@ -71,7 +84,7 @@ function DlSortHeader({ col, label, sort, sortDir, setSort, setSortDir }) {
   );
 }
 
-function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, activeChars, header, empty, orderKey }) {
+function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, activeChars, header, empty, orderKey, progress }) {
   const I = window.MCU_I18N;
   const tr = I.tr;
   const { statusOf } = window.useCollection();
@@ -106,7 +119,17 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
           </div>
           {groups.map(g => (
             <div key={g.id} role="rowgroup">
-              {g.label && <div className={`dl-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>{g.label}</div>}
+              {g.phaseStart && progress && progress.byPhase[g.phaseStart] && (
+                <div className="dl-phase-divider" data-flip-id={'pd:' + g.id}>
+                  <window.ProgressHeader label={I.upper(I.tr('phase.label', { n: g.phaseStart }))}
+                    color={window.PHASE_COLORS[g.phaseStart]} {...progress.byPhase[g.phaseStart]}/>
+                </div>
+              )}
+              {g.label && (g.phase && progress && progress.byPhase[g.phase]
+                ? <div className="dl-glabel" data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>
+                    <window.ProgressHeader label={g.label} color={g.color} {...progress.byPhase[g.phase]}/>
+                  </div>
+                : <div className={`dl-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>{g.label}</div>)}
               {g.items.map(t => {
                 n += 1;
                 const seen = statusOf(t.id) === 'seen';

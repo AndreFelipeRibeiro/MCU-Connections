@@ -222,6 +222,10 @@ window.MCU_LOCALES.en = {
     'sync.failed': "Collection didn't sync",
     'sync.synced': 'Collection synced to your account',
     'sync.guest': 'Collection saved on this device',
+    // Group progress. 'seen' is the spoken form; the visible count is n/total.
+    'progress.seen': '{seen} of {n} seen',
+    'progress.upcoming': '+{n}',
+    'progress.upcomingLong': '{n} still to come.',
     'account.unavailable': 'Sync unavailable{reason}. Your collection is still saved in this browser.',
     'account.retryConnection': 'Retry connection',
     'account.signOut': 'Sign out',

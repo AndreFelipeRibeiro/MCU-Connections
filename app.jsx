@@ -822,7 +822,7 @@ function App() {
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [mediaReady, setMediaReady] = useState(!!window.MEDIA);
-  const { states: collectionStates } = window.useCollection();
+  const { states: collectionStates, statusOf } = window.useCollection();
 
   useEffect(() => { setMediaReady(true); }, []);
   const device = useDevice();
@@ -1104,6 +1104,31 @@ function App() {
     }
     return list;
   }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches, pinnedTitleIds, charOnly, isTouch]);
+
+  // How much of each phase and era has been seen. Deliberately NOT derived from
+  // `visible`: the collection tab must not feed back into its own numbers, or
+  // Seen would always read 100% and Unseen 0%. `filtered` is the right base —
+  // it carries the type, phase and budget filters and nothing else.
+  //
+  // Hidden entirely during a text search, and while a character is pinned:
+  // both narrow `filtered`, and a pinned character's progress is the one thing
+  // the ticket rules out.
+  const showProgress = !search.trim() && !highlightedChar;
+  const groupProgress = useMemo(() => {
+    if (!showProgress) return null;
+    const eraOf = chronoEras(filtered);
+    const byPhase = {}, byEra = {};
+    const add = (m, k, t) => {
+      const g = m[k] || (m[k] = { seen: 0, released: 0, upcoming: 0 });
+      // Unreleased titles count towards neither side of the fraction — they are
+      // not a gap in what you have watched — but they are still announced.
+      if (!window.MCU_isReleased(t)) { g.upcoming += 1; return; }
+      g.released += 1;
+      if (statusOf(t.id) === 'seen') g.seen += 1;
+    };
+    filtered.forEach(t => { add(byPhase, t.phase, t); add(byEra, eraOf[t.id], t); });
+    return { byPhase, byEra };
+  }, [showProgress, filtered, collectionStates]);
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
@@ -2193,14 +2218,19 @@ function App() {
       >
         {/* Row labels for the Release (phase) and Chrono (era) timelines. Hidden
             while a title is selected: its connection rings move the cards. */}
-        {!selectedId && layout.bands.map(b => (
-          <div key={b.phase ? 'p' + b.phase : 'e' + b.era} className={`band-label${b.phase ? ' phase' : ''}`}
-            style={{ transform: `translate(${b.x}px, ${b.y - 40}px)`, ...(b.phase ? { '--band': PHASE_COLORS[b.phase] } : {}) }}>
-            {b.phase ? tr('phase.label', { n: b.phase })
-              : b.era === 0 ? tr('era.before', { year: ERA_STARTS[0] })
-              : b.from === null ? '' : b.from === b.to ? String(b.from) : `${b.from}–${b.to}`}
-          </div>
-        ))}
+        {!selectedId && layout.bands.map(b => {
+          const label = b.phase ? tr('phase.label', { n: b.phase })
+            : b.era === 0 ? tr('era.before', { year: ERA_STARTS[0] })
+            : b.from === null ? '' : b.from === b.to ? String(b.from) : `${b.from}–${b.to}`;
+          const g = groupProgress && (b.phase ? groupProgress.byPhase[b.phase] : groupProgress.byEra[b.era]);
+          return (
+            <div key={b.phase ? 'p' + b.phase : 'e' + b.era} className={`band-label${b.phase ? ' phase' : ''}`}
+              style={{ transform: `translate(${b.x}px, ${b.y - 40}px)`, ...(b.phase ? { '--band': PHASE_COLORS[b.phase] } : {}) }}>
+              {g ? <window.ProgressHeader band label={label} seen={g.seen} released={g.released} upcoming={g.upcoming}
+                     color={b.phase ? PHASE_COLORS[b.phase] : 'var(--accent)'}/> : label}
+            </div>
+          );
+        })}
         <FloatingConnections
           visibleTitles={lineTitles}
           positions={positions}
@@ -2312,7 +2342,7 @@ function App() {
         <div role="main" className={`m-main${charPill ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
           {viewMode === 'grid' && <window.MobileGrid collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
-          {viewMode === 'list' && <window.MobileList collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {viewMode === 'list' && <window.MobileList progress={groupProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
@@ -2386,7 +2416,7 @@ function App() {
         ? <window.DesktopList titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
             onOpen={(id) => setDrawerId(drawerId === id ? null : id)}
-            header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey}/>
+            header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey} progress={groupProgress}/>
         : canvasEl}
 
       {hoveredConnection && (

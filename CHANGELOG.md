@@ -12,6 +12,46 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — phase and era progress, on four of the five surfaces
+
+Recorded: 2026-10-28 17:43 EDT (-0400). Not pushed. **Awaiting the user's
+design review**, which the ticket requires before this can merge.
+
+- One shared `ProgressHeader` carries the label, the `9/18` count in JetBrains
+  Mono, a slim bar in the group's colour and a screen-reader sentence
+  ("9 of 18 seen"). Complete swaps the count for a check; nothing-seen shows an
+  empty track rather than hiding, so the structure stays consistent.
+- **Desktop List:** By Phase headers become progress headers, and Release gains
+  a phase divider above the first year of each phase, acting as a super-header
+  while the year rows below are untouched. **Desktop and phone Spatial:** phase
+  bands (Release) and era bands (Chrono) carry the count and bar. **Phone
+  List:** the same divider, including inside the folded seen-runs branch, which
+  renders through a different path and needed the divider added separately —
+  it deliberately does not fold with a run, being the super-header.
+- Counts are computed from `filtered`, never `visible`: the collection tab must
+  not feed its own numbers, or Seen would always read 100% and Unseen 0%. They
+  follow the type, phase and budget filters, count seen over **released** only,
+  report "+N" for upcoming, and update live.
+- Hidden during a text search and while a character is pinned — both narrow the
+  base set, and pinned-character progress is the one thing the ticket rules out.
+- **The phone Grid is NOT done.** It has no group headers at all today, only
+  seen-run sections, so "the same component" means giving the Grid grouping it
+  has never had. That is a visible change to that view's design rather than a
+  styling job, so it is left for the user's call.
+- Verification: checked in a real browser on desktop List (Release and By
+  Phase), desktop Spatial (Release and Chrono), phone List and phone Spatial,
+  in English and Portuguese, with complete, partial and zero states and the
+  live update after marking. At 320px all six dividers sit on one line and fit
+  the width. axe-core clean on 7 screens in both languages. Contrast measured
+  against real composited backgrounds: complete count 8.34:1, partial count and
+  the upcoming hint 5.63:1.
+- One fix found by measuring rather than looking: `.pgh-up` had `opacity: .75`
+  over `--text-muted`, which sits exactly at AA, so the fade would have pushed
+  the "+N" hint under the line. The opacity is gone.
+- Limits: **no targeted `qa/` check yet**, and the full suite has not run
+  against this change. The phone Grid is outstanding. Screenshots still need
+  the user's approval before this merges.
+
 ## V3 maintenance — five source-verified characters for the sparse series
 
 Recorded: 2026-10-28 17:17 EDT (-0400). Not pushed.

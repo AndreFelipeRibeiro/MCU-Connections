@@ -423,3 +423,15 @@
    it), and the scroll area never scrolls horizontally. */
 .m-flat, .m-gflat { min-width: 0; }
 .m-main .m-scrollarea { overflow-x: hidden; }
+
+/* Phase divider above the first year of each phase, matching the desktop List
+   so the two views read the same. Fits one line at 320px: the label shortens
+   before the count does, and the bar always spans the row. */
+.m-phase-divider {
+  padding: 14px 14px 6px; margin-top: 2px; border-top: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--pm, var(--text-muted));
+}
+.m-phase-divider:first-child { border-top: none; margin-top: 0; padding-top: 4px; }
+.m-phase-divider .pgh-label { color: var(--pm); }
+.m-glabel .pgh-label { font: inherit; letter-spacing: inherit; color: inherit; }
