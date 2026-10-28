@@ -1,0 +1,14 @@
+{
+  "name": "mcu-connections-qa",
+  "private": true,
+  "description": "Development-only browser checks for MCU Connections. Not part of the app: the site never loads anything from qa/, and Vercel does not deploy this folder.",
+  "scripts": {
+    "setup": "bash setup.sh",
+    "regress": "bash regress.sh",
+    "a11y": "node a11y-scan.js"
+  },
+  "devDependencies": {
+    "axe-core": "4.10.2",
+    "playwright": "1.63.0"
+  }
+}

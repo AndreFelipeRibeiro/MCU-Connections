@@ -329,3 +329,138 @@ RT 90%; clearing restored the list. Desktop at 1440×900 showed the updated
 toolbar and Order label without overflow. Console error log was empty.
 No account marks were changed and no new OAuth/cloud-sync flow was exercised.
 This records an observed deployment result, not its exact deployment timestamp.
+
+## V3 batch 4 — 2026-10-28
+
+First batch worked in Claude Code. Five tickets: the regression script's silent
+pass, the Portuguese release label, the guest sign-in reminder against Undo,
+Spatial touch input on wide screens, and character-variant scope. Nothing was
+committed or pushed at the time of writing, so this records local verification.
+
+### The checks themselves were not trustworthy
+
+`qa/regress.sh` wrapped every check in GNU `timeout`, which macOS does not
+ship. Each check died with "command not found", the output grep matched
+nothing, and the run reported success in about two seconds having executed no
+browser at all. Separately, four checks print indented JSON, so a non-empty
+errors array spans lines; the single-line pattern could not match one and fell
+back to matching zero digits, printing a bare `"desktopErrors": ` that was
+indistinguishable from an empty array. Both are fixed, and the script now exits
+non-zero, so earlier "clean" macOS runs of this script should not be trusted.
+
+### Full suite on the final working tree
+
+- `bash qa/regress.sh`: **18 of 19 checks clean**. `test-camera` failed
+  (`exited 1`, no errors field); it fails the same way on unmodified code, as
+  recorded under "The camera check" below.
+- `node qa/a11y-scan.js` and `LOC=pt-BR node qa/a11y-scan.js`: no violations on
+  any of the 7 screens, in either language.
+- All ten `.jsx` files and both locale files compile through the pinned Babel
+  standalone build.
+
+### Before and after, against a pristine HEAD copy
+
+Each fix has a check that was run against an unmodified export of `HEAD`
+(`SITE=` pointing at a clean copy) and then against the working tree, so the
+reported behaviour is observed rather than assumed.
+
+- `test-widetouch` at 1440×900 with touch reported: on HEAD `touchPan` did not
+  move and `pinch` did not grow — finger input was entirely absent, because the
+  touch handlers were attached on a width breakpoint. After: pan follows the
+  finger by the full 90px, pinch zooms, mouse drag still moves exactly its 70px
+  and is not doubled, the wheel still zooms, a card still opens its drawer, and
+  the layout stays the desktop one.
+- `test-variant`: on HEAD the suggestion offered "1 title" for Peter Parker
+  (Raimi) and pinning him opened "13 titles" and 13 cards. After: 1 in the
+  suggestion, the banner, the stepper and the narrowed catalog. Tom Holland's
+  Peter is unchanged at 13, Captain Carter agrees at 4, and Jonathan Majors
+  stays a text search instead of pinning one of his three portrayals.
+- `test-nudgeundo`: on HEAD the check cannot complete, because the reminder's
+  modal scrim is on screen after the Undo and blocks the next mark — the
+  reminder had opened anyway. After: three marks advance the stage, Undo during
+  the wait cancels the reminder and returns the stage, and marking again opens
+  it once with a count that matches the collection.
+- A direct probe of `data.js` recorded the scope change for every variant:
+  He Who Remains and Victor Timely 3 to 1, Captain Carter 10 to 4, White Vision
+  7 to 2, Peter Parker (Raimi) and (Webb) 13 to 1, Kang 3 to 1, Peggy Carter 10
+  to 6, Vision 7 to 6. Tom Holland's Peter Parker stays 13.
+
+### The camera check
+
+`test-camera` was run four times, twice on the working tree and twice on an
+unmodified export of `HEAD`. All four failed identically with `locator.click:
+Timeout 30000ms exceeded`, so this is not a regression from this batch, and the
+expected result of a full run right now is 16 of 17.
+
+The failing step is "sort change while selected", not the "wheel cancels the
+glide" step `qa/README.md` previously blamed — `glideCancelledByWheel` was true
+in every run. A diagnostic copy of the check showed that after the preceding
+wheel-zoom step, the click on the centre card leaves nothing selected
+(`.card.selected` count 0, drawer closed) while the sort button itself is
+clickable, so the following `.drawer-close` click has no target. Whether that is
+brittleness in the check or a genuine "a click after a wheel zoom does not
+select" bug in the app was not established, and is worth its own ticket. The
+old "about 1 run in 4" description is not what this machine shows.
+
+### Picking an actor or a character from search
+
+Added after the user reported that picking "Hayley Atwell" fell back to a text
+search instead of opening the pinned widget. Narrowing `pickPerson` to
+single-role actors (done earlier the same day, for the variant scope) had
+removed the widget for every performer with more than one role. A pinned
+subject is now either one portrayal or a performer.
+
+`qa/test-pickperson.js` is a full pass rather than a sample: it drives the
+search box for **all 84 characters and all 79 actors**, clicks each suggestion
+and reads the banner back.
+
+- Working tree: 163 of 163 open the widget, with the banner name, the count and
+  the stepper total all matching the catalogue. No console errors.
+- Against an unmodified export of `HEAD` the same check reports the two bugs it
+  was written for: Robert Downey Jr. opens no widget at all (two separate
+  identities, so this one predates the batch), and 14 counts are wrong because
+  variants still resolved to their prime — Peggy Carter 10 instead of 6, Vision
+  7 instead of 6, Kang, He Who Remains and Victor Timely 3 instead of 1, Captain
+  Carter 10 instead of 4, and so on.
+
+One bug in this work was caught only by running the full pass: `pinnedChars` was
+declared above the state it reads, so its dependency array captured `undefined`
+on every render and the memo never recomputed. The app still booted and every
+character still behaved, because the character path does not read that value —
+only actors did, and only then did it surface. Moving the declaration below
+`pinnedActor` and `highlightedChar` fixed it.
+
+### Escape and the pinned widget
+
+Added at the user's request: Escape now clears the pinned character or
+performer. `qa/test-escpin.js` checks the rung and, more importantly, its place
+in the ladder.
+
+- Escape clears a pin and gives the catalogue back, 13 cards to 64.
+- Details over a pin: the first Escape closes only the details, the pin survives
+  with its 13 cards, and a second Escape clears it.
+- Escape with the search suggestions open closes the suggestions only.
+- Phone width: tapping a cast row pins, and Escape clears the pill.
+
+The first attempt used a second listener that bailed while details were open,
+and it closed both layers on one press. Two listeners each see the same press;
+React re-renders between them for a discrete event like `keydown`; and a
+listener added to `window` during the capture phase is still called when the
+event bubbles back to `window`. So the pin's re-subscribed listener ran for the
+same press with a closure in which the details were already gone. Both rungs
+now share one listener that decides once. `qa/test-esc.js`, which covers the
+details rung this rewrote, still passes.
+
+### Limits, not covered by this batch
+
+- **No real-device checks.** Everything above is headless Chromium. The
+  wide-screen touch fix was exercised with emulated touch at 1440×900; a real
+  touch laptop or an iPad in landscape, including orientation changes, has not
+  been tried, and that is named in the ticket's own criteria.
+- No iPhone/Safari or Android pass, no WebKit engine, no spoken screen reader.
+- No live Google OAuth and no cross-device cloud sync. The reminder check runs
+  as a signed-out guest only.
+- The Portuguese label was verified through `test-fit` in Portuguese and the
+  axe-core scan, not by eye in a real browser at 320px.
+- `test-camera`'s own flake was identified but not fixed; its "wheel cancels
+  the glide" and mobile selection steps remain timing-sensitive.

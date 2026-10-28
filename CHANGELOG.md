@@ -12,6 +12,168 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — the regression run reports failures instead of passing in silence
+
+Recorded: 2026-10-28 11:14 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
+(`b28c271`; development tooling only, no app files changed).
+
+- `qa/regress.sh` wrapped every check in GNU `timeout`, which is part of
+  coreutils and ships with neither macOS nor this machine. Each check exited
+  "command not found", the grep matched nothing, and the run reported success
+  in about two seconds having started no browser. It now falls back to
+  `gtimeout` and then to perl's `alarm`.
+- Four checks print their JSON indented, so a non-empty errors array spans
+  lines. The single-line pattern could not match one and fell back to matching
+  zero digits, printing a bare `"desktopErrors": ` that read exactly like an
+  empty array. Output is flattened before matching, and a field must hold `[]`
+  or a real number.
+- The run marks anything that is not `[]` or `0` with `!!`, fails a check that
+  exits non-zero or prints no errors field, and exits non-zero overall.
+- Verification: the reporting logic was exercised against six output shapes
+  (empty and non-empty indented arrays, the documented warning, zero, a
+  non-zero count, and a crash with no JSON). It found a real failure on first
+  use — `test-camera` fails at "sort change while selected" on unmodified code
+  too, which the old script swallowed; raised as its own ticket, not fixed here.
+- Limits: no real-device work is claimed by this entry. The second half of its
+  ticket, current iPhone/Safari and Android evidence, is not done.
+
+## V3 improvement — "Lançamento" and "Saiu" replace "Estreia" in Portuguese
+
+Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
+(`088b9c1`).
+
+- "Estreia" alone reads as something still to come, the opposite of what the
+  release sort means. `sort.release` and `list.col.release` become
+  "Lançamento"; `sort.short.release` becomes "Saiu", which renders in the phone
+  sort tabs and the desktop compact span beside Crono, Fase, A–Z, IMDb and RT,
+  where ten characters would not fit.
+- Verification: `test-fit` in both languages (24 fields, all `errors: 0`),
+  `test-i18n`, `test-dlist`, `test-v2`, and the axe-core scan in Portuguese.
+  The painted label was read back at 1440, 1000, 390 and 320px.
+- Limits: not viewed by eye in a real browser; whether "Saiu" reads well to a
+  Brazilian user is a judgement the maintainer still owns.
+
+## V3 fix — the guest sign-in reminder stays true to the saved collection
+
+Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
+(`6d74b0c`).
+
+- The reminder captured its mark count at the tap, so undoing that mark during
+  its delay left it opening anyway with a number the collection no longer had.
+- The cause runs deeper than the count: the toast's `undo()` calls `setStatus`
+  directly and never goes through `emitStatusChange`, so the reminder could not
+  learn about a removal on that path at all. It now reads the live collection
+  when the reminder comes due, and hands its stage back if the marks are under
+  the threshold again.
+- Verification: new `qa/test-nudgeundo.js`. Against unmodified code the check
+  cannot finish, because the reminder's scrim blocks the next mark.
+- Limits: guest only, signed out; no live Google OAuth. Only the 3-mark
+  threshold was driven end to end, not the 10.
+
+## V3 fix — Spatial touch, portrayal scope, performer pins and Escape
+
+Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
+(`87ccb33`). Four tickets in one commit: they edit overlapping lines in the same
+functions, and each later one corrected the earlier before any of it was
+committed, so separate commits would have recorded states already known wrong.
+
+- **Touch follows the device, not the window width.** The canvas attached its
+  touch handlers from a 900px layout breakpoint, so a touch laptop or a tablet
+  in landscape took the desktop layout and lost pan and pinch altogether. It
+  now reads `navigator.maxTouchPoints` and `(any-pointer: coarse)`. Mouse and
+  wheel are untouched, and mouse events synthesized within 400ms of a touch are
+  ignored so a background tap cannot step back twice.
+- **A selected character means one exact portrayal.** "Peter Parker (Raimi)"
+  offered 1 title and opened Tom Holland's 13. The pin's scope is now keyed by
+  the exact character; a separate prime-keyed map keeps the connection
+  threading, so arcs like Kang's stay continuous. It also narrows Kang 3→1,
+  Peggy Carter 10→6, Vision 7→6, Captain Carter 10→4, White Vision 7→2.
+- **A pin is one portrayal or a performer.** Picking an actor who plays several
+  characters pins the performer — the union of their own roles' titles, named
+  as themselves. This restored the widget for Jonathan Majors, Hayley Atwell
+  and Paul Bettany, and gave it to Robert Downey Jr., who had never had it.
+- **Escape clears the pin**, last in the ladder. The details rung and the pin
+  rung share one listener, because two listeners both see the same press and
+  React re-renders between them.
+- Verification: new `test-widetouch`, `test-variant`, `test-pickperson` and
+  `test-escpin`, each run against an unmodified copy of the previous tree as
+  well. `test-pickperson` is a full pass over all 84 characters and all 79
+  actors: 163 of 163 open the widget with the right count, against 162 and 14
+  wrong counts before.
+- Limits: **no real-device verification.** The wide-screen touch fix was
+  exercised with emulated touch at 1440×900 only; a real touch laptop or an
+  iPad in landscape, including orientation changes, has not been tried, and
+  that is the first acceptance criterion of its ticket. The pick pass is
+  desktop and English only.
+
+## V3 workflow — Approved status, new checks in the regression run, verification log
+
+Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
+(tooling and documentation; no app files changed).
+
+- Notion **V3 Tasks** gains an **Approved** status between Awaiting review and
+  Blocked. The maintainer sets it; it clears that ticket's current revision to
+  be committed and pushed to staging, never a merge to `main`, and it lapses if
+  the work changes. AGENTS.md records the rule and asks agents to ship anything
+  already Approved at the start of a session.
+- The five new checks join `qa/regress.sh`, taking the run from 14 to 19
+  checks (about 20 minutes). `qa/README.md` gains a Reporting section and a
+  corrected account of the `test-camera` failure.
+- `.gitignore` now ignores a root `shots/`. Checks resolve their screenshot
+  path relative to the working directory, so running one from the repository
+  root, as qa/README.md says to, wrote PNGs outside the ignored `qa/shots/`.
+- `docs/V3-VERIFICATION.md` gains the batch 4 checkpoint and
+  `docs/decisions.md` the decisions behind each change.
+- Expected result of a full run right now is **18 of 19**, with `test-camera`
+  the only failure, for a reason that predates this batch.
+
+## V3 workflow — QA checks in the repository; no-build rule with a V4 exit
+
+Recorded: 2026-10-28 08:55 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
+(tooling and documentation only; no app files changed).
+
+- New `qa/`: the curated headless checks used during V3. That is the 14-check
+  regression run (`qa/regress.sh`), the axe-core scan (`qa/a11y-scan.js`), a
+  startup timing check and one targeted check per recent fix, all serving the
+  repository root. Its own `package.json` pins Playwright 1.63.0 and axe-core
+  4.10.2; `qa/setup.sh` installs them and fetches the pinned app libraries.
+  `.gitignore` keeps installs out of Git; new `.vercelignore` keeps `qa/` off
+  the deployed site.
+- Rule recorded in AGENTS.md and docs/decisions.md: the V3 app stays build-free
+  (`qa/` is the one development-only npm exception); V4 moves to a standard
+  build step as one planned migration. AGENTS.md now asks agents to run the
+  regression and axe scan before handing work over. README and HANDOFF updated.
+- Verification: in a fresh copy of the repository, setup steps and
+  `qa/test-panel.js` passed (no errors); Git ignores the installed packages. The
+  full `qa/regress.sh` run was still in progress at push time; its result is
+  recorded on the Notion ticket.
+
+## V3 workflow — handoff to Claude Code
+
+Recorded: 2026-10-28 08:39 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
+(documentation only).
+
+- AGENTS.md rewritten as a self-contained, agent-neutral rulebook: stack and
+  load order, local commands (no install or build; `python3 -m http.server`
+  on 8123, 8126 for sign-in), staging/production flow and approvals, commit and
+  CHANGELOG rules with real git times, the Notion V3 Tasks workflow (board
+  priority, screenshots, statuses, completion time and order), the calendar
+  recap, design/accessibility/keyboard standards, deferred work (Phase 6 waits
+  on a custom domain) and secrets.
+- New docs/HANDOFF.md (state, architecture, decisions, quirks, open threads) and
+  docs/decisions.md (decision log). The 2026-10-24 handoff sections in V3-SPEC.md,
+  V3-TASKS.md and KICKOFF-PROMPT.md are labelled historical; README lists the
+  new docs.
+- Verification: documents reviewed against the code, git state, CHANGELOG and
+  the Notion board; no application files changed.
+
 ## V3 improvement — Spatial cards from the keyboard
 
 Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to

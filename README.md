@@ -172,7 +172,9 @@ Connections chain on the prime, so *Loki* → *Quantumania* → *Loki Season 2* 
 
 ## Running it locally
 
-No package installation, npm, bundler, router, application server or test runner.
+The app needs no package installation, npm, bundler, router or application
+server (V3 rule; V4 plans a build step, see docs/decisions.md). The optional QA
+checks in `qa/` are the one development-only exception (below).
 The entry point is `index.html`. React and ReactDOM (production builds), Babel
 standalone and supabase-js load from pinned CDN scripts with SRI; JSX compiles in the browser. Files share
 exports through `window.*`, not ES modules.
@@ -197,6 +199,14 @@ also be configured in Google/Supabase before testing sign-in.
 
 The catalog does not require Supabase to render. A cold page load still needs
 access to the CDN libraries; this is not a bundled offline app or service worker.
+
+### Automated checks (optional)
+
+`qa/` holds headless browser checks (Playwright and axe-core) for agents and
+maintainers. Set up once with `bash qa/setup.sh` (Node 18+), then run
+`bash qa/regress.sh` for the full regression or `node qa/a11y-scan.js` for
+accessibility. They are development-only: the site never loads them and Vercel
+does not deploy the folder. Details are in [qa/README.md](qa/README.md).
 
 ## Supabase and Google setup
 
@@ -350,6 +360,9 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `schema.sql` | Watch-state table, constraints, trigger, grants and ownership RLS |
 | `V3-SPEC.md` / `V3-TASKS.md` | Architecture/decisions and phased delivery checklist |
 | `KICKOFF-PROMPT.md` | Original kickoff and current continuation/approval rules |
+| `qa/` | Development-only headless checks (Playwright, axe-core); not deployed. See qa/README.md |
+| `docs/HANDOFF.md` | Current handoff: state, architecture, quirks, open threads |
+| `docs/decisions.md` | Running decision log (date, decision, reason) |
 | `docs/V3-VERIFICATION.md` | Detailed phase-by-phase evidence and limitations |
 | `CHANGELOG.md` | Dated commit summaries, release context and verification links |
 | `AGENTS.md` | Contributor workflow, shared Codex/Claude working tree, attribution and privacy instructions |

@@ -71,7 +71,7 @@ function DlSortHeader({ col, label, sort, sortDir, setSort, setSortDir }) {
   );
 }
 
-function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, header, empty, orderKey }) {
+function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, activeChars, header, empty, orderKey }) {
   const I = window.MCU_I18N;
   const tr = I.tr;
   const { statusOf } = window.useCollection();
@@ -113,7 +113,9 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                 const matched = searchCharMatches ? (searchCharMatches[t.id] || []) : [];
                 // Matched characters first, then the rest of the cast.
                 const cast = [...matched, ...t.cast.filter(c => !matched.includes(c))];
-                const dim = activeChar && !t.cast.includes(activeChar);
+                // A pinned performer covers several characters: a row is only
+                // dimmed when it holds none of them.
+                const dim = activeChars ? !activeChars.some(c => t.cast.includes(c)) : (activeChar && !t.cast.includes(activeChar));
                 return (
                   <div key={t.id} role="row" data-row-id={t.id} data-flip-id={t.id} onClick={() => onOpen(t.id)}
                     className={`dl-row${seen ? ' seen' : ''}${openId === t.id ? ' on' : ''}${dim ? ' dim' : ''}`}>

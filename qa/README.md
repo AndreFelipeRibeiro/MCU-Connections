@@ -1,0 +1,105 @@
+# QA checks
+
+Development-only browser checks (headless Playwright). They are **not part of
+the app**: the site never loads anything from `qa/`, Vercel does not deploy this
+folder (`.vercelignore`), and installed packages stay out of Git
+(`.gitignore`). This is the one place npm is allowed in V3 (see AGENTS.md).
+
+## Setup (once per machine)
+
+    bash qa/setup.sh
+
+Installs Playwright and axe-core into `qa/node_modules`, downloads Chromium,
+and fetches the pinned React, ReactDOM, Babel standalone and supabase-js
+packages into `qa/vendor`. The checks serve those packages in place of unpkg,
+so they test exactly the versions `index.html` loads and need no network.
+
+## Running
+
+Run from the repository root:
+
+| Command | What it does |
+|---|---|
+| `bash qa/regress.sh` | Full regression, 19 checks (about 20 min). Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
+| `node qa/a11y-scan.js` | axe-core scan of 7 screens (desktop Spatial, details, List, account menu; phone List, details, Spatial). Add `LOC=pt-BR` for Portuguese. Expect no violations. |
+| `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
+| `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
+
+Each check starts its own static server on a fixed local port, serving the
+repository root. To compare two versions, set `SITE` to another folder,
+relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
+
+## The checks
+
+- Regression set (`regress.sh`): `test-fit` (layout fit for every sort, both
+  languages), `test-ctxfn2` (context summary and filters), `test-panel`
+  (details panel and drawer), `test-i18n`, `test-dlist` (desktop List),
+  `test-suggest` (search suggestions), `test-layers` (menu layering),
+  `test-anim` (reorder animations), `test-cel` (counters and celebrations),
+  `test-align2` (Spatial alignment), `test-about`, `test-welcome`,
+  `test-camera` (Spatial camera, glides, selection return), `test-v2`
+  (phone views), `test-widetouch` (touch pan and pinch on a wide screen),
+  `test-variant` (character-variant scope), `test-nudgeundo` (the guest
+  sign-in reminder against Undo), `test-pickperson` (every actor and character
+  picked from the search opens the pinned widget), `test-escpin` (Escape
+  unwinds one layer per press, down to the pinned widget).
+- Checks written for specific fixes (run them when touching that area):
+  - `test-pan`: zoomed-out Spatial layers and memory.
+  - `test-back`: phone Back closes sheets.
+  - `test-img`: image fallbacks.
+  - `test-accent`: accent-insensitive search.
+  - `test-empty`: Spatial empty state.
+  - `test-bgclick`: empty-canvas click.
+  - `test-boot`: startup screen.
+  - `test-esc`: Escape and focus in details.
+  - `test-kbspatial`: Spatial cards from the keyboard.
+  - `test-ringfocus`: enlarged ring card.
+- `test-jit2.js` and `test-jit2-env.js` also hold the shared harness (server,
+  vendor routing, page helpers) that other checks load. Edit them with care.
+
+## Reporting
+
+`regress.sh` prints every errors field it finds under each script name, flags
+anything that is not `[]` or `0` with `!!`, and exits non-zero if there was any.
+It also fails a check that exits non-zero or prints no errors field at all, so a
+crashed or hung check can no longer look like a pass.
+
+It caps each check at 300s with GNU `timeout`, falling back to `gtimeout` and
+then to perl's `alarm`. GNU `timeout` is part of coreutils and is **absent on
+macOS**: before the fallback existed, every check died with "command not found"
+and the whole run passed, silently, in a couple of seconds.
+
+Four checks print their JSON indented (`JSON.stringify(out, null, 1)`), so a
+non-empty errors array spans several lines. The matcher flattens each check's
+output before reading it; a single-line pattern could not match such an array
+and printed a bare `"desktopErrors": `, which read as harmlessly as an empty
+one.
+
+## Known noise
+
+- `test-camera`: one desktop console warning ("Unable to preventDefault inside
+  passive event listener"), which React causes by attaching wheel listeners
+  passively at the root. `regress.sh` allows that one string by name, and
+  `test-widetouch` reports it as `knownWarning` rather than in `errors`.
+- **`test-camera` currently fails, and did so before this batch.** Measured on
+  2026-10-28 over four runs (two on the working tree, two on an unmodified
+  export of `HEAD`): all four failed identically with `locator.click: Timeout
+  30000ms exceeded`. So the expected result of a full run right now is 16 of 17,
+  with `test-camera` the only failure.
+  The step is "sort change while selected", not the "wheel cancels the glide"
+  step this file used to blame — that one passed in every run. After the
+  preceding wheel-zoom step, the click on the centre card selects nothing
+  (`.card.selected` count 0, no open drawer), so the `.drawer-close` click that
+  follows has no target and times out. Whether that is brittleness in the check
+  or a real "click after a wheel zoom does not select" bug in the app is not yet
+  established; it needs its own ticket. Until then, do not read a `test-camera`
+  failure as a regression from your own change — compare against a clean copy
+  with `SITE=` first.
+- External images and fonts are blocked on purpose, so posters show their
+  generated fallback art in screenshots.
+
+## Keeping it useful
+
+Checks find elements by class names and texts. When a change renames or
+restructures UI, update the affected checks in the same commit. Screenshots go
+to `qa/shots/` (ignored by Git).
