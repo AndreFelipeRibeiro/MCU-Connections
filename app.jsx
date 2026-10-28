@@ -228,7 +228,7 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   return { positions, bands: layoutBands, width: maxX + 120, height: maxY + 120 };
 }
 
-function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
+function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
   const phaseColor = PHASE_COLORS[title.phase];
   const downRef = useRef({ x: 0, y: 0, moved: false });
   const { statusOf } = window.useCollection();
@@ -261,6 +261,15 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
       onMouseEnter={() => onHover(title.id)}
       onMouseLeave={() => onHover(null)}
     >
+      {focusable && (
+        // The keyboard way into a card, like the List's title button. It comes
+        // first, so Tab reaches the card before its Seen/Watchlist buttons;
+        // it covers the card for the focus ring but lets pointer clicks
+        // through to the card's own handler. Enter or Space opens it.
+        <button type="button" className="card-open" aria-label={I18N.titleName(title)}
+          onFocus={() => onFocusCard && onFocusCard(title.id)}
+          onClick={(e) => { e.stopPropagation(); onClick(); }}/>
+      )}
       <div className="card-poster">
         <PosterArt title={title}/>
         <div className="card-badges">
@@ -300,11 +309,39 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
   );
 }
 
+// How the visitor last interacted: the details drawer only takes focus when it
+// was opened from the keyboard, so a mouse or touch open shows no focus ring.
+let lastInput = 'pointer';
+document.addEventListener('keydown', (e) => { if (!e.metaKey && !e.ctrlKey && !e.altKey) lastInput = 'keyboard'; }, true);
+document.addEventListener('pointerdown', () => { lastInput = 'pointer'; }, true);
+
 function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, search }) {
   // Slide in and out: mount closed and open on the next frame, and keep showing
   // the last title while it slides away. Switching titles swaps the content.
   const [title, setTitle] = useState(current);
   const [open, setOpen] = useState(false);
+  // Keyboard flow for this modeless panel (no focus trap): remember what
+  // opened it, move focus to its heading once it is visible (keyboard opens
+  // only), and give focus
+  // back to the opener when it closes (if focus was still in the panel).
+  const asideRef = useRef(null);
+  const headingRef = useRef(null);
+  const openerRef = useRef(null);
+  useEffect(() => {
+    const aside = asideRef.current;
+    const active = document.activeElement;
+    const inPanel = !!(aside && active && aside.contains(active));
+    if (current) {
+      if (!openerRef.current && active && active !== document.body && !inPanel) openerRef.current = active;
+      return;
+    }
+    const opener = openerRef.current;
+    openerRef.current = null;
+    if (opener && opener.isConnected && lastInput === 'keyboard' && (inPanel || active === document.body)) opener.focus({ preventScroll: true });
+  }, [current && current.id]);
+  useEffect(() => {
+    if (open && headingRef.current && lastInput === 'keyboard') headingRef.current.focus({ preventScroll: true });
+  }, [open, title && title.id]);
   useEffect(() => {
     if (!current) { setOpen(false); return; }
     setTitle(current);
@@ -314,12 +351,12 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
   }, [current]);
   if (!title) return null;
   return (
-    <aside className={`drawer${open ? ' open' : ''}`} aria-hidden={!open}
+    <aside ref={asideRef} className={`drawer${open ? ' open' : ''}`} aria-hidden={!open} aria-labelledby="drawer-title"
       onTransitionEnd={e => { if (!current && e.target === e.currentTarget) setTitle(null); }}>
       <header className="drawer-header">
         <div>
           <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{phaseLabel(title.phase)} · {I18N.upper(typeLabel(title.type))} · {title.year}</div>
-          <h2 className="drawer-title"><window.Highlight text={I18N.titleName(title)} query={search}/></h2>
+          <h2 className="drawer-title" id="drawer-title" ref={headingRef} tabIndex={-1}><window.Highlight text={I18N.titleName(title)} query={search}/></h2>
           <window.StoryYear title={title} detail className="drawer-story"/>
           <window.Synopsis title={title} className="drawer-synopsis"/>
           <window.TitleStatusActions title={title} variant="inline" className="drawer-tsa"/>
@@ -382,11 +419,11 @@ function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopVi
   // narrower desktops the search group wraps onto its own row (CSS). Below it:
   // sort modes and the collection switch.
   return (
-    <div className="toolbar">
+    <div className="toolbar" role="banner">
       <div className="tb-row tb-top-row">
         <div className="brand">
           <div className="brand-mark"/>
-          <div className="brand-title">{tr('app.name')}</div>
+          <h1 className="brand-title">{tr('app.name')}</h1>
         </div>
         <div className="tb-filter-row">
           <div className="search-wrap">
@@ -788,6 +825,8 @@ function App() {
     writeDisplayPrefs({ viewMode, desktopView, sort, sortDir });
   }, [viewMode, desktopView, sort, sortDir]);
   const [drawerId, setDrawerId] = useState(null);
+  const drawerIdRef = useRef(null);
+  drawerIdRef.current = drawerId;
   const [sheet, setSheet] = useState(null);
   // Desktop About dialog (phones use the 'about' sheet).
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -843,6 +882,23 @@ function App() {
   // return there instead of leaving the viewport on the focus ring (laid out
   // near the canvas origin, i.e. the Phase 1 end of the timeline layouts).
   const viewRef = useRef(view);
+  // A card reached with Tab that sits outside the visible canvas (or under the
+  // details drawer) glides just far enough into view. Pointer focus never pans.
+  const revealCard = useCallback((id) => {
+    if (lastInput !== 'keyboard') return;
+    const vp = viewportRef.current;
+    const el = vp && vp.querySelector(`.card[data-id="${id}"]`);
+    if (!el) return;
+    const r = el.getBoundingClientRect(), v = vp.getBoundingClientRect();
+    const left = v.left + 24, right = v.right - (drawerIdRef.current ? 380 : 0) - 24;
+    const top = v.top + 64, bottom = v.bottom - 64;
+    let dx = 0, dy = 0;
+    if (r.left < left) dx = left - r.left; else if (r.right > right) dx = right - r.right;
+    if (r.top < top) dy = top - r.top; else if (r.bottom > bottom) dy = bottom - r.bottom;
+    if (!dx && !dy) return;
+    const cur = viewRef.current;
+    glideTo({ x: cur.x + dx, y: cur.y + dy, scale: cur.scale });
+  }, [glideTo]);
   viewRef.current = view;
   const selectionReturnRef = useRef(null);
   // False until resetView has framed the canvas; the mobile canvas only exists
@@ -1706,6 +1762,25 @@ function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [pair]);
+  // Desktop: Escape closes the open details (and its selection) when nothing
+  // nearer claims it. The pair view, the search box and any open menu, popover
+  // or dialog handle Escape themselves, so this stands back for them; their
+  // own handlers, so this checks the page for them first.
+  useEffect(() => {
+    if (isTouch || (!drawerId && !selectedId)) return;
+    const onKey = (e) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || pair) return;
+      const t = e.target instanceof Element ? e.target : null;
+      if (t && t.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, [role="dialog"], [aria-modal="true"]')) return;
+      setSelectedId(null);
+      setDrawerId(null);
+    };
+    // Capture phase: runs before the menus' own handlers close them (React
+    // re-renders between listeners), so an open menu is still visible here.
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [isTouch, drawerId, selectedId, pair]);
   useEffect(() => { setPair(null); }, [basePositions]);
   // Labels steer clear of the cards that are lit; dimmed ones may sit under them.
   const labelAvoidIds = useMemo(() => {
@@ -1805,6 +1880,11 @@ function App() {
     <div
       className="viewport"
       ref={viewportRef}
+      /* Focusing a card would let the browser scroll this clipped box; the
+         camera does the moving instead (revealCard), so keep it at 0,0. */
+      onScroll={(e) => { e.currentTarget.scrollLeft = 0; e.currentTarget.scrollTop = 0; }}
+      role={isTouch ? undefined : 'main'}
+      aria-label={isTouch ? undefined : tr('view.spatial')}
       onPointerDownCapture={stopGlide}
       onWheelCapture={stopGlide}
       onMouseDown={isTouch ? undefined : onMouseDown}
@@ -1883,6 +1963,8 @@ function App() {
               onClick={() => onCardTap(t.id)}
               onHover={isTouch ? (() => {}) : setHoveredTitle}
               onDragStart={isTouch ? (() => {}) : onCardDragStart}
+              focusable={!isTouch}
+              onFocusCard={revealCard}
               isSelected={selectedId === t.id}
               isHighlighted={isHighlighted}
               isDimmed={isDimmed}
@@ -1954,7 +2036,7 @@ function App() {
           onOpenAccount={() => setSheet('account')}
           collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         />
-        <div className={`m-main${charPill ? ' has-pill' : ''}`}
+        <div role="main" className={`m-main${charPill ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
           {viewMode === 'grid' && <window.MobileGrid collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'list' && <window.MobileList collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}

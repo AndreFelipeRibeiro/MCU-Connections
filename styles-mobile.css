@@ -12,7 +12,7 @@
 .m-brandrow { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .m-mark { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 7px; position: relative; background: conic-gradient(from 45deg,#d4a05a,#4a8de8,#d04040,#a05cd0,#5fa856,#d4a05a); }
 .m-mark::after { content: ''; position: absolute; inset: 5px; border-radius: 3px; background: var(--bg); }
-.m-btitle { font-size: 15px; font-weight: 600; line-height: 1.15; white-space: nowrap; }
+.m-btitle { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.15; white-space: nowrap; }
 .m-btitle { overflow: hidden; text-overflow: ellipsis; }
 /* Context summary (ContextSummary in app.jsx): one line at the top of List and
    Grid; a pill at the top-left of Spatial, clear of the zoom control. */
@@ -50,7 +50,7 @@
 .m-sc .tg { border-radius: 2px; font-size: 8px; font-weight: 800; padding: 1px 3px; letter-spacing: .2px; }
 .m-scores.compact .m-sc .tg { font-size: 7.5px; padding: 1px 2.5px; }
 .m-sc.imdb { color: #f5c518; } .m-sc.imdb .tg { background: #f5c518; color: #000; }
-.m-sc.rt { color: #fa5c3c; } .m-sc.rt .tg { background: #fa320a; color: #fff; }
+.m-sc.rt { color: #fa5c3c; } .m-sc.rt .tg { background: #cc2a0a; color: #fff; }
 .m-sc.none { color: var(--text-muted); font-size: 9px; font-weight: 500; }
 
 /* GRID VIEW */

@@ -6,8 +6,10 @@
   --border: #232838;
   --border-strong: #2e344a;
   --text: #e6e8f0;
-  --text-dim: #8a90a6;
-  --text-muted: #5c6278;
+  /* Contrast on the darkest surface (--surface-2): dim 6.5:1, muted 4.7:1, so
+     both pass WCAG AA for normal text; dim stays a step brighter than muted. */
+  --text-dim: #9ea4b8;
+  --text-muted: #8389a1;
   --accent: #4a8de8;
   font-family: 'Inter', system-ui, sans-serif;
 }
@@ -111,7 +113,7 @@ body {
 .brand-mark::after {
   content: ''; position: absolute; inset: 6px; border-radius: 3px; background: var(--bg);
 }
-.brand-title { font-size: 15px; font-weight: 600; letter-spacing: 0.2px; }
+.brand-title { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.2px; }
 
 .control-group { display: flex; align-items: center; gap: 10px; }
 .control-group label {
@@ -292,7 +294,7 @@ body {
 }
 .card-rating.rt { color: #fa5c3c; }
 .card-rating.rt .rt-tag {
-  background: #fa320a; color: #fff; border-radius: 2px;
+  background: #cc2a0a; color: #fff; border-radius: 2px; /* 5.4:1 */
   font-size: 8.5px; font-weight: 800; padding: 1px 3px; letter-spacing: 0.2px;
 }
 
@@ -979,3 +981,13 @@ body {
 .boot-reload:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @keyframes boot-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .boot-spinner { animation-duration: 2.4s; } }
+
+/* The details heading takes focus when the drawer opens (keyboard flow). */
+.drawer-title:focus { outline: none; }
+.drawer-title:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+
+/* Spatial cards from the keyboard: an invisible first button over the whole
+   card takes Tab focus and draws the ring; pointer clicks pass through it. */
+.card-open { position: absolute; inset: 0; z-index: 4; margin: 0; padding: 0; border: 0; border-radius: 10px; background: transparent; pointer-events: none; }
+.card-open:focus { outline: none; }
+.card-open:focus-visible { box-shadow: inset 0 0 0 3px var(--accent); }

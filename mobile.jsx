@@ -25,11 +25,11 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, o
   // The suggestions list spans the whole search row (see SearchInput).
   const [searchRow, setSearchRow] = React.useState(null);
   return (
-    <div className="m-appbar">
+    <div className="m-appbar" role="banner">
       <div className="m-appbar-top">
         <div className="m-brandrow">
           <div className="m-mark"/>
-          <div className="m-btitle">{mtr('app.name')}</div>
+          <h1 className="m-btitle">{mtr('app.name')}</h1>
         </div>
         <window.LanguageMenu compact/>
         <window.AccountAvatarButton onOpen={onOpenAccount}/>

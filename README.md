@@ -108,6 +108,11 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   connection brings its two titles side by side (Escape or a background click
   restores the layout); links between titles in the same row arc below it.
   Hovering a character in the drawer lights only that character's lines.
+- Escape closes the desktop details unless the search box, a menu or the pair
+  view claims it. Details opened from the keyboard take focus and give it back
+  when they close.
+- In desktop Spatial, Tab reaches each card (then its Seen and Watchlist
+  buttons) and Enter opens it; a card tabbed to off-screen glides into view.
 - On phones, Spatial's grid layouts (Phase, A–Z, IMDb, RT) open with three
   whole columns and the next column and row peeking past the right and bottom
   edges, so it's clear the canvas pans; the first row sits below the count pill.
@@ -326,6 +331,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 |---|---|
 | `index.html` | Entry point; startup screen markup, pinned/SRI CDN scripts and application script order |
 | `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render |
+| `favicon.png`, `apple-touch-icon.png`, `og-image.jpg` | Tab icon, home-screen icon and link-preview image (from the brand mark) |
 | `data.js` | Static titles/characters, ratings, phases, stable ids and variant links |
 | `media-data.js` | TMDB poster and actor-portrait paths |
 | `config.js` | Public Supabase project URL and publishable key |

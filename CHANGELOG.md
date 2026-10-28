@@ -12,6 +12,86 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — Spatial cards from the keyboard
+
+Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 23:30 EDT.
+
+- On desktop each Spatial card starts with an invisible button over the whole
+  card, so Tab reaches the card before its Seen/Watchlist buttons and Enter or
+  Space opens it; pointer clicks pass through to the card as before. A card
+  tabbed to off-screen glides into view, the clipped canvas never scrolls, and
+  Escape from its details returns focus to it.
+- Verification: headless Chromium, 1440×900. First Tab into a card lands on the
+  card (it used to land on Seen) with the ring around the whole card; 20 more Tabs
+  go card, Seen, Watchlist… with every card in view; Enter opened Thor: The
+  Dark World with focus on its title and Escape returned focus to the card; a
+  mouse click opens without a ring. Full regression suite and axe scan pass.
+- Limits: Tab follows catalog order rather than on-screen position; phones
+  unchanged.
+
+## V3 improvement — favicon, home-screen icon and link previews
+
+Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 23:30 EDT.
+
+- New `favicon.png`, `apple-touch-icon.png` and `og-image.jpg` (1200×630),
+  rendered from the app's brand mark with no studio imagery. `index.html` adds a
+  description, theme colour, icon links, Open Graph and `twitter:card` tags; no
+  manifest or service worker.
+- Verification: headless Chromium, desktop and phone: all three files served
+  and linked, no console errors; icon checked at 32 and 16 px.
+- Limits: the description is English (crawlers do not run scripts); `og:image`
+  points at production, so previews work once this reaches main.
+
+## V3 improvement — Escape and keyboard focus for desktop details
+
+Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 23:30 EDT.
+
+- Escape closes the open desktop details and selection unless the pair view,
+  a text field, or an open menu, popover or dialog claims it first (listened in
+  the capture phase so an open menu is still seen). Details opened from the
+  keyboard move focus to their title and give it back to the opener on close;
+  mouse and touch opens leave focus alone, so no focus ring appears (revised
+  after review).
+- Verification: headless Chromium. List: Enter → focus on the title, Escape →
+  closed with focus back on the row; Escape in the search box or with the
+  account menu open only closes those; Spatial: Escape closes the selection;
+  pair view first leaves the pair. A mouse open leaves no outline. No console
+  errors.
+- Limits: after the pair view, closing does not return the camera to its
+  pre-selection position; not tried with a screen reader.
+
+## V3 improvement — page landmarks and List column labels
+
+Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 23:30 EDT.
+
+- The app name is the page's `<h1>`; the desktop toolbar and phone app bar are
+  the banner; the Spatial canvas, the List or the phone's main area is `main`.
+  The List's blank poster and actions headers get screen-reader-only labels
+  (new keys `list.col.poster`, `list.col.actions`).
+- Verification: axe-core on the same 7 screens in both languages reports no
+  violations of any kind; screenshots are pixel-identical before and after.
+- Limits: not tried with VoiceOver or NVDA.
+
+## V3 improvement — readable muted text and RT tags
+
+Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 23:30 EDT.
+
+- `--text-muted` `#5c6278` → `#8389a1` (2.67–3.23:1 → 4.66–5.63:1 across the
+  app's surfaces) and `--text-dim` `#8a90a6` → `#9ea4b8` so it stays a step
+  brighter. The RT tag red `#fa320a` → `#cc2a0a` (white text 3.80 → 5.38:1). List
+  cast initials pick dark or white text by the character colour.
+- Verification: axe-core 4.10 on 7 screens (desktop Spatial, details, List,
+  account menu; phone List, details, Spatial): `color-contrast` failures 61 → 0
+  (English), 60 → 0 (Portuguese). Before/after screenshots checked; sizes and
+  layout unchanged.
+- Limits: text over poster art keeps its own semi-opaque backing and was not
+  flagged; not checked on physical screens.
+
 ## V3 improvement — selected title drawn larger in the Spatial ring
 
 Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
