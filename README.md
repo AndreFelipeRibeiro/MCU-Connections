@@ -350,6 +350,8 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `schema.sql` | Watch-state table, constraints, trigger, grants and ownership RLS |
 | `V3-SPEC.md` / `V3-TASKS.md` | Architecture/decisions and phased delivery checklist |
 | `KICKOFF-PROMPT.md` | Original kickoff and current continuation/approval rules |
+| `docs/HANDOFF.md` | Current handoff: state, architecture, quirks, open threads |
+| `docs/decisions.md` | Running decision log (date, decision, reason) |
 | `docs/V3-VERIFICATION.md` | Detailed phase-by-phase evidence and limitations |
 | `CHANGELOG.md` | Dated commit summaries, release context and verification links |
 | `AGENTS.md` | Contributor workflow, shared Codex/Claude working tree, attribution and privacy instructions |

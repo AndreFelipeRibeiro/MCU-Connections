@@ -1,6 +1,6 @@
 # Kickoff prompt
 
-## Current handoff — 2026-10-24
+## Handoff — 2026-10-24 (historical; current: docs/HANDOFF.md)
 
 Phases 1–5 were initially released to `main` at `1f79b74`.
 The subsequent V3 maintenance release was approved on 2026-10-24: catalog

@@ -12,6 +12,25 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 workflow — handoff to Claude Code
+
+Recorded: 2026-10-28 08:39 EDT (-0400). Pushed to `version/3.0` (staging); not merged to main
+(documentation only).
+
+- AGENTS.md rewritten as a self-contained, agent-neutral rulebook: stack and
+  load order, local commands (no install or build; `python3 -m http.server`
+  on 8123, 8126 for sign-in), staging/production flow and approvals, commit and
+  CHANGELOG rules with real git times, the Notion V3 Tasks workflow (board
+  priority, screenshots, statuses, completion time and order), the calendar
+  recap, design/accessibility/keyboard standards, deferred work (Phase 6 waits
+  on a custom domain) and secrets.
+- New docs/HANDOFF.md (state, architecture, decisions, quirks, open threads) and
+  docs/decisions.md (decision log). The 2026-10-24 handoff sections in V3-SPEC.md,
+  V3-TASKS.md and KICKOFF-PROMPT.md are labelled historical; README lists the
+  new docs.
+- Verification: documents reviewed against the code, git state, CHANGELOG and
+  the Notion board; no application files changed.
+
 ## V3 improvement — Spatial cards from the keyboard
 
 Recorded: 2026-10-27 23:26 EDT (-0400). Pushed to `version/3.0` (staging); merged to
