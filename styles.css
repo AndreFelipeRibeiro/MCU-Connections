@@ -22,7 +22,10 @@ mark.hl {
 }
 .card-match-char mark.hl, .card-match-actor mark.hl { text-decoration-color: var(--match-color, var(--accent)); }
 .card-match-actor mark.hl { color: var(--match-color, var(--accent)); font-weight: 700; }
-html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); min-height: 100vh; }
+/* 100vh on iOS is the *largest* viewport: it excludes the browser chrome that
+   is on screen at rest, so a 100vh body stays taller than what you can see and
+   leaves a scrollable band under the app. dvh is the visible height. */
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); min-height: 100vh; min-height: 100dvh; }
 body {
   background:
     radial-gradient(1200px 800px at 80% -10%, rgba(74,141,232,0.06), transparent 60%),

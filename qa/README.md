@@ -20,7 +20,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression, 19 checks (about 20 min). Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
+| `bash qa/regress.sh` | Full regression, 20 checks (about 21 min). Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
 | `node qa/a11y-scan.js` | axe-core scan of 7 screens (desktop Spatial, details, List, account menu; phone List, details, Spatial). Add `LOC=pt-BR` for Portuguese. Expect no violations. |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
 | `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
@@ -42,7 +42,8 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   `test-variant` (character-variant scope), `test-nudgeundo` (the guest
   sign-in reminder against Undo), `test-pickperson` (every actor and character
   picked from the search opens the pinned widget), `test-escpin` (Escape
-  unwinds one layer per press, down to the pinned widget).
+  unwinds one layer per press, down to the pinned widget), `test-mviewport`
+  (the phone document does not scroll behind the shell).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.
@@ -83,7 +84,7 @@ one.
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
 - `test-camera` used to fail at "sort change while selected", and separately to
   report a false "wheel cancels the glide" about one run in four. Both were the
-  check, not the app, and both are fixed. A full run should now be **19 of 19**;
+  check, not the app, and both are fixed. A full run should now be **20 of 20**;
   treat any `test-camera` failure as real, and compare against a clean copy with
   `SITE=` if in doubt.
   - `page.mouse.click` moves the cursor and presses in the same tick. Hovering a
