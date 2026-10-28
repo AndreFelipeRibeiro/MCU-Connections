@@ -988,7 +988,7 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
   );
 }
 
-function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, inSpatial, search }) {
+function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, onGoSpatial, inSpatial, search }) {
   if (!title) return null;
   const PosterArt = window.PosterArt;
   return (
@@ -1011,7 +1011,7 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
           const c = window.CHARACTERS[ch];
           if (!c) return null;
           return (
-            <button key={ch} className={`m-crow${activeChar===ch?' on':''}`} style={{'--match-color': c.color}} onClick={()=>onCharacterClick(ch)}>
+            <button key={ch} className={`m-crow${(activeChars?activeChars.indexOf(ch)!==-1:activeChar===ch)?' on':''}`} style={{'--match-color': c.color}} onClick={()=>onCharacterClick(ch)}>
               <div className="m-port" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
                 <window.Portrait
                   url={window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch] ? (window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]) : null}

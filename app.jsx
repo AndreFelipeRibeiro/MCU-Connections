@@ -32,6 +32,17 @@ function primeOf(id) {
   return (c && c.prime) || id;
 }
 
+// Layout follows the viewport width; input capability does not. A touch laptop
+// or a tablet in landscape is 900px or wider, so it takes the desktop layout
+// while still needing the canvas's touch pan and pinch. `any-pointer` is what
+// asks "is a coarse pointer available", rather than "is it the primary one",
+// which is false on a hybrid with a mouse attached.
+function hasTouchInput() {
+  if (navigator.maxTouchPoints > 0) return true;
+  return !!(window.matchMedia && window.matchMedia('(any-pointer: coarse)').matches);
+}
+const HAS_TOUCH = hasTouchInput();
+
 function useDevice() {
   const get = () => (window.innerWidth < 900 ? 'mobile' : 'desktop');
   const [device, setDevice] = useState(get);
@@ -315,7 +326,7 @@ let lastInput = 'pointer';
 document.addEventListener('keydown', (e) => { if (!e.metaKey && !e.ctrlKey && !e.altKey) lastInput = 'keyboard'; }, true);
 document.addEventListener('pointerdown', () => { lastInput = 'pointer'; }, true);
 
-function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, search }) {
+function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, activeChars, search }) {
   // Slide in and out: mount closed and open on the next frame, and keep showing
   // the last title while it slides away. Switching titles swaps the content.
   const [title, setTitle] = useState(current);
@@ -369,7 +380,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
         {title.cast.map(ch => {
           const c = window.CHARACTERS[ch];
           if (!c) return null;
-          const isActive = activeChar === ch;
+          const isActive = activeChars ? activeChars.indexOf(ch) !== -1 : activeChar === ch;
           return (
             <button
               key={ch}
@@ -528,7 +539,7 @@ function labelPillWidth(text) {
   }
 }
 
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds }) {
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds }) {
   // Group appearances by prime identity so variants share one continuous thread,
   // but remember which specific variant appeared in each title.
   // One appearance per (prime, title): several variants of the same identity can share a
@@ -644,7 +655,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       // A hovered character narrows everything to that character's thread, so
       // no other line stays lit while leading into a dimmed card. Otherwise the
       // pair view, a hovered line or the focused title's lines are lit.
-      const isChar = activeChar && primeOf(ch) === primeOf(activeChar);
+      const isChar = !!activeChars && activeChars.indexOf(ch) !== -1;
       const emphasized = pair ? isPair : activeChar ? isChar : (isHovered || involvesFocus);
       const dimmed = anyFocus && !emphasized;
       const baseOpacity = dimmed ? 0.05 : (emphasized ? 1 : 0.55);
@@ -815,6 +826,8 @@ function App() {
   useEffect(() => { setMediaReady(true); }, []);
   const device = useDevice();
   const isTouch = device !== 'desktop';
+  // Phone layout, or a wide screen that can still be touched.
+  const touchPan = isTouch || HAS_TOUCH;
   // Mobile opens in List unless the visitor chose another view before. Desktop
   // has its own choice (Spatial by default, or List) so the two never fight.
   const [viewMode, setViewMode] = useState(initialPrefs.viewMode);
@@ -839,6 +852,36 @@ function App() {
   // A clicked connection: its two titles are brought side by side.
   const [pair, setPair] = useState(null);
   const [highlightedChar, setHighlightedChar] = useState(null);
+  // A pin is either one portrayal or a performer. The performer form covers
+  // that actor's own characters and nothing else, so exact portrayal still
+  // holds: their titles are the titles they are actually in. `highlightedChar`
+  // stays a real character id either way (the representative one), because
+  // colour, photo and name are looked up through window.CHARACTERS.
+  const [pinnedActor, setPinnedActor] = useState(null);
+  // Characters an actor plays, catalogue-wide and busiest first. Read from
+  // TITLES, not the filtered set, since a pin is what narrows that.
+  const charsByActor = useMemo(() => {
+    const seen = {};
+    window.TITLES.forEach(t => t.cast.forEach(c => { seen[c] = (seen[c] || 0) + 1; }));
+    const byActor = {};
+    Object.keys(window.CHARACTERS).forEach(id => {
+      if (!seen[id]) return;
+      const a = window.CHARACTERS[id].actor;
+      (byActor[a] = byActor[a] || []).push(id);
+    });
+    // Busiest role first; on a tie the through-line identity leads, so the
+    // banner's photo and colour come from the recognisable one (Jonathan
+    // Majors' three roles are one title each, and Kang should head them).
+    const rank = id => (window.CHARACTERS[id].prime ? 1 : 0);
+    Object.values(byActor).forEach(ids => ids.sort((x, y) =>
+      (seen[y] - seen[x]) || (rank(x) - rank(y)) || x.localeCompare(y)));
+    return byActor;
+  }, []);
+  // The characters the current pin covers: one, or all of a performer's.
+  const pinnedChars = useMemo(() => {
+    if (pinnedActor) return charsByActor[pinnedActor] || null;
+    return highlightedChar ? [highlightedChar] : null;
+  }, [pinnedActor, charsByActor, highlightedChar]);
   // Pinned character: show only their titles (default) or everything, dimmed.
   const [charOnly, setCharOnly] = useState(true);
   // The title the highlight stepper (‹ ›) is on.
@@ -906,6 +949,12 @@ function App() {
   const cameraFramedRef = useRef(false);
   const viewportRef = useRef(null);
   const panRef = useRef({ panning: false, sx: 0, sy: 0, ox: 0, oy: 0 });
+  // When a touch last drove the canvas. A device with both pointers synthesizes
+  // a mouse press and a click about 300ms after a tap, and neither may run on
+  // top of what the touch handlers already did: a background tap would step
+  // back twice, closing two layers at once.
+  const touchActiveRef = useRef(0);
+  const afterTouch = () => !!touchRef.current || Date.now() - touchActiveRef.current < 400;
 
   // Maps title id -> array of cast character ids whose name/actor matched the
   // search text (empty array if the title only matched on its own title text).
@@ -951,14 +1000,13 @@ function App() {
       });
     }
     if (searchCharMatches) list = list.filter(t => searchCharMatches[t.id] !== undefined);
-    // "Their titles": a pinned character narrows the layout like search does.
-    // Deliberate (the visitor pins or toggles it), so re-laying out is expected.
-    if (highlightedChar && (charOnly || isTouch)) {
-      const prime = primeOf(highlightedChar);
-      list = list.filter(t => t.cast.some(c => primeOf(c) === prime));
+    // "Their titles": a pin narrows the layout like search does. Deliberate
+    // (the visitor pins or toggles it), so re-laying out is expected.
+    if (pinnedChars && (charOnly || isTouch)) {
+      list = list.filter(t => pinnedChars.some(c => t.cast.includes(c)));
     }
     return list;
-  }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches, highlightedChar, charOnly, isTouch]);
+  }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches, pinnedChars, charOnly, isTouch]);
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
@@ -1087,8 +1135,22 @@ function App() {
     ? window.collectionEmptyCopy(collectionFilter)
     : null;
 
-  // Keyed by prime identity, so highlighting any variant lights the whole thread
+  // Keyed by the exact character: a selected character means that portrayal, so
+  // Peter Parker (Raimi) counts, lists and steps through Tobey Maguire's titles
+  // only (scope decided 2026-10-28). Connection lines still thread variants
+  // together, so Kang's arc stays drawn across the canvas either way.
   const charToTitleIds = useMemo(() => {
+    const m = {};
+    filtered.forEach(t => t.cast.forEach(c => {
+      if (!m[c]) m[c] = new Set();
+      m[c].add(t.id);
+    }));
+    return m;
+  }, [filtered]);
+
+  // Keyed by prime identity instead, for the threading itself: a title's
+  // connection count has to agree with the lines actually drawn from it.
+  const primeToTitleIds = useMemo(() => {
     const m = {};
     filtered.forEach(t => t.cast.forEach(c => {
       const p = primeOf(c);
@@ -1099,8 +1161,22 @@ function App() {
   }, [filtered]);
 
   const activeChar = highlightedChar || hoveredCharacter;
-  const activePrime = activeChar ? primeOf(activeChar) : null;
-  const highlightedIds = activePrime && charToTitleIds[activePrime] ? charToTitleIds[activePrime] : null;
+  // Every character the highlight covers, so a performer's whole cast list and
+  // all their connection threads light up, not just the representative one.
+  const activeChars = useMemo(() => {
+    if (highlightedChar) return pinnedChars;
+    return hoveredCharacter ? [hoveredCharacter] : null;
+  }, [highlightedChar, pinnedChars, hoveredCharacter]);
+  // One portrayal reuses its own set; a performer needs the union, memoised so
+  // the canvas is not handed a fresh Set on every render.
+  const actorTitleIds = useMemo(() => {
+    if (!pinnedActor || !pinnedChars) return null;
+    const s = new Set();
+    pinnedChars.forEach(c => { const ids = charToTitleIds[c]; if (ids) ids.forEach(id => s.add(id)); });
+    return s;
+  }, [pinnedActor, pinnedChars, charToTitleIds]);
+  const highlightedIds = (highlightedChar ? actorTitleIds : null)
+    || (activeChar && charToTitleIds[activeChar] ? charToTitleIds[activeChar] : null);
 
   // The ids the active canvas filters single out. Collection status and a pinned
   // character are both *dimming* treatments — the cards stay in the layout — so
@@ -1110,8 +1186,8 @@ function App() {
   // so passing the cursor over the cast list can't move the viewport.
   const pinnedCharIds = useMemo(() => {
     if (!highlightedChar) return null;
-    return charToTitleIds[primeOf(highlightedChar)] || null;
-  }, [highlightedChar, charToTitleIds]);
+    return actorTitleIds || charToTitleIds[highlightedChar] || null;
+  }, [highlightedChar, actorTitleIds, charToTitleIds]);
 
   const recenterFocusIds = useMemo(() => {
     const sets = [];
@@ -1193,6 +1269,7 @@ function App() {
 
   // Pan handlers
   const onMouseDown = (e) => {
+    if (afterTouch()) return;
     if (e.target.closest('.card') || e.target.closest('.toolbar') || e.target.closest('.drawer')) return;
     panRef.current = { panning: true, sx: e.clientX, sy: e.clientY, ox: view.x, oy: view.y };
   };
@@ -1488,6 +1565,7 @@ function App() {
   const touchRef = useRef(null);
   const lastTapRef = useRef(null);
   const onTouchStart = (e) => {
+    touchActiveRef.current = Date.now();
     if (e.target instanceof Element && e.target.closest('.zoom-ctl')) { touchRef.current = null; return; }
     if (e.touches.length === 2) {
       const a = e.touches[0], b = e.touches[1];
@@ -1526,6 +1604,7 @@ function App() {
     }
   };
   const onTouchEnd = (e) => {
+    touchActiveRef.current = Date.now();
     const s = touchRef.current;
     touchRef.current = null;
     if (!s || s.mode !== 'pan' || s.moved) return;
@@ -1593,22 +1672,18 @@ function App() {
   };
   // A character picked from the search suggestions opens the character view
   // (photo, Their titles / All titles, stepper) rather than a text search, as
-  // if pinned from a cast list. An actor counts when they play one character
-  // (variants included); otherwise (two roles) the pick stays a text search.
+  // if pinned from a cast list. A character pins that one portrayal; an actor
+  // pins every character they play, which for all but four of them is one.
   const pickPerson = (item, how = {}) => {
-    let ch = null;
-    if (item.kind === 'character') ch = item.id;
-    else if (item.kind === 'actor') {
-      const primes = new Set(item.chars.map(primeOf));
-      if (primes.size !== 1) return false;
-      const prime = [...primes][0];
-      ch = item.chars.includes(prime) ? prime : item.chars[0];
-    }
+    const chars = item.kind === 'character' ? [item.id]
+      : item.kind === 'actor' ? (charsByActor[item.label] || [])
+      : [];
     // Checked against the whole catalog: another character may be pinned (so
     // the current titles are theirs) when this one is picked.
-    if (!ch || !window.TITLES.some(t => t.cast.some(c => primeOf(c) === primeOf(ch)))) return false;
+    if (!chars.length || !window.TITLES.some(t => chars.some(c => t.cast.includes(c)))) return false;
     setSearch('');
-    if (highlightedChar !== ch) pinCharacter(ch);
+    if (item.kind === 'actor' && chars.length > 1) pinActor(item.label);
+    else if (pinnedActor || highlightedChar !== chars[0]) pinCharacter(chars[0]);
     // The search box lets go of focus; after a keyboard pick on desktop, hand
     // it to the stepper so keyboard users can carry on through the titles.
     if (!isTouch && how.viaKeyboard) requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -1632,8 +1707,8 @@ function App() {
     if (!selectedId) return 0;
     const t = window.TITLES.find(x => x.id === selectedId);
     if (!t) return 0;
-    return t.cast.filter(c => charToTitleIds[primeOf(c)] && charToTitleIds[primeOf(c)].size > 1).length;
-  }, [selectedId, charToTitleIds]);
+    return t.cast.filter(c => primeToTitleIds[primeOf(c)] && primeToTitleIds[primeOf(c)].size > 1).length;
+  }, [selectedId, primeToTitleIds]);
 
   // Character highlight. Pinning a character (from the details cast list) shows
   // their photo, a Their titles / All titles switch and a stepper that visits
@@ -1647,19 +1722,32 @@ function App() {
   // order (the connections ring belongs to a selected title) and starts the
   // stepper on the title it was pinned from. Phones close the sheet so the
   // change is visible.
-  const pinCharacter = (ch) => {
-    if (highlightedChar === ch) { unpinCharacter(); return; }
+  const pinSubject = (chars, actor) => {
     const from = drawerId;
-    const ids = charToTitleIds[primeOf(ch)];
-    const start = from && ids && ids.has(from) ? from : null;
-    setHighlightedChar(ch);
+    const covers = from && chars.some(c => { const ids = charToTitleIds[c]; return ids && ids.has(from); });
+    const start = covers ? from : null;
+    setPinnedActor(actor);
+    setHighlightedChar(chars[0]);
     setHoveredCharacter(null);
     setStepId(start);
     if (selectedIdRef.current) { selectionReturnRef.current = null; setSelectedId(null); }
     pendingStepRef.current = start || '*';
     if (isTouch) setDrawerId(null);
   };
+  const pinCharacter = (ch) => {
+    if (!pinnedActor && highlightedChar === ch) { unpinCharacter(); return; }
+    pinSubject([ch], null);
+  };
+  // A performer who plays one character pins as that character; the banner has
+  // nothing to add by naming them twice.
+  const pinActor = (name) => {
+    if (pinnedActor === name) { unpinCharacter(); return; }
+    const chars = charsByActor[name];
+    if (!chars || !chars.length) return;
+    pinSubject(chars, chars.length > 1 ? name : null);
+  };
   const unpinCharacter = () => {
+    setPinnedActor(null);
     setHighlightedChar(null);
     setHoveredCharacter(null);
     setStepId(null);
@@ -1762,25 +1850,31 @@ function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [pair]);
-  // Desktop: Escape closes the open details (and its selection) when nothing
-  // nearer claims it. The pair view, the search box and any open menu, popover
-  // or dialog handle Escape themselves, so this stands back for them; their
-  // own handlers, so this checks the page for them first.
+  // Escape unwinds one layer per press: the open details and its selection
+  // first (desktop), then the pinned character or performer. The pair view, the
+  // search box and any open menu, popover, dialog or sheet handle Escape
+  // themselves, so this stands back for them and checks the page first.
+  //
+  // Both rungs share one listener deliberately. Two listeners would each see
+  // the same press, and React re-renders between them: the second would read
+  // state the first had just cleared, decide nothing was in its way, and close
+  // two layers at once.
+  const detailsOpen = !isTouch && !!(drawerId || selectedId);
   useEffect(() => {
-    if (isTouch || (!drawerId && !selectedId)) return;
+    if (!detailsOpen && !highlightedChar) return undefined;
     const onKey = (e) => {
       if (e.key !== 'Escape' || e.defaultPrevented || pair) return;
       const t = e.target instanceof Element ? e.target : null;
       if (t && t.closest('input, textarea, select, [contenteditable="true"]')) return;
-      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, [role="dialog"], [aria-modal="true"]')) return;
-      setSelectedId(null);
-      setDrawerId(null);
+      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .m-sheet, [role="dialog"], [aria-modal="true"]')) return;
+      if (detailsOpen) { setSelectedId(null); setDrawerId(null); return; }
+      unpinCharacter();
     };
     // Capture phase: runs before the menus' own handlers close them (React
     // re-renders between listeners), so an open menu is still visible here.
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [isTouch, drawerId, selectedId, pair]);
+  }, [detailsOpen, highlightedChar, pair]);
   useEffect(() => { setPair(null); }, [basePositions]);
   // Labels steer clear of the cards that are lit; dimmed ones may sit under them.
   const labelAvoidIds = useMemo(() => {
@@ -1795,15 +1889,20 @@ function App() {
     const path = media && media.actors && media.actors[activeChar];
     const photo = path && (window.mediaURL ? window.mediaURL('a', activeChar, media.profile_base + path) : media.profile_base + path);
     const pinned = !!highlightedChar && activeChar === highlightedChar;
-    const count = (charToTitleIds[primeOf(activeChar)] || new Set()).size;
+    // A performer with several portrayals is named as themselves, with their
+    // characters underneath, the way the search suggestion already reads.
+    const asActor = pinned && !!pinnedActor;
+    const count = (asActor ? (actorTitleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
+    const who = asActor ? pinnedActor : I18N.charName(activeChar);
+    const sub = asActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') }) : c.actor;
     return (
       <div className={`char-banner${pinned ? ' pinned' : ''}`} style={{ '--char-color': c.color }}>
         <span className="cb-photo" style={{ background: c.color }}>
           <window.Portrait url={photo} alt="" initials={c.initials}/>
         </span>
         <span className="cb-who">
-          <b>{I18N.charName(activeChar)}</b>
-          <span className="cb-sub">{c.actor} · {tr('header.count', { n: count })}</span>
+          <b>{who}</b>
+          <span className="cb-sub">{sub} · {tr('header.count', { n: count })}</span>
         </span>
         {pinned && <>
           <div className="segmented cb-mode" role="group" aria-label={tr('highlight.modeAria')}>
@@ -1842,8 +1941,10 @@ function App() {
               <window.Portrait url={photo} alt="" initials={c.initials}/>
             </span>
             <span className="cp-text">
-              <span className="cp-name">{I18N.charName(ch)}</span>
-              <span className="cp-actor">{c.actor}</span>
+              <span className="cp-name">{pinnedActor || I18N.charName(ch)}</span>
+              <span className="cp-actor">{pinnedActor
+                ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
+                : c.actor}</span>
             </span>
           </span>
           <div className="cb-step">
@@ -1889,15 +1990,15 @@ function App() {
       onWheelCapture={stopGlide}
       onMouseDown={isTouch ? undefined : onMouseDown}
       onWheel={isTouch ? undefined : onWheel}
-      onTouchStart={isTouch ? onTouchStart : undefined}
-      onTouchMove={isTouch ? onTouchMove : undefined}
-      onTouchEnd={isTouch ? onTouchEnd : undefined}
+      onTouchStart={touchPan ? onTouchStart : undefined}
+      onTouchMove={touchPan ? onTouchMove : undefined}
+      onTouchEnd={touchPan ? onTouchEnd : undefined}
       onClick={(e) => {
         // A click on the empty background (not a drag) steps back one level:
         // out of the pair view, or else closes the selected title and its
         // details, as a background tap does on phones. Cards, connection
         // lines and the on-canvas controls keep their own clicks.
-        if (isTouch || (!pair && !selectedId && !drawerId)) return;
+        if (afterTouch() || isTouch || (!pair && !selectedId && !drawerId)) return;
         const s = panRef.current;
         if (e.target.closest('.card, path, button, input, a, .zoom-ctl, .ctx, .drawer, .toolbar, .spatial-empty')) return;
         if (s && Math.hypot(e.clientX - s.sx, e.clientY - s.sy) > 4) return;
@@ -1934,6 +2035,7 @@ function App() {
           positions={positions}
           hoveredTitle={hoveredTitle}
           activeChar={activeChar}
+          activeChars={activeChars}
           onHoverConnection={setHoveredConnection}
           hoveredConnection={hoveredConnection}
           selectedId={selectedId}
@@ -2079,6 +2181,7 @@ function App() {
             onClose={() => setDrawerId(null)}
             onCharacterClick={pinCharacter}
             activeChar={activeChar}
+            activeChars={activeChars}
             onGoSpatial={() => {
               setViewMode('spatial');
               if (highlightedChar) {
@@ -2110,7 +2213,7 @@ function App() {
 
       {desktopView === 'list'
         ? <window.DesktopList titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
-            search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar}
+            search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
             onOpen={(id) => setDrawerId(drawerId === id ? null : id)}
             header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey}/>
         : canvasEl}
@@ -2141,6 +2244,7 @@ function App() {
         hoveredCharacter={hoveredCharacter}
         onCharacterHover={setHoveredCharacter}
         activeChar={activeChar}
+        activeChars={activeChars}
         search={search}
       />
       <window.StatusToast touch={false}/>
