@@ -81,17 +81,29 @@ one.
   passive event listener"), which React causes by attaching wheel listeners
   passively at the root. `regress.sh` allows that one string by name, and
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
-- `test-camera` used to fail every run, at "sort change while selected" — not
-  the "wheel cancels the glide" step this file long blamed, which passed every
-  time. It was the check, not the app: `page.mouse.click` moves the cursor and
-  presses in the same tick, and hovering a card re-lays the canvas out, so in
-  that state the press landed after the cards had shifted and selected nothing.
-  The `.drawer-close` click after it then had no target and timed out. Card
-  clicks now go through `clickCard()`, which moves, lets the hover settle, and
-  then presses. Verified by hand first: a click after a wheel zoom selects
-  normally, and move-settle-press worked where `click` did not.
-  A full run should now be **19 of 19**. Treat any `test-camera` failure as
-  real, and compare against a clean copy with `SITE=` if in doubt.
+- `test-camera` used to fail at "sort change while selected", and separately to
+  report a false "wheel cancels the glide" about one run in four. Both were the
+  check, not the app, and both are fixed. A full run should now be **19 of 19**;
+  treat any `test-camera` failure as real, and compare against a clean copy with
+  `SITE=` if in doubt.
+  - `page.mouse.click` moves the cursor and presses in the same tick. Hovering a
+    card re-lays the canvas out, so the press could land after the cards had
+    shifted and select nothing, leaving `.drawer-close` with no target. Card
+    clicks go through `clickCard()` (move, let the hover settle, then press),
+    and the two that must open a card go through `openCentreCard()`, which
+    waits for the drawer and re-measures if the press missed. It reports
+    `cardOpenAttempts`: more than one attempt is normal after a wheel zoom, and
+    a run of `"failed"` is worth looking at.
+  - The glide steps guessed at 60ms and 80ms. They now wait for the transition
+    to appear and to clear, which is what the "1 in 4" was.
+
+## Assertions have to be named "errors" to count
+
+`regress.sh` only reads fields whose name contains `errors`. A check that
+prints `"somethingWorked": false` therefore gates nothing — the run reports
+clean. `test-camera` had six such booleans, any of which could be false
+unnoticed; they are now collected into `assertErrors`. Worth remembering when
+writing a check: **an assertion that is not in an errors field is decorative.**
 - External images and fonts are blocked on purpose, so posters show their
   generated fallback art in screenshots.
 

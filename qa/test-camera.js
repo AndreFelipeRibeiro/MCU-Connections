@@ -102,6 +102,25 @@ async function clickCard(page, pt) {
   await page.waitForTimeout(40);
   await page.mouse.up();
 }
+// Select the centre card and make sure it actually opened, re-measuring if the
+// press missed. The canvas can still shift between measuring and pressing, and
+// the steps after this one click .drawer-close, which has no target if nothing
+// opened. Attempts are reported: a run that needs more than one is a signal,
+// not something to hide.
+async function openCentreCard(page, tally) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const pt = await centerCard(page);
+    if (!pt) break;
+    await clickCard(page, pt);
+    try {
+      await page.waitForFunction(() => !!document.querySelector('.drawer.open'), null, { timeout: 2500 });
+      tally.push(attempt);
+      return pt;
+    } catch (e) { /* missed: measure again and retry */ }
+  }
+  tally.push('failed');
+  return null;
+}
 const pickView = async (page, n) => { await page.locator('.view-menu .sort-order-trigger').click(); await page.locator('.view-menu .sort-order-pop button').nth(n).click(); };
 (async () => {
   await new Promise(r => server.listen(8192, r));
@@ -168,22 +187,37 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
   }, b.title.trim().slice(0, 14));
 
   // Glide cancels on wheel
-  const c = await centerCard(page);
-  await clickCard(page, c); await page.waitForTimeout(900);
+  const cardOpens = [];
+  await openCentreCard(page, cardOpens); await page.waitForTimeout(400);
   await page.mouse.move(600, 500);
-  await page.locator('.drawer-close').click(); await page.waitForTimeout(60);
+  await page.locator('.drawer-close').click();
+  const settle = async (want) => {
+    try { await page.waitForFunction(w => (document.querySelector('.canvas').style.transition || '') !== '' === w, want, { timeout: 2000 }); }
+    catch (e) { /* report whatever it actually is */ }
+  };
+  await settle(true);
   out.glideStartedBeforeWheel = (await TR(page)) !== '';
-  await page.mouse.move(600, 500); await page.mouse.wheel(0, -100); await page.waitForTimeout(80);
+  await page.mouse.move(600, 500); await page.mouse.wheel(0, -100);
+  await settle(false);
   out.glideCancelledByWheel = (await TR(page)) === '';
 
   // Sort change while selected clears the memory (no jump back into an old layout)
-  const d = await centerCard(page);
-  await clickCard(page, d); await page.waitForTimeout(900);
+  await openCentreCard(page, cardOpens); await page.waitForTimeout(400);
+  out.cardOpenAttempts = cardOpens;
   await page.locator('.tb-sort-controls .segmented button', { hasText: 'IMDb' }).first().click();
   await page.waitForTimeout(400);
   const afterSort = parse(await T(page));
   await page.locator('.drawer-close').click(); await page.waitForTimeout(900);
   out.sortWhileSelected_noJump = near(parse(await T(page)), afterSort);
+  // regress.sh only reads fields whose name contains "errors", so these
+  // booleans were decorative: any of them could be false and the run still
+  // reported clean. Collect the failures into one, so they gate.
+  out.assertErrors = Object.entries({
+    selectedMoved: out.selectedMoved, restored: out.restored, abScaleKept: out.abScaleKept,
+    glideStartedBeforeWheel: out.glideStartedBeforeWheel,
+    glideCancelledByWheel: out.glideCancelledByWheel,
+    sortWhileSelected_noJump: out.sortWhileSelected_noJump,
+  }).filter(([, v]) => v !== true).map(([k, v]) => k + '=' + JSON.stringify(v));
   out.desktopErrors = errors;
   await ctx.close();
 
