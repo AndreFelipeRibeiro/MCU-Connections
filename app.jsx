@@ -1813,11 +1813,17 @@ function App() {
       onTouchMove={isTouch ? onTouchMove : undefined}
       onTouchEnd={isTouch ? onTouchEnd : undefined}
       onClick={(e) => {
-        // A click on the background (not a drag) leaves the pair view.
-        if (!pair || isTouch) return;
+        // A click on the empty background (not a drag) steps back one level:
+        // out of the pair view, or else closes the selected title and its
+        // details, as a background tap does on phones. Cards, connection
+        // lines and the on-canvas controls keep their own clicks.
+        if (isTouch || (!pair && !selectedId && !drawerId)) return;
         const s = panRef.current;
-        if (e.target.closest('.card') || e.target.closest('path') || (s && Math.hypot(e.clientX - s.sx, e.clientY - s.sy) > 4)) return;
-        setPair(null);
+        if (e.target.closest('.card, path, button, input, a, .zoom-ctl, .ctx, .drawer, .toolbar, .spatial-empty')) return;
+        if (s && Math.hypot(e.clientX - s.sx, e.clientY - s.sy) > 4) return;
+        if (pair) { setPair(null); return; }
+        setSelectedId(null);
+        setDrawerId(null);
       }}
     >
       <div className="canvas-bg"/>

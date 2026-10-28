@@ -12,6 +12,22 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — click empty canvas to close a desktop selection
+
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- In desktop Spatial a click on empty background (not a drag) now steps back one
+  level: out of the pair view, or else closes the selected title and its
+  details, as a background tap does on phones. Cards, lines and on-canvas
+  controls keep their own clicks.
+- Verification: headless Chromium, 1440×900. A drag keeps the selection; a click
+  closes it and the drawer and returns the camera to its exact earlier position;
+  a connection line still opens the pair view, which a background click leaves
+  (a second click closes the drawer); clicking another card switches the
+  selection. No console errors.
+- Limits: not checked on a trackpad or touch laptop.
+
 ## V3 fix — Spatial explains an empty result
 
 Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not

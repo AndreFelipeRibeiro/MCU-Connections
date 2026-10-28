@@ -75,7 +75,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Selecting a title in Spatial arranges the titles that share its characters in
   rings around it, closest when they share the most. Unrelated cards fade out
   while the rings show (and come back when it closes), and lines are drawn
-  among the ring's titles only.
+  among the ring's titles only. On desktop a click on empty canvas closes the
+  selection, as a background tap does on phones.
 - When a search or filter leaves no titles, Spatial says so and offers to clear
   the search, the filters or both.
 - Picking a character in the details highlights them: their titles are laid out
