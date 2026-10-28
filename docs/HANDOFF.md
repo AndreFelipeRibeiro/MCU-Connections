@@ -53,10 +53,15 @@ every visit. Modules talk through `window.*`.
 The dated log is [decisions.md](decisions.md). The ones that shape day-to-day
 work:
 
-- **No build step.** The project stays a static site that anyone can run with a
-  one-line Python server. We switched to React's production builds instead of
-  adding a bundler. Precompiling JSX would cut startup time but is still an open
-  decision.
+- **No build step in V3; a build step in V4.** V3 stays a static site that
+  anyone can run with a one-line Python server; we switched to React's
+  production builds instead of adding a bundler. V4 will move to a standard
+  build (React with Vite or similar, built by Vercel). That brings
+  design-system tooling, Figma round trips, modules and a faster startup, as
+  one planned migration rather than piecemeal changes.
+- **QA lives in the repo, development-only.** `qa/` holds the headless checks
+  with their own `package.json`. It is the one place npm is allowed in V3;
+  nothing in the app loads from it and Vercel does not deploy it.
 - **Staging first, batches, explicit approval for main.** The user tries
   batches on the preview (often on a phone) before approving a merge.
 - **One commit per ticket, real times in the CHANGELOG, recap after approval.**
@@ -114,15 +119,18 @@ work:
   need ratings and story years when they come out. Several series have thin
   casts.
 
-## QA scripts
+## QA checks
 
-During V3, verification used about 85 headless Playwright scripts (many of
-them one-off checks), including a 14-script regression run (`regress.sh`). They cover layout fit, Spatial camera and animations,
-List, search suggestions, languages, About and welcome, accessibility (axe-core)
-and performance. They are **not in the repository** (no-npm rule); the user has
-a zip of them from 2026-10-28. Committing them under a `qa/` folder, or keeping
-them outside, is an open decision. Until then, verify in a real browser and
-record what was checked.
+`qa/` holds the headless Playwright checks used throughout V3, curated
+(qa/README.md lists them):
+- the 14-script regression run (`bash qa/regress.sh`, about 15 minutes);
+- the axe-core accessibility scan (`node qa/a11y-scan.js`);
+- a startup timing check;
+- one targeted check per recent fix.
+
+Set up once per machine with `bash qa/setup.sh` (Node 18+). They run headless
+Chromium against the repository root with the pinned libraries served
+locally. They do not replace a look in a real browser and on a real phone.
 
 ## Open threads and what's next
 
@@ -144,8 +152,6 @@ record what was checked.
   - Maintain shared regression checks and real-device evidence; reconcile the
     V3 planning documents with the app.
 - **Decisions waiting on the user:**
-  - Precompile JSX (a build step) or not.
-  - Whether to commit the QA scripts.
   - Which preferences sync across devices.
   - How variant characters should behave.
   - A wider first Spatial view on desktop.
@@ -153,6 +159,9 @@ record what was checked.
   - Phase 6 email/password accounts (needs a custom domain, a plan and
     approval).
   - Light mode and the V4 look and feel.
+  - V4 tooling: the move to a build step (Notion "V4 - Tooling and build
+    step"). Plan it together with the V4 design pass so tokens and components
+    come from the design system.
   - Feature ideas in the Deferred column: shareable URLs, "what to watch next",
     watch guides and catch-up paths, Coming Soon, where to watch, character
     journeys, title comparison, spoiler-aware browsing, installable app and
@@ -160,8 +169,8 @@ record what was checked.
     community features.
 - **Design pass.** The user is a designer and wants a Figma round trip: take the
   running app into Figma, refine the art direction and design system, then bring
-  it back to code for V4. The tokens and standards in AGENTS.md are the current
-  baseline to start from.
+  it back to code for V4 on the new build setup. The tokens and standards in
+  AGENTS.md are the current baseline to start from.
 - **Real devices.** Most verification was headless Chromium. An iPhone (Safari)
   and Android pass before larger releases is still worthwhile.
 - **Review and plan.** A 2026-10-27 review of usability, bugs, speed,

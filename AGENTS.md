@@ -25,9 +25,16 @@ their "Handoff — 2026-10-24" sections are historical.
   supabase-js 2.112.2, all from unpkg with pinned versions, `crossorigin` and SRI
   hashes. Supabase (Postgres + Google OAuth) stores signed-in collections.
   Vercel serves the repository as static files.
-- **No npm, package.json, bundler, router, ES modules or test runner.** Files
-  share APIs through `window.*`. Precompiling JSX is an open decision, not a
-  licence to add a build (see docs/decisions.md).
+- **Rule for V3: the app has no build step.** No npm, package.json, bundler,
+  router or ES modules in the app; files share APIs through `window.*`. Do not
+  migrate piecemeal (no partial bundling or precompiling).
+- **Exception: `qa/`** is development-only tooling with its own `package.json`
+  (Playwright, axe-core). Nothing in the app may load from `qa/`; Vercel does not
+  deploy it (`.vercelignore`) and its installs stay out of Git (`.gitignore`).
+- **V4 moves to a build step** (React with a standard bundler such as Vite,
+  built by Vercel) to unlock design-system tooling, Figma round trips, faster
+  startup and modules. That migration is a planned V4 project with its own plan
+  and approval, not something to start during V3 work (docs/decisions.md).
 - Load order lives in `index.html`: `boot.js`, locales + `i18n.js`, CDN
   libraries, `data.js`, `media-data.js`, `config.js`, `supabase-client.js`, then
   the `.jsx` files with `app.jsx` last. Keep that order.
@@ -54,10 +61,17 @@ their "Handoff — 2026-10-24" sections are historical.
 - Build: none. Pushing a branch is the deploy.
 - Hard-refresh (Cmd+Shift+R) after changing `.jsx` files: Babel fetches them
   and browsers can serve a cached copy on a plain refresh.
-- Tests: there is no test runner in the repository. Verify in a browser (desktop
-  and a phone-sized viewport, English and Portuguese) and record what you
-  actually checked. Headless Playwright scripts used during V3 live outside
-  the repository (see docs/HANDOFF.md); adding them is an open decision.
+- QA checks (`qa/`, details in qa/README.md): once per machine
+  `bash qa/setup.sh` (needs Node 18+). Before handing work over for review, run
+  `bash qa/regress.sh` (14 checks, about 15 minutes; every errors array must be
+  `[]` or `0`) and `node qa/a11y-scan.js` (expect no violations; add
+  `LOC=pt-BR` for Portuguese). Also run the targeted check for the area you
+  touched (for example `qa/test-kbspatial.js`), and update checks in the same
+  commit when you rename or restructure UI they rely on.
+- The QA checks are headless Chromium. Still look at the change in a real
+  browser (desktop and a phone-sized viewport, English and Portuguese), and
+  record what you actually verified, including what was not checked (for
+  example real iPhone Safari).
 
 ## Branches, deploys and approvals
 
@@ -213,9 +227,9 @@ from the Spatial layout).
 - **Phase 6, email/password accounts:** Deferred. It waits on a custom domain
   (for reliable transactional email) and on its own plan and explicit
   approval. Do not add forms, recovery handlers or SMTP settings before then.
-- Also deferred: Light mode and the V4 look and feel.
-- Decisions still open (precompiling JSX, committing the QA scripts) are listed
-  in docs/decisions.md and docs/HANDOFF.md.
+- Also deferred: Light mode, the V4 look and feel, and the V4 move to a build
+  step (Notion: "V4 - App Look and feel", "V4 - Tooling and build step").
+- Other open decisions are listed in docs/HANDOFF.md.
 - Supabase free tier: accept pauses; no keep-alive automation.
 
 ## Secrets and privacy

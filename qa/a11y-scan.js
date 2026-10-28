@@ -1,0 +1,41 @@
+const base = require('fs').readFileSync(__dirname + '/test-jit2-env.js', 'utf8');
+const head = base.slice(0, base.indexOf('(async () => {'));
+eval(head + `
+const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v) { v.posters = {}; this.__m = v; }, get() { return this.__m; } });";
+const NOWELCOME = "try { localStorage.setItem('mcu.welcome.v1', 'test'); } catch (e) {}";
+const PORT = +process.env.PORT || 8282;
+const AXE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
+const scan = async (page, name, out) => {
+  await page.addScriptTag({ content: AXE });
+  const r = await page.evaluate(async () => { const res = await axe.run(document, { resultTypes: ['violations'] }); return res.violations.map(v => ({ id: v.id, impact: v.impact, n: v.nodes.length, help: v.help, sample: v.nodes.slice(0, 3).map(n => n.target.join(' ') + (n.any[0] ? ' :: ' + n.any[0].message.slice(0, 120) : '')) })); });
+  out[name] = r;
+};
+(async () => {
+  await new Promise(r => server.listen(PORT, r));
+  const browser = await chromium.launch();
+  const out = {};
+  const LOCALE = process.env.LOC || 'en-US'; const D = { viewport: { width: 1440, height: 900 }, locale: LOCALE }, M = { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true, locale: LOCALE };
+  const open = async (opts, prefs) => { const x = await ctxPage(browser, opts, NOWELCOME + ART + SEED + "localStorage.setItem('mcu.prefs.v1', '" + JSON.stringify(prefs) + "');"); await x.page.goto('http://127.0.0.1:' + PORT + '/'); await x.page.waitForTimeout(3500); return x; };
+  let x = await open(D, {version:1, viewMode:'list', desktopView:'spatial', sort:'release'});
+  await scan(x.page, 'desktop spatial', out);
+  const c = await x.page.evaluate(() => { const r = [...document.querySelectorAll('.card')].map(c => c.getBoundingClientRect()).find(r => r.left > 50 && r.top > 200 && r.right < 1000 && r.bottom < 850); return { x: r.left + r.width / 2, y: r.top + r.height * 0.8 }; });
+  await x.page.mouse.click(c.x, c.y); await x.page.waitForTimeout(1500);
+  await scan(x.page, 'desktop spatial + details drawer', out);
+  await x.ctx.close();
+  x = await open(D, {version:1, viewMode:'list', desktopView:'list', sort:'release'});
+  await scan(x.page, 'desktop list', out);
+  await x.page.locator('.acct-pill, .account-btn').first().click().catch(() => {}); await x.page.waitForTimeout(600);
+  await scan(x.page, 'desktop account menu', out);
+  await x.ctx.close();
+  x = await open(M, {version:1, viewMode:'list', desktopView:'list', sort:'release'});
+  await scan(x.page, 'phone list', out);
+  await x.page.locator('.m-lrow-open').nth(2).tap(); await x.page.waitForTimeout(900);
+  await scan(x.page, 'phone details sheet', out);
+  await x.ctx.close();
+  x = await open(M, {version:1, viewMode:'spatial', desktopView:'list', sort:'release'});
+  await scan(x.page, 'phone spatial', out);
+  await x.ctx.close();
+  console.log(JSON.stringify(out, null, 1));
+  await browser.close(); server.close();
+})();
+`);

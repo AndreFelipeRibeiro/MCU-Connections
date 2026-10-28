@@ -20,3 +20,9 @@
 *.sqlite3
 backups/
 supabase/.temp/
+
+# QA tooling (qa/): installed packages, downloaded libraries, screenshots
+qa/node_modules/
+qa/package-lock.json
+qa/vendor/
+qa/shots/

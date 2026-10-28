@@ -6,6 +6,8 @@ Notion ticket when there is one. Earlier history is in CHANGELOG.md.
 
 | Date | Decision | Reason |
 |---|---|---|
+| 2026-10-28 | Rule: V3 keeps the no-build app (no npm, bundler or modules in the app); V4 moves to a standard build step (React with Vite or similar, built by Vercel) as one planned migration with its own plan and approval. | The no-build setup was inherited and keeps V3 simple, but it blocks design-system tooling, Figma round trips, modules and a faster startup, which V4 needs. A planned move avoids risky partial migrations. |
+| 2026-10-28 | QA checks move into the repo as `qa/`, development-only, with their own `package.json`. Vercel ignores the folder and installs stay out of Git. | Both agents can run the same checks, the checks change with the code, and they no longer live only in one chat's workspace. |
 | 2026-10-28 | Development moves to Claude Code; AGENTS.md stays the single agent-neutral rulebook (CLAUDE.md only imports it), with docs/HANDOFF.md and this log. | Claude Code and Codex share one worktree and need the same rules without chat history. |
 | 2026-10-27 | Batches ship to staging (`version/3.0`) first and reach `main` only on the user's explicit approval; one commit per ticket; a calendar recap after each approval. | The user tests on a phone before production and logs the work in a calendar. |
 | 2026-10-27 | CHANGELOG times come from git, never estimates; merge status is updated in a follow-up commit before merging. | An entry once carried a time later than its own commit. |

@@ -12,6 +12,27 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 workflow — QA checks in the repository; no-build rule with a V4 exit
+
+Recorded: 2026-10-28 08:55 EDT (-0400). Pushed to `version/3.0` (staging); not merged to main
+(tooling and documentation only; no app files changed).
+
+- New `qa/`: the curated headless checks used during V3. That is the 14-check
+  regression run (`qa/regress.sh`), the axe-core scan (`qa/a11y-scan.js`), a
+  startup timing check and one targeted check per recent fix, all serving the
+  repository root. Its own `package.json` pins Playwright 1.63.0 and axe-core
+  4.10.2; `qa/setup.sh` installs them and fetches the pinned app libraries.
+  `.gitignore` keeps installs out of Git; new `.vercelignore` keeps `qa/` off
+  the deployed site.
+- Rule recorded in AGENTS.md and docs/decisions.md: the V3 app stays build-free
+  (`qa/` is the one development-only npm exception); V4 moves to a standard
+  build step as one planned migration. AGENTS.md now asks agents to run the
+  regression and axe scan before handing work over. README and HANDOFF updated.
+- Verification: in a fresh copy of the repository, setup steps and
+  `qa/test-panel.js` passed (no errors); Git ignores the installed packages. The
+  full `qa/regress.sh` run was still in progress at push time; its result is
+  recorded on the Notion ticket.
+
 ## V3 workflow — handoff to Claude Code
 
 Recorded: 2026-10-28 08:39 EDT (-0400). Pushed to `version/3.0` (staging); not merged to main
