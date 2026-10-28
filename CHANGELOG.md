@@ -14,8 +14,9 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V3 fix — a recast cast row shows the credited performer's face, or none
 
-Recorded: 2026-10-28 13:29 EDT (-0400). Pushed to `version/3.0` (staging);
-not merged to main (`ca3112d`).
+Recorded: 2026-10-28 13:29 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 15:10 EDT
+(`ca3112d`).
 
 - Correcting the per-title credits left the right name under the wrong face:
   `MEDIA.actors` is keyed by character, so Iron Man read "Terrence Howard"
@@ -42,8 +43,9 @@ not merged to main (`ca3112d`).
 
 ## V3 improvement — a pan coasts to a stop instead of stopping dead
 
-Recorded: 2026-10-28 13:14 EDT (-0400). Pushed to `version/3.0` (staging);
-not merged to main (`68b1953`).
+Recorded: 2026-10-28 13:14 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 15:10 EDT
+(`68b1953`).
 
 - A drag now ends with a short inertial glide on both the mouse and the touch
   path. Velocity is sampled from the last few moves rather than the whole
@@ -63,8 +65,9 @@ not merged to main (`68b1953`).
 
 ## V3 fix — per-title performer credits
 
-Recorded: 2026-10-28 12:56 EDT (-0400). Pushed to `version/3.0` (staging);
-not merged to main (`5d153f0`, `41e61aa`).
+Recorded: 2026-10-28 12:56 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 15:10 EDT
+(`5d153f0`, `41e61aa`).
 
 - One `actor` per character leaked the current performer into every title:
   Iron Man credited Don Cheadle as Rhodes, and The Incredible Hulk credited
@@ -90,16 +93,18 @@ not merged to main (`5d153f0`, `41e61aa`).
 
 ## V3 maintenance — ignore editor swap files
 
-Recorded: 2026-10-28 12:28 EDT (-0400). Pushed to `version/3.0` (staging);
-not merged to main (`b5e9bf7`).
+Recorded: 2026-10-28 12:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 15:10 EDT
+(`b5e9bf7`).
 
 - An open vim session leaves `.<name>.swp` beside the file; `git difftool -y
   -x vimdiff` produced one in the worktree. `*.swp` is now ignored.
 
 ## V3 fix — the phone document no longer scrolls behind the app shell
 
-Recorded: 2026-10-28 12:27 EDT (-0400). Pushed to `version/3.0` (staging);
-not merged to main (`3413caf`).
+Recorded: 2026-10-28 12:27 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 15:10 EDT
+(`3413caf`).
 
 - Dragging up from the bottom nav scrolled the page behind the app, exposing
   a band below it. `html, body` now take `min-height: 100vh` then
@@ -116,8 +121,9 @@ not merged to main (`3413caf`).
 
 ## V3 fix — test-camera is reliable, and its assertions now count
 
-Recorded: 2026-10-28 12:27 EDT (-0400). Pushed to `version/3.0` (staging);
-not merged to main (`00894d8`, `53412fb`).
+Recorded: 2026-10-28 12:27 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 15:10 EDT
+(`00894d8`, `53412fb`).
 
 - `test-camera` failed at "sort change while selected", and separately
   reported a false "wheel cancels the glide" about one run in four. Both were
