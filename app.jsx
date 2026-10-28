@@ -1904,6 +1904,27 @@ function App() {
               title={tr(isTouch ? 'canvas.zoomTypeTouch' : 'canvas.zoomTypeDesktop')}>{Math.round(view.scale * 100)}%</button>}
         <button className="zoom-btn" onClick={()=>applyScale(s=>s*1.15)} disabled={view.scale >= 2 - 1e-4} aria-label={tr('canvas.zoomIn')}>+</button>
       </div>
+      {filtered.length === 0 && (() => {
+        // Nothing matches: say so and offer the one action that brings titles
+        // back, instead of an empty canvas. Events stop here so the button
+        // never starts a pan or a background tap.
+        const searching = !!search.trim();
+        const filtering = phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all';
+        const label = searching && filtering ? tr('empty.clearBoth') : searching ? tr('search.clear') : tr('filters.clear');
+        const stop = e => e.stopPropagation();
+        return (
+          <div className="spatial-empty" role="status" onMouseDown={stop} onTouchStart={stop} onTouchEnd={stop} onClick={stop}>
+            <div className="spatial-empty-t">{tr('empty.title')}</div>
+            <div className="spatial-empty-s">{tr('empty.sub')}</div>
+            {(searching || filtering) && (
+              <button className="spatial-empty-btn" onClick={() => {
+                if (searching) setSearch('');
+                if (filtering) { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); }
+              }}>{label}</button>
+            )}
+          </div>
+        );
+      })()}
       {contextSummary(isTouch ? 'pill' : 'float')}
       {focusPop}
     </div>
@@ -1933,7 +1954,7 @@ function App() {
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
-              <window.SpatialHint focused={!!selectedId} sharedCount={sharedCharCount}/>
+              {filtered.length > 0 && <window.SpatialHint focused={!!selectedId} sharedCount={sharedCharCount}/>}
             </div>
           )}
           {charPill}

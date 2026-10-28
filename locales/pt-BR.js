@@ -132,6 +132,7 @@ window.MCU_LOCALES['pt-BR'] = {
 
     'empty.title': 'Nenhum título encontrado',
     'empty.sub': 'Tente limpar um filtro ou a busca.',
+    'empty.clearBoth': 'Limpar busca e filtros',
 
     'details.close': 'Fechar',
     'highlight.modeAria': 'Mostrar',

@@ -133,6 +133,7 @@ window.MCU_LOCALES.en = {
 
     'empty.title': 'No titles match',
     'empty.sub': 'Try clearing a filter or the search box.',
+    'empty.clearBoth': 'Clear search and filters',
 
     'details.close': 'Close',
     'highlight.modeAria': 'Show',

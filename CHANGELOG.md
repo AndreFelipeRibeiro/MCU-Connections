@@ -12,6 +12,21 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 fix — Spatial explains an empty result
+
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- When a search or filter leaves no titles, Spatial (desktop and phone) shows
+  "No titles match" with one button that clears the search, the filters or both,
+  instead of a blank canvas. The phone's "Tap a title" hint hides meanwhile. New
+  key `empty.clearBoth` in both languages; collection dimming is unchanged.
+- Verification: headless Chromium. Desktop "zzzz" → "Clear search" restores 64
+  titles; Phase 1 + "Endgame" → "Clear search and filters" restores 64; phone in
+  Portuguese shows "Limpar busca" centred and hides the hint. Screenshots checked;
+  no console errors.
+- Limits: not checked on a physical phone.
+
 ## V3 fix — search matches with or without accents
 
 Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
