@@ -1019,7 +1019,7 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, 
               </div>
               <div className="m-ctext">
                 <div className="m-cn"><Highlight text={MI18N.charName(ch)} query={search}/></div>
-                <div className="m-an"><Highlight text={c.actor} query={search}/></div>
+                <div className="m-an"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
               </div>
               <span className="m-cdot" style={{background:c.color}}/>
             </button>

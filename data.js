@@ -17,8 +17,8 @@
 
 const TITLES = [
   // Phase 1
-  { id: 'iron-man', title: 'Iron Man', year: 2008, phase: 1, type: 'film', release: '2008-05-02', chronOrder: 5, story: '2008', accent: '#d4a05a', cast: ['tony', 'rhodey', 'pepper', 'fury', 'happy'] },
-  { id: 'incredible-hulk', title: 'The Incredible Hulk', year: 2008, phase: 1, type: 'film', release: '2008-06-13', chronOrder: 6, story: '2010', accent: '#5fa856', cast: ['ross', 'bruce', 'tony'] },
+  { id: 'iron-man', title: 'Iron Man', year: 2008, phase: 1, type: 'film', release: '2008-05-02', chronOrder: 5, story: '2008', accent: '#d4a05a', cast: ['tony', 'rhodey', 'pepper', 'fury', 'happy'], credits: { rhodey: 'Terrence Howard' } },
+  { id: 'incredible-hulk', title: 'The Incredible Hulk', year: 2008, phase: 1, type: 'film', release: '2008-06-13', chronOrder: 6, story: '2010', accent: '#5fa856', cast: ['ross', 'bruce', 'tony'], credits: { bruce: 'Edward Norton', ross: 'William Hurt' } },
   { id: 'iron-man-2', title: 'Iron Man 2', year: 2010, phase: 1, type: 'film', release: '2010-05-07', chronOrder: 7, story: '2010', accent: '#c25a3a', cast: ['tony', 'rhodey', 'pepper', 'natasha', 'fury', 'happy'] },
   { id: 'thor', title: 'Thor', year: 2011, phase: 1, type: 'film', release: '2011-05-06', chronOrder: 8, story: '2010', accent: '#7e9bd6', cast: ['jane', 'sif', 'odin', 'heimdall', 'thor', 'loki', 'clint', 'fury'] },
   { id: 'cap-first-avenger', title: 'Captain America: The First Avenger', year: 2011, phase: 1, type: 'film', release: '2011-07-22', chronOrder: 2, story: '1943–1945', accent: '#4a6da3', cast: ['peggy', 'steve', 'bucky', 'fury'] },
@@ -33,23 +33,23 @@ const TITLES = [
   { id: 'ant-man', title: 'Ant-Man', year: 2015, phase: 2, type: 'film', release: '2015-07-17', chronOrder: 16, story: '2015', accent: '#c25a3a', cast: ['hope', 'hank', 'peggy', 'scott', 'sam', 'steve', 'bucky'] },
 
   // Phase 3
-  { id: 'civil-war', title: 'Captain America: Civil War', year: 2016, phase: 3, type: 'film', release: '2016-05-06', chronOrder: 17, story: '2016', accent: '#3a5a7a', cast: ['tchalla', 'steve', 'tony', 'bucky', 'natasha', 'sam', 'rhodey', 'wanda', 'vision', 'scott', 'peter', 'clint', 'ross'] },
+  { id: 'civil-war', title: 'Captain America: Civil War', year: 2016, phase: 3, type: 'film', release: '2016-05-06', chronOrder: 17, story: '2016', accent: '#3a5a7a', cast: ['tchalla', 'steve', 'tony', 'bucky', 'natasha', 'sam', 'rhodey', 'wanda', 'vision', 'scott', 'peter', 'clint', 'ross'], credits: { ross: 'William Hurt' } },
   { id: 'doctor-strange', title: 'Doctor Strange', year: 2016, phase: 3, type: 'film', release: '2016-11-04', chronOrder: 22, story: '2016–2017', accent: '#a04040', cast: ['wong', 'strange', 'thor'] },
   { id: 'gotg-2', title: 'Guardians of the Galaxy Vol. 2', year: 2017, phase: 3, type: 'film', release: '2017-05-05', chronOrder: 14, story: '2014', accent: '#c060a0', cast: ['quill', 'gamora', 'rocket', 'groot', 'drax', 'nebula', 'mantis', 'yondu'] },
   { id: 'homecoming', title: 'Spider-Man: Homecoming', year: 2017, phase: 3, type: 'film', release: '2017-07-07', chronOrder: 20, story: '2016', accent: '#a23a3a', cast: ['peter', 'tony', 'happy', 'steve', 'pepper'] },
   { id: 'thor-ragnarok', title: 'Thor: Ragnarok', year: 2017, phase: 3, type: 'film', release: '2017-11-03', chronOrder: 23, story: '2017', accent: '#a05ca0', cast: ['valkyrie', 'heimdall', 'thor', 'loki', 'bruce', 'strange', 'odin'] },
   { id: 'black-panther', title: 'Black Panther', year: 2018, phase: 3, type: 'film', release: '2018-02-16', chronOrder: 19, story: '2016', accent: '#3a3a5a', cast: ['tchalla', 'shuri', 'okoye', 'mbaku', 'ramonda', 'bucky'] },
-  { id: 'infinity-war', title: 'Avengers: Infinity War', year: 2018, phase: 3, type: 'film', release: '2018-04-27', chronOrder: 25, story: '2018', accent: '#7a4060', cast: ['wong', 'tchalla', 'shuri', 'okoye', 'quill', 'gamora', 'rocket', 'groot', 'drax', 'nebula', 'mantis', 'tony', 'steve', 'thor', 'bruce', 'natasha', 'wanda', 'vision', 'sam', 'rhodey', 'strange', 'peter', 'bucky', 'loki', 'fury', 'pepper', 'carol', 'mbaku', 'ross', 'heimdall'] },
+  { id: 'infinity-war', title: 'Avengers: Infinity War', year: 2018, phase: 3, type: 'film', release: '2018-04-27', chronOrder: 25, story: '2018', accent: '#7a4060', cast: ['wong', 'tchalla', 'shuri', 'okoye', 'quill', 'gamora', 'rocket', 'groot', 'drax', 'nebula', 'mantis', 'tony', 'steve', 'thor', 'bruce', 'natasha', 'wanda', 'vision', 'sam', 'rhodey', 'strange', 'peter', 'bucky', 'loki', 'fury', 'pepper', 'carol', 'mbaku', 'ross', 'heimdall'], credits: { ross: 'William Hurt' } },
   { id: 'ant-man-wasp', title: 'Ant-Man and the Wasp', year: 2018, phase: 3, type: 'film', release: '2018-07-06', chronOrder: 24, story: '2018', accent: '#c25a3a', cast: ['hope', 'hank', 'scott'] },
   { id: 'captain-marvel', title: 'Captain Marvel', year: 2019, phase: 3, type: 'film', release: '2019-03-08', chronOrder: 4, story: '1995', accent: '#a06030', cast: ['carol', 'fury', 'steve', 'natasha', 'bruce', 'rhodey'] },
-  { id: 'endgame', title: 'Avengers: Endgame', year: 2019, phase: 3, type: 'film', release: '2019-04-26', chronOrder: 26, story: '2018–2023', storyNote: 'Opens in 2018, then jumps five years', accent: '#704040', cast: ['hope', 'tchalla', 'shuri', 'okoye', 'quill', 'gamora', 'rocket', 'groot', 'drax', 'nebula', 'mantis', 'valkyrie', 'peggy', 'tony', 'steve', 'thor', 'bruce', 'natasha', 'clint', 'rhodey', 'sam', 'wanda', 'scott', 'strange', 'peter', 'bucky', 'carol', 'pepper', 'loki', 'fury', 'happy', 'mbaku', 'wong', 'ross', 'hank', 'jane'] },
+  { id: 'endgame', title: 'Avengers: Endgame', year: 2019, phase: 3, type: 'film', release: '2019-04-26', chronOrder: 26, story: '2018–2023', storyNote: 'Opens in 2018, then jumps five years', accent: '#704040', cast: ['hope', 'tchalla', 'shuri', 'okoye', 'quill', 'gamora', 'rocket', 'groot', 'drax', 'nebula', 'mantis', 'valkyrie', 'peggy', 'tony', 'steve', 'thor', 'bruce', 'natasha', 'clint', 'rhodey', 'sam', 'wanda', 'scott', 'strange', 'peter', 'bucky', 'carol', 'pepper', 'loki', 'fury', 'happy', 'mbaku', 'wong', 'ross', 'hank', 'jane'], credits: { ross: 'William Hurt' } },
   { id: 'far-from-home', title: 'Spider-Man: Far From Home', year: 2019, phase: 3, type: 'film', release: '2019-07-02', chronOrder: 33, story: '2024', accent: '#3a6090', cast: ['peter', 'happy', 'fury'] },
 
   // Phase 4
   { id: 'wandavision', title: 'WandaVision', year: 2021, phase: 4, type: 'series', release: '2021-01-15', chronOrder: 27, story: '2023', accent: '#a02020', cast: ['white-vision', 'agatha', 'billy', 'wanda', 'vision'] },
   { id: 'falcon-winter', title: 'The Falcon and the Winter Soldier', year: 2021, phase: 4, type: 'series', release: '2021-03-19', chronOrder: 30, story: '2024', accent: '#a04040', cast: ['sam', 'bucky', 'rhodey'] },
   { id: 'loki-s1', title: 'Loki', year: 2021, phase: 4, type: 'series', release: '2021-06-09', chronOrder: 31, story: 'Outside time', storyNote: 'The TVA, outside the timeline', accent: '#3a7050', cast: ['he-who-remains', 'loki'] },
-  { id: 'black-widow', title: 'Black Widow', year: 2021, phase: 4, type: 'film', release: '2021-07-09', chronOrder: 18, story: '2016', accent: '#404050', cast: ['yelena', 'alexei', 'natasha', 'ross'] },
+  { id: 'black-widow', title: 'Black Widow', year: 2021, phase: 4, type: 'film', release: '2021-07-09', chronOrder: 18, story: '2016', accent: '#404050', cast: ['yelena', 'alexei', 'natasha', 'ross'], credits: { ross: 'William Hurt' } },
   { id: 'what-if', title: 'What If…?', year: 2021, phase: 4, type: 'series', release: '2021-08-11', chronOrder: 32, story: 'Multiverse', storyNote: 'Alternate realities', accent: '#a06030', cast: ['captain-carter', 'yondu', 'tony', 'steve', 'thor', 'natasha', 'bruce', 'clint', 'loki', 'fury', 'rhodey', 'happy', 'bucky', 'wanda', 'vision', 'peter', 'strange', 'scott', 'carol', 'quill', 'gamora', 'groot', 'drax', 'nebula', 'tchalla', 'shuri', 'wong', 'ross', 'hope', 'jane', 'ultron'] },
   { id: 'shang-chi', title: 'Shang-Chi and the Legend of the Ten Rings', year: 2021, phase: 4, type: 'film', release: '2021-09-03', chronOrder: 29, story: '2024', accent: '#a04030', cast: ['shangchi', 'wong', 'trevor', 'bruce', 'carol'] },
   { id: 'eternals', title: 'Eternals', year: 2021, phase: 4, type: 'film', release: '2021-11-05', chronOrder: 34, story: '2024', accent: '#a08030', cast: ['sersi', 'ikaris', 'thena', 'kingo', 'ajak', 'druig', 'makkari'] },
@@ -190,6 +190,17 @@ const CHARACTERS = {
 
 window.TITLES = TITLES;
 window.CHARACTERS = CHARACTERS;
+
+// Who actually played a character in a given production. A character keeps one
+// identity — one colour, one portrait, one connection thread — while the
+// performer can change between titles, so the credit lives on the title and the
+// character's `actor` is only the default. Iron Man credits Terrence Howard as
+// Rhodes; The Incredible Hulk credits Edward Norton and William Hurt.
+window.MCU_credit = function (title, charId) {
+  if (title && title.credits && title.credits[charId]) return title.credits[charId];
+  const c = CHARACTERS[charId];
+  return c ? c.actor : '';
+};
 
 // Approximate production budgets in millions USD (publicly reported figures)
 const BUDGETS = {

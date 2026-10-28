@@ -60,21 +60,29 @@ const { TITLES, CHARACTERS } = data;
 const exact = {};
 TITLES.forEach(t => t.cast.forEach(c => { (exact[c] = exact[c] || new Set()).add(t.id); }));
 const chars = Object.keys(CHARACTERS).filter(id => exact[id]);
-const byActor = {};
-chars.forEach(id => { (byActor[CHARACTERS[id].actor] = byActor[CHARACTERS[id].actor] || []).push(id); });
+// Performers are resolved per title, because a part can change hands: Rhodes is
+// Terrence Howard in Iron Man and Don Cheadle after it, so each name gets the
+// titles they were actually credited in.
+const byActor = {}, actorTitles = {};
+TITLES.forEach(t => t.cast.forEach(id => {
+  if (!CHARACTERS[id]) return;
+  const name = data.MCU_credit(t, id);
+  (byActor[name] = byActor[name] || []);
+  if (byActor[name].indexOf(id) === -1) byActor[name].push(id);
+  (actorTitles[name] = actorTitles[name] || new Set()).add(t.id);
+}));
 
 const subjects = []
   .concat(chars.map(id => ({ kind: 'character', label: CHARACTERS[id].name, expect: exact[id].size, who: CHARACTERS[id].name })))
   .concat(Object.keys(byActor).map(a => {
-    const s = new Set();
-    byActor[a].forEach(id => exact[id].forEach(t => s.add(t)));
+    const s = actorTitles[a];
     const plays = byActor[a].length;
     return {
       kind: 'actor', label: a, expect: s.size, plays,
-      // One role: the banner names the character. Several: it names the
-      // performer, with their characters underneath.
-      who: plays === 1 ? CHARACTERS[byActor[a][0]].name : a,
-      sub: plays > 1 ? byActor[a].map(id => CHARACTERS[id].name) : null,
+      // The banner names the character only when the performer is that
+      // character's whole run; a recast performer is named as themselves.
+      who: (plays === 1 && s.size === exact[byActor[a][0]].size) ? CHARACTERS[byActor[a][0]].name : a,
+      sub: (plays === 1 && s.size === exact[byActor[a][0]].size) ? null : byActor[a].map(id => CHARACTERS[id].name),
     };
   }));
 

@@ -398,7 +398,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
               </div>
               <div className="cast-text">
                 <div className="char-name"><window.Highlight text={I18N.charName(ch)} query={search}/></div>
-                <div className="actor-name"><window.Highlight text={c.actor} query={search}/></div>
+                <div className="actor-name"><window.Highlight text={window.MCU_credit(current, ch)} query={search}/></div>
               </div>
               <div className="cast-color-dot" style={{background:c.color}}/>
             </button>
@@ -860,28 +860,53 @@ function App() {
   const [pinnedActor, setPinnedActor] = useState(null);
   // Characters an actor plays, catalogue-wide and busiest first. Read from
   // TITLES, not the filtered set, since a pin is what narrows that.
-  const charsByActor = useMemo(() => {
+  const performers = useMemo(() => {
     const seen = {};
     window.TITLES.forEach(t => t.cast.forEach(c => { seen[c] = (seen[c] || 0) + 1; }));
+    // Keyed per title, not per character, because a part can change hands:
+    // Rhodes is Terrence Howard in Iron Man and Don Cheadle after it, so each
+    // performer gets the titles they were actually credited in.
     const byActor = {};
-    Object.keys(window.CHARACTERS).forEach(id => {
-      if (!seen[id]) return;
-      const a = window.CHARACTERS[id].actor;
-      (byActor[a] = byActor[a] || []).push(id);
-    });
+    window.TITLES.forEach(t => t.cast.forEach(id => {
+      if (!window.CHARACTERS[id]) return;
+      const name = window.MCU_credit(t, id);
+      const p = byActor[name] || (byActor[name] = { chars: [], titles: new Set() });
+      if (p.chars.indexOf(id) === -1) p.chars.push(id);
+      p.titles.add(t.id);
+    }));
     // Busiest role first; on a tie the through-line identity leads, so the
     // banner's photo and colour come from the recognisable one (Jonathan
     // Majors' three roles are one title each, and Kang should head them).
     const rank = id => (window.CHARACTERS[id].prime ? 1 : 0);
-    Object.values(byActor).forEach(ids => ids.sort((x, y) =>
+    Object.values(byActor).forEach(p => p.chars.sort((x, y) =>
       (seen[y] - seen[x]) || (rank(x) - rank(y)) || x.localeCompare(y)));
     return byActor;
+  }, []);
+  const charsByActor = useMemo(() => {
+    const m = {};
+    Object.keys(performers).forEach(name => { m[name] = performers[name].chars; });
+    return m;
+  }, [performers]);
+  const charTitleTotals = useMemo(() => {
+    const m = {};
+    window.TITLES.forEach(t => t.cast.forEach(c => { m[c] = (m[c] || 0) + 1; }));
+    return m;
   }, []);
   // The characters the current pin covers: one, or all of a performer's.
   const pinnedChars = useMemo(() => {
     if (pinnedActor) return charsByActor[pinnedActor] || null;
     return highlightedChar ? [highlightedChar] : null;
   }, [pinnedActor, charsByActor, highlightedChar]);
+  // The titles it covers, catalogue-wide. A performer pin uses the titles they
+  // are credited in, so Terrence Howard gives Iron Man alone rather than every
+  // title Rhodes appears in.
+  const pinnedTitleIds = useMemo(() => {
+    if (pinnedActor) return (performers[pinnedActor] && performers[pinnedActor].titles) || null;
+    if (!highlightedChar) return null;
+    const s = new Set();
+    window.TITLES.forEach(t => { if (t.cast.indexOf(highlightedChar) !== -1) s.add(t.id); });
+    return s;
+  }, [pinnedActor, performers, highlightedChar]);
   // Pinned character: show only their titles (default) or everything, dimmed.
   const [charOnly, setCharOnly] = useState(true);
   // The title the highlight stepper (‹ ›) is on.
@@ -1002,11 +1027,11 @@ function App() {
     if (searchCharMatches) list = list.filter(t => searchCharMatches[t.id] !== undefined);
     // "Their titles": a pin narrows the layout like search does. Deliberate
     // (the visitor pins or toggles it), so re-laying out is expected.
-    if (pinnedChars && (charOnly || isTouch)) {
-      list = list.filter(t => pinnedChars.some(c => t.cast.includes(c)));
+    if (pinnedTitleIds && (charOnly || isTouch)) {
+      list = list.filter(t => pinnedTitleIds.has(t.id));
     }
     return list;
-  }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches, pinnedChars, charOnly, isTouch]);
+  }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches, pinnedTitleIds, charOnly, isTouch]);
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
@@ -1169,13 +1194,13 @@ function App() {
   }, [highlightedChar, pinnedChars, hoveredCharacter]);
   // One portrayal reuses its own set; a performer needs the union, memoised so
   // the canvas is not handed a fresh Set on every render.
-  const actorTitleIds = useMemo(() => {
-    if (!pinnedActor || !pinnedChars) return null;
+  const pinnedVisibleIds = useMemo(() => {
+    if (!pinnedTitleIds) return null;
     const s = new Set();
-    pinnedChars.forEach(c => { const ids = charToTitleIds[c]; if (ids) ids.forEach(id => s.add(id)); });
+    filtered.forEach(t => { if (pinnedTitleIds.has(t.id)) s.add(t.id); });
     return s;
-  }, [pinnedActor, pinnedChars, charToTitleIds]);
-  const highlightedIds = (highlightedChar ? actorTitleIds : null)
+  }, [pinnedTitleIds, filtered]);
+  const highlightedIds = (highlightedChar ? pinnedVisibleIds : null)
     || (activeChar && charToTitleIds[activeChar] ? charToTitleIds[activeChar] : null);
 
   // The ids the active canvas filters single out. Collection status and a pinned
@@ -1186,8 +1211,8 @@ function App() {
   // so passing the cursor over the cast list can't move the viewport.
   const pinnedCharIds = useMemo(() => {
     if (!highlightedChar) return null;
-    return actorTitleIds || charToTitleIds[highlightedChar] || null;
-  }, [highlightedChar, actorTitleIds, charToTitleIds]);
+    return pinnedVisibleIds || charToTitleIds[highlightedChar] || null;
+  }, [highlightedChar, pinnedVisibleIds, charToTitleIds]);
 
   const recenterFocusIds = useMemo(() => {
     const sets = [];
@@ -1682,7 +1707,7 @@ function App() {
     // the current titles are theirs) when this one is picked.
     if (!chars.length || !window.TITLES.some(t => chars.some(c => t.cast.includes(c)))) return false;
     setSearch('');
-    if (item.kind === 'actor' && chars.length > 1) pinActor(item.label);
+    if (item.kind === 'actor') pinActor(item.label);
     else if (pinnedActor || highlightedChar !== chars[0]) pinCharacter(chars[0]);
     // The search box lets go of focus; after a keyboard pick on desktop, hand
     // it to the stepper so keyboard users can carry on through the titles.
@@ -1738,13 +1763,16 @@ function App() {
     if (!pinnedActor && highlightedChar === ch) { unpinCharacter(); return; }
     pinSubject([ch], null);
   };
-  // A performer who plays one character pins as that character; the banner has
-  // nothing to add by naming them twice.
+  // A performer pins as the character only when they are that character's whole
+  // run — then the banner has nothing to add by naming them twice. A recast
+  // performer covers part of it (Terrence Howard is Rhodes in Iron Man alone),
+  // so they pin as themselves and keep their own titles.
   const pinActor = (name) => {
     if (pinnedActor === name) { unpinCharacter(); return; }
-    const chars = charsByActor[name];
-    if (!chars || !chars.length) return;
-    pinSubject(chars, chars.length > 1 ? name : null);
+    const p = performers[name];
+    if (!p || !p.chars.length) return;
+    const wholeRun = p.chars.length === 1 && p.titles.size === charTitleTotals[p.chars[0]];
+    pinSubject(p.chars, wholeRun ? null : name);
   };
   const unpinCharacter = () => {
     setPinnedActor(null);
@@ -1892,7 +1920,7 @@ function App() {
     // A performer with several portrayals is named as themselves, with their
     // characters underneath, the way the search suggestion already reads.
     const asActor = pinned && !!pinnedActor;
-    const count = (asActor ? (actorTitleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
+    const count = (pinned ? (pinnedVisibleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
     const who = asActor ? pinnedActor : I18N.charName(activeChar);
     const sub = asActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') }) : c.actor;
     return (

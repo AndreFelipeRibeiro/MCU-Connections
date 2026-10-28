@@ -257,3 +257,57 @@ VisionQuest for Paladin. Cached entry HTML initially omitted language scripts;
 a fresh query parameter loaded the current entry page and resolved rendering
 without a code change. No fresh physical-phone, auth, cloud-write or production
 checks. Changes remain local pending commit/push approval.
+
+## Per-title performer credits — 2026-10-28
+
+Characters carried a single `actor`, used wherever a performer was shown. That
+leaked the current performer into every title: Iron Man credited Don Cheadle as
+Rhodes, and The Incredible Hulk credited Mark Ruffalo as Banner and Harrison
+Ford as Ross.
+
+Titles may now carry `credits`, a map of character id to the performer actually
+credited in that production. The character keeps one identity — one colour, one
+portrait, one connection thread — and `CHARACTERS[id].actor` is only the
+default, used when a title says nothing.
+
+### Corrections applied
+
+| Title | Character | Was (default) | Now |
+|---|---|---|---|
+| Iron Man | James Rhodes | Don Cheadle | **Terrence Howard** |
+| The Incredible Hulk | Bruce Banner | Mark Ruffalo | **Edward Norton** |
+| The Incredible Hulk | Thaddeus Ross | Harrison Ford | **William Hurt** |
+| Captain America: Civil War | Thaddeus Ross | Harrison Ford | **William Hurt** |
+| Avengers: Infinity War | Thaddeus Ross | Harrison Ford | **William Hurt** |
+| Avengers: Endgame | Thaddeus Ross | Harrison Ford | **William Hurt** |
+| Black Widow | Thaddeus Ross | Harrison Ford | **William Hurt** |
+
+Captain America: Brave New World keeps Harrison Ford, which is the default and
+correct. Resulting search counts: Terrence Howard 1, Don Cheadle 10 (was 11),
+Edward Norton 1, Mark Ruffalo 11 (was 12), William Hurt 5, Harrison Ford 3
+(was 8).
+
+### Not verified, left on the default
+
+Two titles still show the default Harrison Ford for Thaddeus Ross and were
+**not** confirmed either way:
+
+- **What If…?** — Ross appears, but the voice credit for that season was not
+  established here.
+- **Your Friendly Neighborhood Spider-Man** — an animated series; the voice
+  credit was not established here.
+
+Both are likely wrong and are deliberately left rather than guessed. Anyone
+picking this up should source them and add a `credits` entry.
+
+No other recasts were audited. The catalogue holds several characters who have
+been recast or voiced by more than one performer elsewhere in the MCU; only the
+cases named in the ticket, plus the rest of William Hurt's run, were corrected.
+A full sweep is a separate piece of work.
+
+### Known limit: portraits
+
+`MEDIA.actors` is keyed by character, not by title, so a cast row for a recast
+part shows the **default** performer's photo beside the corrected name — Iron
+Man reads "Terrence Howard" under Don Cheadle's portrait. Fixing that needs
+per-title profile paths in `media-data.js` and is not attempted here.
