@@ -719,5 +719,92 @@
         ]
       }
     ]
+  },
+  "sparseSeriesAudit": {
+    "checkedAt": "2026-10-28",
+    "rule": "Added only characters whose appearances are source-verified per production, and only where they create real links across existing titles. The credit-scene rule applies here too: an appearance that is mid- or post-credits only does not count.",
+    "added": {
+      "hill": {
+        "name": "Maria Hill",
+        "actor": "Cobie Smulders",
+        "titles": [
+          "avengers",
+          "cap-winter-soldier",
+          "aou",
+          "endgame",
+          "far-from-home",
+          "secret-invasion"
+        ],
+        "excluded": {
+          "infinity-war": "post-credits only — she and Fury blip in the same scene, which is why Fury was removed from this title too"
+        },
+        "notes": "NOT in Captain America: Civil War. A Deadline piece lists it; Wikipedia and CinemaBlend both have her absent, and the Deadline list also mislabels Winter Soldier. Far From Home IS counted: the Hill on screen is Soren in disguise, but Cobie Smulders plays her through the main feature, which is the same reading that keeps Fury in that title.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Maria_Hill",
+          "https://en.wikipedia.org/wiki/Cobie_Smulders",
+          "https://www.cinemablend.com/news/2465324/cobie-smulders-wants-you-to-know-shes-in-the-spider-man-far-from-home-trailer"
+        ]
+      },
+      "talos": {
+        "name": "Talos",
+        "actor": "Ben Mendelsohn",
+        "titles": [
+          "captain-marvel",
+          "secret-invasion"
+        ],
+        "excluded": {
+          "far-from-home": "Mendelsohn appears only in the post-credits reveal; for the main feature he is disguised as Fury, so the performer on screen is Samuel L. Jackson"
+        },
+        "sources": [
+          "https://marvelcinematicuniverse.fandom.com/wiki/Ben_Mendelsohn",
+          "https://www.wikiwand.com/en/articles/Talos_the_Untamed"
+        ]
+      },
+      "monica": {
+        "name": "Monica Rambeau",
+        "actor": "Teyonah Parris",
+        "titles": [
+          "captain-marvel",
+          "wandavision",
+          "marvels"
+        ],
+        "notes": "A child/adult recast: Akira Akbar plays the 1990s Monica in Captain Marvel, so that title carries credits.monica. Not to be confused with her mother Maria Rambeau (Lashana Lynch), who is not in the catalog.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Monica_Rambeau",
+          "https://www.etonline.com/teyonah-parris-wandavision-monica-rambeau-interview-158930"
+        ]
+      },
+      "mobius": {
+        "name": "Mobius M. Mobius",
+        "actor": "Owen Wilson",
+        "titles": [
+          "loki-s1",
+          "loki-s2"
+        ],
+        "notes": "Deadpool & Wolverine was NOT added. One cast guide predicted it before release, but the post-release cameo round-ups name only Happy Hogan and Thor. A prediction is not a credit.",
+        "sources": [
+          "https://www.dexerto.com/tv-movies/loki-season-2-cast-characters-2320467/"
+        ]
+      },
+      "sylvie": {
+        "name": "Sylvie",
+        "actor": "Sophia Di Martino",
+        "titles": [
+          "loki-s1",
+          "loki-s2"
+        ],
+        "prime": "loki",
+        "notes": "A Loki variant, so threaded onto his arc the way He Who Remains and Victor Timely are onto Kang's.",
+        "sources": [
+          "https://www.dexerto.com/tv-movies/loki-season-2-cast-characters-2320467/"
+        ]
+      }
+    },
+    "notAdded": {
+      "eyes-of-wakanda": "Left at zero deliberately. It is an anthology set centuries before the modern MCU; its characters are genuine one-offs, not a missing appearance. The ticket asks for that distinction to be made rather than filled in.",
+      "doctor-strange": "Sparse because the credit-scene audit removed Thor, not because of missing data. Mordo, Christine Palmer and the Ancient One are one-title characters here and would add no link.",
+      "ms-marvel": "Sparse for the same reason: Carol's only appearance is the post-credits swap.",
+      "unreleased": "daredevil-born-again-s2/s3, friendly-spidey-s2 and wonder-man have provisional casts; nothing is added to a title that has not aired."
+    }
   }
 }

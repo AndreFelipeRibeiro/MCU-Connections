@@ -425,3 +425,69 @@ The unreleased titles (Avengers: Doomsday, Secret Wars, Spider-Man: Brand New
 Day, VisionQuest, Your Friendly Neighborhood Spider-Man S2, Daredevil: Born
 Again S2 and S3, Wonder Man) have provisional casts and no scene inventory to
 check against. Marvel Zombies was not checked scene by scene.
+
+## Sparse-series character pass — 2026-10-28
+
+The review counted 11 series with two or fewer featured characters. Five
+characters were added, each verified per production and each chosen because
+it joins titles that were already in the catalog. Sources and the per-title
+reasoning are in [CATALOG-SOURCES.json](CATALOG-SOURCES.json) under
+`sparseSeriesAudit`.
+
+| Character | Performer | Titles |
+|---|---|---|
+| Maria Hill | Cobie Smulders | The Avengers, The Winter Soldier, Age of Ultron, Endgame, Far From Home, Secret Invasion |
+| Talos | Ben Mendelsohn | Captain Marvel, Secret Invasion |
+| Monica Rambeau | Teyonah Parris | Captain Marvel, WandaVision, The Marvels |
+| Mobius M. Mobius | Owen Wilson | Loki, Loki: Season 2 |
+| Sylvie | Sophia Di Martino | Loki, Loki: Season 2 |
+
+Sparse titles: **13 → 9**. Captain Marvel and Secret Invasion are no longer
+sparse, and Secret Invasion gains threads to five earlier titles through Hill
+and to Captain Marvel through Talos.
+
+### The credit-scene rule decided three of these
+
+The rule set earlier the same day — a character counts for a title only if the
+performer appears in the **main feature** — is what kept this pass honest:
+
+- **Maria Hill is not added to Infinity War.** Her only appearance there is the
+  post-credits scene, the same one Nick Fury was removed from.
+- **Talos is not added to Far From Home.** Ben Mendelsohn appears only in the
+  post-credits reveal; through the main feature he is disguised as Fury, so the
+  performer on screen is Samuel L. Jackson.
+- **Maria Hill *is* added to Far From Home**, which looks like the opposite call
+  but follows the same rule. The Hill on screen is Soren in disguise, yet Cobie
+  Smulders plays her throughout the main feature — the same reading that keeps
+  Fury in that title.
+
+### Two corrections worth recording
+
+- **Maria Hill is not in Captain America: Civil War.** A Deadline piece lists
+  her there; Wikipedia and CinemaBlend both have her absent, and that same
+  Deadline list also mislabels Winter Soldier. The claim does not survive.
+- **Mobius is not added to Deadpool & Wolverine.** A pre-release cast guide
+  predicted it, but the post-release cameo round-ups name only Happy Hogan and
+  Thor. A prediction is not a credit.
+
+### Monica Rambeau is a recast
+
+Akira Akbar plays the 1990s Monica in Captain Marvel and Teyonah Parris plays
+her everywhere else, so Captain Marvel carries `credits: { monica: 'Akira
+Akbar' }` and the batch 5 credit machinery handles the rest. She is not her
+mother Maria Rambeau (Lashana Lynch), who is not in the catalog.
+
+### Sylvie threads onto Loki
+
+She is a Loki variant, so she carries `prime: 'loki'` — the same treatment He
+Who Remains and Victor Timely get for Kang, keeping the arc continuous.
+
+### Left sparse on purpose
+
+**Eyes of Wakanda stays at zero.** It is an anthology set centuries before the
+modern MCU; its characters are genuine one-offs, not a missing appearance, and
+the ticket asks for that distinction rather than for the map to be filled in.
+Doctor Strange and Ms. Marvel are sparse because the credit-scene audit removed
+Thor and Carol respectively — that is the audit working, not a gap. The
+unreleased titles keep provisional casts; nothing was added to a title that has
+not aired.

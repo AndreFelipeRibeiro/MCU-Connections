@@ -12,6 +12,45 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 maintenance — five source-verified characters for the sparse series
+
+Recorded: 2026-10-28 17:17 EDT (-0400). Not pushed.
+
+- The review counted 11 series with two or fewer featured characters. Five
+  characters were added, each verified per production and each chosen because
+  it joins titles already in the catalog: **Maria Hill** (6 titles), **Talos**
+  (2), **Monica Rambeau** (3), **Mobius M. Mobius** (2) and **Sylvie** (2).
+- Sparse titles **13 → 9**. Captain Marvel and Secret Invasion are no longer
+  sparse; Secret Invasion gains threads to five earlier titles through Hill and
+  to Captain Marvel through Talos.
+- **The credit-scene rule decided three of these**, and kept the pass honest.
+  Maria Hill is *not* added to Infinity War — her only appearance there is the
+  post-credits scene Fury was removed from. Talos is *not* added to Far From
+  Home: Mendelsohn appears only in the post-credits reveal, since through the
+  main feature he is disguised as Fury. Maria Hill *is* added to Far From Home,
+  which looks like the opposite call but follows the same rule — the Hill on
+  screen is Soren in disguise, yet Cobie Smulders plays her throughout.
+- Two claims were checked and rejected. **Maria Hill is not in Civil War**: a
+  Deadline piece lists her, but Wikipedia and CinemaBlend have her absent and
+  that same list also mislabels Winter Soldier. **Mobius is not in Deadpool &
+  Wolverine**: a pre-release cast guide predicted it, and the post-release
+  cameo round-ups name only Happy Hogan and Thor. A prediction is not a credit.
+- Monica Rambeau is a child/adult recast, so Captain Marvel carries
+  `credits: { monica: 'Akira Akbar' }` and the batch 5 machinery handles it.
+  Sylvie is a Loki variant and carries `prime: 'loki'`, the treatment He Who
+  Remains and Victor Timely get for Kang.
+- **Eyes of Wakanda stays at zero deliberately.** It is an anthology set
+  centuries before the modern MCU, so its characters are genuine one-offs, not
+  a missing appearance — the distinction the ticket asks for.
+- Verification: checked in a real browser — all five are searchable and pin
+  correctly with the right counts, and the credit resolver returns Akira Akbar
+  for Captain Marvel and Teyonah Parris for WandaVision and The Marvels. No
+  character was left with zero titles.
+- Limits: the five have **no TMDB portraits**, so they fall back to initials.
+  That is the designed behaviour and is better than risking a wrong face, but
+  it is unfinished polish. The full suite had not yet run against this change
+  when it was committed.
+
 ## V3 improvement — picking a title from search navigates to it instead of filtering by its name
 
 Recorded: 2026-10-28 16:59 EDT (-0400). Not pushed.
