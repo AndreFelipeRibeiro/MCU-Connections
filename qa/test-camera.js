@@ -70,6 +70,18 @@ const pickOrder = async (page, nth) => {
 
 const T = page => page.evaluate(() => document.querySelector('.canvas').style.transform);
 const TR = page => page.evaluate(() => document.querySelector('.canvas').style.transition || '');
+// A drag now ends with a short inertial glide, so a position read straight
+// after mouseup is mid-flight. Wait for the canvas to hold still.
+const settleCanvas = async (page, timeout = 2500) => {
+  let last = null, stable = 0;
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    const t = await T(page);
+    if (t === last) { if (++stable >= 2) return t; } else { stable = 0; last = t; }
+    await page.waitForTimeout(60);
+  }
+  return last;
+};
 const parse = t => { const m = t.match(/translate(?:3d)?\(([-\d.]+)px, ([-\d.]+)px.*scale\(([-\d.]+)\)/); return m ? { x: +m[1], y: +m[2], s: +m[3] } : null; };
 const near = (a, b, tol = 1.5) => a && b && Math.abs(a.x - b.x) < tol && Math.abs(a.y - b.y) < tol && Math.abs(a.s - b.s) < 0.002;
 async function emptyPoint(page, xs, ys) {
@@ -144,7 +156,7 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
     await page.mouse.move(p.x, p.y); await page.mouse.down();
     await page.mouse.move(p.x + mx, p.y + my, { steps: 4 }); await page.mouse.up();
   }
-  await page.waitForTimeout(200);
+  await settleCanvas(page);
   const before = parse(await T(page));
   out.pannedTo = before;
   const a = await centerCard(page);
