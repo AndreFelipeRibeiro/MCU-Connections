@@ -314,7 +314,7 @@ function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusabl
           )}
         </div>
         <window.StoryYear title={title} className="card-story"/>
-        <window.MatchBadge matchedChars={matchedChars} query={searchQuery}/>
+        <window.MatchBadge matchedChars={matchedChars} query={searchQuery} title={title}/>
       </div>
     </div>
   );
@@ -887,11 +887,20 @@ function App() {
     Object.keys(performers).forEach(name => { m[name] = performers[name].chars; });
     return m;
   }, [performers]);
+  // Every title a character is in, over the WHOLE catalog. Not the same thing
+  // as charToTitleIds, which counts only what is currently visible: a search
+  // narrows that, so using it to work out whether a performer covers a
+  // character's whole run gives the wrong answer at exactly the moment the
+  // question is asked — while the user is searching.
   const charTitleTotals = useMemo(() => {
     const m = {};
     window.TITLES.forEach(t => t.cast.forEach(c => { m[c] = (m[c] || 0) + 1; }));
     return m;
   }, []);
+  // A part can change hands, so a character has a roster of performers rather
+  // than one actor. Ordered by how much of the run each carries, so the first
+  // name is the one most of the catalog means by that character.
+  const creditsByChar = useMemo(() => window.MCU_creditRoster(), []);
   // The characters the current pin covers: one, or all of a performer's.
   const pinnedChars = useMemo(() => {
     if (pinnedActor) return charsByActor[pinnedActor] || null;
@@ -1053,9 +1062,11 @@ function App() {
       // Character-name matches come before actor-name ones, so "Sam" shows Sam
       // Wilson ahead of Nick Fury (Samuel L. Jackson) in the match badge.
       const byName = c => I18N.charNames(c).some(n => I18N.fold(n).includes(q));
+      // Matched on the credit for *this* title, not the character's default,
+      // so "Edward Norton" finds The Incredible Hulk and nothing else.
       const chars = t.cast.filter(c => {
         const ch = window.CHARACTERS[c];
-        return ch && (byName(c) || I18N.fold(ch.actor).includes(q));
+        return ch && (byName(c) || I18N.fold(window.MCU_credit(t, c)).includes(q));
       }).sort((a, b) => byName(b) - byName(a));
       if (I18N.titleNames(t).some(n => I18N.fold(n).includes(q)) || chars.length) m[t.id] = chars;
     });
@@ -1778,7 +1789,11 @@ function App() {
     // the current titles are theirs) when this one is picked.
     if (!chars.length || !window.TITLES.some(t => chars.some(c => t.cast.includes(c)))) return false;
     setSearch('');
+    // Both an actor row and a character row naming one performer go through
+    // pinActor, which keeps a recast character's run whole and starts on that
+    // performer's first title.
     if (item.kind === 'actor') pinActor(item.label);
+    else if (item.actor) pinActor(item.actor);
     else if (pinnedActor || highlightedChar !== chars[0]) pinCharacter(chars[0]);
     // The search box lets go of focus; after a keyboard pick on desktop, hand
     // it to the stepper so keyboard users can carry on through the titles.
@@ -1818,8 +1833,8 @@ function App() {
   // order (the connections ring belongs to a selected title) and starts the
   // stepper on the title it was pinned from. Phones close the sheet so the
   // change is visible.
-  const pinSubject = (chars, actor) => {
-    const from = drawerId;
+  const pinSubject = (chars, actor, startAt) => {
+    const from = startAt || drawerId;
     const covers = from && chars.some(c => { const ids = charToTitleIds[c]; return ids && ids.has(from); });
     const start = covers ? from : null;
     setPinnedActor(actor);
@@ -1834,16 +1849,32 @@ function App() {
     if (!pinnedActor && highlightedChar === ch) { unpinCharacter(); return; }
     pinSubject([ch], null);
   };
-  // A performer pins as the character only when they are that character's whole
-  // run — then the banner has nothing to add by naming them twice. A recast
-  // performer covers part of it (Terrence Howard is Rhodes in Iron Man alone),
-  // so they pin as themselves and keep their own titles.
+  // A performer of ONE character pins that character, whole run and all, and
+  // just starts on their first title. A recast is the same person — Rhodes is
+  // Rhodes whether Terrence Howard or Don Cheadle is playing him — so breaking
+  // his ten titles into a one and a nine breaks the chain the stepper exists to
+  // walk. The banner names the credited performer per title, which is what
+  // tells the portrayals apart now.
+  // Someone who plays SEVERAL characters still pins as themselves: their roles
+  // are genuinely different people, and no single character's run covers them.
   const pinActor = (name) => {
-    if (pinnedActor === name) { unpinCharacter(); return; }
     const p = performers[name];
     if (!p || !p.chars.length) return;
-    const wholeRun = p.chars.length === 1 && p.titles.size === charTitleTotals[p.chars[0]];
-    pinSubject(p.chars, wholeRun ? null : name);
+    if (p.chars.length === 1) {
+      const ch = p.chars[0];
+      // Only a recast performer needs a starting title, because they cover
+      // part of the run and the stepper should open where their part begins.
+      // Someone who played the whole run has no particular place to start, so
+      // the stepper stays idle on the count, as it always has.
+      const total = charTitleTotals[ch] || 0;
+      const first = total && p.titles.size < total
+        ? window.TITLES.find(t => t.cast.indexOf(ch) !== -1 && window.MCU_credit(t, ch) === name)
+        : null;
+      pinSubject([ch], null, first && first.id);
+      return;
+    }
+    if (pinnedActor === name) { unpinCharacter(); return; }
+    pinSubject(p.chars, name);
   };
   const unpinCharacter = () => {
     setPinnedActor(null);
@@ -1986,15 +2017,24 @@ function App() {
     const c = window.CHARACTERS[activeChar];
     const media = window.MEDIA;
     const pinned = !!highlightedChar && activeChar === highlightedChar;
-    const photo = (pinned && pinnedActor)
-      ? window.performerPortrait(pinnedActor, activeChar)
-      : window.performerPortrait(c.actor, activeChar);
     // A performer with several portrayals is named as themselves, with their
     // characters underneath, the way the search suggestion already reads.
     const asActor = pinned && !!pinnedActor;
+    // Otherwise the name follows the title in view, because the credit belongs
+    // to the title: stepping onto The Incredible Hulk reads Edward Norton, not
+    // the character's default. With no single title in view there is nobody to
+    // name, so the roster speaks for the whole run instead.
+    const inView = !asActor && stepCurrent && window.TITLES.find(t => t.id === stepCurrent);
+    const creditedHere = inView && inView.cast.indexOf(activeChar) !== -1
+      ? window.MCU_credit(inView, activeChar) : null;
+    const roster = creditsByChar[activeChar] || [];
+    const named = asActor ? pinnedActor : (creditedHere || (roster[0] && roster[0].name) || c.actor);
+    const photo = window.performerPortrait(named, activeChar);
     const count = (pinned ? (pinnedVisibleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
     const who = asActor ? pinnedActor : I18N.charName(activeChar);
-    const sub = asActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') }) : c.actor;
+    const sub = asActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
+      : (creditedHere || roster.length < 2) ? named
+      : tr('credit.more', { name: named, n: roster.length - 1 });
     return (
       <div className={`char-banner${pinned ? ' pinned' : ''}`} style={{ '--char-color': c.color }}>
         <span className="cb-photo" style={{ background: c.color }}>
@@ -2029,7 +2069,13 @@ function App() {
   const charPill = isTouch && highlightedChar ? (() => {
     const ch = highlightedChar;
     const c = window.CHARACTERS[ch];
-    const photo = window.performerPortrait(pinnedActor || c.actor, ch);
+    // Same rule as the desktop banner: the performer follows the title the
+    // stepper is on, so the pill never names one actor over another's title.
+    const inView = !pinnedActor && stepCurrent && window.TITLES.find(t => t.id === stepCurrent);
+    const creditedHere = inView && inView.cast.indexOf(ch) !== -1 ? window.MCU_credit(inView, ch) : null;
+    const roster = creditsByChar[ch] || [];
+    const named = pinnedActor || creditedHere || (roster[0] && roster[0].name) || c.actor;
+    const photo = window.performerPortrait(named, ch);
     const n = pinnedTitles.length;
     return (
       <div className="char-pill" style={{ '--char-color': c.color }}>
@@ -2042,7 +2088,8 @@ function App() {
               <span className="cp-name">{pinnedActor || I18N.charName(ch)}</span>
               <span className="cp-actor">{pinnedActor
                 ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
-                : c.actor}</span>
+                : (creditedHere || roster.length < 2) ? named
+                : tr('credit.more', { name: named, n: roster.length - 1 })}</span>
             </span>
           </span>
           <div className="cb-step">

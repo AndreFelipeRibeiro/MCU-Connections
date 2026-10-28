@@ -98,6 +98,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'suggest.characters': 'Personagens',
     'suggest.titles': 'Títulos',
     'suggest.as': 'como {names}',
+    'credit.more': '{name} +{n}',
 
     'canvas.zoomIn': 'Aumentar zoom',
     'canvas.zoomOut': 'Diminuir zoom',

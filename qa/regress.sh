@@ -1,6 +1,6 @@
 #!/bin/bash
-# Full regression: 22 headless checks across desktop and phone viewports,
-# English and Portuguese. Takes about 15 minutes. Under each script name every
+# Full regression: headless checks across desktop and phone viewports,
+# English and Portuguese. Takes about 25 minutes. Under each script name every
 # errors field is listed, and all of them should read [] or 0. Lines marked !!
 # are failures; the run exits non-zero when there is any.
 # Known noise: test-camera's desktopErrors carries one pre-existing console
@@ -26,7 +26,9 @@ FIELD='"[^"]*[Ee]rrors\?": *\(\[[^]]*\]\|[0-9][0-9]*\)'
 NOISE='Unable to preventDefault inside passive event listener'
 
 fail=0
+ran=0
 run(){
+  ran=$((ran + 1))
   echo "=== $1 $2"
   out=$( set -a; eval "$1"; set +a; cap 300 node "$2" 2>&1 ); status=$?
   found=$(printf '%s' "$out" | tr '\n' ' ' | tr -s ' ' | grep -o "$FIELD")
@@ -39,8 +41,11 @@ run(){
 }
 run "LOC=en-US MODE=all" test-fit.js
 run "LOC=pt-BR MODE=watch" test-fit.js
-for t in test-ctxfn2 test-panel test-i18n test-dlist test-suggest test-layers test-anim test-cel test-align2 test-about test-welcome test-camera test-v2 test-widetouch test-variant test-nudgeundo test-pickperson test-escpin test-mviewport test-inertia test-portrait; do
+for t in test-ctxfn2 test-panel test-i18n test-dlist test-suggest test-layers test-anim test-cel test-align2 test-about test-welcome test-camera test-v2 test-widetouch test-variant test-nudgeundo test-pickperson test-escpin test-mviewport test-inertia test-portrait test-recastname; do
   run X=1 $t.js
 done
-[ "$fail" -eq 0 ] && echo "=== all 22 checks clean" || echo "=== FAILURES ABOVE"
+# Counted, not hardcoded: the summary said "22" for a run of 23 once.
+# "Runs", not "checks": test-fit runs twice, once per language, and the two
+# can fail independently, so the number here is larger than the script count.
+[ "$fail" -eq 0 ] && echo "=== all $ran check runs clean" || echo "=== FAILURES ABOVE"
 exit $fail

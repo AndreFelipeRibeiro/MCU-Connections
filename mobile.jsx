@@ -240,14 +240,20 @@ function Synopsis({ title, className = '' }) {
 }
 window.Synopsis = Synopsis;
 
-function MatchBadge({ matchedChars, query }) {
+// `title` is what makes the credit right: a card for The Incredible Hulk must
+// name Edward Norton, not the character's default performer. Without it the
+// badge was the last place still contradicting the details panel beside it.
+function MatchBadge({ matchedChars, query, title }) {
   if (!matchedChars || !matchedChars.length) return null;
   const id = matchedChars[0];
   const c = window.CHARACTERS[id];
   if (!c) return null;
-  const portrait = window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[id]
-    ? (window.mediaURL ? window.mediaURL('a', id, window.MEDIA.profile_base + window.MEDIA.actors[id]) : window.MEDIA.profile_base + window.MEDIA.actors[id])
-    : null;
+  const credited = title && window.MCU_credit ? window.MCU_credit(title, id) : c.actor;
+  const portrait = title && window.castPortrait
+    ? window.castPortrait(title, id)
+    : (window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[id]
+      ? (window.mediaURL ? window.mediaURL('a', id, window.MEDIA.profile_base + window.MEDIA.actors[id]) : window.MEDIA.profile_base + window.MEDIA.actors[id])
+      : null);
   return (
     <div className="card-match" style={{'--match-color': c.color}} title={matchedChars.map(mid => MI18N.charName(mid)).join(', ')}>
       <div className="card-match-portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
@@ -255,7 +261,7 @@ function MatchBadge({ matchedChars, query }) {
       </div>
       <div className="card-match-text">
         <div className="card-match-char"><Highlight text={MI18N.charName(id)} query={query}/>{matchedChars.length > 1 ? ` +${matchedChars.length - 1}` : ''}</div>
-        <div className="card-match-actor"><Highlight text={c.actor} query={query}/></div>
+        <div className="card-match-actor"><Highlight text={credited} query={query}/></div>
       </div>
     </div>
   );
@@ -483,7 +489,7 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
               {t.budget != null && <b>{MI18N.budget(t.budget)}</b>}
             </div>
             <StoryYear title={t} className="m-cstory"/>
-            <MatchBadge matchedChars={matchedChars} query={search}/>
+            <MatchBadge matchedChars={matchedChars} query={search} title={t}/>
           </div>
         </button>
         <window.TitleStatusActions title={t} className="m-card-tsa"/>
@@ -686,7 +692,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
               {t.story && !chrono && <><span className="m-dot"/><StoryYear title={t}/></>}
             </div>
             <ScoreBadges title={t} lead={lead}/>
-            <MatchBadge matchedChars={matchedChars} query={search}/>
+            <MatchBadge matchedChars={matchedChars} query={search} title={t}/>
           </div>
         </button>
         <window.TitleStatusActions title={t} className="m-lrow-tsa"/>

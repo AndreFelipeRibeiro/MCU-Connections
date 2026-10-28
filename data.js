@@ -202,6 +202,27 @@ window.MCU_credit = function (title, charId) {
   return c ? c.actor : '';
 };
 
+// Every performer credited for each character, with how many titles each one
+// carries, ordered by that count. Built once and shared, because the banner,
+// the phone pill and the search suggestions all have to agree on who a
+// character's performers are — naming them differently in two places is the
+// bug this replaced.
+let CREDIT_ROSTER = null;
+window.MCU_creditRoster = function () {
+  if (CREDIT_ROSTER) return CREDIT_ROSTER;
+  const m = {};
+  window.TITLES.forEach(t => t.cast.forEach(id => {
+    if (!CHARACTERS[id]) return;
+    const name = window.MCU_credit(t, id);
+    const list = m[id] || (m[id] = []);
+    const row = list.find(r => r.name === name);
+    if (row) row.n += 1; else list.push({ name, n: 1 });
+  }));
+  Object.keys(m).forEach(id => m[id].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)));
+  CREDIT_ROSTER = m;
+  return m;
+};
+
 // Approximate production budgets in millions USD (publicly reported figures)
 const BUDGETS = {
   'brand-new-day': 225, // IMDb production estimate; USD millions, checked 2026-10-24.

@@ -12,6 +12,53 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — one name for a recast character, everywhere, and one unbroken chain
+
+Recorded: 2026-10-28 16:37 EDT (-0400). Not pushed.
+
+- **The name now follows the title.** The pinned banner, the phone pill and the
+  card match badge all named the character's *default* performer, so the banner
+  read "Mark Ruffalo" above a cast row reading "Edward Norton", about the same
+  title, at the same moment. All three now resolve through the credit for the
+  title in view. The badge needed the title passed to it at four call sites —
+  it had no way to know which title it was describing.
+- A character search offers **one row per performer** of a recast part:
+  "Bruce Banner · Mark Ruffalo" and "Bruce Banner · Edward Norton". A part that
+  never changed hands keeps its single row.
+- **The chain stays whole.** A performer of one character now pins that
+  character and keeps the entire run, opening on their first title. Rhodes
+  walks 1–10 through Terrence Howard and Don Cheadle; Ross walks 1–8 through
+  William Hurt, Mike McGill, Travis Willingham and Harrison Ford. Breaking a
+  recast into separate runs broke the chain the stepper exists to walk — a
+  recast is the same person. A performer of *several* characters (Majors,
+  Atwell, Bettany) still pins as themselves; those are genuinely different
+  people. This **reverses** part of the rule set on 2026-10-28, which named a
+  recast performer as themselves with their own titles.
+- Card search matching also moved onto the per-title credit, so "Edward Norton"
+  finds The Incredible Hulk and nothing else.
+- One shared helper, `window.MCU_creditRoster()`, backs the banner, the pill
+  and the suggestions. Naming a performer differently in two places is the bug
+  this replaced, so they read from one source.
+- **A bug the checks caught, worth recording:** the first version decided
+  whether a performer was a recast from `charToTitleIds`, which is built from
+  the *filtered* set. A search narrows it, so the test silently failed at
+  exactly the moment it is asked — while the user is searching. The
+  whole-catalog `charTitleTotals` exists for this; deleting it as unused was
+  the mistake. The trap is now written above it.
+- `qa/regress.sh` counted its own checks wrong: the summary said "all 22 checks
+  clean" for a run of 23, because the number was hardcoded in two places. It
+  now counts what actually ran, and says **runs** rather than checks, since
+  `test-fit` runs twice and the two can fail independently.
+- Verification: full `qa/regress.sh` — **all 24 check runs clean, exit 0** —
+  including the rewritten `test-pickperson` (168 subjects, every actor and
+  character picked from the search) and a new `qa/test-recastname.js`. Checked
+  in a real desktop browser in both languages: the Rhodes and Ross chains
+  walked end to end, and the List badge reading "Edward Norton" on
+  *O Incrível Hulk* while every other Banner title reads "Mark Ruffalo".
+- Limits: no phone-width browser pass for this change; the phone pill rests on
+  the checks. `test-pickperson`'s expectations were rewritten to the new rule,
+  so it no longer guards the old one.
+
 ## V3 workflow — Version and Batch tags on the Notion backlog
 
 Recorded: 2026-10-28 15:45 EDT (-0400). Not pushed.

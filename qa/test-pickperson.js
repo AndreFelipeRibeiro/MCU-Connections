@@ -72,17 +72,40 @@ TITLES.forEach(t => t.cast.forEach(id => {
   (actorTitles[name] = actorTitles[name] || new Set()).add(t.id);
 }));
 
+// Who carries most of each character's run, which is the row a character
+// search offers first and therefore the one this check clicks.
+const topOf = {};
+Object.keys(exact).forEach(id => {
+  const tally = {};
+  TITLES.forEach(t => { if (t.cast.indexOf(id) !== -1) { const n = data.MCU_credit(t, id); tally[n] = (tally[n] || 0) + 1; } });
+  topOf[id] = Object.keys(tally).sort((x, y) => tally[y] - tally[x] || x.localeCompare(y))[0];
+});
+const performersOf = id => new Set(TITLES.filter(t => t.cast.indexOf(id) !== -1).map(t => data.MCU_credit(t, id))).size;
+
+// `starts` is the difference the recast rule makes. A pick that lands on a
+// particular performer opens the stepper ON their first title, so `.cb-pos`
+// reads "1 of 9"; a pick with no such title stays idle and reads "9 titles".
+// Both are correct, so only the idle case has one exact right answer.
 const subjects = []
-  .concat(chars.map(id => ({ kind: 'character', label: CHARACTERS[id].name, expect: exact[id].size, who: CHARACTERS[id].name })))
+  .concat(chars.map(id => ({
+    kind: 'character', label: CHARACTERS[id].name, expect: exact[id].size,
+    who: CHARACTERS[id].name, sub: [topOf[id]],
+    starts: performersOf(id) > 1,
+  })))
   .concat(Object.keys(byActor).map(a => {
     const s = actorTitles[a];
     const plays = byActor[a].length;
+    const only = byActor[a][0];
+    // A performer of ONE character pins that character and keeps the whole run,
+    // recast or not — Rhodes is Rhodes whoever is playing him. Someone who
+    // plays several characters is still named as themselves.
+    const single = plays === 1;
     return {
-      kind: 'actor', label: a, expect: s.size, plays,
-      // The banner names the character only when the performer is that
-      // character's whole run; a recast performer is named as themselves.
-      who: (plays === 1 && s.size === exact[byActor[a][0]].size) ? CHARACTERS[byActor[a][0]].name : a,
-      sub: (plays === 1 && s.size === exact[byActor[a][0]].size) ? null : byActor[a].map(id => CHARACTERS[id].name),
+      kind: 'actor', label: a, plays,
+      expect: single ? exact[only].size : s.size,
+      who: single ? CHARACTERS[only].name : a,
+      sub: single ? [a] : byActor[a].map(id => CHARACTERS[id].name),
+      starts: single && s.size < exact[only].size,
     };
   }));
 
@@ -144,8 +167,20 @@ const subjects = []
     }
 
     R.checked += 1;
+    // A pick that opens on a title leaves that title's details open, and the
+    // next pin would then start from it (pinSubject falls back to drawerId).
+    // Close it so every subject is judged on its own pick, not on leftovers.
+    await page.evaluate(() => {
+      const close = document.querySelector('.drawer-close');
+      if (close) close.click();
+    }).catch(() => {});
+    await page.waitForTimeout(150);
+
     const subOk = !s.sub || s.sub.every(nm => (got.sub || '').indexOf(nm) !== -1);
-    if (got.count !== s.expect || got.step !== s.expect || got.who !== s.who || !subOk) {
+    const stepOk = s.starts
+      ? (got.step >= 1 && got.step <= s.expect)
+      : got.step === s.expect;
+    if (got.count !== s.expect || !stepOk || got.who !== s.who || !subOk) {
       wrongCount.push(s.kind + ': ' + s.label + ' expected ' + s.expect + '/' + JSON.stringify(s.who) +
         ' got count=' + got.count + ' step=' + got.step + ' who=' + JSON.stringify(got.who) +
         (subOk ? '' : ' sub=' + JSON.stringify(got.sub)));

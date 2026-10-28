@@ -99,6 +99,9 @@ window.MCU_LOCALES.en = {
     'suggest.characters': 'Characters',
     'suggest.titles': 'Titles',
     'suggest.as': 'as {names}',
+    // A recast part, with no single title in view to pick a performer from:
+    // the name that carries most of the run, then how many others there are.
+    'credit.more': '{name} +{n}',
 
     'canvas.zoomIn': 'Zoom in',
     'canvas.zoomOut': 'Zoom out',

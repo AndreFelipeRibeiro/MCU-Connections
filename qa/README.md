@@ -20,7 +20,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression, 22 checks (about 23 min). Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
+| `bash qa/regress.sh` | Full regression, 23 check scripts in 24 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
 | `node qa/a11y-scan.js` | axe-core scan of 7 screens (desktop Spatial, details, List, account menu; phone List, details, Spatial). Add `LOC=pt-BR` for Portuguese. Expect no violations. |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
 | `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
@@ -45,7 +45,9 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   unwinds one layer per press, down to the pinned widget), `test-mviewport`
   (the phone document does not scroll behind the shell), `test-inertia`
   (panning decelerates on release and stops dead when grabbed),
-  `test-portrait` (a recast row never shows the default performer's face).
+  `test-portrait` (a recast row never shows the default performer's face),
+  `test-recastname` (the performer named beside a recast character follows
+  the title in view, and a character search offers one row per performer).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.
@@ -86,7 +88,7 @@ one.
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
 - `test-camera` used to fail at "sort change while selected", and separately to
   report a false "wheel cancels the glide" about one run in four. Both were the
-  check, not the app, and both are fixed. A full run should now be **22 of 22**;
+  check, not the app, and both are fixed. A full run should now report **24 check runs clean**;
   treat any `test-camera` failure as real, and compare against a clean copy with
   `SITE=` if in doubt.
   - `page.mouse.click` moves the cursor and presses in the same tick. Hovering a

@@ -128,7 +128,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                       </button>
                       {/* Which character matched the search, at every width
                           (the characters column drops on narrower lists). */}
-                      <window.MatchBadge matchedChars={matched} query={search}/>
+                      <window.MatchBadge matchedChars={matched} query={search} title={t}/>
                     </span>
                     <span className="c-type" role="cell">{typeLabel(t)}</span>
                     <span className="c-phase" role="cell"><span className="dl-dot" style={{ background: window.PHASE_COLORS[t.phase] }}/>{t.phase}</span>
