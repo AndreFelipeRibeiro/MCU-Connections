@@ -133,8 +133,22 @@ The backlog is the Notion database **V3 Tasks**, under the **MCU - V3** page
   tickets above it are the next ones to do.
 - Fields: **Status** (Backlog, In progress, Awaiting review, Approved, Blocked,
   Deferred, Completed), **Assigned to** (Codex, Claude, Andre), **Type** (Bug,
-  Improvement, Feature, Workflow, Maintenance), **Source**, **Latest commit**,
-  **Completed on** (date-time), **Completion order** (number).
+  Improvement, Feature, Workflow, Maintenance), **Version** (V3, V4), **Batch**
+  (Pre-batch, Batch 1…n), **Source**, **Latest commit**, **Completed on**
+  (date-time), **Completion order** (number).
+- **Version** and **Batch** say where a ticket belongs in the shipping history.
+  Set both when you claim a ticket: Version is V3 for V3 work, and Batch is the
+  batch it is being worked in. They are what the calendar recap's title line is
+  built from, so a ticket with no batch has no recap to belong to.
+  - **Pre-batch** is V3 work completed before the batch workflow began on
+    2026-10-27; it is history, not a batch to add to.
+  - Batch boundaries follow the **Completion order** clusters: tickets closed
+    together in one approval share a batch. Batch 2 is orders 44–48, batch 4 is
+    54–61, batch 5 is 62–66, which fixes the numbering for everything around
+    them.
+  - Deferred tickets are left without a Version unless they say which one they
+    are for (the two "V4 -" tickets are V4). Guessing a version for an idea
+    nobody has scheduled is worse than leaving it blank.
 - Read the whole ticket page, **including any screenshots or images**: fetch
   the page with its file URLs and look at each image before deciding what the
   ticket means. New requests from the user in chat become tickets first.

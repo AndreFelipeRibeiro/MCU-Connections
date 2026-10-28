@@ -12,6 +12,26 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 workflow — Version and Batch tags on the Notion backlog
+
+Recorded: 2026-10-28 15:45 EDT (-0400). Not pushed.
+
+- The backlog recorded *when* a ticket was completed but not *what it shipped
+  in*, so reconstructing a batch meant reading completion timestamps and
+  guessing at the clusters. **Version** (V3, V4) and **Batch** (Pre-batch,
+  Batch 1…n) are now fields on the V3 Tasks database.
+- All 70 completed tickets were backfilled: 43 Pre-batch, then 4 / 5 / 5 / 8 /
+  5 across batches 1 to 5. The five batch 6 tickets are tagged, and the three
+  unbatched backlog tickets carry V3 with no batch.
+- The batch boundaries are anchored, not guessed. The user's own calendar
+  screenshot of "Backlog batch 2" lists five bullets that match completion
+  orders 44–48 exactly, which fixes batch 2 and therefore the numbering on
+  either side of it. Batch 4 is 54–61 and batch 5 is 62–66, both confirmed
+  against their merge commits.
+- Deferred tickets are deliberately left without a Version, except the two
+  explicitly named "V4 -". Guessing a version for an idea nobody has scheduled
+  is worse than leaving it blank.
+
 ## V3 improvement — the two open credit-scene cases, decided
 
 Recorded: 2026-10-28 15:35 EDT (-0400). Not pushed.
