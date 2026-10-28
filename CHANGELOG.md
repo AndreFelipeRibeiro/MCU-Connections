@@ -12,6 +12,131 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 fix — a recast cast row shows the credited performer's face, or none
+
+Recorded: 2026-10-28 13:29 EDT (-0400). Pushed to `version/3.0` (staging);
+not merged to main (`ca3112d`).
+
+- Correcting the per-title credits left the right name under the wrong face:
+  `MEDIA.actors` is keyed by character, so Iron Man read "Terrence Howard"
+  beside Don Cheadle's photo. A right name under a wrong face is worse than
+  both being wrong together.
+- `MEDIA.performers` maps a performer name to a TMDB profile path.
+  `castPortrait(title, charId)` uses the character's portrait when the credited
+  performer is the default, the performer map when it is not, and `null`
+  otherwise — which `Portrait` already renders as initials, so an unknown
+  performer costs a face rather than borrowing someone else's.
+- `performerPortrait(name, repCharId)` does the same for the pinned banner and
+  the phone pill, keeping the character's portrait when that character's
+  default performer *is* the pinned person. Without it, pinning Jonathan
+  Majors would have lost his photo even though Kang's portrait is his face.
+- Four profile paths were each verified against that person's own credits
+  before use, then confirmed to return 200. Mike McGill is deliberately
+  absent: the only TMDB person of that name has no profile photo and no
+  What If…? credit, so it is someone else, and What If…? shows initials.
+- Verification: new `qa/test-portrait.js` (9 cases, all `errors: []`) and the
+  full `qa/regress.sh` — 22 of 22 clean.
+- Limits: the check asserts the resolver, not rendered pixels, because
+  external images are blocked in these runs. No real browser load of a
+  recast title's drawer is claimed by this entry.
+
+## V3 improvement — a pan coasts to a stop instead of stopping dead
+
+Recorded: 2026-10-28 13:14 EDT (-0400). Pushed to `version/3.0` (staging);
+not merged to main (`68b1953`).
+
+- A drag now ends with a short inertial glide on both the mouse and the touch
+  path. Velocity is sampled from the last few moves rather than the whole
+  drag, capped, and decays exponentially, settling in about a third of a
+  second. A slow release places the canvas rather than throwing it.
+- Any press, touch or wheel on the viewport stops the glide exactly where it
+  is, so the canvas is never moving when you reach for it.
+- This **reverses** the earlier rule that a manual pan must stop instantly;
+  the comment beside `glideTo` was rewritten rather than left contradicting
+  the code (docs/decisions.md).
+- Verification: new `qa/test-inertia.js` (deceleration on release, and a dead
+  stop when grabbed), plus `qa/test-camera.js`, which needed a new
+  `settleCanvas()` because it had been snapshotting a camera position
+  mid-glide. Full `qa/regress.sh` clean.
+- Limits: the deceleration constants were chosen by eye on a trackpad. How
+  the throw feels under a finger on a real phone is **not** verified.
+
+## V3 fix — per-title performer credits
+
+Recorded: 2026-10-28 12:56 EDT (-0400). Pushed to `version/3.0` (staging);
+not merged to main (`5d153f0`, `41e61aa`).
+
+- One `actor` per character leaked the current performer into every title:
+  Iron Man credited Don Cheadle as Rhodes, and The Incredible Hulk credited
+  Mark Ruffalo and Harrison Ford. A title may now carry `credits` (character
+  id to performer) and `CHARACTERS[id].actor` is only the default.
+- `window.MCU_credit(title, charId)` resolves it. The character's identity,
+  colour and connection thread are untouched, so the arc stays continuous.
+- Search suggestions are built per title, not per character, so searching
+  either performer returns that performer's own titles and no others. A
+  performer pins as themselves unless they are that character's whole run —
+  Terrence Howard plays Rhodes in one title of eleven, so pinning him must
+  not open the other ten.
+- Eight titles were sourced: Rhodes (Terrence Howard), Banner (Edward
+  Norton), and Ross (William Hurt ×5, Mike McGill, Travis Willingham).
+- Verification: `qa/test-pickperson.js` picks every actor and character from
+  the search — 166 subjects, all opening the pinned widget. Full
+  `qa/regress.sh` clean.
+- Limits: **the audit is not finished.** What If…? lists 31 cast members and
+  only Ross is corrected; Tony Stark, Steve Rogers, Natasha Romanoff and
+  Peter Parker are voiced by different performers there and still carry
+  their live-action defaults, as do Marvel Zombies' ten. Those remain open on
+  the ticket.
+
+## V3 maintenance — ignore editor swap files
+
+Recorded: 2026-10-28 12:28 EDT (-0400). Pushed to `version/3.0` (staging);
+not merged to main (`b5e9bf7`).
+
+- An open vim session leaves `.<name>.swp` beside the file; `git difftool -y
+  -x vimdiff` produced one in the worktree. `*.swp` is now ignored.
+
+## V3 fix — the phone document no longer scrolls behind the app shell
+
+Recorded: 2026-10-28 12:27 EDT (-0400). Pushed to `version/3.0` (staging);
+not merged to main (`3413caf`).
+
+- Dragging up from the bottom nav scrolled the page behind the app, exposing
+  a band below it. `html, body` now take `min-height: 100vh` then
+  `100dvh` — `100vh` is the *largest* viewport, excluding collapsed browser
+  chrome, while `100dvh` is what is actually visible — and below 900px they
+  are locked to `height: 100%` with `overflow: hidden` and
+  `overscroll-behavior: none`.
+- Verification: new `qa/test-mviewport.js` asserts the document does not
+  scroll behind the shell at phone sizes. Full `qa/regress.sh` clean.
+- Limits: **headless Chromium treats `100vh` and `100dvh` alike**, so the
+  symptom itself cannot be reproduced or disproved there. The check proves
+  the lock is applied, not that the band is gone. Real iPhone Safari is not
+  checked.
+
+## V3 fix — test-camera is reliable, and its assertions now count
+
+Recorded: 2026-10-28 12:27 EDT (-0400). Pushed to `version/3.0` (staging);
+not merged to main (`00894d8`, `53412fb`).
+
+- `test-camera` failed at "sort change while selected", and separately
+  reported a false "wheel cancels the glide" about one run in four. Both were
+  the check, not the app. `page.mouse.click` moves the cursor and presses in
+  the same tick; hovering a card re-lays the canvas out, so the press landed
+  after the cards had shifted. Card clicks now go through `clickCard()`, and
+  the two that must open a card through `openCentreCard()`, which waits for
+  the drawer and re-measures. The glide steps guessed at 60ms and 80ms; they
+  now wait for the transition to appear and to clear.
+- `qa/regress.sh` only reads fields whose name contains `errors`, so
+  `test-camera`'s six standalone booleans gated nothing — a run could report
+  clean with `glideCancelledByWheel=False`. They are collected into
+  `assertErrors`. Recorded in qa/README.md: an assertion that is not in an
+  errors field is decorative.
+- Verification: repeated `test-camera` runs, then the full `qa/regress.sh` —
+  22 of 22 clean, exit 0.
+- Limits: this is development tooling; no app behaviour changed in these two
+  commits.
+
 ## V3 maintenance — the regression run reports failures instead of passing in silence
 
 Recorded: 2026-10-28 11:14 EDT (-0400). Pushed to `version/3.0` (staging); merged to
