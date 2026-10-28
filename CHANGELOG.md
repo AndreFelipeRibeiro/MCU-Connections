@@ -12,6 +12,24 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — Spatial cards from the keyboard
+
+Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- On desktop each Spatial card starts with an invisible button over the whole
+  card, so Tab reaches the card before its Seen/Watchlist buttons and Enter or
+  Space opens it; pointer clicks pass through to the card as before. A card
+  tabbed to off-screen glides into view, the clipped canvas never scrolls, and
+  Escape from its details returns focus to it.
+- Verification: headless Chromium, 1440×900. First Tab into a card lands on the
+  card (it used to land on Seen) with the ring around the whole card; 20 more Tabs
+  go card, Seen, Watchlist… with every card in view; Enter opened Thor: The
+  Dark World with focus on its title and Escape returned focus to the card; a
+  mouse click opens without a ring. Full regression suite and axe scan pass.
+- Limits: Tab follows catalog order rather than on-screen position; phones
+  unchanged.
+
 ## V3 improvement — favicon, home-screen icon and link previews
 
 Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not

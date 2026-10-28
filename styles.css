@@ -985,3 +985,9 @@ body {
 /* The details heading takes focus when the drawer opens (keyboard flow). */
 .drawer-title:focus { outline: none; }
 .drawer-title:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+
+/* Spatial cards from the keyboard: an invisible first button over the whole
+   card takes Tab focus and draws the ring; pointer clicks pass through it. */
+.card-open { position: absolute; inset: 0; z-index: 4; margin: 0; padding: 0; border: 0; border-radius: 10px; background: transparent; pointer-events: none; }
+.card-open:focus { outline: none; }
+.card-open:focus-visible { box-shadow: inset 0 0 0 3px var(--accent); }

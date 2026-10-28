@@ -228,7 +228,7 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   return { positions, bands: layoutBands, width: maxX + 120, height: maxY + 120 };
 }
 
-function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
+function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
   const phaseColor = PHASE_COLORS[title.phase];
   const downRef = useRef({ x: 0, y: 0, moved: false });
   const { statusOf } = window.useCollection();
@@ -261,6 +261,15 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
       onMouseEnter={() => onHover(title.id)}
       onMouseLeave={() => onHover(null)}
     >
+      {focusable && (
+        // The keyboard way into a card, like the List's title button. It comes
+        // first, so Tab reaches the card before its Seen/Watchlist buttons;
+        // it covers the card for the focus ring but lets pointer clicks
+        // through to the card's own handler. Enter or Space opens it.
+        <button type="button" className="card-open" aria-label={I18N.titleName(title)}
+          onFocus={() => onFocusCard && onFocusCard(title.id)}
+          onClick={(e) => { e.stopPropagation(); onClick(); }}/>
+      )}
       <div className="card-poster">
         <PosterArt title={title}/>
         <div className="card-badges">
@@ -328,7 +337,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
     }
     const opener = openerRef.current;
     openerRef.current = null;
-    if (opener && opener.isConnected && (inPanel || active === document.body)) opener.focus({ preventScroll: true });
+    if (opener && opener.isConnected && lastInput === 'keyboard' && (inPanel || active === document.body)) opener.focus({ preventScroll: true });
   }, [current && current.id]);
   useEffect(() => {
     if (open && headingRef.current && lastInput === 'keyboard') headingRef.current.focus({ preventScroll: true });
@@ -816,6 +825,8 @@ function App() {
     writeDisplayPrefs({ viewMode, desktopView, sort, sortDir });
   }, [viewMode, desktopView, sort, sortDir]);
   const [drawerId, setDrawerId] = useState(null);
+  const drawerIdRef = useRef(null);
+  drawerIdRef.current = drawerId;
   const [sheet, setSheet] = useState(null);
   // Desktop About dialog (phones use the 'about' sheet).
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -871,6 +882,23 @@ function App() {
   // return there instead of leaving the viewport on the focus ring (laid out
   // near the canvas origin, i.e. the Phase 1 end of the timeline layouts).
   const viewRef = useRef(view);
+  // A card reached with Tab that sits outside the visible canvas (or under the
+  // details drawer) glides just far enough into view. Pointer focus never pans.
+  const revealCard = useCallback((id) => {
+    if (lastInput !== 'keyboard') return;
+    const vp = viewportRef.current;
+    const el = vp && vp.querySelector(`.card[data-id="${id}"]`);
+    if (!el) return;
+    const r = el.getBoundingClientRect(), v = vp.getBoundingClientRect();
+    const left = v.left + 24, right = v.right - (drawerIdRef.current ? 380 : 0) - 24;
+    const top = v.top + 64, bottom = v.bottom - 64;
+    let dx = 0, dy = 0;
+    if (r.left < left) dx = left - r.left; else if (r.right > right) dx = right - r.right;
+    if (r.top < top) dy = top - r.top; else if (r.bottom > bottom) dy = bottom - r.bottom;
+    if (!dx && !dy) return;
+    const cur = viewRef.current;
+    glideTo({ x: cur.x + dx, y: cur.y + dy, scale: cur.scale });
+  }, [glideTo]);
   viewRef.current = view;
   const selectionReturnRef = useRef(null);
   // False until resetView has framed the canvas; the mobile canvas only exists
@@ -1852,6 +1880,9 @@ function App() {
     <div
       className="viewport"
       ref={viewportRef}
+      /* Focusing a card would let the browser scroll this clipped box; the
+         camera does the moving instead (revealCard), so keep it at 0,0. */
+      onScroll={(e) => { e.currentTarget.scrollLeft = 0; e.currentTarget.scrollTop = 0; }}
       role={isTouch ? undefined : 'main'}
       aria-label={isTouch ? undefined : tr('view.spatial')}
       onPointerDownCapture={stopGlide}
@@ -1932,6 +1963,8 @@ function App() {
               onClick={() => onCardTap(t.id)}
               onHover={isTouch ? (() => {}) : setHoveredTitle}
               onDragStart={isTouch ? (() => {}) : onCardDragStart}
+              focusable={!isTouch}
+              onFocusCard={revealCard}
               isSelected={selectedId === t.id}
               isHighlighted={isHighlighted}
               isDimmed={isDimmed}

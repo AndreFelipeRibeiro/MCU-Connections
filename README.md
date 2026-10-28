@@ -111,6 +111,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Escape closes the desktop details unless the search box, a menu or the pair
   view claims it. Details opened from the keyboard take focus and give it back
   when they close.
+- In desktop Spatial, Tab reaches each card (then its Seen and Watchlist
+  buttons) and Enter opens it; a card tabbed to off-screen glides into view.
 - On phones, Spatial's grid layouts (Phase, A–Z, IMDb, RT) open with three
   whole columns and the next column and row peeking past the right and bottom
   edges, so it's clear the canvas pans; the first row sits below the count pill.
