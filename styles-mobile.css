@@ -50,7 +50,7 @@
 .m-sc .tg { border-radius: 2px; font-size: 8px; font-weight: 800; padding: 1px 3px; letter-spacing: .2px; }
 .m-scores.compact .m-sc .tg { font-size: 7.5px; padding: 1px 2.5px; }
 .m-sc.imdb { color: #f5c518; } .m-sc.imdb .tg { background: #f5c518; color: #000; }
-.m-sc.rt { color: #fa5c3c; } .m-sc.rt .tg { background: #fa320a; color: #fff; }
+.m-sc.rt { color: #fa5c3c; } .m-sc.rt .tg { background: #cc2a0a; color: #fff; }
 .m-sc.none { color: var(--text-muted); font-size: 9px; font-weight: 500; }
 
 /* GRID VIEW */

@@ -28,18 +28,28 @@ function dlGroups(titles, sort) {
 
 // Character face: the actor photo when there is one, else initials on the
 // character's colour. Matched search characters get a ring.
+// Dark or white initials, whichever reads better on the character's colour
+// (WCAG relative luminance; dark text wins on light colours).
+function inkOn(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  if (!m) return '#fff';
+  const ch = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255)
+    .map(x => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)));
+  const lum = 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+  const dark = 0.0042; // #0a0c14
+  return (lum + 0.05) / (dark + 0.05) >= 1.05 / (lum + 0.05) ? '#0a0c14' : '#fff';
+}
 function DlFace({ id, matched }) {
   const I = window.MCU_I18N;
   const c = window.CHARACTERS[id] || {};
   const media = window.MEDIA;
   const path = media && media.actors && media.actors[id];
-  const [failed, setFailed] = React.useState(false);
   const name = I.charName(id);
   const initials = name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const url = path && (window.mediaURL ? window.mediaURL('a', id, media.profile_base + path) : media.profile_base + path);
   return (
-    <span className={`dl-face${matched ? ' matched' : ''}`} title={name} style={{ background: c.color || '#555' }}>
-      {url && !failed ? <img src={url} alt="" loading="lazy" onError={() => setFailed(true)}/> : <span aria-hidden="true">{initials}</span>}
+    <span className={`dl-face${matched ? ' matched' : ''}`} title={name} style={{ background: c.color || '#555', color: inkOn(c.color || '#555') }}>
+      <window.Portrait url={url} alt="" initials={initials}/>
     </span>
   );
 }

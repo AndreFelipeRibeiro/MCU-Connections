@@ -12,6 +12,22 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — readable muted text and RT tags
+
+Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- `--text-muted` `#5c6278` → `#8389a1` (2.67–3.23:1 → 4.66–5.63:1 across the
+  app's surfaces) and `--text-dim` `#8a90a6` → `#9ea4b8` so it stays a step
+  brighter. The RT tag red `#fa320a` → `#cc2a0a` (white text 3.80 → 5.38:1). List
+  cast initials pick dark or white text by the character colour.
+- Verification: axe-core 4.10 on 7 screens (desktop Spatial, details, List,
+  account menu; phone List, details, Spatial): `color-contrast` failures 61 → 0
+  (English), 60 → 0 (Portuguese). Before/after screenshots checked; sizes and
+  layout unchanged.
+- Limits: text over poster art keeps its own semi-opaque backing and was not
+  flagged; not checked on physical screens.
+
 ## V3 improvement — selected title drawn larger in the Spatial ring
 
 Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
