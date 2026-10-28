@@ -12,6 +12,27 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 fix — browser Back closes phone sheets
+
+Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- Back now closes the open phone sheet (details, Filters, Account, About, the
+  welcome sheet and the sign-in reminder) instead of leaving the app. Each sheet
+  owns one history entry (`pushState`/`popstate`, no router). Closing a sheet
+  any other way steps back over its entry, a sheet that hands off to another
+  (Account → About) reuses it, and an entry left by Forward or a reload is
+  reused rather than duplicated.
+- Verification: headless Chromium, phone viewport. Details → Back closes it
+  and stays in the app; Forward reopens nothing; five open/close cycles leave
+  history length unchanged; Escape and Back both close Filters cleanly; Account
+  → About → Back closes About, and the next Back leaves the app; Back closes the
+  first-visit welcome sheet; desktop adds no history entries. Regression
+  scripts pass.
+- Limits: not tried on a physical phone or with the system swipe-back gesture;
+  the Google sign-in return was not exercised end to end. Desktop dialogs and
+  the details drawer are unchanged.
+
 ## V3 fix — zoomed-out Spatial no longer exhausts phone memory
 
 Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging) for

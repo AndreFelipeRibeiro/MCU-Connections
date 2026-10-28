@@ -93,7 +93,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Grid). Rows shrink, grow and fold with an animation once the collection has
   loaded (none with reduced motion). The Seen tab keeps full rows and cards.
   Watchlisted titles have a thin amber outline outside the Watchlist tab.
-- Phone sheets close with the × button, a tap on the handle, or a swipe down.
+- Phone sheets close with the × button, a tap on the handle, a swipe down or
+  the browser's Back button (each open sheet owns one history entry).
 - Spatial timelines have labelled rows: Release by phase, Chronological by
   in-story era (Before 2008, 2008–2012, … 2027–2028), so both read as a
   left-to-right staircase. Character labels on a hovered or selected title's
