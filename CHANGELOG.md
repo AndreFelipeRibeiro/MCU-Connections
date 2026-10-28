@@ -30,6 +30,14 @@ Recorded: 2026-10-28 16:59 EDT (-0400). Not pushed.
   unrelated cards hidden, the details open, and the count still reading "64
   titles". `test-suggest` now asserts all three of those (empty box, catalog
   intact, title selected); it already captured them and never checked them.
+- A pinned character now steps aside when a title is picked. Its narrowed
+  canvas otherwise hid the very title just picked: pin Tommy Shepherd, who
+  is in one title, then pick Endgame, and Endgame's details filled the panel
+  while Endgame was not on the canvas at all. Only the pin goes; the phase,
+  type and collection filters stay.
+- That one was found by the new assertion rather than by eye — the first
+  version of this change fixed the text filter and left this second way of
+  stranding a title untouched.
 - Limits: the phone path rests on `test-suggest`'s existing mobile case; no
   phone-width browser pass.
 

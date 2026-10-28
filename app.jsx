@@ -1794,8 +1794,14 @@ function App() {
   // A title picked from the search suggestions opens its details (and, in
   // desktop Spatial, selects its card so the canvas shows its connections).
   const pickTitle = (id) => {
+    // Picking a title is navigating to it, so a pinned character steps aside:
+    // its narrowed canvas would otherwise hide the very title just picked. Pin
+    // Tommy Shepherd, who is in one title, then pick Endgame, and Endgame was
+    // not on the canvas at all while its details filled the panel.
+    // Only the pin goes — the phase, type and collection filters stay.
+    if (highlightedChar) unpinCharacter();
     setDrawerId(id);
-    if (!isTouch && desktopView === 'spatial' && !highlightedChar) setSelectedId(id);
+    if (!isTouch && desktopView === 'spatial') setSelectedId(id);
   };
   // A character picked from the search suggestions opens the character view
   // (photo, Their titles / All titles, stepper) rather than a text search, as
