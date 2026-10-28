@@ -808,6 +808,10 @@ body {
 }
 .canvas:has(.card.current) .card.highlighted:not(.current):not(:hover) { filter: brightness(.72) saturate(.8); box-shadow: none; border-color: var(--border); }
 @media (prefers-reduced-motion: reduce) { .card.current { --lift: 1; } }
+/* The title at the centre of its connection ring is drawn larger, so the eye
+   lands on it first. Scales about its centre; the desktop ring leaves room for
+   it. Phones keep their compact ring (already touching its neighbours) as is. */
+.app:not(.touch) .card.ring-focus { --lift: 1.18; z-index: 27; }
 
 /* Keep the zoom control clear of the open details drawer (desktop Spatial). */
 .app:not(.touch).drawer-open .zoom-ctl { right: 396px; }

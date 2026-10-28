@@ -73,7 +73,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Details show a short, spoiler-light synopsis under the title (three lines, then
   See more), written for this app in each language.
 - Selecting a title in Spatial arranges the titles that share its characters in
-  rings around it, closest when they share the most. Unrelated cards fade out
+  rings around it, closest when they share the most; on desktop the selected
+  title is drawn slightly larger. Unrelated cards fade out
   while the rings show (and come back when it closes), and lines are drawn
   among the ring's titles only. On desktop a click on empty canvas closes the
   selection, as a background tap does on phones.

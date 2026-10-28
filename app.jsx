@@ -228,7 +228,7 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   return { positions, bands: layoutBands, width: maxX + 120, height: maxY + 120 };
 }
 
-function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
+function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
   const phaseColor = PHASE_COLORS[title.phase];
   const downRef = useRef({ x: 0, y: 0, moved: false });
   const { statusOf } = window.useCollection();
@@ -239,7 +239,7 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
   return (
     <div
       data-id={title.id}
-      className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''}${isRingHidden ? ' ring-hidden' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}${isCurrent ? ' current' : ''}`}
+      className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''}${isRingHidden ? ' ring-hidden' : ''}${isRingFocus ? ' ring-focus' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}${isCurrent ? ' current' : ''}`}
       style={{
         '--phase-color': phaseColor,
         ...(isCurrent && curColor ? { '--cur-color': curColor } : {}),
@@ -1888,6 +1888,7 @@ function App() {
               isDimmed={isDimmed}
               isCollDimmed={isCollDimmed}
               isRingHidden={!!ringIds && !ringIds.has(t.id)}
+              isRingFocus={!!ringIds && selectedId === t.id}
               isDragging={draggingId === t.id}
               isCurrent={!!highlightedChar && stepId === t.id}
               curColor={highlightedChar ? window.CHARACTERS[highlightedChar].color : null}

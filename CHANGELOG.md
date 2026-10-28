@@ -12,6 +12,19 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — selected title drawn larger in the Spatial ring
+
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- On desktop, the title at the centre of an open connection ring is drawn 18%
+  larger (its existing lift scale), above its neighbours. Phones keep their
+  compact ring unchanged.
+- Verification: headless Chromium. Rings for Iron Man 2, Endgame and Shang-Chi:
+  1.18× with 17–22 px to the nearest card and no overlaps; phone sizes unchanged.
+  Screenshot checked; Spatial regression scripts pass.
+- Limits: a larger centre card on phones would need a wider phone ring.
+
 ## V3 improvement — startup screen with failure recovery
 
 Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); not
