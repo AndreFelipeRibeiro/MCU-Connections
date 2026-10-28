@@ -170,20 +170,33 @@ The backlog is the Notion database **V3 Tasks**, under the **MCU - V3** page
 ## Recap after each approval
 
 When the user approves and closes a ticket or batch, reply with a recap they
-can paste into their calendar:
+paste into the Notion Calendar event. Write it as **ordinary chat text, with
+real Markdown bold** — not inside a code fence. Plain text out of a fence
+pastes unformatted into Notion Calendar, which is the whole problem the format
+exists to avoid.
 
-```
-**MCU V3 – <batch or ticket name>**
-<Day Mon D>, <start>–<end> (about <duration>)
+Title line, then one bullet per ticket:
 
-- **Fixed:** …
-- **Improved:** …
-- **Added:** …
-- **Shipped:** <n> commits on staging / merged to main at <time>.
-```
+> **MCU V3 – Backlog batch <n> (<a few keywords>)**
+>
+> - **Fixed:** search now matches with or without accents ("Capitao" finds "Capitão").
+> - **Improved:** clicking empty canvas on desktop closes the selected title and its details.
 
-Times are America/New_York and come from real events (when work started on
-the batch, when it was pushed or merged). Use only the labels that apply.
+- The title carries the version, the batch number and a short keyword phrase
+  saying what the batch was about.
+- **One bullet per ticket**, opening with a bold label — Fixed, Improved,
+  Added — and then what changed, in the user's terms rather than the
+  implementation's. Use only the labels that apply.
+- No date, duration or commit-count line in the body: the calendar event
+  itself holds the time.
+
+Times quoted anywhere else are America/New_York and come from real events
+(when work started on the batch, when it was pushed or merged).
+
+The assistant can also create the event directly on the user's Google
+**Personal** calendar (the one Notion Calendar fronts) with the Notion
+calendar tools. Creating an event is an outward-facing action: offer, and
+only create it when the user says yes.
 
 ## Design, accessibility and interaction standards
 

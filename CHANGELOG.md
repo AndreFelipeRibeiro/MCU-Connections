@@ -12,6 +12,26 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 workflow — the calendar recap format, so it pastes with its formatting
+
+Recorded: 2026-10-28 15:30 EDT (-0400). Not pushed.
+
+- The recap the user pastes into their Notion Calendar event was specified
+  inside a code fence, so it reached them as plain text and pasted
+  unformatted — the exact problem the format exists to prevent. It is now
+  specified as ordinary chat text with real Markdown bold.
+- The shape is a title line carrying the version, batch number and a short
+  keyword phrase, then **one bullet per ticket** opening with a bold Fixed /
+  Improved / Added label. The date, duration and commit-count lines are gone:
+  the calendar event itself holds the time.
+- Recorded that the assistant can create the event directly on the user's
+  Google Personal calendar through the Notion calendar tools, and that doing
+  so is an outward-facing action to offer rather than perform unasked.
+- Verified by creating the batch 4 and batch 5 events. **Two limits found and
+  worth knowing:** the connector strips HTML from the description, so bold
+  labels arrive as plain text, and neither the create nor the update tool has
+  a colour field, so the event colour must be set by hand.
+
 ## V3 fix — a recast cast row shows the credited performer's face, or none
 
 Recorded: 2026-10-28 13:29 EDT (-0400). Pushed to `version/3.0` (staging); merged to
