@@ -26,3 +26,6 @@ qa/node_modules/
 qa/package-lock.json
 qa/vendor/
 qa/shots/
+# A check run from the repository root (as qa/README.md says to) resolves its
+# screenshot path to ./shots/ rather than qa/shots/.
+/shots/

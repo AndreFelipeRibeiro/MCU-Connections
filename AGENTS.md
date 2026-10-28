@@ -15,8 +15,9 @@ their "Handoff — 2026-10-24" sections are historical.
    discard or commit another agent's pending work.
 2. `git fetch origin`; if `version/3.0` moved, fast-forward only
    (`git pull --ff-only`) on a clean tree.
-3. Open the Notion **V3 Tasks** board, take the right ticket and claim it (see
-   Backlog workflow) before writing code.
+3. Open the Notion **V3 Tasks** board. Ship anything already in **Approved**
+   first (the user cleared it; commit, push, then complete it), then take the
+   right ticket and claim it (see Backlog workflow) before writing code.
 
 ## Stack and layout
 
@@ -63,8 +64,8 @@ their "Handoff — 2026-10-24" sections are historical.
   and browsers can serve a cached copy on a plain refresh.
 - QA checks (`qa/`, details in qa/README.md): once per machine
   `bash qa/setup.sh` (needs Node 18+). Before handing work over for review, run
-  `bash qa/regress.sh` (14 checks, about 15 minutes; every errors array must be
-  `[]` or `0`) and `node qa/a11y-scan.js` (expect no violations; add
+  `bash qa/regress.sh` (19 checks, about 20 minutes; it exits non-zero and
+  marks failures with `!!`) and `node qa/a11y-scan.js` (expect no violations; add
   `LOC=pt-BR` for Portuguese). Also run the targeted check for the area you
   touched (for example `qa/test-kbspatial.js`), and update checks in the same
   commit when you rename or restructure UI they rely on.
@@ -81,8 +82,9 @@ their "Handoff — 2026-10-24" sections are historical.
 - Both deploy automatically through Vercel's Git integration; there is no
   Vercel CLI step. Check a deploy with the commit status on GitHub.
 - Keep iterations local and uncommitted until the user approves committing and
-  pushing **that** revision. Prior approval does not carry over to a new
-  revision. Do not push layout experiments for review.
+  pushing **that** revision, either in chat or by setting the ticket's Status to
+  **Approved** in Notion. Prior approval does not carry over to a new revision.
+  Do not push layout experiments for review.
 - **Never merge to `main` without the user's explicit approval for that merge.**
   Merge with `git merge --no-ff version/3.0` from an up-to-date `main`, push
   `main`, then fast-forward `version/3.0` to the merge commit so both match.
@@ -129,8 +131,8 @@ The backlog is the Notion database **V3 Tasks**, under the **MCU - V3** page
   view). The user drags cards to set the order; agents cannot reorder cards
   and must not add priority numbers. A card titled `———` is the user's divider:
   tickets above it are the next ones to do.
-- Fields: **Status** (Backlog, In progress, Awaiting review, Blocked, Deferred,
-  Completed), **Assigned to** (Codex, Claude, Andre), **Type** (Bug,
+- Fields: **Status** (Backlog, In progress, Awaiting review, Approved, Blocked,
+  Deferred, Completed), **Assigned to** (Codex, Claude, Andre), **Type** (Bug,
   Improvement, Feature, Workflow, Maintenance), **Source**, **Latest commit**,
   **Completed on** (date-time), **Completion order** (number).
 - Read the whole ticket page, **including any screenshots or images**: fetch
@@ -143,6 +145,18 @@ The backlog is the Notion database **V3 Tasks**, under the **MCU - V3** page
   changes, the verification actually done and the remaining limits.
 - Pushed for review: record the commit in **Latest commit** and the page body;
   the ticket stays Awaiting review until the user approves it.
+- **Approved** is the user's own flag, set by them and nobody else. It means
+  they have approved *that ticket's current revision* and you may commit and
+  push it to `version/3.0` without asking again. Never set it yourself, and
+  never read it as approval for anything beyond that ticket.
+  - It does **not** authorise a merge to `main`. That still needs the user's
+    explicit approval for that merge (see "Branches, deploys and approvals").
+  - It does not survive a new revision: if you change the work after it was
+    approved, move it back to Awaiting review and ask again.
+  - Approval given in chat counts the same; the flag exists so an approval
+    outlives the conversation and is visible to the other agent.
+  - At the start of a session, a ticket sitting in Approved is work the user
+    has already cleared — commit and push it, then complete it.
 - Complete (only after the user approves and the change is committed and
   pushed): Status = Completed, Latest commit = the final implementation commit,
   every related commit listed in the body. **Completed on** = the actual
@@ -191,8 +205,11 @@ the batch, when it was pushed or merged). Use only the labels that apply.
   - Scripts move focus only after keyboard input (the `lastInput` tracker in
     `app.jsx`), so mouse and touch users never see a ring they didn't cause.
   - Escape closes the nearest layer first: search suggestions, then menus and
-    popovers, then dialogs, then the pair view, then the details. Never close
-    two layers with one press.
+    popovers, then dialogs and phone sheets, then the pair view, then the
+    details, then the pinned character or performer. Never close two layers
+    with one press. The details and the pin share one listener for that reason:
+    two listeners both see the same press, and React re-renders between them,
+    so the second acts on state the first just cleared.
   - The desktop details drawer is modeless (no focus trap). Phone sheets and
     dialogs trap focus and restore it to their opener.
   - Every Spatial card is reachable with Tab (an invisible first button) and
