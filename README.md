@@ -329,6 +329,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 |---|---|
 | `index.html` | Entry point; startup screen markup, pinned/SRI CDN scripts and application script order |
 | `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render |
+| `favicon.png`, `apple-touch-icon.png`, `og-image.jpg` | Tab icon, home-screen icon and link-preview image (from the brand mark) |
 | `data.js` | Static titles/characters, ratings, phases, stable ids and variant links |
 | `media-data.js` | TMDB poster and actor-portrait paths |
 | `config.js` | Public Supabase project URL and publishable key |

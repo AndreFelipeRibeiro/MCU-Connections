@@ -12,6 +12,20 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — favicon, home-screen icon and link previews
+
+Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
+merged to main.
+
+- New `favicon.png`, `apple-touch-icon.png` and `og-image.jpg` (1200×630),
+  rendered from the app's brand mark with no studio imagery. `index.html` adds a
+  description, theme colour, icon links, Open Graph and `twitter:card` tags; no
+  manifest or service worker.
+- Verification: headless Chromium, desktop and phone: all three files served
+  and linked, no console errors; icon checked at 32 and 16 px.
+- Limits: the description is English (crawlers do not run scripts); `og:image`
+  points at production, so previews work once this reaches main.
+
 ## V3 improvement — Escape and keyboard focus for desktop details
 
 Recorded: 2026-10-27 23:35 EDT (-0400). Pushed to `version/3.0` (staging); not
