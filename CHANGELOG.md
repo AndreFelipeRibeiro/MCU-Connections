@@ -14,7 +14,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V3 maintenance — the regression run reports failures instead of passing in silence
 
-Recorded: 2026-10-28 11:14 EDT (-0400). Pushed to `version/3.0` (staging); not merged to main
+Recorded: 2026-10-28 11:14 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
 (`b28c271`; development tooling only, no app files changed).
 
 - `qa/regress.sh` wrapped every check in GNU `timeout`, which is part of
@@ -39,7 +40,8 @@ Recorded: 2026-10-28 11:14 EDT (-0400). Pushed to `version/3.0` (staging); not m
 
 ## V3 improvement — "Lançamento" and "Saiu" replace "Estreia" in Portuguese
 
-Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); not merged to main
+Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
 (`088b9c1`).
 
 - "Estreia" alone reads as something still to come, the opposite of what the
@@ -55,7 +57,8 @@ Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); not m
 
 ## V3 fix — the guest sign-in reminder stays true to the saved collection
 
-Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); not merged to main
+Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
 (`6d74b0c`).
 
 - The reminder captured its mark count at the tap, so undoing that mark during
@@ -72,7 +75,8 @@ Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); not m
 
 ## V3 fix — Spatial touch, portrayal scope, performer pins and Escape
 
-Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); not merged to main
+Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
 (`87ccb33`). Four tickets in one commit: they edit overlapping lines in the same
 functions, and each later one corrected the earlier before any of it was
 committed, so separate commits would have recorded states already known wrong.
@@ -108,7 +112,8 @@ committed, so separate commits would have recorded states already known wrong.
 
 ## V3 workflow — Approved status, new checks in the regression run, verification log
 
-Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); not merged to main
+Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
 (tooling and documentation; no app files changed).
 
 - Notion **V3 Tasks** gains an **Approved** status between Awaiting review and
@@ -129,7 +134,8 @@ Recorded: 2026-10-28 11:15 EDT (-0400). Pushed to `version/3.0` (staging); not m
 
 ## V3 workflow — QA checks in the repository; no-build rule with a V4 exit
 
-Recorded: 2026-10-28 08:55 EDT (-0400). Pushed to `version/3.0` (staging); not merged to main
+Recorded: 2026-10-28 08:55 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
 (tooling and documentation only; no app files changed).
 
 - New `qa/`: the curated headless checks used during V3. That is the 14-check
@@ -150,7 +156,8 @@ Recorded: 2026-10-28 08:55 EDT (-0400). Pushed to `version/3.0` (staging); not m
 
 ## V3 workflow — handoff to Claude Code
 
-Recorded: 2026-10-28 08:39 EDT (-0400). Pushed to `version/3.0` (staging); not merged to main
+Recorded: 2026-10-28 08:39 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-28 11:31 EDT
 (documentation only).
 
 - AGENTS.md rewritten as a self-contained, agent-neutral rulebook: stack and
