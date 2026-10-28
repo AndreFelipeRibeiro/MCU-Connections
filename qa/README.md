@@ -81,20 +81,17 @@ one.
   passive event listener"), which React causes by attaching wheel listeners
   passively at the root. `regress.sh` allows that one string by name, and
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
-- **`test-camera` currently fails, and did so before this batch.** Measured on
-  2026-10-28 over four runs (two on the working tree, two on an unmodified
-  export of `HEAD`): all four failed identically with `locator.click: Timeout
-  30000ms exceeded`. So the expected result of a full run right now is 16 of 17,
-  with `test-camera` the only failure.
-  The step is "sort change while selected", not the "wheel cancels the glide"
-  step this file used to blame — that one passed in every run. After the
-  preceding wheel-zoom step, the click on the centre card selects nothing
-  (`.card.selected` count 0, no open drawer), so the `.drawer-close` click that
-  follows has no target and times out. Whether that is brittleness in the check
-  or a real "click after a wheel zoom does not select" bug in the app is not yet
-  established; it needs its own ticket. Until then, do not read a `test-camera`
-  failure as a regression from your own change — compare against a clean copy
-  with `SITE=` first.
+- `test-camera` used to fail every run, at "sort change while selected" — not
+  the "wheel cancels the glide" step this file long blamed, which passed every
+  time. It was the check, not the app: `page.mouse.click` moves the cursor and
+  presses in the same tick, and hovering a card re-lays the canvas out, so in
+  that state the press landed after the cards had shifted and selected nothing.
+  The `.drawer-close` click after it then had no target and timed out. Card
+  clicks now go through `clickCard()`, which moves, lets the hover settle, and
+  then presses. Verified by hand first: a click after a wheel zoom selects
+  normally, and move-settle-press worked where `click` did not.
+  A full run should now be **19 of 19**. Treat any `test-camera` failure as
+  real, and compare against a clean copy with `SITE=` if in doubt.
 - External images and fonts are blocked on purpose, so posters show their
   generated fallback art in screenshots.
 

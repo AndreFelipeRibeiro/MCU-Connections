@@ -92,6 +92,16 @@ async function centerCard(page, exclude) {
     return { x: pick.r.left + pick.r.width / 2, y: pick.r.top + pick.r.height * 0.8, title: pick.c.querySelector('.card-title, h3, .title') ? pick.c.querySelector('.card-title, h3, .title').textContent : pick.c.textContent.slice(0, 40) };
   }, exclude);
 }
+// page.mouse.click moves and presses in one go. Hovering a card re-lays the
+// canvas out, so in some states the press landed after the cards had shifted
+// and selected nothing. Move, let the hover settle, then press.
+async function clickCard(page, pt) {
+  await page.mouse.move(pt.x, pt.y);
+  await page.waitForTimeout(250);
+  await page.mouse.down();
+  await page.waitForTimeout(40);
+  await page.mouse.up();
+}
 const pickView = async (page, n) => { await page.locator('.view-menu .sort-order-trigger').click(); await page.locator('.view-menu .sort-order-pop button').nth(n).click(); };
 (async () => {
   await new Promise(r => server.listen(8192, r));
@@ -122,7 +132,7 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
   out.cardA = a && a.title;
   await page.screenshot({ path: path.join(S, 'shots', 'cam-before-click.png') });
   out.aPoint = a;
-  await page.mouse.click(a.x, a.y);
+  await clickCard(page, a);
   await page.waitForTimeout(900);
   out.drawerCount = await page.locator('.drawer-close').count();
   await page.screenshot({ path: path.join(S, 'shots', 'cam-after-click.png') });
@@ -137,11 +147,11 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
 
   // A -> B through the ring, then close: B centred at the original zoom
   const a2 = await centerCard(page);
-  await page.mouse.click(a2.x, a2.y);
+  await clickCard(page, a2);
   await page.waitForTimeout(900);
   const b = await centerCard(page, a2.title.slice(0, 12));
   out.cardB = b && b.title;
-  await page.mouse.click(b.x, b.y);
+  await clickCard(page, b);
   await page.waitForTimeout(900);
   // Measure whichever card the click actually selected (tiny ring cards overlap).
   b.title = await page.evaluate(() => document.querySelector('.card.selected .card-title').textContent);
@@ -159,7 +169,7 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
 
   // Glide cancels on wheel
   const c = await centerCard(page);
-  await page.mouse.click(c.x, c.y); await page.waitForTimeout(900);
+  await clickCard(page, c); await page.waitForTimeout(900);
   await page.mouse.move(600, 500);
   await page.locator('.drawer-close').click(); await page.waitForTimeout(60);
   out.glideStartedBeforeWheel = (await TR(page)) !== '';
@@ -168,7 +178,7 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
 
   // Sort change while selected clears the memory (no jump back into an old layout)
   const d = await centerCard(page);
-  await page.mouse.click(d.x, d.y); await page.waitForTimeout(900);
+  await clickCard(page, d); await page.waitForTimeout(900);
   await page.locator('.tb-sort-controls .segmented button', { hasText: 'IMDb' }).first().click();
   await page.waitForTimeout(400);
   const afterSort = parse(await T(page));
