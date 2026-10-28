@@ -497,5 +497,215 @@
         "note": "Reconfirmed; no rating yet."
       }
     }
+  },
+  "creditSceneAudit": {
+    "checkedAt": "2026-10-28",
+    "rule": "A character counts for a title only if they appear in the main feature. A character whose sole appearance is a mid- or post-credit scene is removed from that title's cast, which also removes the connection line it drew.",
+    "primarySource": "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe",
+    "removed": {
+      "iron-man": {
+        "characters": [
+          "fury"
+        ],
+        "scene": "post-credits",
+        "note": "Fury visits Stark at home to discuss the Avengers Initiative.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe",
+          "https://en.wikipedia.org/wiki/Nick_Fury_(Marvel_Cinematic_Universe)"
+        ]
+      },
+      "thor": {
+        "characters": [
+          "fury"
+        ],
+        "scene": "post-credits",
+        "note": "Fury asks Selvig to study the Tesseract; Loki is present but also appears in the main feature.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
+        ]
+      },
+      "iron-man-3": {
+        "characters": [
+          "bruce"
+        ],
+        "scene": "post-credits",
+        "note": "Stark finishes telling his story to Banner, who slept through it.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
+        ]
+      },
+      "cap-winter-soldier": {
+        "characters": [
+          "wanda"
+        ],
+        "scene": "mid-credits",
+        "note": "Strucker and List observe the Maximoff twins in custody. Bucky also has a credits scene but appears in the main feature, so he stays.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
+        ]
+      },
+      "ant-man": {
+        "characters": [
+          "steve",
+          "bucky"
+        ],
+        "scene": "post-credits",
+        "note": "Rogers and Wilson discuss what to do about a restrained Barnes. Sam Wilson is NOT removed: Falcon fights Scott Lang at the Avengers facility in the main feature.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe",
+          "https://www.slashfilm.com/539645/ant-man-vs-falcon-clip/"
+        ]
+      },
+      "doctor-strange": {
+        "characters": [
+          "thor"
+        ],
+        "scene": "mid-credits",
+        "note": "Strange receives Thor and agrees to help him find Odin.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
+        ]
+      },
+      "black-panther": {
+        "characters": [
+          "bucky"
+        ],
+        "scene": "post-credits",
+        "note": "Barnes wakes from cryostasis in Wakanda and thanks Shuri.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
+        ]
+      },
+      "infinity-war": {
+        "characters": [
+          "fury",
+          "carol"
+        ],
+        "scene": "post-credits",
+        "note": "Fury pages Carol Danvers as he disintegrates. Carol does not appear on screen at all, only her insignia on the pager, so she is removed as absent rather than as credits-only.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe",
+          "https://www.thewrap.com/avengers-infinity-war-post-credits-scene-explained-what-was-that-symbol-on-the-pager/"
+        ]
+      },
+      "captain-marvel": {
+        "characters": [
+          "steve",
+          "natasha",
+          "bruce",
+          "rhodey"
+        ],
+        "scene": "mid-credits",
+        "note": "The four surviving Avengers monitor Fury's pager at the compound before Danvers appears.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe",
+          "https://www.slashfilm.com/captain-marvel-credits-scene"
+        ]
+      },
+      "shang-chi": {
+        "characters": [
+          "bruce",
+          "carol"
+        ],
+        "scene": "mid-credits",
+        "note": "Banner and Danvers join Wong by hologram to examine the rings. Wong is NOT removed: he fights Abomination in the main feature.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe",
+          "https://www.techradar.com/news/shang-chi-ending-and-post-credits-scenes-explained"
+        ]
+      },
+      "ms-marvel": {
+        "characters": [
+          "carol"
+        ],
+        "scene": "post-credits",
+        "note": "Danvers swaps places with Kamala in her bedroom.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe",
+          "https://www.tvline.com/interviews/ms-marvel-finale-explained-captain-marvel-cameo-x-men-reference-1234851593/"
+        ]
+      },
+      "deadpool-3": {
+        "characters": [
+          "scott"
+        ],
+        "scene": "absent",
+        "note": "Scott Lang does not appear. Only a giant Ant-Man corpse is seen, used as Cassandra Nova's lair; Paul Rudd is not in the film. Happy Hogan is NOT removed: he interviews Wade in the main feature.",
+        "sources": [
+          "https://www.gamesradar.com/entertainment/marvel-movies/every-deadpool-and-wolverine-cameo-explained-human-torch-lady-deadpool",
+          "https://cinemablend.com/superheroes/marvel-cinematic-universe/happy-hogan-scene-deadpool-and-wolverine-movie-best-moments-very-different-robert-downey-jr"
+        ]
+      }
+    },
+    "keptAfterCheck": {
+      "incredible-hulk": {
+        "characters": [
+          "tony"
+        ],
+        "reason": "Stark's bar scene with Ross plays BEFORE the credits: it is the final scene of the main feature, not a post-credits scene, though it is widely described as one.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
+        ]
+      },
+      "ant-man": {
+        "characters": [
+          "sam"
+        ],
+        "reason": "Falcon fights Ant-Man at the New Avengers facility in the main feature.",
+        "sources": [
+          "https://www.slashfilm.com/539645/ant-man-vs-falcon-clip/"
+        ]
+      },
+      "deadpool-3": {
+        "characters": [
+          "happy"
+        ],
+        "reason": "Happy interviews Wade for the Avengers early in the main feature.",
+        "sources": [
+          "https://cinemablend.com/superheroes/marvel-cinematic-universe/happy-hogan-scene-deadpool-and-wolverine-movie-best-moments-very-different-robert-downey-jr"
+        ]
+      },
+      "shang-chi": {
+        "characters": [
+          "wong"
+        ],
+        "reason": "Wong fights Abomination in the main feature's cage-fight sequence.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
+        ]
+      },
+      "cap-winter-soldier": {
+        "characters": [
+          "bucky"
+        ],
+        "reason": "He is the title character of the main feature; his Smithsonian scene is an additional credits scene.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
+        ]
+      }
+    },
+    "openQuestions": [
+      {
+        "title": "far-from-home",
+        "characters": [
+          "fury"
+        ],
+        "question": "The Fury seen throughout the main feature is Talos impersonating him; the real Fury appears only in the post-credits scene. Kept for now, because the connection a viewer experiences is Spider-Man to Fury.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
+        ]
+      },
+      {
+        "title": "homecoming",
+        "characters": [
+          "steve"
+        ],
+        "question": "Rogers appears in the main feature only as in-universe PSA videos, plus a post-credits gag. Kept, because he is on screen in the main feature.",
+        "sources": [
+          "https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe"
+        ]
+      }
+    ],
+    "notAudited": "The unreleased titles (doomsday, secret-wars, brand-new-day, visionquest, friendly-spidey-s2, daredevil-born-again-s2/s3, wonder-man) cannot be audited; their casts are provisional. marvel-zombies was not checked scene by scene."
   }
 }

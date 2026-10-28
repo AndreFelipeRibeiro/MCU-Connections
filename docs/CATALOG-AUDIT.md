@@ -339,3 +339,80 @@ no profile photo and no *What If…?* credit, so it is a different Mike McGill.
 What If…? therefore shows initials for Ross rather than a face — correct, and
 better than borrowing one. If a profile is found later, adding the name to
 `MEDIA.performers` is the whole change.
+
+## Credit-scene cast audit — 2026-10-28
+
+**Rule, set by the user:** a character counts for a title only if they appear in
+the **main feature**. A character whose sole appearance in that title is a mid-
+or post-credit scene comes out of its `cast`, which also removes the connection
+line it drew. There is no new field: membership in `cast` is the whole
+mechanism, so nothing in the app had to learn a new concept.
+
+Primary source for the scene inventory:
+[Mid-credits and post-credits scenes in the MCU](https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe),
+with per-case corroboration recorded in
+[CATALOG-SOURCES.json](CATALOG-SOURCES.json) under `creditSceneAudit`.
+
+### Removed — 18 cast entries across 12 titles
+
+| Title | Removed | Scene |
+|---|---|---|
+| Iron Man | Nick Fury | post-credits |
+| Thor | Nick Fury | post-credits |
+| Iron Man 3 | Bruce Banner | post-credits |
+| Captain America: The Winter Soldier | Wanda Maximoff | mid-credits |
+| Ant-Man | Steve Rogers, Bucky Barnes | post-credits |
+| Doctor Strange | Thor | mid-credits |
+| Black Panther | Bucky Barnes | post-credits |
+| Avengers: Infinity War | Nick Fury, Carol Danvers | post-credits |
+| Captain Marvel | Steve Rogers, Natasha Romanoff, Bruce Banner, James Rhodes | mid-credits |
+| Shang-Chi | Bruce Banner, Carol Danvers | mid-credits |
+| Ms. Marvel | Carol Danvers | post-credits |
+| Deadpool & Wolverine | Scott Lang | **absent entirely** |
+
+Two of those are not really credit-scene cases:
+
+- **Carol Danvers in Infinity War** never appears on screen at all. Only her
+  insignia shows on Fury's pager. She is removed as absent.
+- **Scott Lang in Deadpool & Wolverine** likewise does not appear. The film
+  shows a giant Ant-Man *corpse* used as Cassandra Nova's lair, and Paul Rudd
+  is not in the picture.
+
+Resulting count drops: Nick Fury 14 → 11, Carol Danvers 7 → 4, Bruce Banner
+12 → 9, Steve Rogers 12 → 10, Bucky Barnes 12 → 10, Natasha 10 → 9, Rhodes
+11 → 10, Thor 12 → 11, Wanda 9 → 8, Scott 10 → 9. No character was left with
+zero titles.
+
+### Checked and deliberately kept
+
+The ticket named Steve Rogers, Sam Wilson and Bucky Barnes as Ant-Man
+connections that should go. **Sam Wilson stays:** Falcon fights Scott Lang at
+the New Avengers facility in the main feature, which is where Scott takes the
+signal decoy. Only Rogers and Barnes are credits-only there.
+
+| Title | Kept | Why |
+|---|---|---|
+| The Incredible Hulk | Tony Stark | The bar scene with Ross plays **before** the credits. It is the last scene of the main feature, not a post-credits scene, though it is almost always described as one. |
+| Ant-Man | Sam Wilson | Falcon fights Ant-Man in the main feature. |
+| Deadpool & Wolverine | Happy Hogan | Happy interviews Wade for the Avengers early in the main feature. |
+| Shang-Chi | Wong | Wong fights Abomination in the cage-fight sequence. |
+| Captain America: The Winter Soldier | Bucky Barnes | He is the title character; the Smithsonian scene is an extra credits scene. |
+
+### Two judgement calls left open
+
+Both are kept for now and flagged rather than decided quietly:
+
+- **Nick Fury in Spider-Man: Far From Home.** The Fury on screen throughout the
+  main feature is Talos impersonating him; the real Fury appears only in the
+  post-credits scene. Kept, because the connection a viewer experiences is
+  Spider-Man to Fury — but by a strict reading of the rule he is not in it.
+- **Steve Rogers in Spider-Man: Homecoming.** He appears in the main feature
+  only as in-universe PSA videos, plus a post-credits gag. Kept, because he is
+  on screen in the main feature.
+
+### Not audited
+
+The unreleased titles (Avengers: Doomsday, Secret Wars, Spider-Man: Brand New
+Day, VisionQuest, Your Friendly Neighborhood Spider-Man S2, Daredevil: Born
+Again S2 and S3, Wonder Man) have provisional casts and no scene inventory to
+check against. Marvel Zombies was not checked scene by scene.

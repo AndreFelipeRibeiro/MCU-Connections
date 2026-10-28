@@ -12,6 +12,49 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — credit-scene-only cast comes out of the catalog
+
+Recorded: 2026-10-28 15:30 EDT (-0400). Not pushed.
+
+- Rule, set by the user: a character counts for a title only if they appear
+  in the **main feature**. A character whose sole appearance is a mid- or
+  post-credit scene leaves that title's `cast`, which also removes the
+  connection line it drew. No new field: membership in `cast` is the whole
+  mechanism, so nothing in the app had to learn a new concept.
+- 18 cast entries removed across 12 titles — Nick Fury from Iron Man, Thor
+  and Infinity War; Bruce Banner from Iron Man 3, Captain Marvel and
+  Shang-Chi; Carol Danvers from Infinity War, Shang-Chi and Ms. Marvel;
+  Steve Rogers and Bucky Barnes from Ant-Man; Wanda from The Winter Soldier;
+  Thor from Doctor Strange; Bucky from Black Panther; Steve, Natasha and
+  Rhodes from Captain Marvel; Scott Lang from Deadpool & Wolverine.
+- Two are not credit-scene cases at all: **Carol Danvers never appears in
+  Infinity War** (only her insignia on the pager), and **Scott Lang is not in
+  Deadpool & Wolverine** (a giant Ant-Man corpse is; Paul Rudd is not in the
+  film). Both are removed as absent.
+- Two of the audit's starting assumptions were wrong and are recorded as
+  such. **Sam Wilson stays in Ant-Man**, though the ticket named him: Falcon
+  fights Scott Lang at the Avengers facility in the main feature. **Tony
+  Stark stays in The Incredible Hulk**: his bar scene with Ross plays before
+  the credits and is the last scene of the main feature, however often it is
+  described as a post-credits scene.
+- Counts drop accordingly: Fury 14 → 11, Carol 7 → 4, Banner 12 → 9, Steve
+  12 → 10, Bucky 12 → 10, Thor 12 → 11, Rhodes 11 → 10, Natasha 10 → 9,
+  Scott 10 → 9, Wanda 9 → 8. No character was left with zero titles.
+- Every removal is sourced in docs/CATALOG-SOURCES.json under
+  `creditSceneAudit`, with the reasoning and the kept cases in
+  docs/CATALOG-AUDIT.md.
+- Verification: full `qa/regress.sh` — **22 of 22 clean, exit 0** — including
+  `test-pickperson` (166 subjects), `test-variant` and `test-suggest`. Then
+  checked in a real desktop browser: Ant-Man reads 5 cast with Sam Wilson
+  present and Rogers and Barnes gone, Captain Marvel 2, Shang-Chi 3 with Wong
+  kept, Iron Man 4 with Rhodes still credited to Terrence Howard.
+- Limits: the browser pass was **English and desktop only**; Portuguese and
+  phone widths rest on the headless checks. Two judgement calls are flagged
+  open rather than decided — Fury in Far From Home (the one on screen is
+  Talos) and Rogers in Homecoming (he appears only in in-universe PSAs). The
+  unreleased titles have provisional casts and were not audited, and Marvel
+  Zombies was not checked scene by scene.
+
 ## V3 workflow — the calendar recap format, so it pastes with its formatting
 
 Recorded: 2026-10-28 15:30 EDT (-0400). Not pushed.
