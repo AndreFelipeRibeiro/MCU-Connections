@@ -63,7 +63,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - English and Brazilian Portuguese. The first visit follows the browser/phone
   language; a language menu in the header (desktop toolbar, mobile app bar)
   overrides it per device. Portuguese shows official Brazilian release titles,
-  and search matches titles and characters in either language.
+  and search matches titles and characters in either language, with or without
+  accents ("Capitao" finds "Capitão").
 - Desktop has Spatial and List views (switch at the end of the sort row). The
   List is one row per title with sortable column headers (title, phase, release,
   in-story years, IMDb, RT) that stay in step with the sort row; a row opens the
@@ -72,7 +73,13 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Details show a short, spoiler-light synopsis under the title (three lines, then
   See more), written for this app in each language.
 - Selecting a title in Spatial arranges the titles that share its characters in
-  rings around it, closest when they share the most.
+  rings around it, closest when they share the most; on desktop the selected
+  title is drawn slightly larger. Unrelated cards fade out
+  while the rings show (and come back when it closes), and lines are drawn
+  among the ring's titles only. On desktop a click on empty canvas closes the
+  selection, as a background tap does on phones.
+- When a search or filter leaves no titles, Spatial says so and offers to clear
+  the search, the filters or both.
 - Picking a character in the details highlights them: their titles are laid out
   in the current order (the rings belong to a selected title), with a Their
   titles / All titles switch (only their titles, or everything with the rest
@@ -91,7 +98,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Grid). Rows shrink, grow and fold with an animation once the collection has
   loaded (none with reduced motion). The Seen tab keeps full rows and cards.
   Watchlisted titles have a thin amber outline outside the Watchlist tab.
-- Phone sheets close with the × button, a tap on the handle, or a swipe down.
+- Phone sheets close with the × button, a tap on the handle, a swipe down or
+  the browser's Back button (each open sheet owns one history entry).
 - Spatial timelines have labelled rows: Release by phase, Chronological by
   in-story era (Before 2008, 2008–2012, … 2027–2028), so both read as a
   left-to-right staircase. Character labels on a hovered or selected title's
@@ -139,6 +147,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - **84 characters**, connecting titles through shared character identities
 - Posters and actor portraits sourced from TMDB (credited in About with TMDB's
   notice; TMDB also asks for its logo there, not added yet)
+- A poster or portrait that fails to load falls back to generated art or the
+  character's initials
 - IMDb and Rotten Tomatoes scores where available
 
 Titles and cast lists are maintained by hand in [`data.js`](data.js) against Wikipedia's per-character MCU filmographies — this isn't pulled from a live API, so it reflects whatever was true as of the last update. Unreleased titles (anything past a "Not yet rated" badge) carry pre-release cast announcements, which can and do change before release.
@@ -158,9 +168,15 @@ Connections chain on the prime, so *Loki* → *Quantumania* → *Loki Season 2* 
 ## Running it locally
 
 No package installation, npm, bundler, router, application server or test runner.
-The entry point is `index.html`. React, ReactDOM, Babel standalone and supabase-js
-load from pinned CDN scripts with SRI; JSX compiles in the browser. Files share
+The entry point is `index.html`. React and ReactDOM (production builds), Babel
+standalone and supabase-js load from pinned CDN scripts with SRI; JSX compiles in the browser. Files share
 exports through `window.*`, not ES modules.
+
+`boot.js` loads first and shows a startup screen inside `#root` (brand, spinner,
+"Loading…") until React's first render replaces it. A script that cannot load
+or an error before that render turns it into a short explanation with a Reload
+button; a slow start says so after 25 seconds. The locale files and `i18n.js`
+load before the CDN scripts so that screen is translated.
 
 From the repository directory, run a static server:
 
@@ -308,7 +324,8 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 
 | File | Purpose |
 |---|---|
-| `index.html` | Entry point; pinned/SRI CDN scripts and application script order |
+| `index.html` | Entry point; startup screen markup, pinned/SRI CDN scripts and application script order |
+| `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render |
 | `data.js` | Static titles/characters, ratings, phases, stable ids and variant links |
 | `media-data.js` | TMDB poster and actor-portrait paths |
 | `config.js` | Public Supabase project URL and publishable key |
@@ -321,7 +338,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
 | `search-suggest.jsx` | Search box with actor/character/title suggestions, shared by desktop and mobile |
-| `poster.jsx` | TMDB posters or generated abstract fallback |
+| `poster.jsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
 | `connections.jsx` | Standalone connection layer retained for reference; not wired into the app |
 | `styles.css` / `styles-mobile.css` | Desktop/touch layout, status treatments, focus and dialogs |
 | `schema.sql` | Watch-state table, constraints, trigger, grants and ownership RLS |

@@ -228,7 +228,7 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   return { positions, bands: layoutBands, width: maxX + 120, height: maxY + 120 };
 }
 
-function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
+function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
   const phaseColor = PHASE_COLORS[title.phase];
   const downRef = useRef({ x: 0, y: 0, moved: false });
   const { statusOf } = window.useCollection();
@@ -239,11 +239,13 @@ function Card({ title, pos, onClick, onHover, onDragStart, isSelected, isHighlig
   return (
     <div
       data-id={title.id}
-      className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}${isCurrent ? ' current' : ''}`}
+      className={`card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''} ${isCollDimmed ? 'coll-dim' : ''}${isRingHidden ? ' ring-hidden' : ''}${isRingFocus ? ' ring-focus' : ''} ${status === 'seen' ? 'seen' : ''} ${status === 'watchlist' ? 'listed' : ''} ${isDragging ? 'dragging' : ''}${isCurrent ? ' current' : ''}`}
       style={{
         '--phase-color': phaseColor,
         ...(isCurrent && curColor ? { '--cur-color': curColor } : {}),
-        transform: `translate3d(${pos.x}px, ${pos.y}px, 0) scale(var(--lift, 1))`,
+        // 2D on purpose: a 3D transform would give each of the 64 cards its own
+        // GPU layer, which phones cannot afford when zoomed far out.
+        transform: `translate(${pos.x}px, ${pos.y}px) scale(var(--lift, 1))`,
         width: CARD_W + 'px',
         height: CARD_H + 'px',
       }}
@@ -342,11 +344,9 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
               onMouseLeave={() => onCharacterHover(null)}
             >
               <div className="portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-                {window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch] ? (
-                  <img src={window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]} alt={I18N.charName(ch)} loading="lazy"/>
-                ) : (
-                  <span>{c.initials}</span>
-                )}
+                <window.Portrait
+                  url={window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch] ? (window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]) : null}
+                  alt={I18N.charName(ch)} initials={c.initials}/>
               </div>
               <div className="cast-text">
                 <div className="char-name"><window.Highlight text={I18N.charName(ch)} query={search}/></div>
@@ -816,6 +816,11 @@ function App() {
   const [view, setView] = useState({ x: 0, y: 0, scale: 1 });
   const [zoomEdit, setZoomEdit] = useState(null);
   const ZOOM_MIN = 0.05;
+  // Below this zoom the canvas is drawn at screen resolution instead of as one
+  // GPU layer. As a layer it is rasterized at full size, and zoomed far out the
+  // whole 12,000px-wide canvas is on screen at once: iOS Safari runs out of
+  // memory and reloads the tab when it is panned.
+  const LAYER_MIN_SCALE = 0.3;
 
   // Camera glide, for programmatic returns only (see the selection return
   // below). Manual pan and zoom must stay instant, so any pointer or wheel input
@@ -850,19 +855,19 @@ function App() {
   // search text (empty array if the title only matched on its own title text).
   // null when there's no active search.
   const searchCharMatches = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = I18N.fold(search.trim());
     if (!q) return null;
     const m = {};
     window.TITLES.forEach(t => {
       // Names in every language match, whichever language is showing.
       // Character-name matches come before actor-name ones, so "Sam" shows Sam
       // Wilson ahead of Nick Fury (Samuel L. Jackson) in the match badge.
-      const byName = c => I18N.charNames(c).some(n => n.toLowerCase().includes(q));
+      const byName = c => I18N.charNames(c).some(n => I18N.fold(n).includes(q));
       const chars = t.cast.filter(c => {
         const ch = window.CHARACTERS[c];
-        return ch && (byName(c) || ch.actor.toLowerCase().includes(q));
+        return ch && (byName(c) || I18N.fold(ch.actor).includes(q));
       }).sort((a, b) => byName(b) - byName(a));
-      if (I18N.titleNames(t).some(n => n.toLowerCase().includes(q)) || chars.length) m[t.id] = chars;
+      if (I18N.titleNames(t).some(n => I18N.fold(n).includes(q)) || chars.length) m[t.id] = chars;
     });
     return m;
   }, [search]);
@@ -934,6 +939,12 @@ function App() {
     });
     return set;
   }, [focusId, filtered]);
+
+  // While a title's rings are showing, only it and its connected titles stay
+  // on the canvas: the rest fade out in place (in the grids they would sit
+  // under the rings), and the lines are drawn among the ring's titles alone.
+  const ringIds = !pair && relatedIds && relatedIds.size > 1 ? relatedIds : null;
+  const lineTitles = useMemo(() => ringIds ? filtered.filter(t => ringIds.has(t.id)) : filtered, [filtered, ringIds]);
 
   // Hover-focus is separate: used only for dimming/labels, not reflow.
   const hoverFocusId = hoveredTitle || selectedId;
@@ -1458,7 +1469,7 @@ function App() {
       setView(v => ({ ...v, x: s.vx + dx, y: s.vy + dy }));
     }
   };
-  const onTouchEnd = () => {
+  const onTouchEnd = (e) => {
     const s = touchRef.current;
     touchRef.current = null;
     if (!s || s.mode !== 'pan' || s.moved) return;
@@ -1476,6 +1487,10 @@ function App() {
         return { x: mx - (mx - v.x) * r, y: my - (my - v.y) * r, scale: ns };
       });
     } else {
+      // Closing a title's rings brings the hidden cards straight back; the
+      // click the browser synthesizes after this tap would then land on
+      // whichever card is under the finger, so cancel it.
+      if (selectedIdRef.current && e && e.cancelable) e.preventDefault();
       setSelectedId(null);
       setPair(null);
     }
@@ -1709,7 +1724,7 @@ function App() {
     return (
       <div className={`char-banner${pinned ? ' pinned' : ''}`} style={{ '--char-color': c.color }}>
         <span className="cb-photo" style={{ background: c.color }}>
-          {photo ? <img src={photo} alt="" loading="lazy"/> : <span aria-hidden="true">{c.initials}</span>}
+          <window.Portrait url={photo} alt="" initials={c.initials}/>
         </span>
         <span className="cb-who">
           <b>{I18N.charName(activeChar)}</b>
@@ -1749,7 +1764,7 @@ function App() {
         <div className="cp-bar">
           <span className="cp-who">
             <span className="cb-photo" style={{ background: c.color }}>
-              {photo ? <img src={photo} alt="" loading="lazy"/> : <span aria-hidden="true">{c.initials}</span>}
+              <window.Portrait url={photo} alt="" initials={c.initials}/>
             </span>
             <span className="cp-text">
               <span className="cp-name">{I18N.charName(ch)}</span>
@@ -1798,11 +1813,17 @@ function App() {
       onTouchMove={isTouch ? onTouchMove : undefined}
       onTouchEnd={isTouch ? onTouchEnd : undefined}
       onClick={(e) => {
-        // A click on the background (not a drag) leaves the pair view.
-        if (!pair || isTouch) return;
+        // A click on the empty background (not a drag) steps back one level:
+        // out of the pair view, or else closes the selected title and its
+        // details, as a background tap does on phones. Cards, connection
+        // lines and the on-canvas controls keep their own clicks.
+        if (isTouch || (!pair && !selectedId && !drawerId)) return;
         const s = panRef.current;
-        if (e.target.closest('.card') || e.target.closest('path') || (s && Math.hypot(e.clientX - s.sx, e.clientY - s.sy) > 4)) return;
-        setPair(null);
+        if (e.target.closest('.card, path, button, input, a, .zoom-ctl, .ctx, .drawer, .toolbar, .spatial-empty')) return;
+        if (s && Math.hypot(e.clientX - s.sx, e.clientY - s.sy) > 4) return;
+        if (pair) { setPair(null); return; }
+        setSelectedId(null);
+        setDrawerId(null);
       }}
     >
       <div className="canvas-bg"/>
@@ -1811,7 +1832,9 @@ function App() {
         style={{
           width: canvasW + 'px',
           height: canvasH + 'px',
-          transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
+          transform: view.scale >= LAYER_MIN_SCALE
+            ? `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`
+            : `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
           transformOrigin: '0 0',
           transition: cameraGlide ? 'transform 600ms cubic-bezier(.2,.8,.2,1)' : undefined,
         }}
@@ -1827,7 +1850,7 @@ function App() {
           </div>
         ))}
         <FloatingConnections
-          visibleTitles={filtered}
+          visibleTitles={lineTitles}
           positions={positions}
           hoveredTitle={hoveredTitle}
           activeChar={activeChar}
@@ -1864,6 +1887,8 @@ function App() {
               isHighlighted={isHighlighted}
               isDimmed={isDimmed}
               isCollDimmed={isCollDimmed}
+              isRingHidden={!!ringIds && !ringIds.has(t.id)}
+              isRingFocus={!!ringIds && selectedId === t.id}
               isDragging={draggingId === t.id}
               isCurrent={!!highlightedChar && stepId === t.id}
               curColor={highlightedChar ? window.CHARACTERS[highlightedChar].color : null}
@@ -1886,6 +1911,27 @@ function App() {
               title={tr(isTouch ? 'canvas.zoomTypeTouch' : 'canvas.zoomTypeDesktop')}>{Math.round(view.scale * 100)}%</button>}
         <button className="zoom-btn" onClick={()=>applyScale(s=>s*1.15)} disabled={view.scale >= 2 - 1e-4} aria-label={tr('canvas.zoomIn')}>+</button>
       </div>
+      {filtered.length === 0 && (() => {
+        // Nothing matches: say so and offer the one action that brings titles
+        // back, instead of an empty canvas. Events stop here so the button
+        // never starts a pan or a background tap.
+        const searching = !!search.trim();
+        const filtering = phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all';
+        const label = searching && filtering ? tr('empty.clearBoth') : searching ? tr('search.clear') : tr('filters.clear');
+        const stop = e => e.stopPropagation();
+        return (
+          <div className="spatial-empty" role="status" onMouseDown={stop} onTouchStart={stop} onTouchEnd={stop} onClick={stop}>
+            <div className="spatial-empty-t">{tr('empty.title')}</div>
+            <div className="spatial-empty-s">{tr('empty.sub')}</div>
+            {(searching || filtering) && (
+              <button className="spatial-empty-btn" onClick={() => {
+                if (searching) setSearch('');
+                if (filtering) { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); }
+              }}>{label}</button>
+            )}
+          </div>
+        );
+      })()}
       {contextSummary(isTouch ? 'pill' : 'float')}
       {focusPop}
     </div>
@@ -1915,7 +1961,7 @@ function App() {
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
-              <window.SpatialHint focused={!!selectedId} sharedCount={sharedCharCount}/>
+              {filtered.length > 0 && <window.SpatialHint focused={!!selectedId} sharedCount={sharedCharCount}/>}
             </div>
           )}
           {charPill}

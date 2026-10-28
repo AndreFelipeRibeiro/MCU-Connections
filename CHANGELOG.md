@@ -12,6 +12,195 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — selected title drawn larger in the Spatial ring
+
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
+
+- On desktop, the title at the centre of an open connection ring is drawn 18%
+  larger (its existing lift scale), above its neighbours. Phones keep their
+  compact ring unchanged.
+- Verification: headless Chromium. Rings for Iron Man 2, Endgame and Shang-Chi:
+  1.18× with 17–22 px to the nearest card and no overlaps; phone sizes unchanged.
+  Screenshot checked; Spatial regression scripts pass.
+- Limits: a larger centre card on phones would need a wider phone ring.
+
+## V3 improvement — startup screen with failure recovery
+
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
+
+- `index.html` shows the brand, a spinner and a localized "Loading…" inside
+  `#root` until React's first render replaces it, instead of a blank page. New
+  `boot.js` (loaded first) turns it into "couldn't start" with Reload when a
+  script fails to load or startup errors, and into a "taking longer than usual"
+  note after 25 s. Locale files and `i18n.js` now load before the CDN scripts.
+- Verification: headless Chromium. Normal start in English and Portuguese; React
+  blocked and a tampered ReactDOM (SRI) both show the failure screen; a JSX
+  compile error in one file shows it only until the app renders; a held-back
+  Babel shows the slow note after a fast-forwarded 25 s. Image and font failures
+  never trigger it. All 14 regression scripts pass with this batch.
+- Limits: if even the locale files fail, the Reload button shows ↻ with an
+  English accessible name. Caching of HTML and scripts on Vercel is unchanged.
+
+## V3 improvement — click empty canvas to close a desktop selection
+
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
+
+- In desktop Spatial a click on empty background (not a drag) now steps back one
+  level: out of the pair view, or else closes the selected title and its
+  details, as a background tap does on phones. Cards, lines and on-canvas
+  controls keep their own clicks.
+- Verification: headless Chromium, 1440×900. A drag keeps the selection; a click
+  closes it and the drawer and returns the camera to its exact earlier position;
+  a connection line still opens the pair view, which a background click leaves
+  (a second click closes the drawer); clicking another card switches the
+  selection. No console errors.
+- Limits: not checked on a trackpad or touch laptop.
+
+## V3 fix — Spatial explains an empty result
+
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
+
+- When a search or filter leaves no titles, Spatial (desktop and phone) shows
+  "No titles match" with one button that clears the search, the filters or both,
+  instead of a blank canvas. The phone's "Tap a title" hint hides meanwhile. New
+  key `empty.clearBoth` in both languages; collection dimming is unchanged.
+- Verification: headless Chromium. Desktop "zzzz" → "Clear search" restores 64
+  titles; Phase 1 + "Endgame" → "Clear search and filters" restores 64; phone in
+  Portuguese shows "Limpar busca" centred and hides the hint. Screenshots checked;
+  no console errors.
+- Limits: not checked on a physical phone.
+
+## V3 fix — search matches with or without accents
+
+Recorded: 2026-10-27 22:20 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
+
+- One shared `MCU_I18N.fold()` (case and accents removed) now drives the search
+  filter behind Spatial, List and Grid, the suggestions and the highlights. Before,
+  suggestions ignored accents but the filter did not, so "Capitao" suggested
+  Captain America titles and then showed none. Highlights map folded matches back
+  to the original text, so "capitao" marks "Capitão".
+- Verification: headless Chromium, desktop Spatial and List, phone List and Grid,
+  English and Portuguese. "Capitao" 0 → 4 results (4 suggestions), "capitao
+  america" 0 → 4, "Viuva" 0 → 1; accented queries, actors and character names
+  unchanged. No console errors; regression scripts pass.
+- Limits: punctuation still matters ("homem formiga" without the hyphen finds
+  nothing, in suggestions and results alike).
+
+## V3 improvement — production React and ReactDOM builds
+
+Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
+
+- `index.html` loads the production UMD builds of React and ReactDOM 18.3.1
+  instead of the development builds, with the same pinned version,
+  `crossorigin` and new SRI hashes computed from the npm package files (the
+  same method reproduces the old development hashes exactly). No npm, bundler
+  or precompile step.
+- Verification: headless Chromium, which enforces the SRI on every load.
+  About 214 KB less to download (gzipped). First title on screen locally:
+  desktop 3.5–4.1 s → 3.3–4.0 s; slowed-phone runs too noisy to show a
+  difference. Spatial panning with the CPU slowed 4×: 16–17 → 24–31 fps at the
+  default zoom and 13 → 28–29 fps fully zoomed out. All 14 regression scripts
+  pass on the four changes together; `test-camera` logs one desktop
+  passive-listener warning that the unchanged base logs too.
+- Limits: React's development warnings no longer appear in the console on the
+  live site. Not measured on a real network or device.
+
+## V3 fix — fallbacks for posters and cast photos that fail to load
+
+Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
+
+- A poster that fails to load now shows the generated poster art instead of a
+  broken image with spilling alt text. A cast photo that fails shows the
+  character's initials, in the desktop details, phone details and character
+  pills (new shared `window.Portrait`; the desktop List already had this).
+  Failed addresses are remembered for the session, so they are not requested
+  again when a card or sheet comes back.
+- Verification: headless Chromium, desktop and phone. With images blocked,
+  16 broken posters on desktop and 31 on the phone became generated art (0
+  broken), and all 5 portraits in details showed initials without overflow.
+  With images served, all posters and portraits render as images. Reopening
+  details makes no new requests for failed images. Regression scripts pass.
+- Limits: an image that fails while briefly offline stays on the fallback until
+  the page is reloaded. The Google account avatar is unchanged.
+
+## V3 fix — browser Back closes phone sheets
+
+Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to
+main (production) after user approval, 2026-10-27 22:21 EDT.
+
+- Back now closes the open phone sheet (details, Filters, Account, About, the
+  welcome sheet and the sign-in reminder) instead of leaving the app. Each sheet
+  owns one history entry (`pushState`/`popstate`, no router). Closing a sheet
+  any other way steps back over its entry, a sheet that hands off to another
+  (Account → About) reuses it, and an entry left by Forward or a reload is
+  reused rather than duplicated.
+- Verification: headless Chromium, phone viewport. Details → Back closes it
+  and stays in the app; Forward reopens nothing; five open/close cycles leave
+  history length unchanged; Escape and Back both close Filters cleanly; Account
+  → About → Back closes About, and the next Back leaves the app; Back closes the
+  first-visit welcome sheet; desktop adds no history entries. Regression
+  scripts pass.
+- Limits: not tried on a physical phone or with the system swipe-back gesture;
+  the Google sign-in return was not exercised end to end. Desktop dialogs and
+  the details drawer are unchanged.
+
+## V3 fix — zoomed-out Spatial no longer exhausts phone memory
+
+Recorded: 2026-10-27 21:28 EDT (-0400). Pushed to `version/3.0` (staging) for
+testing on a phone; merged to main (production) after user approval,
+2026-10-27 22:21 EDT.
+
+- Phones could reload or crash when panning Spatial zoomed out to about 5–10%.
+  It was graphics memory, not a script error: the whole canvas was one GPU
+  layer (12,687×2,595 at full size) and every card, badge and seen-title wash
+  had its own layer as well, all on screen at once when zoomed out.
+- Cards are now positioned with a 2D transform and no `will-change`; the canvas
+  keeps its GPU layer only at 30% zoom and above (`LAYER_MIN_SCALE`) and below
+  that is drawn at screen resolution. Spatial cards no longer use backdrop
+  blur (the badges are opaque enough), and the seen wash desaturates the poster
+  itself instead of using a backdrop filter.
+- Verification: headless Chromium, 390×844 at 3× pixel density. At minimum zoom
+  223 compositor layers covering about 37 million pixels became 6 layers
+  covering 0.4 million; at the default zoom 340 became 8. Desktop Spatial
+  screenshots differ in 0.07% of pixels (anti-aliasing). Pan frame rate with
+  the CPU slowed 4× is unchanged at the default zoom and lower when fully zoomed
+  out with development React (23 → 17 fps). Regression scripts pass; two that
+  parsed `translate3d(` now accept both forms.
+- Limits: iOS Safari could not be run here, so the crash itself was not
+  reproduced; confirmation is pending on a real phone. Below 30% zoom each pan
+  frame is redrawn rather than moved as a cached layer.
+
+## V3 fix — Spatial rings hide unrelated cards
+
+Recorded: 2026-10-26 22:01:32 EDT (-0400).
+
+- While a selected title's rings are showing in Spatial, unrelated cards fade
+  out in place (no clicks, no tab stop) instead of staying dimmed under the
+  ring, which was most visible in the A–Z and Phase grids. They fade back when
+  the selection closes; nothing reflows. Lines are drawn among the ring's
+  titles only, so none lead to a hidden card. The pair view and a title with no
+  connections are unchanged.
+- Phones: closing the rings by tapping the background no longer lets the
+  browser's follow-up click select the card that reappears under the finger.
+- Verification: headless Chromium.
+  - Desktop A–Z with Black Panther: Wakanda Forever: 7 visible cards, 57
+    hidden, no overlaps, no lines to hidden cards, all 64 back after closing.
+  - Desktop Release with Iron Man 2: 24 visible, no orphan lines.
+  - Phone A–Z: same result; a tap on empty space over a hidden card closes the
+    selection without selecting anything.
+  - No console errors; regression scripts and the label test pass.
+  - Screenshot reviewed by the user, who approved committing and merging to
+    main.
+- Limits: an unrelated title can't be clicked while the rings are showing
+  (close the selection first). Not checked on a physical phone.
+
 ## V3 feature — guest sign-in reminder
 
 Recorded: 2026-10-26 21:39:35 EDT (-0400).

@@ -190,12 +190,28 @@ function SortTabs({ sort, setSort }) {
 function Highlight({ text, query }) {
   if (text == null) return null;
   const str = String(text);
-  const q = query && query.trim();
+  const q = query ? MI18N.fold(query.trim()) : '';
   if (!q) return str;
-  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const parts = str.split(new RegExp(`(${escaped})`, 'ig'));
-  if (parts.length === 1) return str;
-  return parts.map((part, i) => i % 2 === 1 ? <mark key={i} className="hl">{part}</mark> : part);
+  // Fold one character at a time (case and accents, as the search does) and
+  // remember where each folded character came from, so "capitao" marks the
+  // "Capitão" it matched.
+  let folded = '';
+  const from = [];
+  for (let i = 0; i < str.length; i++) {
+    for (const ch of MI18N.fold(str[i])) { folded += ch; from.push(i); }
+  }
+  const out = [];
+  let last = 0, at = folded.indexOf(q);
+  while (at >= 0) {
+    const start = from[at], end = from[at + q.length - 1] + 1;
+    if (start > last) out.push(str.slice(last, start));
+    out.push(<mark key={start} className="hl">{str.slice(start, end)}</mark>);
+    last = end;
+    at = folded.indexOf(q, at + q.length);
+  }
+  if (!out.length) return str;
+  if (last < str.length) out.push(str.slice(last));
+  return out;
 }
 
 // Synopsis for the details drawer (desktop) and sheet (mobile). Clamped to
@@ -235,7 +251,7 @@ function MatchBadge({ matchedChars, query }) {
   return (
     <div className="card-match" style={{'--match-color': c.color}} title={matchedChars.map(mid => MI18N.charName(mid)).join(', ')}>
       <div className="card-match-portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-        {portrait ? <img src={portrait} alt={MI18N.charName(id)} loading="lazy"/> : <span>{c.initials}</span>}
+        <window.Portrait url={portrait} alt={MI18N.charName(id)} initials={c.initials}/>
       </div>
       <div className="card-match-text">
         <div className="card-match-char"><Highlight text={MI18N.charName(id)} query={query}/>{matchedChars.length > 1 ? ` +${matchedChars.length - 1}` : ''}</div>
@@ -764,6 +780,57 @@ function EmptyState({ title, sub, mark }) {
   );
 }
 
+// Browser Back closes the open sheet instead of leaving the app. Each sheet
+// owns one history entry: opening adds it (or takes over the entry of a sheet
+// that is handing off to it, such as Account → About), Back removes it and
+// closes the sheet, and closing any other way (×, scrim, swipe, Escape) steps
+// back over it so no stale entries pile up. A sheet entry left in history by
+// Forward or a reload is reused by the next sheet rather than duplicated.
+const sheetHistory = (() => {
+  let active = null;      // { token, onBack } for the sheet that owns the entry
+  let ignorePops = 0;     // pops caused by our own history.back()
+  let seq = 0;
+  const isSheetEntry = (st) => !!(st && st.mcuSheet);
+  window.addEventListener('popstate', (e) => {
+    if (ignorePops > 0) {
+      ignorePops--;
+      // A sheet opened while our own step back was still in flight: give it
+      // its entry again so the next Back closes it rather than leaving.
+      if (active && !(e.state && e.state.mcuSheet === active.token)) {
+        try { history.pushState({ ...(history.state || {}), mcuSheet: active.token }, ''); } catch (err) {}
+      }
+      return;
+    }
+    if (active && !(e.state && e.state.mcuSheet === active.token)) {
+      const { onBack } = active;
+      active = null;
+      onBack();
+    }
+  });
+  return {
+    open(onBack) {
+      const token = 's' + (++seq) + '-' + Date.now();
+      const st = { ...(history.state || {}), mcuSheet: token };
+      try {
+        if (isSheetEntry(history.state)) history.replaceState(st, '');
+        else history.pushState(st, '');
+      } catch (e) { return null; }
+      active = { token, onBack };
+      return token;
+    },
+    close(token) {
+      if (!token || !active || active.token !== token) return;
+      active = null;
+      // Wait a tick: a sheet opening in the same render takes over the entry.
+      setTimeout(() => {
+        if (active || !history.state || history.state.mcuSheet !== token) return;
+        ignorePops++;
+        history.back();
+      }, 0);
+    },
+  };
+})();
+
 function Sheet({ children, onClose, tall, label }) {
   const ref = React.useRef(null);
   const closeRef = React.useRef(onClose);
@@ -794,7 +861,9 @@ function Sheet({ children, onClose, tall, label }) {
       }
     };
     document.addEventListener('keydown', keys);
+    const entry = sheetHistory.open(() => closeRef.current());
     return () => {
+      sheetHistory.close(entry);
       document.removeEventListener('keydown', keys);
       previous.forEach(([el, inert]) => { el.inert = inert; });
       document.body.style.overflow = overflow;
@@ -944,9 +1013,9 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, onGoSpatial, 
           return (
             <button key={ch} className={`m-crow${activeChar===ch?' on':''}`} style={{'--match-color': c.color}} onClick={()=>onCharacterClick(ch)}>
               <div className="m-port" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-                {window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch]
-                  ? <img src={window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]} alt={MI18N.charName(ch)} loading="lazy"/>
-                  : <span>{c.initials}</span>}
+                <window.Portrait
+                  url={window.MEDIA && window.MEDIA.actors && window.MEDIA.actors[ch] ? (window.mediaURL ? window.mediaURL('a', ch, window.MEDIA.profile_base + window.MEDIA.actors[ch]) : window.MEDIA.profile_base + window.MEDIA.actors[ch]) : null}
+                  alt={MI18N.charName(ch)} initials={c.initials}/>
               </div>
               <div className="m-ctext">
                 <div className="m-cn"><Highlight text={MI18N.charName(ch)} query={search}/></div>

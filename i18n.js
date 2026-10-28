@@ -149,10 +149,15 @@
     return codes().map((code) => ({ code, name: meta(code).name || code, short: meta(code).short || code }));
   }
 
+  // Search text without case or accents, so "Capitao" finds "Capitão" and the
+  // other way round. Every search path (suggestions, the filter, highlights)
+  // uses this one function so they always agree.
+  const fold = (value) => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
   const api = {
     get lang() { return lang; },
     setLang, tr, titleName, titleNames, charName, charNames, storyLabel, storyNote, synopsis,
-    budget, upper, compare, languages, detect,
+    budget, upper, compare, languages, detect, fold,
   };
 
   const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
@@ -166,4 +171,6 @@
   apply();
   window.MCU_I18N = api;
   window.useI18n = useI18n;
+  // The startup screen (boot.js) can show its words now.
+  if (window.MCU_BOOT) window.MCU_BOOT.refresh();
 })();

@@ -54,8 +54,12 @@ body {
 .canvas {
   position: absolute; top: 0; left: 0;
   transition: none;
-  will-change: transform;
 }
+/* Nothing inside the Spatial canvas may ask for its own GPU layer: zoomed far
+   out every card is on screen, and per-card layers (backdrop blur on badges and
+   the seen wash) exhaust phone graphics memory. The badges are opaque enough
+   to read without the blur. */
+.canvas .card *, .canvas .card *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .zoom-readout {
   position: absolute; bottom: 16px; right: 16px;
   font-family: 'JetBrains Mono', monospace; font-size: 11px;
@@ -175,9 +179,8 @@ body {
   position: absolute; top: 0; left: 0; z-index: 10;
   background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   overflow: hidden; cursor: grab;
-  transition: transform 600ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms, border-color 220ms, opacity 220ms, filter 220ms;
+  transition: transform 600ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms, border-color 220ms, opacity 220ms, filter 220ms, visibility 0s;
   display: flex; flex-direction: column;
-  will-change: transform;
 }
 .card.dragging {
   cursor: grabbing;
@@ -476,14 +479,18 @@ body {
 .card.seen .card-poster::after {
   content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: rgba(10,12,20,0.34);
-  -webkit-backdrop-filter: saturate(0.35);
-  backdrop-filter: saturate(0.35);
 }
+/* Desaturate the art itself (a backdrop filter here cost a GPU layer per card). */
+.card.seen .card-poster > :first-child { filter: saturate(0.35); }
 .card.seen .card-meta { opacity: 0.82; }
 .card.listed { border-color: color-mix(in oklab, #d4a05a 45%, var(--border)); }
 
 /* Collection dimming — visual only, never removes a card from the layout. */
 .card.coll-dim { opacity: 0.26; filter: saturate(0.3); }
+/* A title's rings are showing: unrelated cards fade out where they are (no
+   clicks, no tab stop) and come back when the selection closes. */
+.card.ring-hidden { opacity: 0; visibility: hidden; pointer-events: none;
+  transition: transform 600ms cubic-bezier(.2,.8,.2,1), opacity 200ms, filter 200ms, visibility 0s 200ms; }
 
 .drawer-tsa { margin-top: 12px; }
 
@@ -801,6 +808,10 @@ body {
 }
 .canvas:has(.card.current) .card.highlighted:not(.current):not(:hover) { filter: brightness(.72) saturate(.8); box-shadow: none; border-color: var(--border); }
 @media (prefers-reduced-motion: reduce) { .card.current { --lift: 1; } }
+/* The title at the centre of its connection ring is drawn larger, so the eye
+   lands on it first. Scales about its centre; the desktop ring leaves room for
+   it. Phones keep their compact ring (already touching its neighbours) as is. */
+.app:not(.touch) .card.ring-focus { --lift: 1.18; z-index: 27; }
 
 /* Keep the zoom control clear of the open details drawer (desktop Spatial). */
 .app:not(.touch).drawer-open .zoom-ctl { right: 396px; }
@@ -947,3 +958,24 @@ body {
 /* Line tooltip: the two titles the hovered line joins. */
 .tt-titles { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text); max-width: 280px; }
 .tt-titles span { color: var(--text-muted); font-weight: 400; }
+
+/* Spatial with no matching titles: a centred note with one way back. */
+.spatial-empty { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 30; width: max-content; max-width: min(360px, calc(100% - 32px)); box-sizing: border-box; padding: 22px 24px; text-align: center; background: rgba(16,19,30,.94); border: 1px solid var(--border); border-radius: 12px; }
+.spatial-empty-t { font-size: 15px; font-weight: 600; color: var(--text); }
+.spatial-empty-s { margin-top: 6px; font-size: 13px; line-height: 1.4; color: var(--text-dim); }
+.spatial-empty-btn { margin-top: 14px; min-height: 36px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.spatial-empty-btn:hover { border-color: var(--accent); }
+.spatial-empty-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Startup screen (index.html, boot.js): replaced by the app's first render. */
+.boot { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; box-sizing: border-box; text-align: center; }
+.boot-mark { width: 48px; height: 48px; border-radius: 10px; position: relative; background: conic-gradient(from 45deg, #d4a05a, #4a8de8, #d04040, #a05cd0, #5fa856, #d4a05a); }
+.boot-mark::after { content: ''; position: absolute; inset: 9px; border-radius: 5px; background: var(--bg); }
+.boot-spinner { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-strong); border-top-color: var(--text-dim); animation: boot-spin 0.9s linear infinite; }
+.boot[data-state="failed"] .boot-spinner { display: none; }
+.boot-msg { margin: 0; max-width: 320px; min-height: 1.4em; font-size: 14px; line-height: 1.45; color: var(--text-dim); }
+.boot-reload { min-height: 40px; padding: 0 18px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.boot-reload:hover { border-color: var(--accent); }
+.boot-reload:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@keyframes boot-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .boot-spinner { animation-duration: 2.4s; } }

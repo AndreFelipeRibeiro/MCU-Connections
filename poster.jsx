@@ -25,21 +25,39 @@ function lighten(hex, amt) {
   return `rgb(${r},${g},${b})`;
 }
 
-// 6 abstract poster styles, picked deterministically per title
+// Image addresses that failed to load this session. Shared, so a card that
+// scrolls away and back (or a remount) shows the fallback at once instead of
+// trying the broken address again.
+const failedImages = new Set();
+function useImageFallback(url) {
+  const [failed, setFailed] = React.useState(() => !!url && failedImages.has(url));
+  React.useEffect(() => { setFailed(!!url && failedImages.has(url)); }, [url]);
+  const onError = React.useCallback(() => { if (url) failedImages.add(url); setFailed(true); }, [url]);
+  return [failed, onError];
+}
+
+// A real poster when media metadata has one and it loads; otherwise (no
+// address, or the image fails) the generated art below.
 function PosterArt({ title }) {
-  // If media metadata loaded and we have a real poster URL, render an image
   const media = window.MEDIA;
   const local = media && media.local_posters && media.local_posters[title.id];
   const path = media && media.posters && media.posters[title.id];
-  if (local || path) {
-    const url = window.mediaURL ? window.mediaURL('p', title.id, local || (media.poster_base + path)) : (local || (media.poster_base + path));
+  const url = (local || path)
+    ? (window.mediaURL ? window.mediaURL('p', title.id, local || (media.poster_base + path)) : (local || (media.poster_base + path)))
+    : null;
+  const [failed, onError] = useImageFallback(url);
+  if (url && !failed) {
     return (
       <div className="poster-image-wrap" style={{width:'100%', height:'100%', position:'relative', background:'#0a0c14'}}>
-        <img src={url} alt={window.MCU_I18N.titleName(title)} loading="lazy" style={{width:'100%', height:'100%', objectFit:'cover', display:'block'}}/>
+        <img src={url} alt={window.MCU_I18N.titleName(title)} loading="lazy" onError={onError} style={{width:'100%', height:'100%', objectFit:'cover', display:'block'}}/>
       </div>
     );
   }
-  // Fallback to abstract generated art
+  return <GeneratedPoster title={title}/>;
+}
+
+// 6 abstract poster styles, picked deterministically per title
+function GeneratedPoster({ title }) {
   const h = hashCode(title.id);
   const variant = h % 6;
   const accent = title.accent;
@@ -145,4 +163,14 @@ function PosterArt({ title }) {
   );
 }
 
+// A cast portrait: the photo, or the character's initials if there is none
+// or it fails to load. The surrounding row already names the character.
+function Portrait({ url, alt, initials }) {
+  const [failed, onError] = useImageFallback(url);
+  return url && !failed
+    ? <img src={url} alt={alt} loading="lazy" onError={onError}/>
+    : <span aria-hidden="true">{initials}</span>;
+}
+
 window.PosterArt = PosterArt;
+window.Portrait = Portrait;
