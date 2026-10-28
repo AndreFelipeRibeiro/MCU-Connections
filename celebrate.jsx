@@ -163,21 +163,31 @@ function SignInNudge({ touch }) {
   accountRef.current = account;
   const [pending, setPending] = React.useState(null);
   const [open, setOpen] = React.useState(null);
+  // What is saved right now. The reminder waits before it shows, and the
+  // toast's Undo puts the status back by calling setStatus directly, without
+  // going through the status-change event, so the collection itself is the only
+  // thing that can say whether the reminder is still warranted when it is due.
+  const { states } = window.useCollection();
+  const statesRef = React.useRef(states);
+  statesRef.current = states;
+  const markedNow = () => Object.values(statesRef.current || {}).filter(v => v && v !== 'none').length;
 
   React.useEffect(() => window.onStatusChange((e) => {
     if (e.to === 'none') return;
+    // The event carries the marks as of this tap; the provider's state has not
+    // re-rendered yet, so it cannot be used to decide the threshold here.
+    const after = Object.assign({}, e.states, { [e.title.id]: e.to });
+    const n = Object.values(after).filter(v => v && v !== 'none').length;
     const a = accountRef.current;
     if (a.status !== 'signed_out' || !a.syncAvailable) return;
     const stage = nudgeStage();
     if (stage >= NUDGE_AT.length) return;
-    const after = Object.assign({}, e.states, { [e.title.id]: e.to });
-    const n = Object.values(after).filter(v => v && v !== 'none').length;
     if (n < NUDGE_AT[stage]) return;
     // Remember it now, so a reload or a quick second tap doesn't repeat it.
     let next = stage;
     while (next < NUDGE_AT.length && n >= NUDGE_AT[next]) next += 1;
     try { window.localStorage.setItem(NUDGE_KEY, String(next)); } catch (err) { /* shown once this visit */ }
-    setPending({ n });
+    setPending({ at: NUDGE_AT[stage], stage });
   }), []);
 
   // A moment after the tap, so the button's pop and the toast come first, and
@@ -188,7 +198,15 @@ function SignInNudge({ touch }) {
     const check = () => {
       if (document.querySelector('.m-sheet, .about-dialog, .mcu-confetti')) { timer = setTimeout(check, 700); return; }
       if (accountRef.current.status !== 'signed_out') { setPending(null); return; }
-      setOpen(pending);
+      // Undone back under the threshold during the wait: drop the reminder and
+      // hand its stage back, rather than opening with a count that no longer
+      // matches the collection.
+      if (markedNow() < pending.at) {
+        try { window.localStorage.setItem(NUDGE_KEY, String(pending.stage)); } catch (err) { /* stage stands for this visit */ }
+        setPending(null);
+        return;
+      }
+      setOpen({ n: markedNow() });
       setPending(null);
     };
     timer = setTimeout(check, 1400);
