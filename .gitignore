@@ -29,3 +29,7 @@ qa/shots/
 # A check run from the repository root (as qa/README.md says to) resolves its
 # screenshot path to ./shots/ rather than qa/shots/.
 /shots/
+
+
+# Editor swap files (an open vim session leaves .<name>.swp beside the file).
+*.swp
