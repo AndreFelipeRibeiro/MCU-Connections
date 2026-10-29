@@ -835,8 +835,8 @@ body {
 .ctx-float.ctx-static { position: static; max-width: none; margin: 0 0 6px; }
 .dl-table { max-width: 1480px; margin: 0 auto; font-size: 13px; color: var(--text-dim); }
 .dl-row { display: grid; align-items: center; gap: 14px; padding: 0 12px;
-  grid-template-columns: 44px minmax(200px, 2.4fr) 64px 56px 74px minmax(96px, 1fr) 76px 76px 64px 132px 84px; }
-.ranked .dl-row { grid-template-columns: 28px 44px minmax(200px, 2.4fr) 64px 56px 74px minmax(96px, 1fr) 76px 76px 64px 132px 84px; }
+  grid-template-columns: 28px 44px minmax(200px, 2.4fr) 64px 56px 74px minmax(96px, 1fr) 76px 76px 64px 132px 84px; }
+.ranked .dl-row { grid-template-columns: 28px 28px 44px minmax(200px, 2.4fr) 64px 56px 74px minmax(96px, 1fr) 76px 76px 64px 132px 84px; }
 .dl-head { position: sticky; top: -14px; z-index: 5; height: 38px; background: var(--bg); border-bottom: 1px solid var(--border);
   font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
 .dl-h button { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 6px; margin-left: -6px; border: 0; border-radius: 6px;
@@ -876,18 +876,18 @@ body {
    details drawer still shows all of them. */
 .dlist { container-type: inline-size; }
 @container (max-width: 1179px) {
-  .dl-row { grid-template-columns: 44px minmax(180px, 2.4fr) 64px 56px 74px minmax(96px, 1fr) 76px 64px 84px; }
-  .ranked .dl-row { grid-template-columns: 28px 44px minmax(180px, 2.4fr) 64px 56px 74px minmax(96px, 1fr) 76px 64px 84px; }
+  .dl-row { grid-template-columns: 28px 44px minmax(180px, 2.4fr) 64px 56px 74px minmax(96px, 1fr) 76px 64px 84px; }
+  .ranked .dl-row { grid-template-columns: 28px 28px 44px minmax(180px, 2.4fr) 64px 56px 74px minmax(96px, 1fr) 76px 64px 84px; }
   .dl-row .c-budget, .dl-row .c-cast { display: none; }
 }
 @container (max-width: 919px) {
-  .dl-row { grid-template-columns: 44px minmax(160px, 1fr) 56px 74px 76px 64px 84px; }
-  .ranked .dl-row { grid-template-columns: 28px 44px minmax(160px, 1fr) 56px 74px 76px 64px 84px; }
+  .dl-row { grid-template-columns: 28px 44px minmax(160px, 1fr) 56px 74px 76px 64px 84px; }
+  .ranked .dl-row { grid-template-columns: 28px 28px 44px minmax(160px, 1fr) 56px 74px 76px 64px 84px; }
   .dl-row .c-type, .dl-row .c-story { display: none; }
 }
 @container (max-width: 709px) {
-  .dl-row { grid-template-columns: 44px minmax(140px, 1fr) 74px 76px 64px 84px; gap: 10px; }
-  .ranked .dl-row { grid-template-columns: 24px 44px minmax(140px, 1fr) 74px 76px 64px 84px; gap: 10px; }
+  .dl-row { grid-template-columns: 28px 44px minmax(140px, 1fr) 74px 76px 64px 84px; gap: 10px; }
+  .ranked .dl-row { grid-template-columns: 28px 24px 44px minmax(140px, 1fr) 74px 76px 64px 84px; gap: 10px; }
   .dl-row .c-phase { display: none; }
 }
 @media (max-width: 1099px) { .tb-view-switch .vl { display: none; } }
@@ -1208,3 +1208,43 @@ body {
    the search-match badge does, so it starts flush with the title's text. */
 .c-title .release-badge.dl-release { display: flex; width: max-content; margin: 5px 0 0; }
 
+/* Bulk selection in the desktop List (desktop-list.jsx). The checkbox column
+   is the first column at every width; the bar floats over the bottom of the
+   List, clear of the details drawer, and leaves before the toast arrives. */
+.c-check { display: flex; align-items: center; justify-content: center; }
+.dl-check { width: 16px; height: 16px; margin: 0; cursor: pointer; accent-color: var(--accent); }
+.dl-check:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bulk-bar {
+  position: fixed; z-index: 70; left: 50%; bottom: 22px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px;
+  border: 1px solid var(--border-strong); border-radius: 14px; background: rgba(20,23,35,.97);
+  box-shadow: 0 16px 40px rgba(0,0,0,.55); font-size: 13px; color: var(--text);
+  animation: toast-in 220ms cubic-bezier(.2,.9,.3,1.2);
+}
+@media (min-width: 1280px) { .app.drawer-open .bulk-bar { left: calc((100% - 402px) / 2); } }
+.bulk-count { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-dim); margin-right: 6px; white-space: nowrap; }
+.bulk-btn {
+  display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text);
+  font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer;
+}
+.bulk-btn:hover:not(:disabled) { border-color: var(--text-muted); }
+.bulk-btn.primary { background: #5fa856; border-color: #5fa856; color: #0a0c14; font-weight: 600; }
+.bulk-btn.ghost { background: transparent; border-color: transparent; color: var(--text-dim); }
+.bulk-btn.icon { width: 32px; padding: 0; justify-content: center; font-size: 16px; }
+.bulk-btn:disabled { opacity: .45; cursor: default; }
+.bulk-btn:focus-visible, .bulk-more-pop button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bulk-n { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,.22); }
+.bulk-btn:not(.primary) .bulk-n { background: var(--border); }
+.bulk-more { position: relative; }
+.bulk-more-pop {
+  position: absolute; bottom: calc(100% + 8px); right: 0; min-width: 200px; padding: 6px;
+  border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 12px 30px rgba(0,0,0,.5);
+}
+.bulk-more-pop button {
+  display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px;
+  border: 0; border-radius: 7px; background: transparent; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; text-align: left;
+}
+.bulk-more-pop button:hover:not(:disabled) { background: var(--surface-2); }
+.bulk-more-pop button:disabled { opacity: .45; cursor: default; }
+.mcu-toast.none .mt-ic { background: var(--border-strong); color: var(--text); }

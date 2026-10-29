@@ -2191,7 +2191,7 @@ function App() {
       if (e.key !== 'Escape' || e.defaultPrevented || pair) return;
       const t = e.target instanceof Element ? e.target : null;
       if (t && t.closest('input, textarea, select, [contenteditable="true"]')) return;
-      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .m-sheet, [role="dialog"], [aria-modal="true"]')) return;
+      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .bulk-more-pop, .m-sheet, [role="dialog"], [aria-modal="true"]')) return;
       if (detailsOpen) { setSelectedId(null); setDrawerId(null); return; }
       unpinCharacter();
     };
@@ -2537,6 +2537,7 @@ function App() {
         {sheet === 'about' && <window.AboutSheet onClose={() => setSheet(null)}/>}
         <window.StatusToast touch/>
         <window.SignInNudge touch/>
+        <window.BulkConfirm touch/>
         {welcome && !sheet && !drawerTitle && <window.AboutSheet welcome onClose={() => setWelcome(false)}/>}
         {drawerTitle && (
           <window.CastSheet
@@ -2614,6 +2615,7 @@ function App() {
       />
       <window.StatusToast touch={false}/>
       <window.SignInNudge touch={false}/>
+      <window.BulkConfirm touch={false}/>
       {(aboutOpen || welcome) && <window.AboutDialog welcome={welcome && !aboutOpen}
         onClose={() => { setAboutOpen(false); setWelcome(false); }}/>}
     </div>

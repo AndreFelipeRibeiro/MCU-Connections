@@ -164,6 +164,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
   seen moves it to seen; un-seeing returns it to untracked.
+- Marking many at once. In the desktop List, tick rows (Shift-click for a
+  range, the header box for everything shown) and use the bar that appears:
+  Mark as seen, Add to Watchlist, or Mark as unseen under More. On phones, each
+  section header offers "Mark all seen" or "Mark 4 more seen" (each phase in By
+  Phase, All titles in every other order). Unreleased titles are never marked
+  seen in bulk, anything over 20 titles (and any Mark as unseen) asks first, and
+  the toast's Undo puts every title back as it was, a replaced watchlist
+  included. Escape clears the selection before it closes the details.
 - Guest tracking saved in this browser; Google sign-in merges those marks and
   syncs the collection across devices. Merge precedence is seen > watchlist > none.
   A signed-out guest (when sign-in is available) is reminded once, right after

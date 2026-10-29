@@ -89,12 +89,101 @@ function DlSortHeader({ col, label, sort, sortDir, setSort, setSortDir }) {
   );
 }
 
+// The bulk bar's "More" menu. Escape and a click outside close it; Escape is
+// stopped here so the same press does not also clear the selection or close
+// the details (one layer per press).
+function BulkMore({ open, setOpen, label, children }) {
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return undefined;
+    const down = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', down);
+    return () => document.removeEventListener('mousedown', down);
+  }, [open]);
+  return (
+    <div className="bulk-more" ref={ref}
+      onKeyDown={e => { if (e.key === 'Escape' && open) { e.preventDefault(); e.stopPropagation(); setOpen(false); } }}>
+      <button className="bulk-btn icon" aria-haspopup="menu" aria-expanded={open} aria-label={label} title={label}
+        onClick={() => setOpen(!open)}>⋯</button>
+      {open && <div className="bulk-more-pop" role="menu">{children}</div>}
+    </div>
+  );
+}
+
 function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, activeChars, header, empty, orderKey, progress }) {
   const I = window.MCU_I18N;
   const tr = I.tr;
-  const { statusOf } = window.useCollection();
+  const { statusOf, states, requestBulk } = window.useCollection();
   const PosterArt = window.PosterArt;
   const ranked = sort === 'imdb' || sort === 'rt';
+
+  // ---- Selection for bulk actions --------------------------------------
+  // Ids of selected rows. Only rows on screen can be selected, so the set is
+  // trimmed whenever the shown titles change (a filter, search or tab hides
+  // some): an action never reaches a title the visitor cannot see.
+  const [selected, setSelected] = React.useState(() => new Set());
+  const anchorRef = React.useRef(null);     // last row clicked, for Shift-click ranges
+  const shownIds = titles.map(t => t.id);
+  const shownKey = shownIds.join(',');
+  React.useEffect(() => {
+    setSelected(prev => {
+      if (!prev.size) return prev;
+      const keep = new Set(shownIds.filter(id => prev.has(id)));
+      return keep.size === prev.size ? prev : keep;
+    });
+  }, [shownKey]);
+  const toggleRow = (id, e) => {
+    // Read the anchor and the modifier now: the updater below runs later,
+    // after the anchor has already moved to this row, so reading it in there
+    // compared the row with itself and a Shift-click never made a range.
+    const a = anchorRef.current;
+    const range = !!(e && e.shiftKey);
+    setSelected(prev => {
+      const next = new Set(prev);
+      const on = !prev.has(id);
+      if (range && a && a !== id && shownIds.indexOf(a) !== -1) {
+        // Shift-click sets the whole range to the state of the clicked row.
+        const i = shownIds.indexOf(a), j = shownIds.indexOf(id);
+        shownIds.slice(Math.min(i, j), Math.max(i, j) + 1).forEach(x => { if (on) next.add(x); else next.delete(x); });
+      } else if (on) next.add(id); else next.delete(id);
+      return next;
+    });
+    anchorRef.current = id;
+  };
+  const allOn = shownIds.length > 0 && shownIds.every(id => selected.has(id));
+  const someOn = !allOn && shownIds.some(id => selected.has(id));
+  const headCheck = React.useRef(null);
+  React.useEffect(() => { if (headCheck.current) headCheck.current.indeterminate = someOn; }, [someOn]);
+  const toggleAll = () => setSelected(allOn ? new Set() : new Set(shownIds));
+  const clearSelection = () => { setSelected(new Set()); anchorRef.current = null; };
+  const selIds = shownIds.filter(id => selected.has(id));
+  const counts = {
+    seen: window.MCU_bulkTargets(selIds, 'seen', states).length,
+    watchlist: window.MCU_bulkTargets(selIds, 'watchlist', states).length,
+    none: window.MCU_bulkTargets(selIds, 'none', states).length,
+  };
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  // The selection ends when the action runs, not when it is asked for:
+  // cancelling the confirmation keeps it.
+  const act = (to) => { setMoreOpen(false); requestBulk(selIds, to, clearSelection); };
+  // Escape clears the selection before it closes the details: an open menu,
+  // popover or dialog goes first (their own handlers), then the selection,
+  // then the details (app.jsx). preventDefault hands the press no further, so
+  // one Escape never closes two layers. Registered once, on mount, so it stays
+  // ahead of the app's handler, which re-registers as its state changes.
+  const selRef = React.useRef(0);
+  selRef.current = selected.size;
+  React.useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || !selRef.current) return;
+      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .bulk-more-pop, [role="dialog"], [aria-modal="true"]')) return;
+      e.preventDefault();
+      setSelected(new Set());
+      anchorRef.current = null;
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, []);
   const groups = dlGroups(titles, sort);
   const labels = {
     poster: <span className="story-sr">{tr('list.col.poster')}</span>, title: tr('list.col.title'), type: tr('list.col.type'), phase: tr('list.col.phase'),
@@ -125,8 +214,35 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
           <div className="dl-empty-s">{(empty && empty.sub) || tr('empty.sub')}</div>
         </div>
       ) : (
+        <>
+        {/* Always present, so the count is announced as it changes (a region
+            that appears together with its text is often not read out). */}
+        <span className="story-sr" role="status" aria-live="polite">{selIds.length ? tr('bulk.selected', { n: selIds.length }) : ''}</span>
+        {/* Before the table in reading order, so Shift+Tab from the header
+            checkbox reaches it; drawn fixed at the bottom of the List. */}
+        {selIds.length > 0 && (
+          <div className="bulk-bar" role="region" aria-label={tr('bulk.selected', { n: selIds.length })}>
+            <span className="bulk-count" aria-hidden="true">{tr('bulk.selected', { n: selIds.length })}</span>
+            <button className="bulk-btn primary" disabled={!counts.seen} onClick={() => act('seen')}>
+              {tr('bulk.markSeen')}<span className="bulk-n">{counts.seen}</span>
+            </button>
+            <button className="bulk-btn" disabled={!counts.watchlist} onClick={() => act('watchlist')}>
+              {tr('bulk.addWatch')}<span className="bulk-n">{counts.watchlist}</span>
+            </button>
+            <BulkMore open={moreOpen} setOpen={setMoreOpen} label={tr('bulk.more')}>
+              <button role="menuitem" disabled={!counts.none} onClick={() => act('none')}>
+                {tr('bulk.markUnseen')}<span className="bulk-n">{counts.none}</span>
+              </button>
+            </BulkMore>
+            <button className="bulk-btn ghost" onClick={clearSelection}>{tr('bulk.clear')}</button>
+          </div>
+        )}
         <div className="dl-table" role="table" aria-label={tr('view.list')}>
           <div className="dl-row dl-head" role="row">
+            <span className="dl-h c-check" role="columnheader">
+              <input type="checkbox" ref={headCheck} className="dl-check" checked={allOn} onChange={toggleAll}
+                aria-label={tr('bulk.selectAll')} title={tr('bulk.selectAll')}/>
+            </span>
             {ranked && <span className="dl-h c-rank" role="columnheader">#</span>}
             {DL_COLUMNS.map(col => (
               <DlSortHeader key={col} col={col} label={labels[col]} sort={sort} sortDir={sortDir} setSort={setSort} setSortDir={setSortDir}/>
@@ -174,6 +290,11 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                 return (
                   <div key={t.id} role="row" data-row-id={t.id} data-flip-id={t.id} onClick={() => onOpen(t.id)}
                     className={`dl-row${seen ? ' seen' : ''}${openId === t.id ? ' on' : ''}${dim ? ' dim' : ''}`}>
+                    <span className="c-check" role="cell" onClick={e => e.stopPropagation()}>
+                      <input type="checkbox" className="dl-check" checked={selected.has(t.id)}
+                        onClick={e => { e.stopPropagation(); toggleRow(t.id, e); }} onChange={() => {}}
+                        aria-label={tr('bulk.selectRow', { title: I.titleName(t) })}/>
+                    </span>
                     {ranked && <span className="c-rank" role="cell">{n}</span>}
                     <span className="c-poster" role="cell"><span className="dl-thumb"><PosterArt title={t}/></span></span>
                     <span className="c-title" role="cell">
@@ -214,6 +335,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
             </div>
           ))}
         </div>
+        </>
       )}
     </div>
   );

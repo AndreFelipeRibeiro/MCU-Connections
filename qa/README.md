@@ -20,7 +20,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression, 27 check scripts in 28 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
+| `bash qa/regress.sh` | Full regression, 28 check scripts in 29 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
 | `node qa/a11y-scan.js` | axe-core scan of 7 screens (desktop Spatial, details, List, account menu; phone List, details, Spatial). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
 | `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
@@ -60,7 +60,13 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   `test-urlstate` (a shared address opens the state it names, the address
   follows changes and survives a reload, bad values are dropped, Back and
   Forward on a phone close and reopen the details, closing the filter sheet
-  keeps the filter just chosen, and only our keys ever appear).
+  keeps the filter just chosen, and only our keys ever appear),
+  `test-bulk` (desktop List selection, Shift ranges and the mixed header;
+  bulk marks change exactly the right titles, never an unreleased one seen,
+  with one guest-storage write and one announcement; Undo restores each title,
+  a replaced watchlist included; over 20 asks first and Cancel keeps the
+  selection; real Escape presses clear the selection before the details; the
+  phone section headers' "Mark all seen" / "Mark N more seen").
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.

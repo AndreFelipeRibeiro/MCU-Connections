@@ -536,6 +536,23 @@ function StoryYear({ title, detail = false, className = '' }) {
   );
 }
 
+// "Mark all seen" / "Mark 4 more seen" on a phone section header (the
+// ProgressHeader action slot). It counts with the same rule the action uses
+// (MCU_bulkTargets: released, not yet seen), so the label never promises a
+// different number than it marks; with nothing left to mark it is not shown.
+function BulkHeaderAction({ ids, group }) {
+  const { states, requestBulk } = window.useCollection();
+  const n = window.MCU_bulkTargets(ids, 'seen', states).length;
+  if (!n) return null;
+  const anySeen = ids.some(id => states[id] === 'seen');
+  return (
+    <button type="button" className="pgh-action" onClick={() => requestBulk(ids, 'seen')}
+      aria-label={mtr('bulk.header.aria', { n, group })}>
+      {anySeen ? mtr('bulk.header.rest', { n }) : mtr('bulk.header.all')}
+    </button>
+  );
+}
+
 // Release status for the details: "Released 2 May 2008", "Coming 18 December
 // 2026", or "Expected March 2027 · day not yet confirmed" — each at the
 // precision the catalog actually has, so an announced month is never shown as
@@ -677,12 +694,14 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
                    depends on the scroll position — the two together pinned the
                    bar below the top of the scroll area. */
                 <div className="m-phase-divider sticky">
-                  <ProgressHeader label={mPhaseLabel(b.phase)} color={MPHASE_COLORS[b.phase]} {...p}/>
+                  <ProgressHeader label={mPhaseLabel(b.phase)} color={MPHASE_COLORS[b.phase]} {...p}
+                    action={<BulkHeaderAction ids={b.items.map(t => t.id)} group={mPhaseLabel(b.phase)}/>}/>
                 </div>
               )}
               {!p && overall && (
                 <div className="m-phase-divider sticky overall">
-                  <ProgressHeader label={mtr('progress.all')} {...overall}/>
+                  <ProgressHeader label={mtr('progress.all')} {...overall}
+                    action={<BulkHeaderAction ids={titles.map(t => t.id)} group={mtr('progress.all')}/>}/>
                 </div>
               )}
               {b.items.length ? sectionsOf(b.items, blockRuns[i]) : null}
@@ -881,7 +900,8 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
   const overall = (progress && progress.all) || null;
   const overallHead = overall ? (
     <div className="m-phase-divider sticky overall">
-      <ProgressHeader label={mtr('progress.all')} {...overall}/>
+      <ProgressHeader label={mtr('progress.all')} {...overall}
+        action={<BulkHeaderAction ids={titles.map(t => t.id)} group={mtr('progress.all')}/>}/>
     </div>
   ) : null;
   const label = (g) => {
@@ -901,7 +921,8 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
     if (!p) return null;
     return (
       <div className="m-phase-divider sticky">
-        <ProgressHeader label={mPhaseLabel(g.phaseStart)} color={MPHASE_COLORS[g.phaseStart]} {...p}/>
+        <ProgressHeader label={mPhaseLabel(g.phaseStart)} color={MPHASE_COLORS[g.phaseStart]} {...p}
+          action={<BulkHeaderAction ids={titles.filter(t => t.phase === g.phaseStart).map(t => t.id)} group={mPhaseLabel(g.phaseStart)}/>}/>
       </div>
     );
   };
