@@ -175,6 +175,25 @@ const go = async page => { await page.goto(URL); await settle(page); };
     if (second !== 8) errors.push(`the Ruffalo line counts ${second} titles; he is credited on eight of Banner's nine`);
   }
 
+  // Every character carries a portrait except the ones TMDB has no photo for,
+  // and a character added without one silently falls back to initials.
+  R.portraits = await page.evaluate(() => {
+    const chars = window.CHARACTERS, M = window.MEDIA;
+    const missing = Object.keys(chars).filter(id => !(M.actors && M.actors[id]));
+    const used = new Set();
+    window.TITLES.forEach(t => t.cast.forEach(id => { if (chars[id]) used.add(window.MCU_credit(t, id)); }));
+    const defaults = new Set(Object.keys(chars).map(id => chars[id].actor));
+    const missingCredits = [...used].filter(nm => !defaults.has(nm) && !(M.performers && M.performers[nm]));
+    return { missing, missingCredits };
+  });
+  if (R.portraits.missing.length) {
+    errors.push(`characters with no portrait: ${R.portraits.missing.join(', ')}`);
+  }
+  // Mike McGill has no photo on TMDB, so initials are the right answer for him
+  // and only for him.
+  const unexpected = R.portraits.missingCredits.filter(nm => nm !== 'Mike McGill');
+  if (unexpected.length) errors.push(`credited performers with no portrait: ${unexpected.join(', ')}`);
+
   R.errors = errors;
   console.log(JSON.stringify(R, null, 1));
   await browser.close(); server.close();
