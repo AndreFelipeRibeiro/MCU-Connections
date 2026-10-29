@@ -14,7 +14,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V3 workflow — the full suite runs once per batch
 
-Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`24c6150`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/24c6150c6b6521a52e5d30ef40182b52cff0a877))
+Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 7 merge. ([`24c6150`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/24c6150c6b6521a52e5d30ef40182b52cff0a877))
 
 - User decision: each ticket runs the targeted check for its area before
   review; the full regression and both accessibility scans run once per batch,
@@ -26,7 +27,8 @@ Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`24
 
 ## V3 feature — mark many titles at once
 
-Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`8e6543d`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/8e6543d826a8848fcaf4c2042226a7386c92c018))
+Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 7 merge. ([`8e6543d`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/8e6543d826a8848fcaf4c2042226a7386c92c018))
 
 - Desktop List: a checkbox column (header box with a mixed state, Shift-click
   ranges) and a bar with Mark as seen, Add to Watchlist, More > Mark as unseen
@@ -49,7 +51,8 @@ Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`8e
 
 ## V3 feature — shareable addresses
 
-Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`2597259`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/2597259ef26aa5a9c63a7549e3c703e5ce2b3f02))
+Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 7 merge. ([`2597259`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/2597259ef26aa5a9c63a7549e3c703e5ce2b3f02))
 
 - The address carries the open title, a pinned character, the view, sort,
   order and catalogue filters; a link opens exactly that state, and what it
@@ -68,7 +71,8 @@ Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`25
 
 ## V3 fix — the desktop List's All titles header is valid ARIA, and pins
 
-Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`d8f2434`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/d8f243441dc7be6d52b3a9acde76ff873a1be880))
+Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 7 merge. ([`d8f2434`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/d8f243441dc7be6d52b3a9acde76ff873a1be880))
 
 - Batch 6 shipped the header in a rowgroup with no row: a **critical** axe
   `aria-required-children` violation in production, and the reason it never
@@ -81,7 +85,8 @@ Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`d8
 
 ## V3 feature — release status at the precision the catalog knows it
 
-Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`c54e685`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/c54e6859f814c6aa909a124b214a4da98ea4d962))
+Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 7 merge. ([`c54e685`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/c54e6859f814c6aa909a124b214a4da98ea4d962))
 
 - "Released May 2, 2008", "Coming December 18, 2026", or "Expected March 2027 ·
   day not yet confirmed" in the details; Upcoming / Expected badges on titles
