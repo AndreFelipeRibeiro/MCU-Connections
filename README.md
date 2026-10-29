@@ -72,6 +72,13 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
 - Details show a short, spoiler-light synopsis under the title (three lines, then
   See more), written for this app in each language.
+- Shareable addresses: the open title, a pinned character, the view, sort,
+  order and catalogue filters live in the URL (for example
+  `?sort=chrono&phase=3&title=thor-ragnarok`), so a view can be bookmarked or
+  sent. A link opens exactly that state; what it leaves out takes the app's
+  defaults. The Seen / Unseen / Watchlist filter, the search text, the language
+  and anything from the account never go in. On phones, Back and Forward close
+  and reopen the details.
 - Release status at the precision it is known: "Released May 2, 2008",
   "Coming December 18, 2026", or "Expected March 2027 · day not yet confirmed"
   for a title with only an announced month (never counted as released, even

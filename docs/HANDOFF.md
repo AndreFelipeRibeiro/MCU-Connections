@@ -154,8 +154,8 @@ work:
 
 `qa/` holds the headless Playwright checks used throughout V3, curated
 (qa/README.md lists them):
-- the regression run (`bash qa/regress.sh`: 26 check scripts in 27 runs,
-  about 26 minutes);
+- the regression run (`bash qa/regress.sh`: 27 check scripts in 28 runs,
+  about 27 minutes);
 - the axe-core accessibility scan (`node qa/a11y-scan.js`);
 - a startup timing check;
 - one targeted check per recent fix.

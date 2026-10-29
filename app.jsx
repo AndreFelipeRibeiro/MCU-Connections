@@ -826,6 +826,44 @@ function readDisplayPrefs() {
   return prefs;
 }
 
+// Public exploration state in the address, so a view can be bookmarked or
+// shared: the open title, a pinned character, the view, sort, order and the
+// catalogue filters. Never the collection filter (it means something different
+// to whoever opens the link), the search text, the language or anything from
+// the account. The names avoid code / state / error, which the sign-in
+// redirect uses (account.jsx stripAuthParams).
+const URL_KEYS = ['view', 'sort', 'order', 'phase', 'type', 'budget', 'release', 'title', 'char'];
+function readURLState() {
+  const out = { any: false };
+  let q;
+  try { q = new URLSearchParams(window.location.search); } catch (e) { return out; }
+  out.any = URL_KEYS.some(k => q.has(k));
+  const v = q.get('view'); if (VIEW_MODE_VALUES.indexOf(v) !== -1) out.view = v;
+  const s = q.get('sort'); if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, s)) out.sort = s;
+  const o = q.get('order'); if (o === 'asc' || o === 'desc') out.order = o;
+  const ph = q.get('phase'); if (/^[1-6]$/.test(ph || '')) out.phase = ph;
+  const ty = q.get('type'); if (ty === 'film' || ty === 'series') out.type = ty;
+  const b = q.get('budget'); if (['low', 'mid', 'high', 'mega'].indexOf(b) !== -1) out.budget = b;
+  if (q.get('release') === 'released') out.release = 'released';
+  const t = q.get('title'); if (t && window.TITLES.some(x => x.id === t)) out.title = t;
+  const c = q.get('char'); if (c && window.CHARACTERS && window.CHARACTERS[c]) out.char = c;
+  return out;
+}
+
+// Writes the given state into the address without adding a history entry.
+// history.state is passed through untouched: it carries the phone sheets'
+// token (mobile.jsx sheetHistory), and replacing it would break their Back.
+function writeURLState(params) {
+  try {
+    const url = new URL(window.location.href);
+    URL_KEYS.forEach(k => url.searchParams.delete(k));
+    Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+    const next = url.pathname + url.search + url.hash;
+    const now = window.location.pathname + window.location.search + window.location.hash;
+    if (next !== now) window.history.replaceState(window.history.state, '', next);
+  } catch (e) { /* an out-of-date address is not worth a crash */ }
+}
+
 function writeDisplayPrefs(prefs) {
   try {
     window.localStorage.setItem(PREFS_KEY, JSON.stringify({ version: PREFS_VERSION, ...prefs }));
@@ -835,14 +873,25 @@ function writeDisplayPrefs(prefs) {
 function App() {
   // Re-render the whole tree when the language changes.
   const { lang } = window.useI18n();
-  const [initialPrefs] = useState(readDisplayPrefs);
+  const [urlAtLoad] = useState(readURLState);
+  // A shared address opens what it says, and what it leaves out takes the
+  // app's defaults rather than this device's saved ones, so the link looks the
+  // same to everyone. An address with none of our keys uses the saved prefs.
+  const [initialPrefs] = useState(() => {
+    if (!urlAtLoad.any) return readDisplayPrefs();
+    const p = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release };
+    if (urlAtLoad.view) { p.viewMode = urlAtLoad.view; p.desktopView = urlAtLoad.view === 'grid' ? 'list' : urlAtLoad.view; }
+    if (urlAtLoad.sort) { p.sort = urlAtLoad.sort; p.sortDir = DEFAULT_SORT_DIR[urlAtLoad.sort]; }
+    if (urlAtLoad.order) p.sortDir = urlAtLoad.order;
+    return p;
+  });
   const [sort, setSort] = useState(initialPrefs.sort);
   const [sortDir, setSortDir] = useState(initialPrefs.sortDir);
   const changeSort = (v) => { if (v === sort) return; setSort(v); setSortDir(DEFAULT_SORT_DIR[v] || 'asc'); };
-  const [phaseFilter, setPhaseFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [budgetFilter, setBudgetFilter] = useState('all');
-  const [releaseFilter, setReleaseFilter] = useState('all');
+  const [phaseFilter, setPhaseFilter] = useState(urlAtLoad.phase || 'all');
+  const [typeFilter, setTypeFilter] = useState(urlAtLoad.type || 'all');
+  const [budgetFilter, setBudgetFilter] = useState(urlAtLoad.budget || 'all');
+  const [releaseFilter, setReleaseFilter] = useState(urlAtLoad.release || 'all');
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [mediaReady, setMediaReady] = useState(!!window.MEDIA);
@@ -1972,6 +2021,64 @@ function App() {
     // Desktop details still open: back to that title's connections.
     if (!isTouch && spatialShown && drawerId) setSelectedId(drawerId);
   };
+  // ---- The address ------------------------------------------------------
+  // The pinned character, when it is one portrayal (a performer pin covering
+  // several characters has no single id to share). With a character pinned the
+  // title in the address is the stepper's, since on phones pinning closes the
+  // details and the step lives in stepId.
+  const urlChar = highlightedChar && !pinnedActor ? highlightedChar : null;
+  const urlTitle = urlChar ? (stepId || drawerId) : drawerId;
+  const urlParams = () => {
+    const p = {};
+    const view = isTouch ? viewMode : desktopView;
+    if (view !== (isTouch ? 'list' : 'spatial')) p.view = view;
+    if (sort !== 'release') p.sort = sort;
+    if (sortDir !== DEFAULT_SORT_DIR[sort]) p.order = sortDir;
+    if (phaseFilter !== 'all') p.phase = phaseFilter;
+    if (typeFilter !== 'all') p.type = typeFilter;
+    if (budgetFilter !== 'all') p.budget = budgetFilter;
+    if (releaseFilter !== 'all') p.release = releaseFilter;
+    if (urlTitle) p.title = urlTitle;
+    if (urlChar) p.char = urlChar;
+    return p;
+  };
+  // Applies a title and character from the address: once on load, and again
+  // on Back and Forward.
+  const applyURLSubject = (u) => {
+    if (u.char) {
+      if (urlChar !== u.char) pinSubject([u.char], null, u.title);
+      if (u.title && !isTouch) setDrawerId(u.title);
+      return;
+    }
+    if (urlChar) unpinCharacter();
+    if ((u.title || null) === drawerId) return;
+    if (u.title) pickTitle(u.title);
+    else { setDrawerId(null); if (!isTouch) setSelectedId(null); }
+  };
+  const urlLatest = useRef({});
+  urlLatest.current = { urlParams, applyURLSubject };
+  useEffect(() => {
+    if (urlAtLoad.title || urlAtLoad.char) applyURLSubject(urlAtLoad);
+  }, []);
+  useEffect(() => { writeURLState(urlParams()); },
+    [isTouch, viewMode, desktopView, sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, urlTitle, urlChar]);
+  // Back and Forward restore the title and the character, never the filters:
+  // closing the phone filter sheet is itself a step back in history, and
+  // restoring filters there would undo the choices just made in it. A step
+  // the phone sheets take on their own (a sheet closing itself) restores
+  // nothing at all — pinning a character from the details closes the sheet,
+  // and treating that step as Back unpinned the character just pinned. Either
+  // way the address is then re-synced from the state it describes.
+  useEffect(() => {
+    const onPop = () => {
+      const own = window.MCU_isOwnSheetPop && window.MCU_isOwnSheetPop();
+      if (!own) urlLatest.current.applyURLSubject(readURLState());
+      setTimeout(() => writeURLState(urlLatest.current.urlParams()), 0);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
   const stepCurrent = stepId || drawerId;
   const stepIndex = stepCurrent ? pinnedTitles.findIndex(t => t.id === stepCurrent) : -1;
   const stepTo = (id) => {

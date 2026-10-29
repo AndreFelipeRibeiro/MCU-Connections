@@ -1035,7 +1035,14 @@ const sheetHistory = (() => {
   let ignorePops = 0;     // pops caused by our own history.back()
   let seq = 0;
   const isSheetEntry = (st) => !!(st && st.mcuSheet);
+  // Whether the pop being handled right now is one of ours. This listener is
+  // registered first, so later popstate listeners (the address sync in
+  // app.jsx) can ask during the same event and leave our own steps alone: a
+  // sheet that closes itself is not the visitor pressing Back.
+  let ownPop = false;
+  window.MCU_isOwnSheetPop = () => ownPop;
   window.addEventListener('popstate', (e) => {
+    ownPop = ignorePops > 0;
     if (ignorePops > 0) {
       ignorePops--;
       // A sheet opened while our own step back was still in flight: give it
