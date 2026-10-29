@@ -355,6 +355,39 @@ function AccountPanel({ onPickCollection, onClose, onAbout }) {
 }
 
 // ---------------------------------------------------------------------------
+// Sync state, outside Account
+// ---------------------------------------------------------------------------
+
+// A failed collection load used to be visible only inside the Account panel,
+// so a signed-in visitor browsed on with editing silently paused and no way
+// back without opening a menu. This surfaces the state where they already are,
+// and carries the Retry with it.
+//
+// It takes space only when something needs attention — a failure, or an
+// account load in progress. Working sync and guest storage are reported to
+// assistive technology and nothing more: a permanent "all fine" chip is noise
+// for everyone, and the Sign in button already says who you are.
+function SyncStatus() {
+  const { tr } = window.useI18n();
+  const { loading, syncError, retrySync, mode } = window.useCollection();
+  const state = syncError ? 'failed'
+    : (mode === 'account' && loading) ? 'loading'
+    : mode === 'account' ? 'synced' : 'guest';
+  if (state === 'synced' || state === 'guest') {
+    return <span className="story-sr" role="status">{tr('sync.' + state)}</span>;
+  }
+  return (
+    <div className={`sync-status ${state}`} role="status">
+      <span className="sync-dot" aria-hidden="true"/>
+      <span className="sync-text">{tr('sync.' + state)}</span>
+      {state === 'failed' && (
+        <button className="sync-retry" onClick={retrySync}>{tr('account.retrySync')}</button>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Desktop — a compact control at the right edge of tb-row
 // ---------------------------------------------------------------------------
 
@@ -451,6 +484,7 @@ Object.assign(window, {
   useAccount,
   AccountButton,
   AccountAvatarButton,
+  SyncStatus,
   AccountSheet,
   AccountPanel,
   GoogleMark,

@@ -8,8 +8,21 @@ the current handoff; the "Handoff — 2026-10-24" sections in `V3-SPEC.md`,
 
 ## Where things stand
 
-- Production (`main`) and staging (`version/3.0`) are at the same commit,
-  `892b8c2` "Merge approved V3 batch 3 into main" (2026-10-27 23:30 EDT).
+- Production (`main`) and staging (`version/3.0`) are at the same commit, the
+  merge of Batch 6 (2026-10-28; `git log -1 main` names it). Batches 4–6
+  shipped on 2026-10-28:
+  - **Batch 4:** "Lançamento" in Portuguese; the guest sign-in reminder after
+    Undo; character-variant scope; search picks open the character widget;
+    Escape closes it; regression reporting; Spatial touch on wide screens; the
+    QA checks brought into the repository.
+  - **Batch 5:** a reliable camera check; the phone page no longer scrolls
+    behind the app; per-title performer credits; panning with inertia; recast
+    cast rows show the credited performer's face.
+  - **Batch 6:** credit-scene-only cast removed; one name and one chain for a
+    recast character; the banner stops at the details panel; a failed sync is
+    visible outside Account; picking a title navigates to it; five returning
+    characters for sparse series, with portraits; phase and catalogue progress
+    on every view; the Spatial count follows a selected title.
 - On 2026-10-27 three backlog batches shipped (details in CHANGELOG.md):
   - **Batch 1:** phone crash when panning zoomed-out Spatial; Back closes phone
     sheets; poster and portrait fallbacks; production React builds.
@@ -20,6 +33,8 @@ the current handoff; the "Handoff — 2026-10-24" sections in `V3-SPEC.md`,
     and keyboard focus in desktop details; favicon, home-screen icon and link
     previews; Spatial cards reachable from the keyboard.
 - The Notion V3 Tasks board matches: nothing In progress or Awaiting review.
+  Batch 7 is queued (bulk select, suggest what to watch next, shareable URLs,
+  first-visit picker, where-to-watch links, release status).
 
 ## Architecture in short
 
@@ -84,7 +99,7 @@ work:
   didn't work.
 - **Sign-in only works on allowed origins:** production, the preview,
   `localhost:8126` (and 8123 for browsing).
-- **`app.jsx` is large (about 2,150 lines)**, and the Spatial camera is the most
+- **`app.jsx` is large (about 2,500 lines)**, and the Spatial camera is the most
   fragile part. That covers glides (`glideTo` / `stopGlide`), the
   return-to-previous-view memory on deselect, the ring layout, the pair view and
   drag versus click detection on cards. Change it carefully and test pan, zoom,
@@ -100,6 +115,22 @@ work:
 - **Phone sheet history** (`sheetHistory` in `mobile.jsx`). Each sheet owns one
   history entry; a sheet handing off to another (Account → About) reuses it.
   Opening two sheets at once would confuse it.
+- **Sticky headers must stay out of the reorder animation.** The phase
+  headers in both Lists and the phone Grid are `position: sticky`; giving one a
+  `data-flip-id` lets the FLIP animation leave a transform on it, which pins it
+  below the top of its scroller. Each sticky header also needs its own
+  containing block (`.m-gblock`, or one desktop rowgroup per phase) so it hands
+  over at the next section instead of stacking.
+- **Band pills and the Spatial camera share `BAND_LABEL_H`.** The camera leaves
+  that much room above the first row; when the two disagreed the first pill was
+  cut off at the top or slid under the count pill. Change them together.
+- **Progress follows one rule, shaped in one place.** `viewProgress` in
+  `app.jsx` hands every view either per-phase tallies (By Phase only) or the
+  whole-catalogue tally (every other order); the views draw whichever they get.
+- **New characters need portraits.** `MEDIA.actors` (by character id) and
+  `MEDIA.performers` (by name, for recast credits) are not filled in by adding
+  a character; `test-recastname` fails when one is missing. Mike McGill has no
+  TMDB photo and is the one allowed exception.
 - **Image fallbacks** remember failed addresses until reload, so a brief
   offline moment keeps generated art for the session.
 - **Link previews.** `og:image` and `og:url` point at production, so staging
@@ -123,7 +154,8 @@ work:
 
 `qa/` holds the headless Playwright checks used throughout V3, curated
 (qa/README.md lists them):
-- the 14-script regression run (`bash qa/regress.sh`, about 15 minutes);
+- the regression run (`bash qa/regress.sh`: 25 check scripts in 26 runs,
+  about 25 minutes);
 - the axe-core accessibility scan (`node qa/a11y-scan.js`);
 - a startup timing check;
 - one targeted check per recent fix.
@@ -152,6 +184,10 @@ locally. They do not replace a look in a real browser and on a real phone.
   - Maintain shared regression checks and real-device evidence; reconcile the
     V3 planning documents with the app.
 - **Decisions waiting on the user:**
+  - Bulk select (Batch 7): reuse the per-title write queue (one request per
+    title, every existing failure and rollback path kept) or build a batched
+    remote write (one request, but a new failure model that needs a signed-in
+    session to verify). Notes are on the Notion ticket.
   - Which preferences sync across devices.
   - How variant characters should behave.
   - A wider first Spatial view on desktop.

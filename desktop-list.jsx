@@ -18,11 +18,29 @@ function dlGroups(titles, sort) {
     let key = 'all', label = null, extra = {};
     if (sort === 'release') { key = 'y' + t.year; label = String(t.year); }
     else if (sort === 'chrono') { key = 's' + (t.story || '-'); label = t.story ? I.storyLabel(t.story) : I.tr('story.tba'); extra = { story: true }; }
-    else if (sort === 'phase') { key = 'p' + t.phase; label = I.upper(I.tr('phase.label', { n: t.phase })); extra = { color: window.PHASE_COLORS[t.phase] }; }
+    else if (sort === 'phase') { key = 'p' + t.phase; label = I.upper(I.tr('phase.label', { n: t.phase })); extra = { color: window.PHASE_COLORS[t.phase], phase: t.phase }; }
     const last = groups[groups.length - 1];
     if (last && last.key === key) last.items.push(t);
     else groups.push({ key, id: key + '#' + groups.length, label, ...extra, items: [t] });
   });
+  // Release groups by year, so a phase spans several of them. Mark the group
+  // that opens each phase: it gets a divider above its year, acting as a
+  // super-header. Every phase is one continuous run in release order today, so
+  // this fires once per phase; if a later catalog entry breaks that, the
+  // divider simply appears again with the same whole-phase count rather than
+  // splitting the phase in two.
+  if (sort === 'release') {
+    let seen = null;
+    groups.forEach(g => {
+      const phase = g.items[0].phase;
+      if (phase !== seen) { g.phaseStart = phase; seen = phase; }
+    });
+  } else if (sort === 'phase') {
+    // In Phase order every group IS a phase, so it carries the same divider
+    // Release uses rather than a second header of its own — the phone views
+    // were unified the same way.
+    groups.forEach(g => { g.phaseStart = g.phase; g.label = null; });
+  }
   return groups;
 }
 
@@ -71,7 +89,7 @@ function DlSortHeader({ col, label, sort, sortDir, setSort, setSortDir }) {
   );
 }
 
-function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, activeChars, header, empty, orderKey }) {
+function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, activeChars, header, empty, orderKey, progress }) {
   const I = window.MCU_I18N;
   const tr = I.tr;
   const { statusOf } = window.useCollection();
@@ -87,6 +105,16 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   // Rows glide to their new places when the sort, order or collection filter
   // changes (same animation as the phone List and Grid).
   const flipRef = window.useReorderAnimation(orderKey, { inside: true });
+  // One rowgroup per phase rather than per year, so the phase's sticky divider
+  // stays pinned across all of that phase's year groups and hands over at the
+  // next phase. Views with no phase headings keep a rowgroup each, as before.
+  const blocks = [];
+  groups.forEach((g) => {
+    const startsPhase = !!(g.phaseStart && progress && progress.byPhase && progress.byPhase[g.phaseStart]);
+    const last = blocks[blocks.length - 1];
+    if (startsPhase || !last || !last.phased) blocks.push({ key: g.id, phased: startsPhase, groups: [g] });
+    else last.groups.push(g);
+  });
   let n = 0;
   return (
     <div className={`dlist${ranked ? ' ranked' : ''}`} ref={flipRef} role="main" aria-label={tr('view.list')}>
@@ -104,9 +132,32 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
               <DlSortHeader key={col} col={col} label={labels[col]} sort={sort} sortDir={sortDir} setSort={setSort} setSortDir={setSortDir}/>
             ))}
           </div>
-          {groups.map(g => (
-            <div key={g.id} role="rowgroup">
-              {g.label && <div className={`dl-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>{g.label}</div>}
+          {progress && progress.all && (
+            <div role="rowgroup">
+              <div className="dl-phase-divider sticky overall">
+                <window.ProgressHeader label={I.upper(I.tr('progress.all'))} {...progress.all}/>
+              </div>
+            </div>
+          )}
+          {blocks.map(b => (
+            <div key={b.key} role="rowgroup">
+              {b.phased && (
+                /* No data-flip-id: the reorder animation moves what it tracks
+                   with a transform, and a sticky element is already positioned
+                   from the scroll offset — together they leave the bar hanging
+                   below the header instead of under it. */
+                <div className="dl-phase-divider sticky">
+                  <window.ProgressHeader label={I.upper(I.tr('phase.label', { n: b.groups[0].phaseStart }))}
+                    color={window.PHASE_COLORS[b.groups[0].phaseStart]} {...progress.byPhase[b.groups[0].phaseStart]}/>
+                </div>
+              )}
+              {b.groups.map(g => (
+                <React.Fragment key={g.id}>
+              {g.label && (g.phase && progress && progress.byPhase[g.phase]
+                ? <div className="dl-glabel" data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>
+                    <window.ProgressHeader label={g.label} color={g.color} {...progress.byPhase[g.phase]}/>
+                  </div>
+                : <div className={`dl-glabel${g.story ? ' story' : ''}`} data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>{g.label}</div>)}
               {g.items.map(t => {
                 n += 1;
                 const seen = statusOf(t.id) === 'seen';
@@ -128,7 +179,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                       </button>
                       {/* Which character matched the search, at every width
                           (the characters column drops on narrower lists). */}
-                      <window.MatchBadge matchedChars={matched} query={search}/>
+                      <window.MatchBadge matchedChars={matched} query={search} title={t}/>
                     </span>
                     <span className="c-type" role="cell">{typeLabel(t)}</span>
                     <span className="c-phase" role="cell"><span className="dl-dot" style={{ background: window.PHASE_COLORS[t.phase] }}/>{t.phase}</span>
@@ -151,6 +202,8 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                   </div>
                 );
               })}
+                </React.Fragment>
+              ))}
             </div>
           ))}
         </div>

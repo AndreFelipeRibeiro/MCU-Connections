@@ -48,10 +48,26 @@ function ssBuild(query) {
     const s = ssScore(a.name, q);
     if (s !== null) out.push({ kind: 'actor', key: 'a:' + a.name, label: a.name, score: s, n: a.titles.size, chars: a.chars });
   });
+  // A part that changed hands gets one row per performer, so searching the
+  // character's own name finds Edward Norton's Banner as well as Mark
+  // Ruffalo's — not just the default. They stay character rows (same heading,
+  // same shape); the performer is what the row names underneath. Picking one
+  // pins the whole character and starts on that performer's first title, so
+  // the run stays grouped in the stepper. The count on the row is still the
+  // performer's own, which is the part worth telling apart.
   Object.keys(window.CHARACTERS).forEach(id => {
     if (!titlesOf[id]) return;
     const s = ssBest(I.charNames(id), q);
-    if (s !== null) out.push({ kind: 'character', key: 'c:' + id, id, label: I.charName(id), score: s, n: titlesOf[id].size });
+    if (s === null) return;
+    const roster = window.MCU_creditRoster()[id] || [];
+    if (roster.length < 2) {
+      out.push({ kind: 'character', key: 'c:' + id, id, label: I.charName(id), score: s, n: titlesOf[id].size });
+      return;
+    }
+    roster.forEach(r => out.push({
+      kind: 'character', key: 'c:' + id + '|' + r.name, id, label: I.charName(id),
+      actor: r.name, score: s, n: r.n,
+    }));
   });
   window.TITLES.forEach(t => {
     const s = ssBest(I.titleNames(t), q);
@@ -80,8 +96,12 @@ function SsThumb({ item }) {
   if (item.kind === 'title') return <span className="ss-thumb poster"><window.PosterArt title={item.title}/></span>;
   const id = item.kind === 'actor' ? item.chars[0] : item.id;
   const c = window.CHARACTERS[id] || {};
-  const path = media && media.actors && media.actors[id];
-  const url = path && (window.mediaURL ? window.mediaURL('a', id, media.profile_base + path) : media.profile_base + path);
+  // A row naming a specific performer shows that performer's face, so the
+  // recast rows are told apart by more than their text.
+  const url = item.actor ? window.performerPortrait(item.actor, id) : (() => {
+    const path = media && media.actors && media.actors[id];
+    return path && (window.mediaURL ? window.mediaURL('a', id, media.profile_base + path) : media.profile_base + path);
+  })();
   return (
     <span className="ss-thumb face" style={{ background: c.color || '#555' }}>
       {url && !failed ? <img src={url} alt="" loading="lazy" onError={() => setFailed(true)}/> : <span aria-hidden="true">{c.initials}</span>}
@@ -113,11 +133,20 @@ function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, 
       setActive(-1);
       return;
     }
-    onChange(item.label);
+    // Picking a title NAVIGATES to it rather than filtering by its name.
+    // Putting the name in the box left a text filter behind, which narrowed the
+    // canvas to that one title and stranded it with nothing to connect to —
+    // the one thing the Spatial view is for. Opening it selected also brings
+    // up its rings, so it lands among its neighbours.
+    // Typing text and not picking still filters, exactly as before, and the
+    // phase, type and collection filters are left alone either way.
     if (item.kind === 'title' && onPickTitle) {
+      onChange('');
       onPickTitle(item.id);
       // Details open now: let go of the box (and the phone keyboard).
       if (inputRef.current) inputRef.current.blur();
+    } else {
+      onChange(item.label);
     }
     setDismissed(true);
     setActive(-1);
@@ -142,7 +171,7 @@ function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, 
   };
   const secondary = (item) => {
     if (item.kind === 'actor') return tr('suggest.as', { names: item.chars.map(id => I.charName(id)).join(', ') });
-    if (item.kind === 'character') return window.CHARACTERS[item.id].actor;
+    if (item.kind === 'character') return item.actor || window.MCU_creditRoster()[item.id][0].name;
     return `${tr(item.title.type === 'film' ? 'type.film.one' : 'type.series.one')} · ${item.year}`;
   };
 

@@ -339,3 +339,155 @@ no profile photo and no *What If…?* credit, so it is a different Mike McGill.
 What If…? therefore shows initials for Ross rather than a face — correct, and
 better than borrowing one. If a profile is found later, adding the name to
 `MEDIA.performers` is the whole change.
+
+## Credit-scene cast audit — 2026-10-28
+
+**Rule, set by the user:** a character counts for a title only if they appear in
+the **main feature**. A character whose sole appearance in that title is a mid-
+or post-credit scene comes out of its `cast`, which also removes the connection
+line it drew. There is no new field: membership in `cast` is the whole
+mechanism, so nothing in the app had to learn a new concept.
+
+Primary source for the scene inventory:
+[Mid-credits and post-credits scenes in the MCU](https://en.wikipedia.org/wiki/Mid-credits_and_post-credits_scenes_in_the_Marvel_Cinematic_Universe),
+with per-case corroboration recorded in
+[CATALOG-SOURCES.json](CATALOG-SOURCES.json) under `creditSceneAudit`.
+
+### Removed — 19 cast entries across 13 titles
+
+| Title | Removed | Scene |
+|---|---|---|
+| Iron Man | Nick Fury | post-credits |
+| Thor | Nick Fury | post-credits |
+| Iron Man 3 | Bruce Banner | post-credits |
+| Captain America: The Winter Soldier | Wanda Maximoff | mid-credits |
+| Ant-Man | Steve Rogers, Bucky Barnes | post-credits |
+| Doctor Strange | Thor | mid-credits |
+| Black Panther | Bucky Barnes | post-credits |
+| Avengers: Infinity War | Nick Fury, Carol Danvers | post-credits |
+| Captain Marvel | Steve Rogers, Natasha Romanoff, Bruce Banner, James Rhodes | mid-credits |
+| Shang-Chi | Bruce Banner, Carol Danvers | mid-credits |
+| Ms. Marvel | Carol Danvers | post-credits |
+| Spider-Man: Homecoming | Steve Rogers | PSA videos + post-credits |
+| Deadpool & Wolverine | Scott Lang | **absent entirely** |
+
+Two of those are not really credit-scene cases:
+
+- **Carol Danvers in Infinity War** never appears on screen at all. Only her
+  insignia shows on Fury's pager. She is removed as absent.
+- **Scott Lang in Deadpool & Wolverine** likewise does not appear. The film
+  shows a giant Ant-Man *corpse* used as Cassandra Nova's lair, and Paul Rudd
+  is not in the picture.
+
+Resulting count drops: Nick Fury 14 → 11, Carol Danvers 7 → 4, Bruce Banner
+12 → 9, Steve Rogers 12 → 9, Bucky Barnes 12 → 10, Natasha 10 → 9, Rhodes
+11 → 10, Thor 12 → 11, Wanda 9 → 8, Scott 10 → 9. No character was left with
+zero titles.
+
+### Checked and deliberately kept
+
+The ticket named Steve Rogers, Sam Wilson and Bucky Barnes as Ant-Man
+connections that should go. **Sam Wilson stays:** Falcon fights Scott Lang at
+the New Avengers facility in the main feature, which is where Scott takes the
+signal decoy. Only Rogers and Barnes are credits-only there.
+
+| Title | Kept | Why |
+|---|---|---|
+| The Incredible Hulk | Tony Stark | The bar scene with Ross plays **before** the credits. It is the last scene of the main feature, not a post-credits scene, though it is almost always described as one. |
+| Ant-Man | Sam Wilson | Falcon fights Ant-Man in the main feature. |
+| Deadpool & Wolverine | Happy Hogan | Happy interviews Wade for the Avengers early in the main feature. |
+| Shang-Chi | Wong | Wong fights Abomination in the cage-fight sequence. |
+| Captain America: The Winter Soldier | Bucky Barnes | He is the title character; the Smithsonian scene is an extra credits scene. |
+
+### Two judgement calls, decided by the user on 2026-10-28
+
+Both were raised rather than settled quietly. The user decided each, and the
+two answers together sharpen the rule: **what counts is a physical, in-story
+appearance by the performer — not whether the character is referred to, and
+not whether the person on screen turns out to be someone else.**
+
+- **Nick Fury in Spider-Man: Far From Home — kept.** The Fury on screen
+  through the main feature is Talos impersonating him, which the post-credits
+  scene reveals. He is kept because Samuel L. Jackson does appear in the film:
+  the later reveal changes who the character was, not whether the performance
+  is in the main feature.
+- **Steve Rogers in Spider-Man: Homecoming — removed.** He appears only
+  through a series of low-budget in-universe educational videos and a
+  post-credits gag, never as a physical live-action presence in the story.
+  Being shown on a screen inside the film is not being in it.
+
+That removal is the audit's **19th**, and takes Rogers from 10 titles to 9. It
+is in a separate commit from the first eighteen.
+
+### Not audited
+
+The unreleased titles (Avengers: Doomsday, Secret Wars, Spider-Man: Brand New
+Day, VisionQuest, Your Friendly Neighborhood Spider-Man S2, Daredevil: Born
+Again S2 and S3, Wonder Man) have provisional casts and no scene inventory to
+check against. Marvel Zombies was not checked scene by scene.
+
+## Sparse-series character pass — 2026-10-28
+
+The review counted 11 series with two or fewer featured characters. Five
+characters were added, each verified per production and each chosen because
+it joins titles that were already in the catalog. Sources and the per-title
+reasoning are in [CATALOG-SOURCES.json](CATALOG-SOURCES.json) under
+`sparseSeriesAudit`.
+
+| Character | Performer | Titles |
+|---|---|---|
+| Maria Hill | Cobie Smulders | The Avengers, The Winter Soldier, Age of Ultron, Endgame, Far From Home, Secret Invasion |
+| Talos | Ben Mendelsohn | Captain Marvel, Secret Invasion |
+| Monica Rambeau | Teyonah Parris | Captain Marvel, WandaVision, The Marvels |
+| Mobius M. Mobius | Owen Wilson | Loki, Loki: Season 2 |
+| Sylvie | Sophia Di Martino | Loki, Loki: Season 2 |
+
+Sparse titles: **13 → 9**. Captain Marvel and Secret Invasion are no longer
+sparse, and Secret Invasion gains threads to five earlier titles through Hill
+and to Captain Marvel through Talos.
+
+### The credit-scene rule decided three of these
+
+The rule set earlier the same day — a character counts for a title only if the
+performer appears in the **main feature** — is what kept this pass honest:
+
+- **Maria Hill is not added to Infinity War.** Her only appearance there is the
+  post-credits scene, the same one Nick Fury was removed from.
+- **Talos is not added to Far From Home.** Ben Mendelsohn appears only in the
+  post-credits reveal; through the main feature he is disguised as Fury, so the
+  performer on screen is Samuel L. Jackson.
+- **Maria Hill *is* added to Far From Home**, which looks like the opposite call
+  but follows the same rule. The Hill on screen is Soren in disguise, yet Cobie
+  Smulders plays her throughout the main feature — the same reading that keeps
+  Fury in that title.
+
+### Two corrections worth recording
+
+- **Maria Hill is not in Captain America: Civil War.** A Deadline piece lists
+  her there; Wikipedia and CinemaBlend both have her absent, and that same
+  Deadline list also mislabels Winter Soldier. The claim does not survive.
+- **Mobius is not added to Deadpool & Wolverine.** A pre-release cast guide
+  predicted it, but the post-release cameo round-ups name only Happy Hogan and
+  Thor. A prediction is not a credit.
+
+### Monica Rambeau is a recast
+
+Akira Akbar plays the 1990s Monica in Captain Marvel and Teyonah Parris plays
+her everywhere else, so Captain Marvel carries `credits: { monica: 'Akira
+Akbar' }` and the batch 5 credit machinery handles the rest. She is not her
+mother Maria Rambeau (Lashana Lynch), who is not in the catalog.
+
+### Sylvie threads onto Loki
+
+She is a Loki variant, so she carries `prime: 'loki'` — the same treatment He
+Who Remains and Victor Timely get for Kang, keeping the arc continuous.
+
+### Left sparse on purpose
+
+**Eyes of Wakanda stays at zero.** It is an anthology set centuries before the
+modern MCU; its characters are genuine one-offs, not a missing appearance, and
+the ticket asks for that distinction rather than for the map to be filled in.
+Doctor Strange and Ms. Marvel are sparse because the credit-scene audit removed
+Thor and Carol respectively — that is the audit working, not a gap. The
+unreleased titles keep provisional casts; nothing was added to a title that has
+not aired.

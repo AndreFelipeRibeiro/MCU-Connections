@@ -12,6 +12,438 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — progress: phase meters on By Phase, one catalogue meter everywhere else
+
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
+Revises the progress entry below after the user's design review
+([`1fc30af`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/1fc30af58978698053888ec313ecc39583bfdb5a)).
+
+- **One rule.** Per-phase meters appear on the By Phase tab only; every other
+  order (Release, Chronological, A–Z, IMDb, Tomatometer) shows one **All
+  titles** meter over the whole catalogue, so the Release and Phase tabs no
+  longer repeat each other. The rule is shaped once (`viewProgress` in
+  `app.jsx`); the views draw whichever tallies they are handed.
+- **Segmented meter**, one tick per released title (a solid bar past 24), so
+  it reads as "5 of 6" without the number. A complete group shows a check disc
+  sized to the label's cap height instead of a glyph that read too small. The
+  meter fills when its header scrolls into view (once; never with reduced
+  motion). Type scale: 13px label, 11px count.
+- **Sticky headers** in the desktop List (one rowgroup per phase, pinned under
+  the column header), the phone List and the phone Grid, which now share one
+  component. Seen runs on the phone no longer straddle a phase boundary.
+- **Spatial:** phase headers sit on opaque pills above their rows (no
+  `backdrop-filter` inside the canvas); row names without a meter hug their
+  text. Pill and camera share `BAND_LABEL_H`, which fixes the first By Phase
+  pill being cut off and the Chronological one sliding under the count pill.
+  By Phase now has bands at all. The All titles meter floats top-right on
+  desktop and takes its own row under the count pill and zoom control on
+  phones, and stands down while a title is selected.
+- **Verified:** `test-progress` rewritten around the rule — all 30 view and
+  order combinations, the counts (released only, collection tab ignored,
+  hidden during search), stickiness, framing and the reveal; full regression
+  (26 check runs) clean; axe clean in English and Portuguese. Looked at in the
+  browser at 1440 and 375 wide.
+- **Limits:** not checked on a real iPhone; the phone layout is from Chromium
+  device emulation.
+
+## V3 improvement — the Spatial count follows a selected title
+
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge. ([`3b2a5f5`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/3b2a5f5bc510a47c2606cea35bf91e8119f1adb2))
+
+- Selecting a title fades the unconnected cards out, but the count pill kept
+  saying "64 titles". It now reads, for example, "17 of 64": the selected title
+  plus every title sharing a character with it, the same set the canvas keeps
+  lit. Closing the selection returns it to the total.
+- **Verified:** `test-camera` compares the pill with the number of lit cards
+  rather than a fixed figure; checked by hand on The Incredible Hulk (17 lit,
+  "17 of 64").
+
+## V3 fix — every character has a portrait
+
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge. ([`958dc3d`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/958dc3d741a1d620ac0389591000fe4b41cdf27d))
+
+- Ten portraits were missing because adding a character does not add its TMDB
+  path: the five sparse-series characters (Maria Hill, Talos, Monica Rambeau,
+  Mobius, Sylvie), four added earlier (Frank Castle, Tommy, Paladin, Silver
+  Surfer) and the recast credit Akira Akbar. Each path was taken from TMDB's
+  person search and confirmed to return a real image.
+- Mike McGill stays as initials: TMDB has no photo for either person of that
+  name.
+- **Verified:** `test-recastname` fails when any character or credited
+  performer has no portrait, with Mike McGill the one allowed exception.
+
+## V3 improvement — a recast performer's own title count beside their name
+
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge. ([`56f44b7`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/56f44b73b68d295883bc22cd138f036b755be67d))
+
+- The banner names the performer credited on the title in view, but counted the
+  whole character's titles beside the name while the stepper already showed
+  the chain ("Mike McGill · 8 titles", "6 of 8"). It now counts that
+  performer's share, the figure the search suggestion shows: Mike McGill 1,
+  Harrison Ford 1, William Hurt 5.
+- **Verified:** `test-pickperson` now keeps the stepper total and the subtitle
+  count apart (it had failed on every recast) and passes for all 179 subjects;
+  `test-recastname` checks Norton (1) and Ruffalo (8).
+
+## V3 improvement — the character banner stops at the details panel
+
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge. ([`3ae170c`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/3ae170c5fefd70911b9f0c9376674abbf925862d))
+
+- Reverses the full-width pinned banner recorded further down ("the pinned
+  banner holds its place…"). That kept the stepper still, but the hover preview
+  stopped at the panel, so pinning a character changed the bar's width, which
+  the user found worse than the controls moving. Both now take the same 402px
+  indent; the panel hangs from the toolbar at full height and the `--cb-h`
+  measurement is removed.
+- **Verified:** `test-bannerhold` rewritten for the new rule (content stops
+  before the panel, panel hangs from the toolbar, hover and pinned indents
+  equal).
+
+## V3 feature — phase and era progress, on four of the five surfaces
+
+Recorded: 2026-10-28 17:43 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
+Revised after design review; see the progress entry above.
+
+- One shared `ProgressHeader` carries the label, the `9/18` count in JetBrains
+  Mono, a slim bar in the group's colour and a screen-reader sentence
+  ("9 of 18 seen"). Complete swaps the count for a check; nothing-seen shows an
+  empty track rather than hiding, so the structure stays consistent.
+- **Desktop List:** By Phase headers become progress headers, and Release gains
+  a phase divider above the first year of each phase, acting as a super-header
+  while the year rows below are untouched. **Desktop and phone Spatial:** phase
+  bands (Release) and era bands (Chrono) carry the count and bar. **Phone
+  List:** the same divider, including inside the folded seen-runs branch, which
+  renders through a different path and needed the divider added separately —
+  it deliberately does not fold with a run, being the super-header.
+- Counts are computed from `filtered`, never `visible`: the collection tab must
+  not feed its own numbers, or Seen would always read 100% and Unseen 0%. They
+  follow the type, phase and budget filters, count seen over **released** only,
+  report "+N" for upcoming, and update live.
+- Hidden during a text search and while a character is pinned — both narrow the
+  base set, and pinned-character progress is the one thing the ticket rules out.
+- **The phone Grid is NOT done.** It has no group headers at all today, only
+  seen-run sections, so "the same component" means giving the Grid grouping it
+  has never had. That is a visible change to that view's design rather than a
+  styling job, so it is left for the user's call.
+- Verification: checked in a real browser on desktop List (Release and By
+  Phase), desktop Spatial (Release and Chrono), phone List and phone Spatial,
+  in English and Portuguese, with complete, partial and zero states and the
+  live update after marking. At 320px all six dividers sit on one line and fit
+  the width. axe-core clean on 7 screens in both languages. Contrast measured
+  against real composited backgrounds: complete count 8.34:1, partial count and
+  the upcoming hint 5.63:1.
+- One fix found by measuring rather than looking: `.pgh-up` had `opacity: .75`
+  over `--text-muted`, which sits exactly at AA, so the fade would have pushed
+  the "+N" hint under the line. The opacity is gone.
+- `qa/test-progress.js` guards the rules that are easy to get subtly wrong:
+  one divider per phase, the denominator counting **released** titles only
+  (Phase 6 reads 0/7 with "+4"), a live update after marking, the count
+  **not** following the collection tab, and the headers standing down during
+  a text search and returning after it.
+- `qa/shots-progress.js` is a screenshot run, not part of regress.sh: it
+  captures all eight surfaces in both languages into `qa/shots/` for the
+  design review the ticket requires.
+- The full suite ran clean against the committed change — **all 25 check
+  runs clean, exit 0**, with nothing edited underneath it.
+- Limits: the phone Grid is outstanding and needs the user's decision, and
+  the screenshots still need their approval before this merges.
+
+## V3 maintenance — five source-verified characters for the sparse series
+
+Recorded: 2026-10-28 17:17 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
+
+- The review counted 11 series with two or fewer featured characters. Five
+  characters were added, each verified per production and each chosen because
+  it joins titles already in the catalog: **Maria Hill** (6 titles), **Talos**
+  (2), **Monica Rambeau** (3), **Mobius M. Mobius** (2) and **Sylvie** (2).
+- Sparse titles **13 → 9**. Captain Marvel and Secret Invasion are no longer
+  sparse; Secret Invasion gains threads to five earlier titles through Hill and
+  to Captain Marvel through Talos.
+- **The credit-scene rule decided three of these**, and kept the pass honest.
+  Maria Hill is *not* added to Infinity War — her only appearance there is the
+  post-credits scene Fury was removed from. Talos is *not* added to Far From
+  Home: Mendelsohn appears only in the post-credits reveal, since through the
+  main feature he is disguised as Fury. Maria Hill *is* added to Far From Home,
+  which looks like the opposite call but follows the same rule — the Hill on
+  screen is Soren in disguise, yet Cobie Smulders plays her throughout.
+- Two claims were checked and rejected. **Maria Hill is not in Civil War**: a
+  Deadline piece lists her, but Wikipedia and CinemaBlend have her absent and
+  that same list also mislabels Winter Soldier. **Mobius is not in Deadpool &
+  Wolverine**: a pre-release cast guide predicted it, and the post-release
+  cameo round-ups name only Happy Hogan and Thor. A prediction is not a credit.
+- Monica Rambeau is a child/adult recast, so Captain Marvel carries
+  `credits: { monica: 'Akira Akbar' }` and the batch 5 machinery handles it.
+  Sylvie is a Loki variant and carries `prime: 'loki'`, the treatment He Who
+  Remains and Victor Timely get for Kang.
+- **Eyes of Wakanda stays at zero deliberately.** It is an anthology set
+  centuries before the modern MCU, so its characters are genuine one-offs, not
+  a missing appearance — the distinction the ticket asks for.
+- Verification: checked in a real browser — all five are searchable and pin
+  correctly with the right counts, and the credit resolver returns Akira Akbar
+  for Captain Marvel and Teyonah Parris for WandaVision and The Marvels. No
+  character was left with zero titles.
+- Limits: the five have **no TMDB portraits**, so they fall back to initials.
+  That is the designed behaviour and is better than risking a wrong face, but
+  it is unfinished polish. The full suite had not yet run against this change
+  when it was committed.
+
+## V3 improvement — picking a title from search navigates to it instead of filtering by its name
+
+Recorded: 2026-10-28 16:59 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
+
+- Picking a title put its name in the search box, which left a text filter
+  behind. On the Spatial canvas that narrowed 64 cards down to the one just
+  picked, stranding it with nothing to connect to — the one thing that view is
+  for. Codex reproduced it with Iron Man 2.
+- A title pick now clears the box and opens the title selected, so its rings
+  come up and it lands among its neighbours. Typing text without picking still
+  filters, exactly as before.
+- The phase, type and collection filters are **not** touched, so a deliberate
+  filter survives the pick rather than being silently reset.
+- Verification: checked in a real browser — picking Iron Man 2 leaves the box
+  empty, all 64 cards on the canvas, the card selected with its ring up and 41
+  unrelated cards hidden, the details open, and the count still reading "64
+  titles". `test-suggest` now asserts all three of those (empty box, catalog
+  intact, title selected); it already captured them and never checked them.
+- A pinned character now steps aside when a title is picked. Its narrowed
+  canvas otherwise hid the very title just picked: pin Tommy Shepherd, who
+  is in one title, then pick Endgame, and Endgame's details filled the panel
+  while Endgame was not on the canvas at all. Only the pin goes; the phase,
+  type and collection filters stay.
+- That one was found by the new assertion rather than by eye — the first
+  version of this change fixed the text filter and left this second way of
+  stranding a title untouched.
+- Limits: the phone path rests on `test-suggest`'s existing mobile case; no
+  phone-width browser pass.
+
+## V3 improvement — the pinned banner holds its place when the details panel opens
+
+Recorded: 2026-10-28 16:55 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
+Reversed before release by "the character banner stops at the details panel".
+
+- The banner was indented by `padding-right: 402px` to clear the drawer, which
+  slid its mode toggle, stepper and close button 402px left the moment a title
+  opened. Stepping with `›` is what opens a title, so the controls moved at the
+  exact moment they were in use and the button left the cursor.
+- The pinned banner now spans the full width and the drawer opens **below** it:
+  `--cb-h` is measured with a ResizeObserver, like `--tb-h`, because the banner
+  wraps and is taller in Portuguese — a constant would be wrong for the same
+  reason it would be wrong for the toolbar.
+- **Only the pinned banner counts.** The hover banner comes and goes as the
+  cursor crosses a cast row *inside* the open drawer; tying the drawer's top to
+  that would slide it out from under the pointer. The hover banner keeps the
+  402px indent so its close button stays clear. The ticket did not anticipate
+  this case.
+- The cost is that the drawer's top moves on pin and unpin, which are
+  deliberate and occasional, instead of on every step. It is transitioned, and
+  `prefers-reduced-motion` keeps the slide-in but drops the reflow.
+- Verification: new `qa/test-bannerhold.js` asserts the stepper's box is
+  identical before and after the panel opens, that the panel starts at the
+  banner's bottom and still reaches the viewport floor, and that hovering a
+  cast row does not move it. `test-panel` and `test-camera`, which both measure
+  drawer geometry, still pass. axe-core clean on 7 screens in both languages.
+- Limits: desktop only by design; phones show a floating pill, not this banner.
+
+## V3 improvement — a failed collection sync is visible without opening Account
+
+Recorded: 2026-10-28 16:55 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
+
+- A failed account-wide load was reported only inside the Account panel, so a
+  signed-in visitor browsed on with collection editing silently paused and no
+  way to retry without opening a menu. `SyncStatus` now sits in the desktop
+  toolbar and the phone app bar, and carries the Retry with it.
+- It takes space only when something needs attention — a failure, or an account
+  load in progress. Working sync and guest storage are reported through
+  `role="status"` to assistive technology and nothing more: a permanent "all
+  fine" chip is noise, and the Sign in button already says who you are.
+- On phones "Syncing…" loses its words and leaves the spinner to say it,
+  clipped rather than `display: none`, which would take the text from screen
+  readers too. A failure keeps its words; it is the state that must be legible.
+- It reuses `.acct-error`'s red rather than introducing a colour, so a failure
+  reads the same wherever it is met. Measured against the real composited
+  toolbar background: failure text 5.21:1, "Syncing…" 7.86:1, Retry 14.89:1 —
+  all above the 4.5:1 the standards section requires.
+- Verification: the guest path checked in a real browser (no visible chip, the
+  hidden status reading "Collection saved on this device", no console errors),
+  and axe-core clean on 7 screens in both languages. The two visible states'
+  styling and contrast were measured by injecting their markup.
+- **Limits, and this one matters:** the failure and loading states were **not**
+  exercised live. Reaching them needs a signed-in session whose network then
+  fails, which neither the headless checks (external requests are blocked) nor
+  a guest session can produce. The logic that picks the state is unverified at
+  runtime; only its rendering is. Worth one real signed-in test with the
+  network cut before this is called done.
+
+## V3 improvement — one name for a recast character, everywhere, and one unbroken chain
+
+Recorded: 2026-10-28 16:37 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
+
+- **The name now follows the title.** The pinned banner, the phone pill and the
+  card match badge all named the character's *default* performer, so the banner
+  read "Mark Ruffalo" above a cast row reading "Edward Norton", about the same
+  title, at the same moment. All three now resolve through the credit for the
+  title in view. The badge needed the title passed to it at four call sites —
+  it had no way to know which title it was describing.
+- A character search offers **one row per performer** of a recast part:
+  "Bruce Banner · Mark Ruffalo" and "Bruce Banner · Edward Norton". A part that
+  never changed hands keeps its single row.
+- **The chain stays whole.** A performer of one character now pins that
+  character and keeps the entire run, opening on their first title. Rhodes
+  walks 1–10 through Terrence Howard and Don Cheadle; Ross walks 1–8 through
+  William Hurt, Mike McGill, Travis Willingham and Harrison Ford. Breaking a
+  recast into separate runs broke the chain the stepper exists to walk — a
+  recast is the same person. A performer of *several* characters (Majors,
+  Atwell, Bettany) still pins as themselves; those are genuinely different
+  people. This **reverses** part of the rule set on 2026-10-28, which named a
+  recast performer as themselves with their own titles.
+- Card search matching also moved onto the per-title credit, so "Edward Norton"
+  finds The Incredible Hulk and nothing else.
+- One shared helper, `window.MCU_creditRoster()`, backs the banner, the pill
+  and the suggestions. Naming a performer differently in two places is the bug
+  this replaced, so they read from one source.
+- **A bug the checks caught, worth recording:** the first version decided
+  whether a performer was a recast from `charToTitleIds`, which is built from
+  the *filtered* set. A search narrows it, so the test silently failed at
+  exactly the moment it is asked — while the user is searching. The
+  whole-catalog `charTitleTotals` exists for this; deleting it as unused was
+  the mistake. The trap is now written above it.
+- `qa/regress.sh` counted its own checks wrong: the summary said "all 22 checks
+  clean" for a run of 23, because the number was hardcoded in two places. It
+  now counts what actually ran, and says **runs** rather than checks, since
+  `test-fit` runs twice and the two can fail independently.
+- Verification: full `qa/regress.sh` — **all 24 check runs clean, exit 0** —
+  including the rewritten `test-pickperson` (168 subjects, every actor and
+  character picked from the search) and a new `qa/test-recastname.js`. Checked
+  in a real desktop browser in both languages: the Rhodes and Ross chains
+  walked end to end, and the List badge reading "Edward Norton" on
+  *O Incrível Hulk* while every other Banner title reads "Mark Ruffalo".
+- Limits: no phone-width browser pass for this change; the phone pill rests on
+  the checks. `test-pickperson`'s expectations were rewritten to the new rule,
+  so it no longer guards the old one.
+
+## V3 workflow — Version and Batch tags on the Notion backlog
+
+Recorded: 2026-10-28 15:45 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
+
+- The backlog recorded *when* a ticket was completed but not *what it shipped
+  in*, so reconstructing a batch meant reading completion timestamps and
+  guessing at the clusters. **Version** (V3, V4) and **Batch** (Pre-batch,
+  Batch 1…n) are now fields on the V3 Tasks database.
+- All 70 completed tickets were backfilled: 43 Pre-batch, then 4 / 5 / 5 / 8 /
+  5 across batches 1 to 5. The five batch 6 tickets are tagged, and the three
+  unbatched backlog tickets carry V3 with no batch.
+- The batch boundaries are anchored, not guessed. The user's own calendar
+  screenshot of "Backlog batch 2" lists five bullets that match completion
+  orders 44–48 exactly, which fixes batch 2 and therefore the numbering on
+  either side of it. Batch 4 is 54–61 and batch 5 is 62–66, both confirmed
+  against their merge commits.
+- Deferred tickets are deliberately left without a Version, except the two
+  explicitly named "V4 -". Guessing a version for an idea nobody has scheduled
+  is worse than leaving it blank.
+
+## V3 improvement — the two open credit-scene cases, decided
+
+Recorded: 2026-10-28 15:35 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
+
+- The credit-scene audit left two cases for the user rather than deciding
+  them. Both are now settled, and together they sharpen the rule: what counts
+  is a **physical, in-story appearance by the performer** — not a mention, not
+  footage shown on a screen inside the film, and not invalidated by a later
+  reveal that the character was someone else in disguise.
+- **Nick Fury stays in Spider-Man: Far From Home.** The Fury on screen through
+  the main feature is Talos impersonating him, which the post-credits scene
+  reveals. Samuel L. Jackson is in the film; the reveal changes who the
+  character was, not whether the performance is there. No data change.
+- **Steve Rogers leaves Spider-Man: Homecoming.** He appears only through a
+  series of low-budget in-universe educational videos and a post-credits gag,
+  never as a physical live-action presence in the story. Being shown on a
+  screen inside the film is not being in it.
+- That is the audit's 19th removal, across 13 titles. Rogers drops from 10
+  titles to 9. No character was left with zero titles.
+- Verification: `test-pickperson`, `test-variant`, `test-suggest` and
+  `test-ctxfn2`, all `errors: []`. The full `qa/regress.sh` was still running
+  when this was committed; nothing is pushed until it is green.
+- Limits: no new browser pass for this one-entry change; it rests on the
+  checks and on the earlier desktop pass for the audit as a whole.
+
+## V3 improvement — credit-scene-only cast comes out of the catalog
+
+Recorded: 2026-10-28 15:30 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
+
+- Rule, set by the user: a character counts for a title only if they appear
+  in the **main feature**. A character whose sole appearance is a mid- or
+  post-credit scene leaves that title's `cast`, which also removes the
+  connection line it drew. No new field: membership in `cast` is the whole
+  mechanism, so nothing in the app had to learn a new concept.
+- 18 cast entries removed across 12 titles — Nick Fury from Iron Man, Thor
+  and Infinity War; Bruce Banner from Iron Man 3, Captain Marvel and
+  Shang-Chi; Carol Danvers from Infinity War, Shang-Chi and Ms. Marvel;
+  Steve Rogers and Bucky Barnes from Ant-Man; Wanda from The Winter Soldier;
+  Thor from Doctor Strange; Bucky from Black Panther; Steve, Natasha and
+  Rhodes from Captain Marvel; Scott Lang from Deadpool & Wolverine.
+- Two are not credit-scene cases at all: **Carol Danvers never appears in
+  Infinity War** (only her insignia on the pager), and **Scott Lang is not in
+  Deadpool & Wolverine** (a giant Ant-Man corpse is; Paul Rudd is not in the
+  film). Both are removed as absent.
+- Two of the audit's starting assumptions were wrong and are recorded as
+  such. **Sam Wilson stays in Ant-Man**, though the ticket named him: Falcon
+  fights Scott Lang at the Avengers facility in the main feature. **Tony
+  Stark stays in The Incredible Hulk**: his bar scene with Ross plays before
+  the credits and is the last scene of the main feature, however often it is
+  described as a post-credits scene.
+- Counts drop accordingly: Fury 14 → 11, Carol 7 → 4, Banner 12 → 9, Steve
+  12 → 10, Bucky 12 → 10, Thor 12 → 11, Rhodes 11 → 10, Natasha 10 → 9,
+  Scott 10 → 9, Wanda 9 → 8. No character was left with zero titles.
+- Every removal is sourced in docs/CATALOG-SOURCES.json under
+  `creditSceneAudit`, with the reasoning and the kept cases in
+  docs/CATALOG-AUDIT.md.
+- Verification: full `qa/regress.sh` — **22 of 22 clean, exit 0** — including
+  `test-pickperson` (166 subjects), `test-variant` and `test-suggest`. Then
+  checked in a real desktop browser: Ant-Man reads 5 cast with Sam Wilson
+  present and Rogers and Barnes gone, Captain Marvel 2, Shang-Chi 3 with Wong
+  kept, Iron Man 4 with Rhodes still credited to Terrence Howard.
+- Limits: the browser pass was **English and desktop only**; Portuguese and
+  phone widths rest on the headless checks. Two judgement calls are flagged
+  open rather than decided — Fury in Far From Home (the one on screen is
+  Talos) and Rogers in Homecoming (he appears only in in-universe PSAs). The
+  unreleased titles have provisional casts and were not audited, and Marvel
+  Zombies was not checked scene by scene.
+
+## V3 workflow — the calendar recap format, so it pastes with its formatting
+
+Recorded: 2026-10-28 15:30 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
+
+- The recap the user pastes into their Notion Calendar event was specified
+  inside a code fence, so it reached them as plain text and pasted
+  unformatted — the exact problem the format exists to prevent. It is now
+  specified as ordinary chat text with real Markdown bold.
+- The shape is a title line carrying the version, batch number and a short
+  keyword phrase, then **one bullet per ticket** opening with a bold Fixed /
+  Improved / Added label. The date, duration and commit-count lines are gone:
+  the calendar event itself holds the time.
+- Recorded that the assistant can create the event directly on the user's
+  Google Personal calendar through the Notion calendar tools, and that doing
+  so is an outward-facing action to offer rather than perform unasked.
+- Verified by creating the batch 4 and batch 5 events. **Two limits found and
+  worth knowing:** the connector strips HTML from the description, so bold
+  labels arrive as plain text, and neither the create nor the update tool has
+  a colour field, so the event colour must be set by hand.
+
 ## V3 fix — a recast cast row shows the credited performer's face, or none
 
 Recorded: 2026-10-28 13:29 EDT (-0400). Pushed to `version/3.0` (staging); merged to

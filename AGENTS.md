@@ -64,7 +64,7 @@ their "Handoff — 2026-10-24" sections are historical.
   and browsers can serve a cached copy on a plain refresh.
 - QA checks (`qa/`, details in qa/README.md): once per machine
   `bash qa/setup.sh` (needs Node 18+). Before handing work over for review, run
-  `bash qa/regress.sh` (22 checks, about 23 minutes; it exits non-zero and
+  `bash qa/regress.sh` (25 check scripts in 26 runs, about 25 minutes; it exits non-zero and
   marks failures with `!!`) and `node qa/a11y-scan.js` (expect no violations; add
   `LOC=pt-BR` for Portuguese). Also run the targeted check for the area you
   touched (for example `qa/test-kbspatial.js`), and update checks in the same
@@ -133,8 +133,22 @@ The backlog is the Notion database **V3 Tasks**, under the **MCU - V3** page
   tickets above it are the next ones to do.
 - Fields: **Status** (Backlog, In progress, Awaiting review, Approved, Blocked,
   Deferred, Completed), **Assigned to** (Codex, Claude, Andre), **Type** (Bug,
-  Improvement, Feature, Workflow, Maintenance), **Source**, **Latest commit**,
-  **Completed on** (date-time), **Completion order** (number).
+  Improvement, Feature, Workflow, Maintenance), **Version** (V3, V4), **Batch**
+  (Pre-batch, Batch 1…n), **Source**, **Latest commit**, **Completed on**
+  (date-time), **Completion order** (number).
+- **Version** and **Batch** say where a ticket belongs in the shipping history.
+  Set both when you claim a ticket: Version is V3 for V3 work, and Batch is the
+  batch it is being worked in. They are what the calendar recap's title line is
+  built from, so a ticket with no batch has no recap to belong to.
+  - **Pre-batch** is V3 work completed before the batch workflow began on
+    2026-10-27; it is history, not a batch to add to.
+  - Batch boundaries follow the **Completion order** clusters: tickets closed
+    together in one approval share a batch. Batch 2 is orders 44–48, batch 4 is
+    54–61, batch 5 is 62–66, which fixes the numbering for everything around
+    them.
+  - Deferred tickets are left without a Version unless they say which one they
+    are for (the two "V4 -" tickets are V4). Guessing a version for an idea
+    nobody has scheduled is worse than leaving it blank.
 - Read the whole ticket page, **including any screenshots or images**: fetch
   the page with its file URLs and look at each image before deciding what the
   ticket means. New requests from the user in chat become tickets first.
@@ -170,20 +184,33 @@ The backlog is the Notion database **V3 Tasks**, under the **MCU - V3** page
 ## Recap after each approval
 
 When the user approves and closes a ticket or batch, reply with a recap they
-can paste into their calendar:
+paste into the Notion Calendar event. Write it as **ordinary chat text, with
+real Markdown bold** — not inside a code fence. Plain text out of a fence
+pastes unformatted into Notion Calendar, which is the whole problem the format
+exists to avoid.
 
-```
-**MCU V3 – <batch or ticket name>**
-<Day Mon D>, <start>–<end> (about <duration>)
+Title line, then one bullet per ticket:
 
-- **Fixed:** …
-- **Improved:** …
-- **Added:** …
-- **Shipped:** <n> commits on staging / merged to main at <time>.
-```
+> **MCU V3 – Backlog batch <n> (<a few keywords>)**
+>
+> - **Fixed:** search now matches with or without accents ("Capitao" finds "Capitão").
+> - **Improved:** clicking empty canvas on desktop closes the selected title and its details.
 
-Times are America/New_York and come from real events (when work started on
-the batch, when it was pushed or merged). Use only the labels that apply.
+- The title carries the version, the batch number and a short keyword phrase
+  saying what the batch was about.
+- **One bullet per ticket**, opening with a bold label — Fixed, Improved,
+  Added — and then what changed, in the user's terms rather than the
+  implementation's. Use only the labels that apply.
+- No date, duration or commit-count line in the body: the calendar event
+  itself holds the time.
+
+Times quoted anywhere else are America/New_York and come from real events
+(when work started on the batch, when it was pushed or merged).
+
+The assistant can also create the event directly on the user's Google
+**Personal** calendar (the one Notion Calendar fronts) with the Notion
+calendar tools. Creating an event is an outward-facing action: offer, and
+only create it when the user says yes.
 
 ## Design, accessibility and interaction standards
 

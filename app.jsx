@@ -20,6 +20,11 @@ const typeLabel = (type) => tr(type === 'film' ? 'type.film.one' : 'type.series.
 
 const CARD_W = 170;
 const CARD_H = 270;
+// How far above its row a band label's pill starts, in canvas units. The pill
+// is drawn there and the camera leaves room for it, so both read this one
+// number: when they disagreed, By Phase cut the first pill off at the top and
+// Chronological slid its first pill under the count pill.
+const BAND_LABEL_H = 58;
 // Space between the two titles of the pair view (room for the labels).
 const PAIR_GAP = 380;
 
@@ -193,6 +198,10 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
           y: y + row * rowH,
         };
       });
+      // A band per phase, so By Phase carries the same heading and meter the
+      // timeline layouts do. Its width is the widest row of this block, which
+      // is what the meter measures.
+      if (list.length) layoutBands.push({ x: 80, y, phase: Number(p) });
       const rows = Math.ceil(list.length / cols);
       y += rows * rowH + 80;
     });
@@ -225,9 +234,11 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
       if (x < b.x) b.x = x;
       if (chrono) { const yr = storyYear(t); if (yr !== null) b.years.push(yr); } else b.phase = t.phase;
     });
-    layoutBands = Object.values(bands).map(b => chrono
-      ? { x: b.x, y: b.y, era: b.row, from: b.years.length ? Math.min(...b.years) : null, to: b.years.length ? Math.max(...b.years) : null }
-      : { x: b.x, y: b.y, phase: b.phase });
+    layoutBands = Object.values(bands).map(b => Object.assign(
+      { x: b.x, y: b.y },
+      chrono
+        ? { era: b.row, from: b.years.length ? Math.min(...b.years) : null, to: b.years.length ? Math.max(...b.years) : null }
+        : { phase: b.phase }));
   }
 
   // Compute canvas bounds
@@ -314,7 +325,7 @@ function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusabl
           )}
         </div>
         <window.StoryYear title={title} className="card-story"/>
-        <window.MatchBadge matchedChars={matchedChars} query={searchQuery}/>
+        <window.MatchBadge matchedChars={matchedChars} query={searchQuery} title={title}/>
       </div>
     </div>
   );
@@ -497,6 +508,7 @@ function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopVi
           </div>
         </div>
         <div className="tb-end">
+          <window.SyncStatus/>
           <window.LanguageMenu/>
           <window.AccountButton onPickCollection={setCollectionFilter} onAbout={onAbout}/>
         </div>
@@ -821,7 +833,7 @@ function App() {
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [mediaReady, setMediaReady] = useState(!!window.MEDIA);
-  const { states: collectionStates } = window.useCollection();
+  const { states: collectionStates, statusOf } = window.useCollection();
 
   useEffect(() => { setMediaReady(true); }, []);
   const device = useDevice();
@@ -887,11 +899,20 @@ function App() {
     Object.keys(performers).forEach(name => { m[name] = performers[name].chars; });
     return m;
   }, [performers]);
+  // Every title a character is in, over the WHOLE catalog. Not the same thing
+  // as charToTitleIds, which counts only what is currently visible: a search
+  // narrows that, so using it to work out whether a performer covers a
+  // character's whole run gives the wrong answer at exactly the moment the
+  // question is asked — while the user is searching.
   const charTitleTotals = useMemo(() => {
     const m = {};
     window.TITLES.forEach(t => t.cast.forEach(c => { m[c] = (m[c] || 0) + 1; }));
     return m;
   }, []);
+  // A part can change hands, so a character has a roster of performers rather
+  // than one actor. Ordered by how much of the run each carries, so the first
+  // name is the one most of the catalog means by that character.
+  const creditsByChar = useMemo(() => window.MCU_creditRoster(), []);
   // The characters the current pin covers: one, or all of a performer's.
   const pinnedChars = useMemo(() => {
     if (pinnedActor) return charsByActor[pinnedActor] || null;
@@ -1053,9 +1074,11 @@ function App() {
       // Character-name matches come before actor-name ones, so "Sam" shows Sam
       // Wilson ahead of Nick Fury (Samuel L. Jackson) in the match badge.
       const byName = c => I18N.charNames(c).some(n => I18N.fold(n).includes(q));
+      // Matched on the credit for *this* title, not the character's default,
+      // so "Edward Norton" finds The Incredible Hulk and nothing else.
       const chars = t.cast.filter(c => {
         const ch = window.CHARACTERS[c];
-        return ch && (byName(c) || I18N.fold(ch.actor).includes(q));
+        return ch && (byName(c) || I18N.fold(window.MCU_credit(t, c)).includes(q));
       }).sort((a, b) => byName(b) - byName(a));
       if (I18N.titleNames(t).some(n => I18N.fold(n).includes(q)) || chars.length) m[t.id] = chars;
     });
@@ -1092,6 +1115,46 @@ function App() {
     }
     return list;
   }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches, pinnedTitleIds, charOnly, isTouch]);
+
+  // How much of each phase and era has been seen. Deliberately NOT derived from
+  // `visible`: the collection tab must not feed back into its own numbers, or
+  // Seen would always read 100% and Unseen 0%. `filtered` is the right base —
+  // it carries the type, phase and budget filters and nothing else.
+  //
+  // Hidden entirely during a text search, and while a character is pinned:
+  // both narrow `filtered`, and a pinned character's progress is the one thing
+  // the ticket rules out.
+  const showProgress = !search.trim() && !highlightedChar;
+  const groupProgress = useMemo(() => {
+    if (!showProgress) return null;
+    const eraOf = chronoEras(filtered);
+    const byPhase = {}, byEra = {};
+    const bump = (g, t) => {
+      // Unreleased titles count towards neither side of the fraction — they are
+      // not a gap in what you have watched — but they are still announced.
+      if (!window.MCU_isReleased(t)) { g.upcoming += 1; return; }
+      g.released += 1;
+      if (statusOf(t.id) === 'seen') g.seen += 1;
+    };
+    const add = (m, k, t) => bump(m[k] || (m[k] = { seen: 0, released: 0, upcoming: 0 }), t);
+    // `all` is the same tally over the whole set, for the views that group by
+    // nothing: the phone Grid in Release order reads as one run of cards, so
+    // one meter over all of it says more than six phase headings would.
+    const all = { seen: 0, released: 0, upcoming: 0 };
+    filtered.forEach(t => { add(byPhase, t.phase, t); add(byEra, eraOf[t.id], t); bump(all, t); });
+    return { byPhase, byEra, all };
+  }, [showProgress, filtered, collectionStates]);
+
+  // Per-group meters belong to the By Phase tab alone; every other order shows
+  // one meter over the whole catalogue. Shaped once here rather than tested at
+  // each call site, so the views stay ignorant of the rule: they draw whichever
+  // of `byPhase` / `byEra` / `all` they are handed, and skip what is null.
+  const viewProgress = useMemo(() => {
+    if (!groupProgress) return null;
+    return sort === 'phase'
+      ? { byPhase: groupProgress.byPhase, byEra: null, all: null }
+      : { byPhase: null, byEra: null, all: groupProgress.all };
+  }, [groupProgress, sort]);
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
@@ -1407,6 +1470,12 @@ function App() {
     const rect = viewportRef.current.getBoundingClientRect();
     const colW = CARD_W + 60;
     const gridSort = sort === 'phase' || sort === 'title' || sort === 'imdb' || sort === 'rt';
+    // Height of the floating chrome at the top of the viewport that content has
+    // to clear. Desktop: the count pill (the whole-catalogue meter sits in the
+    // top-right corner there, out of the way). Phone: the count pill and zoom
+    // control share the first row, so the meter takes a row of its own beneath
+    // them in every order but By Phase.
+    const chromeTop = isTouch ? (sort === 'phase' ? 44 : 113) : 52;
 
     // The scale this sort opens at with no filter applied. Used as the yardstick
     // below: framing a match set is only an improvement if it doesn't mean
@@ -1482,7 +1551,8 @@ function App() {
         return null; // everything fits: nothing needs to peek
       };
       const miss = (f, lo, hi) => f === null ? 0 : f < lo ? lo - f : f > hi ? f - hi : 0;
-      const pill = 44;
+      // By Phase also has a band pill above its first row to keep on screen.
+      const pill = chromeTop + (sort === 'phase' ? BAND_LABEL_H * defaultScale : 0);
       let best = null;
       for (let s = Math.min(1, defaultScale); s >= defaultScale * 0.8; s -= 0.0025) {
         if (xs.length > 3 && 14 + (xs[2] - xs[0]) * s + CARD_W * s > rect.width) continue;
@@ -1500,9 +1570,12 @@ function App() {
       // Grid layouts: match the grid's width (mobile keeps a legibility floor of ~3 columns)
       const scale = defaultScale;
       const zoomed = canvasW * scale > rect.width - 32;
+      // By Phase is the one grid layout with band labels: leave room above the
+      // first row for its pill, below the count pill, as the timelines do.
+      const top = sort === 'phase' ? chromeTop + BAND_LABEL_H * scale : 14;
       setView({
         x: zoomed ? 14 - minX * scale : (rect.width - canvasW * scale) / 2,
-        y: canvasH * scale <= rect.height - 32 ? (rect.height - canvasH * scale) / 2 : 14 - minY * scale,
+        y: canvasH * scale <= rect.height - 32 ? (rect.height - canvasH * scale) / 2 : top - minY * scale,
         scale,
       });
     } else {
@@ -1520,13 +1593,13 @@ function App() {
         if (p.y < y0) y0 = p.y;
         if (p.y + CARD_H > y1) y1 = p.y + CARD_H;
       });
-      // Each row has its label 40 units above it, and the count pill sits at the
-      // top-left of the viewport: keep the first label clear of it.
-      const pill = isTouch ? 44 : 52;
-      const top = pill + 40 * scale;
+      // Each row has its label BAND_LABEL_H units above it, and the count pill
+      // sits at the top-left of the viewport: keep the first label clear of it.
+      const pill = chromeTop;
+      const top = pill + BAND_LABEL_H * scale;
       let y = top - minY * scale;
       if (isFinite(y0)) {
-        const yTop = y0 - 40;
+        const yTop = y0 - BAND_LABEL_H;
         if ((y1 - yTop) * scale <= rect.height - 28 - pill) {
           y = Math.max(rect.height / 2 - ((yTop + y1) / 2) * scale, pill - yTop * scale);
         } else {
@@ -1763,8 +1836,14 @@ function App() {
   // A title picked from the search suggestions opens its details (and, in
   // desktop Spatial, selects its card so the canvas shows its connections).
   const pickTitle = (id) => {
+    // Picking a title is navigating to it, so a pinned character steps aside:
+    // its narrowed canvas would otherwise hide the very title just picked. Pin
+    // Tommy Shepherd, who is in one title, then pick Endgame, and Endgame was
+    // not on the canvas at all while its details filled the panel.
+    // Only the pin goes — the phase, type and collection filters stay.
+    if (highlightedChar) unpinCharacter();
     setDrawerId(id);
-    if (!isTouch && desktopView === 'spatial' && !highlightedChar) setSelectedId(id);
+    if (!isTouch && desktopView === 'spatial') setSelectedId(id);
   };
   // A character picked from the search suggestions opens the character view
   // (photo, Their titles / All titles, stepper) rather than a text search, as
@@ -1778,7 +1857,11 @@ function App() {
     // the current titles are theirs) when this one is picked.
     if (!chars.length || !window.TITLES.some(t => chars.some(c => t.cast.includes(c)))) return false;
     setSearch('');
+    // Both an actor row and a character row naming one performer go through
+    // pinActor, which keeps a recast character's run whole and starts on that
+    // performer's first title.
     if (item.kind === 'actor') pinActor(item.label);
+    else if (item.actor) pinActor(item.actor);
     else if (pinnedActor || highlightedChar !== chars[0]) pinCharacter(chars[0]);
     // The search box lets go of focus; after a keyboard pick on desktop, hand
     // it to the stepper so keyboard users can carry on through the titles.
@@ -1793,8 +1876,12 @@ function App() {
     setSelectedId(v === 'spatial' && !highlightedChar ? drawerId : null);
     setDesktopView(v);
   };
-  const contextSummary = (variant, inList) => (
-    <ContextSummary variant={variant} inList={inList} showing={visible.length} total={window.TITLES.length}
+  // `showing` is overridable because the Spatial canvas counts what is actually
+  // on it: selecting a card fades every unconnected title out, so the pill has
+  // to follow the ring rather than keep reporting the whole filtered set.
+  const contextSummary = (variant, inList, showing) => (
+    <ContextSummary variant={variant} inList={inList}
+      showing={showing == null ? visible.length : showing} total={window.TITLES.length}
       filters={{ search, setSearch, collectionFilter, setCollectionFilter, typeFilter, setTypeFilter,
         phaseFilter, setPhaseFilter, budgetFilter, setBudgetFilter }}/>
   );
@@ -1818,8 +1905,8 @@ function App() {
   // order (the connections ring belongs to a selected title) and starts the
   // stepper on the title it was pinned from. Phones close the sheet so the
   // change is visible.
-  const pinSubject = (chars, actor) => {
-    const from = drawerId;
+  const pinSubject = (chars, actor, startAt) => {
+    const from = startAt || drawerId;
     const covers = from && chars.some(c => { const ids = charToTitleIds[c]; return ids && ids.has(from); });
     const start = covers ? from : null;
     setPinnedActor(actor);
@@ -1834,16 +1921,32 @@ function App() {
     if (!pinnedActor && highlightedChar === ch) { unpinCharacter(); return; }
     pinSubject([ch], null);
   };
-  // A performer pins as the character only when they are that character's whole
-  // run — then the banner has nothing to add by naming them twice. A recast
-  // performer covers part of it (Terrence Howard is Rhodes in Iron Man alone),
-  // so they pin as themselves and keep their own titles.
+  // A performer of ONE character pins that character, whole run and all, and
+  // just starts on their first title. A recast is the same person — Rhodes is
+  // Rhodes whether Terrence Howard or Don Cheadle is playing him — so breaking
+  // his ten titles into a one and a nine breaks the chain the stepper exists to
+  // walk. The banner names the credited performer per title, which is what
+  // tells the portrayals apart now.
+  // Someone who plays SEVERAL characters still pins as themselves: their roles
+  // are genuinely different people, and no single character's run covers them.
   const pinActor = (name) => {
-    if (pinnedActor === name) { unpinCharacter(); return; }
     const p = performers[name];
     if (!p || !p.chars.length) return;
-    const wholeRun = p.chars.length === 1 && p.titles.size === charTitleTotals[p.chars[0]];
-    pinSubject(p.chars, wholeRun ? null : name);
+    if (p.chars.length === 1) {
+      const ch = p.chars[0];
+      // Only a recast performer needs a starting title, because they cover
+      // part of the run and the stepper should open where their part begins.
+      // Someone who played the whole run has no particular place to start, so
+      // the stepper stays idle on the count, as it always has.
+      const total = charTitleTotals[ch] || 0;
+      const first = total && p.titles.size < total
+        ? window.TITLES.find(t => t.cast.indexOf(ch) !== -1 && window.MCU_credit(t, ch) === name)
+        : null;
+      pinSubject([ch], null, first && first.id);
+      return;
+    }
+    if (pinnedActor === name) { unpinCharacter(); return; }
+    pinSubject(p.chars, name);
   };
   const unpinCharacter = () => {
     setPinnedActor(null);
@@ -1986,15 +2089,30 @@ function App() {
     const c = window.CHARACTERS[activeChar];
     const media = window.MEDIA;
     const pinned = !!highlightedChar && activeChar === highlightedChar;
-    const photo = (pinned && pinnedActor)
-      ? window.performerPortrait(pinnedActor, activeChar)
-      : window.performerPortrait(c.actor, activeChar);
     // A performer with several portrayals is named as themselves, with their
     // characters underneath, the way the search suggestion already reads.
     const asActor = pinned && !!pinnedActor;
-    const count = (pinned ? (pinnedVisibleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
+    // Otherwise the name follows the title in view, because the credit belongs
+    // to the title: stepping onto The Incredible Hulk reads Edward Norton, not
+    // the character's default. With no single title in view there is nobody to
+    // name, so the roster speaks for the whole run instead.
+    const inView = !asActor && stepCurrent && window.TITLES.find(t => t.id === stepCurrent);
+    const creditedHere = inView && inView.cast.indexOf(activeChar) !== -1
+      ? window.MCU_credit(inView, activeChar) : null;
+    const roster = creditsByChar[activeChar] || [];
+    const named = asActor ? pinnedActor : (creditedHere || (roster[0] && roster[0].name) || c.actor);
+    const photo = window.performerPortrait(named, activeChar);
+    // When the subtitle names one performer, the count beside it is that
+    // performer's share — the same number the search suggestion shows for their
+    // row. The whole chain is already in the stepper ("6 of 8"), so repeating it
+    // here said Mike McGill was in 8 titles when he is in one.
+    const namedRow = creditedHere ? roster.find(r => r.name === creditedHere) : null;
+    const count = namedRow ? namedRow.n
+      : (pinned ? (pinnedVisibleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
     const who = asActor ? pinnedActor : I18N.charName(activeChar);
-    const sub = asActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') }) : c.actor;
+    const sub = asActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
+      : (creditedHere || roster.length < 2) ? named
+      : tr('credit.more', { name: named, n: roster.length - 1 });
     return (
       <div className={`char-banner${pinned ? ' pinned' : ''}`} style={{ '--char-color': c.color }}>
         <span className="cb-photo" style={{ background: c.color }}>
@@ -2029,7 +2147,13 @@ function App() {
   const charPill = isTouch && highlightedChar ? (() => {
     const ch = highlightedChar;
     const c = window.CHARACTERS[ch];
-    const photo = window.performerPortrait(pinnedActor || c.actor, ch);
+    // Same rule as the desktop banner: the performer follows the title the
+    // stepper is on, so the pill never names one actor over another's title.
+    const inView = !pinnedActor && stepCurrent && window.TITLES.find(t => t.id === stepCurrent);
+    const creditedHere = inView && inView.cast.indexOf(ch) !== -1 ? window.MCU_credit(inView, ch) : null;
+    const roster = creditsByChar[ch] || [];
+    const named = pinnedActor || creditedHere || (roster[0] && roster[0].name) || c.actor;
+    const photo = window.performerPortrait(named, ch);
     const n = pinnedTitles.length;
     return (
       <div className="char-pill" style={{ '--char-color': c.color }}>
@@ -2042,7 +2166,8 @@ function App() {
               <span className="cp-name">{pinnedActor || I18N.charName(ch)}</span>
               <span className="cp-actor">{pinnedActor
                 ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
-                : c.actor}</span>
+                : (creditedHere || roster.length < 2) ? named
+                : tr('credit.more', { name: named, n: roster.length - 1 })}</span>
             </span>
           </span>
           <div className="cb-step">
@@ -2120,14 +2245,21 @@ function App() {
       >
         {/* Row labels for the Release (phase) and Chrono (era) timelines. Hidden
             while a title is selected: its connection rings move the cards. */}
-        {!selectedId && layout.bands.map(b => (
-          <div key={b.phase ? 'p' + b.phase : 'e' + b.era} className={`band-label${b.phase ? ' phase' : ''}`}
-            style={{ transform: `translate(${b.x}px, ${b.y - 40}px)`, ...(b.phase ? { '--band': PHASE_COLORS[b.phase] } : {}) }}>
-            {b.phase ? tr('phase.label', { n: b.phase })
-              : b.era === 0 ? tr('era.before', { year: ERA_STARTS[0] })
-              : b.from === null ? '' : b.from === b.to ? String(b.from) : `${b.from}–${b.to}`}
-          </div>
-        ))}
+        {!selectedId && layout.bands.map(b => {
+          const label = b.phase ? tr('phase.label', { n: b.phase })
+            : b.era === 0 ? tr('era.before', { year: ERA_STARTS[0] })
+            : b.from === null ? '' : b.from === b.to ? String(b.from) : `${b.from}–${b.to}`;
+          const g = viewProgress && (b.phase
+            ? (viewProgress.byPhase && viewProgress.byPhase[b.phase])
+            : (viewProgress.byEra && viewProgress.byEra[b.era]));
+          return (
+            <div key={b.phase ? 'p' + b.phase : 'e' + b.era} className={`band-label${b.phase ? ' phase' : ''}${g ? '' : ' plain'}`}
+              style={{ transform: `translate(${b.x}px, ${b.y - BAND_LABEL_H}px)`, ...(b.phase ? { '--band': PHASE_COLORS[b.phase] } : {}) }}>
+              {g ? <window.ProgressHeader band label={label} seen={g.seen} released={g.released} upcoming={g.upcoming}
+                     color={b.phase ? PHASE_COLORS[b.phase] : 'var(--accent)'}/> : label}
+            </div>
+          );
+        })}
         <FloatingConnections
           visibleTitles={lineTitles}
           positions={positions}
@@ -2214,7 +2346,17 @@ function App() {
           </div>
         );
       })()}
-      {contextSummary(isTouch ? 'pill' : 'float')}
+      {/* ringIds is the selected title plus everything sharing a character
+          with it — exactly the cards left standing on the canvas. */}
+      {contextSummary(isTouch ? 'pill' : 'float', false, ringIds ? ringIds.size : null)}
+      {/* Every order but By Phase carries one meter over the whole catalogue.
+          It stands down with the band labels whenever a title is selected,
+          since the canvas is then showing one ring. */}
+      {!selectedId && viewProgress && viewProgress.all && (
+        <div className="spatial-overall">
+          <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>
+        </div>
+      )}
       {focusPop}
     </div>
   );
@@ -2238,8 +2380,8 @@ function App() {
         />
         <div role="main" className={`m-main${charPill ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
-          {viewMode === 'grid' && <window.MobileGrid collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
-          {viewMode === 'list' && <window.MobileList collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {viewMode === 'grid' && <window.MobileGrid progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {viewMode === 'list' && <window.MobileList progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
@@ -2313,7 +2455,7 @@ function App() {
         ? <window.DesktopList titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
             onOpen={(id) => setDrawerId(drawerId === id ? null : id)}
-            header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey}/>
+            header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey} progress={viewProgress}/>
         : canvasEl}
 
       {hoveredConnection && (
