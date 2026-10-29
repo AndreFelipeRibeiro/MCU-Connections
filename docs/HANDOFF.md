@@ -161,10 +161,10 @@ work:
 `qa/` holds the headless Playwright checks used throughout V3, curated
 (qa/README.md lists them):
 - the regression run (`bash qa/regress.sh`: 28 check scripts in 29 runs,
-  about 28 minutes);
-- the axe-core accessibility scan (`node qa/a11y-scan.js`);
+  about 28 minutes) and the axe-core accessibility scan
+  (`node qa/a11y-scan.js`), both run once per batch before staging;
 - a startup timing check;
-- one targeted check per recent fix.
+- one targeted check per recent fix, run per ticket before review.
 
 Set up once per machine with `bash qa/setup.sh` (Node 18+). They run headless
 Chromium against the repository root with the pinned libraries served
