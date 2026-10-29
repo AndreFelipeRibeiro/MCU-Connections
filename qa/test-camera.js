@@ -221,6 +221,35 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
   const afterSort = parse(await T(page));
   await page.locator('.drawer-close').click(); await page.waitForTimeout(900);
   out.sortWhileSelected_noJump = near(parse(await T(page)), afterSort);
+  // The floating pill counts what is actually on the canvas. Selecting a card
+  // fades every unconnected title out, so a pill still reporting the whole
+  // catalogue would describe a screen nobody is looking at.
+  out.pill = await (async () => {
+    const before = (await page.locator('.ctx-count').innerText()).trim();
+    const pt = await openCentreCard(page, cardOpens);
+    if (!pt) return { error: 'no card opened for the pill check' };
+    const r = await page.evaluate(() => ({
+      pill: document.querySelector('.ctx-count').innerText.replace(/\s+/g, ' ').trim(),
+      lit: [...document.querySelectorAll('.card')].filter((c) => {
+        const st = getComputedStyle(c);
+        return st.visibility !== 'hidden' && parseFloat(st.opacity) > 0.35;
+      }).length,
+    }));
+    await page.locator('.drawer-close').click(); await page.waitForTimeout(900);
+    return { before, ...r, after: (await page.locator('.ctx-count').innerText()).trim() };
+  })();
+  {
+    const pl = out.pill;
+    if (pl.error) errors.push(pl.error);
+    else {
+      // Two numbers, in any language: "<shown> of <total>".
+      const m = /(\d+)\D+(\d+)/.exec(pl.pill);
+      if (!m) errors.push(`the pill reads "${pl.pill}" with a title selected; expected a shown-of-total pair`);
+      else if (Number(m[1]) !== pl.lit) errors.push(`the pill says ${m[1]} titles but ${pl.lit} are lit on the canvas`);
+      if (pl.after !== pl.before) errors.push(`the pill stayed at "${pl.after}" after closing; it opened at "${pl.before}"`);
+    }
+  }
+
   // regress.sh only reads fields whose name contains "errors", so these
   // booleans were decorative: any of them could be false and the run still
   // reported clean. Collect the failures into one, so they gate.

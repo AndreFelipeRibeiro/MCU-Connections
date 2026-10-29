@@ -1840,8 +1840,12 @@ function App() {
     setSelectedId(v === 'spatial' && !highlightedChar ? drawerId : null);
     setDesktopView(v);
   };
-  const contextSummary = (variant, inList) => (
-    <ContextSummary variant={variant} inList={inList} showing={visible.length} total={window.TITLES.length}
+  // `showing` is overridable because the Spatial canvas counts what is actually
+  // on it: selecting a card fades every unconnected title out, so the pill has
+  // to follow the ring rather than keep reporting the whole filtered set.
+  const contextSummary = (variant, inList, showing) => (
+    <ContextSummary variant={variant} inList={inList}
+      showing={showing == null ? visible.length : showing} total={window.TITLES.length}
       filters={{ search, setSearch, collectionFilter, setCollectionFilter, typeFilter, setTypeFilter,
         phaseFilter, setPhaseFilter, budgetFilter, setBudgetFilter }}/>
   );
@@ -2304,7 +2308,9 @@ function App() {
           </div>
         );
       })()}
-      {contextSummary(isTouch ? 'pill' : 'float')}
+      {/* ringIds is the selected title plus everything sharing a character
+          with it — exactly the cards left standing on the canvas. */}
+      {contextSummary(isTouch ? 'pill' : 'float', false, ringIds ? ringIds.size : null)}
       {focusPop}
     </div>
   );
