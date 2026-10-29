@@ -177,6 +177,9 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                         onClick={e => { e.stopPropagation(); onOpen(t.id); }}>
                         <window.Highlight text={I.titleName(t)} query={search}/>
                       </button>
+                      {/* Beside the title rather than in the narrow Released
+                          column, where it wrapped under the year. */}
+                      <window.ReleaseBadge title={t} className="dl-release"/>
                       {/* Which character matched the search, at every width
                           (the characters column drops on narrower lists). */}
                       <window.MatchBadge matchedChars={matched} query={search} title={t}/>

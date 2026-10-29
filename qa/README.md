@@ -20,7 +20,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression, 25 check scripts in 26 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
+| `bash qa/regress.sh` | Full regression, 26 check scripts in 27 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
 | `node qa/a11y-scan.js` | axe-core scan of 7 screens (desktop Spatial, details, List, account menu; phone List, details, Spatial). Add `LOC=pt-BR` for Portuguese. Expect no violations. |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
 | `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
@@ -48,10 +48,15 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   `test-portrait` (a recast row never shows the default performer's face),
   `test-recastname` (the performer named beside a recast character follows
   the title in view, and a character search offers one row per performer),
-  `test-bannerhold` (the pinned banner's controls stay put when the details
-  panel opens, and a hover banner does not move the panel),
-  `test-progress` (phase progress counts released titles only, ignores the
-  collection tab, and hides during a search).
+  `test-bannerhold` (the character banner stops at the details panel with the
+  same indent pinned or hovered, and the panel hangs from the toolbar),
+  `test-progress` (phase meters on By Phase only and one All titles meter on
+  every other order, across all 30 view and order combinations; counts
+  released titles only, ignores the collection tab and hides during a search;
+  sticky headers, Spatial framing and the scroll reveal),
+  `test-release` (release status worked out from the dates at run time:
+  released / upcoming / expected at their real precision, badges only on
+  titles not out yet, the Released only filter, Portuguese dates).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.

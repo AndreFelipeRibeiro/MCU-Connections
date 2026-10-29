@@ -57,7 +57,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   while the old layout fades (all off with reduced motion).
 - Menus in the desktop toolbar (language, order, filters, account, search
   suggestions) open over the details drawer; the zoom control moves left of it.
-- Phase, film/series and budget filters. All / Unseen / Seen / Watchlist is an
+- Phase, film/series, budget and release (Released only) filters. All / Unseen / Seen / Watchlist is an
   always-visible switch (desktop toolbar; mobile second header row, beside the
   List/Grid/Spatial menu), with a dashed-ring, check and bookmark icon for each state.
 - English and Brazilian Portuguese. The first visit follows the browser/phone
@@ -72,6 +72,11 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
 - Details show a short, spoiler-light synopsis under the title (three lines, then
   See more), written for this app in each language.
+- Release status at the precision it is known: "Released May 2, 2008",
+  "Coming December 18, 2026", or "Expected March 2027 · day not yet confirmed"
+  for a title with only an announced month (never counted as released, even
+  once the month passes). Titles not out yet carry an Upcoming or Expected
+  badge on cards and rows; released titles carry none.
 - Selecting a title in Spatial arranges the titles that share its characters in
   rings around it, closest when they share the most; on desktop the selected
   title is drawn slightly larger. Unrelated cards fade out

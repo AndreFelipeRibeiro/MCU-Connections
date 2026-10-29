@@ -137,6 +137,27 @@
     return table(lang, 'synopses')[title.id] || table('en', 'synopses')[title.id] || null;
   }
 
+  // A title's release at the precision it is actually known: a full date for a
+  // confirmed day, the month alone for an announced window. `status` keeps the
+  // two apart — released / upcoming for a confirmed day, expected for a month —
+  // so an announced month never reads as a premiere, even once it has passed
+  // (the same rule MCU_isReleased applies to the completion count).
+  function release(title) {
+    const r = title && title.release;
+    if (!r) return { status: 'expected', date: null };
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(r);
+    const [y, m, d] = r.split('-').map(Number);
+    let date = r;
+    try {
+      date = new Intl.DateTimeFormat(tag(lang), day
+        ? { year: 'numeric', month: 'long', day: 'numeric' }
+        : { year: 'numeric', month: 'long' }).format(new Date(y, (m || 1) - 1, d || 1));
+    } catch (e) { /* keep the ISO text */ }
+    if (!day) return { status: 'expected', date };
+    const out = window.MCU_isReleased ? window.MCU_isReleased(title) : true;
+    return { status: out ? 'released' : 'upcoming', date };
+  }
+
   function budget(millions) {
     const n = millions < 1 ? millions : Math.round(millions);
     return tr('budget.format', { n: n.toLocaleString(tag(lang)) });
@@ -157,7 +178,7 @@
   const api = {
     get lang() { return lang; },
     setLang, tr, titleName, titleNames, charName, charNames, storyLabel, storyNote, synopsis,
-    budget, upper, compare, languages, detect, fold,
+    release, budget, upper, compare, languages, detect, fold,
   };
 
   const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };

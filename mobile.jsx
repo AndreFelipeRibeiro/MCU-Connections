@@ -536,6 +536,37 @@ function StoryYear({ title, detail = false, className = '' }) {
   );
 }
 
+// Release status for the details: "Released 2 May 2008", "Coming 18 December
+// 2026", or "Expected March 2027 · day not yet confirmed" — each at the
+// precision the catalog actually has, so an announced month is never shown as
+// a firm date.
+function ReleaseLine({ title, className = '' }) {
+  if (!title) return null;
+  const r = MI18N.release(title);
+  const text = r.date ? mtr('release.' + r.status, { date: r.date }) : mtr('release.tba');
+  return (
+    <span className={`release-line ${r.status}${className ? ' ' + className : ''}`}>
+      <span className="release-dot" aria-hidden="true"/>
+      <span>{text}{r.status === 'expected' && r.date && <span className="release-note"> · {mtr('release.expectedNote')}</span>}</span>
+    </span>
+  );
+}
+
+// A small badge for cards and rows. Released titles get none: they are the
+// norm, and a badge on 56 of 64 titles would say nothing.
+function ReleaseBadge({ title, className = '' }) {
+  if (!title) return null;
+  const r = MI18N.release(title);
+  if (r.status === 'released') return null;
+  const full = r.date ? mtr('release.' + r.status, { date: r.date }) : mtr('release.tba');
+  return (
+    <span className={`release-badge ${r.status}${className ? ' ' + className : ''}`} title={full}>
+      <span aria-hidden="true">{mtr('release.badge.' + r.status)}</span>
+      <span className="story-sr">{full}</span>
+    </span>
+  );
+}
+
 // The card is a <div> wrapping a dedicated open button rather than one big
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
@@ -586,7 +617,7 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
           <div className="m-cmeta">
             <div className="m-ctitle"><Highlight text={MI18N.titleName(t)} query={search}/></div>
             <div className="m-cyear">
-              <span>{t.year}</span>
+              <span>{t.year}<ReleaseBadge title={t} className="m-crelease"/></span>
               {t.budget != null && <b>{MI18N.budget(t.budget)}</b>}
             </div>
             <StoryYear title={t} className="m-cstory"/>
@@ -834,6 +865,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
               <span style={{color:MPHASE_COLORS[t.phase]}}>{mPhaseLabel(t.phase)}</span>
               {t.budget != null && <><span className="m-dot"/><span>{MI18N.budget(t.budget)}</span></>}
               {t.story && !chrono && <><span className="m-dot"/><StoryYear title={t}/></>}
+              <ReleaseBadge title={t} className="m-lrelease"/>
             </div>
             <ScoreBadges title={t} lead={lead}/>
             <MatchBadge matchedChars={matchedChars} query={search} title={t}/>
@@ -1151,7 +1183,7 @@ function Sheet({ children, onClose, tall, label }) {
   );
 }
 
-function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, sort, sortDir, setSortDir, onClose, showing, onClear }) {
+function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, sort, sortDir, setSortDir, onClose, showing, onClear }) {
   return (
     <Sheet onClose={onClose} tall label={mtr('filters.title')}>
       <div className="m-sh-head">
@@ -1186,6 +1218,14 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
         </div>
       </div>
       <div className="m-fgroup">
+        <div className="m-flab">{mtr('filter.release')}</div>
+        <div className="m-chips">
+          {[['all','filter.release.all'],['released','filter.release.released']].map(([v,k])=>(
+            <button key={v} className={`m-chip${releaseFilter===v?' on':''}`} aria-pressed={releaseFilter===v} onClick={()=>setReleaseFilter(v)}>{mtr(k)}</button>
+          ))}
+        </div>
+      </div>
+      <div className="m-fgroup">
         <div className="m-flab">{mtr('order.label')}</div>
         <div className="m-chips">
           {window.sortDirectionLabels(sort).map((label, i) => {
@@ -1210,6 +1250,7 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, 
         <div className="m-hero-text">
           <div className="m-eyebrow" style={{color:MPHASE_COLORS[title.phase]}}>{mPhaseLabel(title.phase)} · {mTypeLabel(title.type)} · {title.year}</div>
           <h2 className="m-dtitle">{MI18N.titleName(title)}</h2>
+          <ReleaseLine title={title} className="m-hero-release"/>
           <StoryYear title={title} detail className="m-hero-story"/>
           <ScoreBadges title={title}/>
           <window.TitleStatusActions title={title} variant="inline" className="m-hero-tsa"/>
@@ -1280,4 +1321,4 @@ function SpatialHint({ focused, sharedCount }) {
   );
 }
 
-Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear });
+Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });

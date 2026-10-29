@@ -1181,3 +1181,29 @@ body {
    divider, without a phase colour of its own. */
 .dl-phase-divider.sticky.overall { color: var(--text-dim); margin-top: 10px; }
 .dl-phase-divider.sticky.overall .pgh-label { color: var(--text-dim); }
+
+/* Release status (i18n release(), mobile.jsx ReleaseLine / ReleaseBadge).
+   The line in the details says what is known at the precision it is known;
+   the badge marks only titles that are not out yet. Upcoming (a confirmed day)
+   takes the accent; Expected (a month window) is dim with a dashed outline,
+   the usual mark of something not yet fixed. Both pass AA on every surface
+   they sit on, row hover included (4.83 and 6.51). */
+.release-line { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-dim); }
+.release-line .release-dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 7px; background: var(--text-muted); }
+.release-line.released .release-dot { background: #5fa856; }
+.release-line.upcoming .release-dot { background: var(--accent); }
+.release-line.expected .release-dot { background: transparent; box-shadow: inset 0 0 0 1.5px var(--text-muted); }
+.release-line .release-note { color: var(--text-muted); }
+.drawer-release { margin: 2px 0 6px; }
+.release-badge {
+  display: inline-flex; align-items: center; margin-left: 7px; vertical-align: 1px;
+  font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase; line-height: 1;
+  padding: 3px 6px; border-radius: 4px; border: 1px solid transparent; white-space: nowrap;
+}
+.release-badge.upcoming { color: var(--accent); border-color: rgba(74,141,232,.45); background: rgba(74,141,232,.08); }
+.release-badge.expected { color: var(--text-dim); border: 1px dashed var(--border-strong); }
+/* In the desktop List the badge sits on its own line under the title, the way
+   the search-match badge does, so it starts flush with the title's text. */
+.c-title .release-badge.dl-release { display: flex; width: max-content; margin: 5px 0 0; }
+

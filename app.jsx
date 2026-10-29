@@ -117,9 +117,10 @@ function ContextSummary({ variant, inList, showing, total, filters: f }) {
   if (f.typeFilter !== 'all') chips.push(['type', tr(f.typeFilter === 'film' ? 'type.films' : 'type.series'), () => f.setTypeFilter('all')]);
   if (f.phaseFilter !== 'all') chips.push(['phase', tr('phase.label', { n: f.phaseFilter }), () => f.setPhaseFilter('all')]);
   if (f.budgetFilter !== 'all') chips.push(['budget', tr('budget.' + f.budgetFilter), () => f.setBudgetFilter('all')]);
+  if (f.releaseFilter !== 'all') chips.push(['release', tr('filter.release.chip'), () => f.setReleaseFilter('all')]);
   const clearAll = () => {
     f.setSearch(''); f.setCollectionFilter('all'); f.setTypeFilter('all');
-    f.setPhaseFilter('all'); f.setBudgetFilter('all');
+    f.setPhaseFilter('all'); f.setBudgetFilter('all'); f.setReleaseFilter('all');
   };
   const count = showing === total ? tr('header.count', { n: total }) : tr('header.countOf', { shown: showing, total });
   // Keep the canvas pan/pinch handlers from treating a click here as a drag.
@@ -319,7 +320,7 @@ function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusabl
       <div className="card-meta">
         <div className="card-title"><window.Highlight text={I18N.titleName(title)} query={searchQuery}/></div>
         <div className="card-year">
-          <span>{title.year}</span>
+          <span>{title.year}<window.ReleaseBadge title={title} className="card-release"/></span>
           {title.budget != null && (
             <span className="card-budget">{I18N.budget(title.budget)}</span>
           )}
@@ -379,6 +380,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
         <div>
           <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{phaseLabel(title.phase)} · {I18N.upper(typeLabel(title.type))} · {title.year}</div>
           <h2 className="drawer-title" id="drawer-title" ref={headingRef} tabIndex={-1}><window.Highlight text={I18N.titleName(title)} query={search}/></h2>
+          <window.ReleaseLine title={title} className="drawer-release"/>
           <window.StoryYear title={title} detail className="drawer-story"/>
           <window.Synopsis title={title} className="drawer-synopsis"/>
           <window.TitleStatusActions title={title} variant="inline" className="drawer-tsa"/>
@@ -423,11 +425,11 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
 const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
-function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
+function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   // Collection has its own always-visible switch, so it is not counted here.
-  const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
+  const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (releaseFilter !== 'all' ? 1 : 0);
   useEffect(() => {
     if (!popOpen) return;
     const away = (e) => { if (popRef.current && !popRef.current.contains(e.target)) setPopOpen(false); };
@@ -483,6 +485,16 @@ function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopVi
                     ))}
                   </div>
                 </div>
+                {/* Released only sits with the other catalogue filters rather
+                    than in the toolbar, so the navigation does not grow. */}
+                <div className="control-group">
+                  <label>{tr('filter.release')}</label>
+                  <div className="segmented">
+                    {[['all','filter.release.all'],['released','filter.release.released']].map(([v,k])=>(
+                      <button key={v} className={releaseFilter===v?'on':''} aria-pressed={releaseFilter===v} onClick={()=>setReleaseFilter(v)}>{tr(k)}</button>
+                    ))}
+                  </div>
+                </div>
                 <div className="control-group">
                   <label>{tr('order.label')}</label>
                   <div className="segmented">
@@ -494,7 +506,7 @@ function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopVi
                   </div>
                 </div>
                 {activeFilters > 0 && (
-                  <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); }}>{tr('filters.clear')}</button>
+                  <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }}>{tr('filters.clear')}</button>
                 )}
               </div>
             )}
@@ -830,6 +842,7 @@ function App() {
   const [phaseFilter, setPhaseFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [budgetFilter, setBudgetFilter] = useState('all');
+  const [releaseFilter, setReleaseFilter] = useState('all');
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [mediaReady, setMediaReady] = useState(!!window.MEDIA);
@@ -1107,6 +1120,9 @@ function App() {
         return true;
       });
     }
+    // Released only uses the same test as the completion count, so a title
+    // with an announced month never passes as out.
+    if (releaseFilter === 'released') list = list.filter(t => window.MCU_isReleased(t));
     if (searchCharMatches) list = list.filter(t => searchCharMatches[t.id] !== undefined);
     // "Their titles": a pin narrows the layout like search does. Deliberate
     // (the visitor pins or toggles it), so re-laying out is expected.
@@ -1114,7 +1130,7 @@ function App() {
       list = list.filter(t => pinnedTitleIds.has(t.id));
     }
     return list;
-  }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches, pinnedTitleIds, charOnly, isTouch]);
+  }, [phaseFilter, typeFilter, budgetFilter, releaseFilter, searchCharMatches, pinnedTitleIds, charOnly, isTouch]);
 
   // How much of each phase and era has been seen. Deliberately NOT derived from
   // `visible`: the collection tab must not feed back into its own numbers, or
@@ -1264,7 +1280,7 @@ function App() {
   }, [basePositions, overrides, focusId, relatedIds, isTouch, pair]);
 
   // Reset overrides when sort/filter changes the layout
-  useEffect(() => { setOverrides({}); }, [sort, sortDir, phaseFilter, typeFilter, budgetFilter, search]);
+  useEffect(() => { setOverrides({}); }, [sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, search]);
 
   const selectedTitle = selectedId ? window.TITLES.find(t => t.id === selectedId) : null;
   const drawerTitle = drawerId ? window.TITLES.find(t => t.id === drawerId) : null;
@@ -1827,8 +1843,8 @@ function App() {
   // Collection has its own switch in the header, so the Filters badge skips it.
   // Grid and List animate when any of these change: sort, order, collection,
   // phase, films/series and budget. Search is left out so typing stays calm.
-  const flipKey = [sort, sortDir, collectionFilter, phaseFilter, typeFilter, budgetFilter].join(':');
-  const filterCount = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
+  const flipKey = [sort, sortDir, collectionFilter, phaseFilter, typeFilter, budgetFilter, releaseFilter].join(':');
+  const filterCount = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (releaseFilter !== 'all' ? 1 : 0);
   // Spatial keeps every card on screen (dimmed), so it counts `filtered`; the
   // flat views actually drop non-matching rows and count what they render.
   // Switching to Spatial with a title open in the drawer selects that card, so
@@ -1883,7 +1899,7 @@ function App() {
     <ContextSummary variant={variant} inList={inList}
       showing={showing == null ? visible.length : showing} total={window.TITLES.length}
       filters={{ search, setSearch, collectionFilter, setCollectionFilter, typeFilter, setTypeFilter,
-        phaseFilter, setPhaseFilter, budgetFilter, setBudgetFilter }}/>
+        phaseFilter, setPhaseFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter }}/>
   );
   const mobileShowing = viewMode === 'spatial' ? filtered.length : visible.length;
   const sharedCharCount = useMemo(() => {
@@ -2330,7 +2346,7 @@ function App() {
         // back, instead of an empty canvas. Events stop here so the button
         // never starts a pan or a background tap.
         const searching = !!search.trim();
-        const filtering = phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all';
+        const filtering = phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all' || releaseFilter !== 'all';
         const label = searching && filtering ? tr('empty.clearBoth') : searching ? tr('search.clear') : tr('filters.clear');
         const stop = e => e.stopPropagation();
         return (
@@ -2340,7 +2356,7 @@ function App() {
             {(searching || filtering) && (
               <button className="spatial-empty-btn" onClick={() => {
                 if (searching) setSearch('');
-                if (filtering) { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); }
+                if (filtering) { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }
               }}>{label}</button>
             )}
           </div>
@@ -2396,10 +2412,11 @@ function App() {
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
             typeFilter={typeFilter} setTypeFilter={setTypeFilter}
             budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
+            releaseFilter={releaseFilter} setReleaseFilter={setReleaseFilter}
             sort={sort}
             sortDir={sortDir} setSortDir={setSortDir}
             showing={mobileShowing}
-            onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); }}
+            onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }}
             onClose={() => { setSheet(null); requestAnimationFrame(() => window.playPendingFlip()); }}
           />
         )}
@@ -2445,6 +2462,7 @@ function App() {
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}
         budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
+        releaseFilter={releaseFilter} setReleaseFilter={setReleaseFilter}
         collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         search={search} setSearch={setSearch}
       />
