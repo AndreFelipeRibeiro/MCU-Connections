@@ -14,7 +14,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V3 feature — progress: phase meters on By Phase, one catalogue meter everywhere else
 
-Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging).
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
 Revises the progress entry below after the user's design review
 ([`1fc30af`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/1fc30af58978698053888ec313ecc39583bfdb5a)).
 
@@ -48,7 +49,8 @@ Revises the progress entry below after the user's design review
 
 ## V3 improvement — the Spatial count follows a selected title
 
-Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`3b2a5f5`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/3b2a5f5bc510a47c2606cea35bf91e8119f1adb2))
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge. ([`3b2a5f5`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/3b2a5f5bc510a47c2606cea35bf91e8119f1adb2))
 
 - Selecting a title fades the unconnected cards out, but the count pill kept
   saying "64 titles". It now reads, for example, "17 of 64": the selected title
@@ -60,7 +62,8 @@ Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`3b
 
 ## V3 fix — every character has a portrait
 
-Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`958dc3d`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/958dc3d741a1d620ac0389591000fe4b41cdf27d))
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge. ([`958dc3d`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/958dc3d741a1d620ac0389591000fe4b41cdf27d))
 
 - Ten portraits were missing because adding a character does not add its TMDB
   path: the five sparse-series characters (Maria Hill, Talos, Monica Rambeau,
@@ -74,7 +77,8 @@ Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`95
 
 ## V3 improvement — a recast performer's own title count beside their name
 
-Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`56f44b7`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/56f44b73b68d295883bc22cd138f036b755be67d))
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge. ([`56f44b7`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/56f44b73b68d295883bc22cd138f036b755be67d))
 
 - The banner names the performer credited on the title in view, but counted the
   whole character's titles beside the name while the stepper already showed
@@ -87,7 +91,8 @@ Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`56
 
 ## V3 improvement — the character banner stops at the details panel
 
-Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`3ae170c`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/3ae170c5fefd70911b9f0c9376674abbf925862d))
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge. ([`3ae170c`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/3ae170c5fefd70911b9f0c9376674abbf925862d))
 
 - Reverses the full-width pinned banner recorded further down ("the pinned
   banner holds its place…"). That kept the stepper still, but the hover preview
@@ -101,7 +106,8 @@ Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`3a
 
 ## V3 feature — phase and era progress, on four of the five surfaces
 
-Recorded: 2026-10-28 17:43 EDT (-0400). Pushed to `version/3.0` (staging).
+Recorded: 2026-10-28 17:43 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
 Revised after design review; see the progress entry above.
 
 - One shared `ProgressHeader` carries the label, the `9/18` count in JetBrains
@@ -150,7 +156,8 @@ Revised after design review; see the progress entry above.
 
 ## V3 maintenance — five source-verified characters for the sparse series
 
-Recorded: 2026-10-28 17:17 EDT (-0400). Pushed to `version/3.0` (staging).
+Recorded: 2026-10-28 17:17 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
 
 - The review counted 11 series with two or fewer featured characters. Five
   characters were added, each verified per production and each chosen because
@@ -189,7 +196,8 @@ Recorded: 2026-10-28 17:17 EDT (-0400). Pushed to `version/3.0` (staging).
 
 ## V3 improvement — picking a title from search navigates to it instead of filtering by its name
 
-Recorded: 2026-10-28 16:59 EDT (-0400). Pushed to `version/3.0` (staging).
+Recorded: 2026-10-28 16:59 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
 
 - Picking a title put its name in the search box, which left a text filter
   behind. On the Spatial canvas that narrowed 64 cards down to the one just
@@ -218,7 +226,8 @@ Recorded: 2026-10-28 16:59 EDT (-0400). Pushed to `version/3.0` (staging).
 
 ## V3 improvement — the pinned banner holds its place when the details panel opens
 
-Recorded: 2026-10-28 16:55 EDT (-0400). Pushed to `version/3.0` (staging).
+Recorded: 2026-10-28 16:55 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
 Reversed before release by "the character banner stops at the details panel".
 
 - The banner was indented by `padding-right: 402px` to clear the drawer, which
@@ -246,7 +255,8 @@ Reversed before release by "the character banner stops at the details panel".
 
 ## V3 improvement — a failed collection sync is visible without opening Account
 
-Recorded: 2026-10-28 16:55 EDT (-0400). Pushed to `version/3.0` (staging).
+Recorded: 2026-10-28 16:55 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
 
 - A failed account-wide load was reported only inside the Account panel, so a
   signed-in visitor browsed on with collection editing silently paused and no
@@ -276,7 +286,8 @@ Recorded: 2026-10-28 16:55 EDT (-0400). Pushed to `version/3.0` (staging).
 
 ## V3 improvement — one name for a recast character, everywhere, and one unbroken chain
 
-Recorded: 2026-10-28 16:37 EDT (-0400). Pushed to `version/3.0` (staging).
+Recorded: 2026-10-28 16:37 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
 
 - **The name now follows the title.** The pinned banner, the phone pill and the
   card match badge all named the character's *default* performer, so the banner
@@ -323,7 +334,8 @@ Recorded: 2026-10-28 16:37 EDT (-0400). Pushed to `version/3.0` (staging).
 
 ## V3 workflow — Version and Batch tags on the Notion backlog
 
-Recorded: 2026-10-28 15:45 EDT (-0400). Pushed to `version/3.0` (staging).
+Recorded: 2026-10-28 15:45 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
 
 - The backlog recorded *when* a ticket was completed but not *what it shipped
   in*, so reconstructing a batch meant reading completion timestamps and
@@ -343,7 +355,8 @@ Recorded: 2026-10-28 15:45 EDT (-0400). Pushed to `version/3.0` (staging).
 
 ## V3 improvement — the two open credit-scene cases, decided
 
-Recorded: 2026-10-28 15:35 EDT (-0400). Pushed to `version/3.0` (staging).
+Recorded: 2026-10-28 15:35 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
 
 - The credit-scene audit left two cases for the user rather than deciding
   them. Both are now settled, and together they sharpen the rule: what counts
@@ -368,7 +381,8 @@ Recorded: 2026-10-28 15:35 EDT (-0400). Pushed to `version/3.0` (staging).
 
 ## V3 improvement — credit-scene-only cast comes out of the catalog
 
-Recorded: 2026-10-28 15:30 EDT (-0400). Pushed to `version/3.0` (staging).
+Recorded: 2026-10-28 15:30 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
 
 - Rule, set by the user: a character counts for a title only if they appear
   in the **main feature**. A character whose sole appearance is a mid- or
@@ -411,7 +425,8 @@ Recorded: 2026-10-28 15:30 EDT (-0400). Pushed to `version/3.0` (staging).
 
 ## V3 workflow — the calendar recap format, so it pastes with its formatting
 
-Recorded: 2026-10-28 15:30 EDT (-0400). Pushed to `version/3.0` (staging).
+Recorded: 2026-10-28 15:30 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
+2026-10-28 after the user's approval, in the Batch 6 merge.
 
 - The recap the user pastes into their Notion Calendar event was specified
   inside a code fence, so it reached them as plain text and pasted
