@@ -257,6 +257,36 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     if (d.parked !== 1) errors.push(`${d.parked} dividers parked at the header line; expected exactly one`);
   }
 
+  // The All titles header pins too, in every order but By Phase. It once sat in
+  // a rowgroup of its own, which was both invalid ARIA and its whole sticky
+  // container, so it scrolled away with the first rows.
+  await deskSort(page, DESK_SORT.release);
+  R.overallSticky = await page.evaluate(async () => {
+    const dl = document.querySelector('.dlist');
+    const c = dl.getBoundingClientRect();
+    const head = document.querySelector('.dl-head');
+    const ov = document.querySelector('.dl-phase-divider.overall');
+    if (!ov) return { error: 'no All titles header in Release order' };
+    dl.scrollTop = 2500;
+    await new Promise((r) => setTimeout(r, 600));
+    const out = {
+      top: Math.round(ov.getBoundingClientRect().top - c.top),
+      headBottom: Math.round(head.getBoundingClientRect().bottom - c.top),
+      role: ov.getAttribute('role'),
+      parentRole: ov.parentElement.getAttribute('role'),
+    };
+    dl.scrollTop = 0;
+    return out;
+  });
+  {
+    const o = R.overallSticky;
+    if (o.error) errors.push(o.error);
+    else {
+      if (Math.abs(o.top - o.headBottom) > 1) errors.push(`after scrolling, the All titles header sits at ${o.top}, not pinned under the column header (${o.headBottom})`);
+      if (o.role !== 'row' || o.parentRole !== 'table') errors.push(`the All titles header is a ${o.role} inside a ${o.parentRole}; it must be a row owned by the table`);
+    }
+  }
+
   // ---- The canvas ---------------------------------------------------------
   await deskView(page, 'Spatial');
   await deskSort(page, DESK_SORT.phase);

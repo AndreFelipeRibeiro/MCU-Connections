@@ -65,8 +65,8 @@ their "Handoff — 2026-10-24" sections are historical.
 - QA checks (`qa/`, details in qa/README.md): once per machine
   `bash qa/setup.sh` (needs Node 18+). Before handing work over for review, run
   `bash qa/regress.sh` (26 check scripts in 27 runs, about 26 minutes; it exits non-zero and
-  marks failures with `!!`) and `node qa/a11y-scan.js` (expect no violations; add
-  `LOC=pt-BR` for Portuguese). Also run the targeted check for the area you
+  marks failures with `!!`) and `node qa/a11y-scan.js` (exits non-zero on any violation;
+  add `LOC=pt-BR` for Portuguese). Also run the targeted check for the area you
   touched (for example `qa/test-kbspatial.js`), and update checks in the same
   commit when you rename or restructure UI they rely on.
 - The QA checks are headless Chromium. Still look at the change in a real

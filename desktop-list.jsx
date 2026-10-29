@@ -132,11 +132,15 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
               <DlSortHeader key={col} col={col} label={labels[col]} sort={sort} sortDir={sortDir} setSort={setSort} setSortDir={setSortDir}/>
             ))}
           </div>
+          {/* A row owned directly by the table, not wrapped in a rowgroup of its
+              own: a rowgroup holding no row is invalid ARIA, and it was also the
+              header's whole sticky container, so it never pinned. As a child of
+              the table it is valid and pins for the length of the List. */}
           {progress && progress.all && (
-            <div role="rowgroup">
-              <div className="dl-phase-divider sticky overall">
+            <div role="row" className="dl-phase-divider sticky overall">
+              <span role="cell" className="dl-overall-cell">
                 <window.ProgressHeader label={I.upper(I.tr('progress.all'))} {...progress.all}/>
-              </div>
+              </span>
             </div>
           )}
           {blocks.map(b => (

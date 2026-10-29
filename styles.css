@@ -1179,7 +1179,8 @@ body {
 
 /* The whole-catalogue meter in the desktop List: same sticky header as a phase
    divider, without a phase colour of its own. */
-.dl-phase-divider.sticky.overall { color: var(--text-dim); margin-top: 10px; }
+.dl-phase-divider.sticky.overall { display: block; color: var(--text-dim); margin-top: 10px; }
+.dl-overall-cell { display: block; }
 .dl-phase-divider.sticky.overall .pgh-label { color: var(--text-dim); }
 
 /* Release status (i18n release(), mobile.jsx ReleaseLine / ReleaseBadge).
