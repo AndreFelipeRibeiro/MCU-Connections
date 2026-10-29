@@ -49,6 +49,73 @@ async function ctxPage(browser, opts, init) {
 const settle = page => page.waitForTimeout(2200);
 const go = async page => { await page.goto(URL); await settle(page); };
 
+// The rule this check exists for: per-phase meters belong to the By Phase tab
+// alone, and every other order shows ONE meter over the whole catalogue. The
+// two tabs used to repeat each other; now they do different jobs.
+const SORTS = ['release', 'chrono', 'phase', 'title', 'imdb', 'rt'];
+const expectFor = (sort) => (sort === 'phase' ? { phaseMeters: 6, overall: false } : { phaseMeters: 0, overall: true });
+// Desktop sort buttons carry a long and a short label ("▤ReleaseRelease"), so
+// match the long one as a substring, inside the toolbar (the List's column
+// headers include "Released").
+const DESK_SORT = { release: 'Release', chrono: 'Chronological', phase: 'By Phase', title: 'A–Z', imdb: 'IMDb Rating', rt: 'Tomatometer' };
+// Phone sort tabs read "◫Phase" and so on: match the end of their text.
+const PHONE_SORT = { release: 'Release', chrono: 'Chrono', phase: 'Phase', title: 'A–Z', imdb: 'IMDb', rt: 'RT' };
+
+const deskSort = (page, label) => page.evaluate(async (l) => {
+  const b = [...document.querySelectorAll('.toolbar button')].find(x => x.textContent.replace(/\s+/g, ' ').includes(l));
+  if (b) b.click();
+  await new Promise(r => setTimeout(r, 1800));
+  return !!b;
+}, label);
+const deskView = (page, name) => page.evaluate(async (n) => {
+  const b = [...document.querySelectorAll('button')].find(x => new RegExp('(^|[^a-z])' + n + '$', 'i').test(x.textContent.trim()));
+  if (b) b.click();
+  await new Promise(r => setTimeout(r, 1800));
+  return !!b;
+}, name);
+const phoneSort = (page, label) => page.evaluate(async (l) => {
+  const b = [...document.querySelectorAll('.m-tab')].find(x => x.textContent.replace(/\s+/g, '').endsWith(l));
+  if (b) b.click();
+  await new Promise(r => setTimeout(r, 2200));
+  return !!b;
+}, label);
+const phoneView = (page, name) => page.evaluate(async (n) => {
+  const chip = [...document.querySelectorAll('button')]
+    .find(b => /^[☰▦◈]\s*(List|Lista|Grid|Grade|Spatial|Espacial)$/.test(b.textContent.trim()));
+  if (!chip) return 'no view chip';
+  if (chip.textContent.trim().endsWith(n)) return 'ok';
+  chip.click();
+  await new Promise(r => setTimeout(r, 700));
+  const opt = [...document.querySelectorAll('button, [role="option"], li')]
+    .find(e => e !== chip && e.textContent.trim().endsWith(n));
+  if (!opt) return 'no ' + n + ' option';
+  opt.click();
+  await new Promise(r => setTimeout(r, 2200));
+  return 'ok';
+}, name);
+
+// What a view is showing right now: how many per-phase meters, and whether the
+// whole-catalogue meter is up.
+const readCanvas = (page) => page.evaluate(() => ({
+  phaseMeters: document.querySelectorAll('.band-label .pgh-bar').length,
+  overall: !!document.querySelector('.spatial-overall'),
+}));
+const readDeskList = (page) => page.evaluate(() => ({
+  phaseMeters: document.querySelectorAll('.dl-phase-divider:not(.overall) .pgh-bar').length,
+  overall: !!document.querySelector('.dl-phase-divider.overall'),
+}));
+const readPhone = (page) => page.evaluate(() => ({
+  phaseMeters: document.querySelectorAll('.m-phase-divider:not(.overall) .pgh-bar').length,
+  overall: !!document.querySelector('.m-phase-divider.overall'),
+}));
+const checkRule = (where, sort, got, errors) => {
+  const want = expectFor(sort);
+  if (got.phaseMeters !== want.phaseMeters || got.overall !== want.overall) {
+    errors.push(`${where} in ${sort} order shows ${got.phaseMeters} phase meters and ${got.overall ? 'an' : 'no'} All titles meter; expected ${want.phaseMeters} and ${want.overall ? 'one' : 'none'}`);
+  }
+};
+const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom));
+
 (async () => {
   await new Promise(r => server.listen(8218, r));
   const browser = await chromium.launch();
@@ -57,27 +124,36 @@ const go = async page => { await page.goto(URL); await settle(page); };
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   await go(page);
 
-  const toList = async () => page.evaluate(async () => {
-    const b = [...document.querySelectorAll('button')].find(x => /(^|[^a-z])List$/i.test(x.textContent.trim()));
-    if (b) b.click();
-    await new Promise(r => setTimeout(r, 1400));
-  });
+  // ---- The rule, in every desktop view and order --------------------------
+  R.rule = {};
+  await deskView(page, 'Spatial');
+  for (const sort of SORTS) {
+    await deskSort(page, DESK_SORT[sort]);
+    const got = await readCanvas(page);
+    R.rule['desktop spatial ' + sort] = got;
+    checkRule('desktop Spatial', sort, got, errors);
+  }
+  await deskView(page, 'List');
+  for (const sort of SORTS) {
+    await deskSort(page, DESK_SORT[sort]);
+    const got = await readDeskList(page);
+    R.rule['desktop list ' + sort] = got;
+    checkRule('desktop List', sort, got, errors);
+  }
+
+  // ---- The numbers, in By Phase -------------------------------------------
+  await deskSort(page, DESK_SORT.phase);
   const dividers = () => page.evaluate(() =>
-    [...document.querySelectorAll('.dl-table .dl-phase-divider .pgh')].map(p => ({
+    [...document.querySelectorAll('.dl-table .dl-phase-divider:not(.overall) .pgh')].map(p => ({
       label: p.querySelector('.pgh-label').textContent.trim(),
       count: (p.querySelector('.pgh-count') || {}).textContent,
       up: (p.querySelector('.pgh-up') || {}).textContent || null,
       sr: (p.querySelector('.story-sr') || {}).textContent.trim(),
     })));
-
-  await toList();
   R.start = await dividers();
-
-  // One divider per phase, and the catalog has six.
-  if (R.start.length !== 6) errors.push(`expected 6 phase dividers, got ${R.start.length}`);
+  if (R.start.length !== 6) errors.push(`expected 6 phase dividers in By Phase, got ${R.start.length}`);
   // Nothing seen yet: an empty track and 0/N, not a hidden header.
   if (R.start[0] && R.start[0].count !== '0/6') errors.push(`Phase 1 opened at "${R.start[0].count}", expected 0/6`);
-
   // The denominator counts released titles only. Phase 6 has unreleased ones,
   // so its total must be smaller than its number of titles, and it must say so.
   R.phase6 = R.start[5] || null;
@@ -88,7 +164,6 @@ const go = async page => { await page.goto(URL); await settle(page); };
     const inCatalog = await page.evaluate(() => window.TITLES.filter(t => t.phase === 6).length);
     if (!(total < inCatalog)) errors.push(`Phase 6 counts ${total} of ${inCatalog} titles; unreleased ones should be left out`);
   }
-
   // Marking a title seen moves its phase's count, live.
   await page.evaluate(async () => {
     const first = window.TITLES.filter(t => t.phase === 1)[0];
@@ -104,7 +179,6 @@ const go = async page => { await page.goto(URL); await settle(page); };
   if (!/1 of 6|1 de 6/.test((R.afterMark && R.afterMark.sr) || '')) {
     errors.push(`the spoken form reads "${R.afterMark && R.afterMark.sr}" — colour and digits must not be the only signal`);
   }
-
   // The collection tab must NOT feed the fraction. On the Seen tab only seen
   // titles are listed, so a count taken from the visible set would read 1/1.
   await page.evaluate(async () => {
@@ -121,7 +195,6 @@ const go = async page => { await page.goto(URL); await settle(page); };
     if (b) b.click();
     await new Promise(r => setTimeout(r, 1000));
   });
-
   // A text search narrows the catalog, so the headers stand down entirely.
   await page.fill('.search-wrap input', 'iron');
   await page.waitForTimeout(900);
@@ -131,6 +204,252 @@ const go = async page => { await page.goto(URL); await settle(page); };
   await page.waitForTimeout(900);
   R.afterSearch = (await dividers()).length;
   if (R.afterSearch !== 6) errors.push(`dividers did not come back after the search (${R.afterSearch})`);
+
+  // The whole-catalogue meter counts the same way, over everything released.
+  await deskSort(page, DESK_SORT.release);
+  R.overallList = await page.evaluate(() => {
+    const el = document.querySelector('.dl-phase-divider.overall');
+    if (!el) return null;
+    const released = window.TITLES.filter(t => window.MCU_isReleased(t)).length;
+    return { count: (el.querySelector('.pgh-count') || {}).textContent || null, released };
+  });
+  if (!R.overallList) errors.push('no All titles meter in the desktop List in Release order');
+  else if (R.overallList.count !== `1/${R.overallList.released}`) {
+    errors.push(`the All titles meter reads "${R.overallList.count}"; with one title seen it should be 1/${R.overallList.released}`);
+  }
+
+  // ---- The desktop phase divider pins (By Phase) ---------------------------
+  await deskSort(page, DESK_SORT.phase);
+  R.deskSticky = await page.evaluate(async () => {
+    const dl = document.querySelector('.dlist');
+    const c = dl.getBoundingClientRect();
+    const head = document.querySelector('.dl-head');
+    dl.scrollTop = 260;
+    await new Promise((r) => setTimeout(r, 500));
+    const d = document.querySelector('.dl-phase-divider');
+    const cs = getComputedStyle(d);
+    const r = d.getBoundingClientRect();
+    const headBottom = Math.round(head.getBoundingClientRect().bottom - c.top);
+    dl.scrollTop = 3000;
+    await new Promise((r2) => setTimeout(r2, 600));
+    const tops = [...document.querySelectorAll('.dl-phase-divider')]
+      .map((x) => Math.round(x.getBoundingClientRect().top - c.top));
+    dl.scrollTop = 0;
+    return {
+      pinnedTop: Math.round(r.top - c.top), headBottom,
+      position: cs.position, transform: cs.transform,
+      flipId: d.getAttribute('data-flip-id'),
+      opaque: cs.backgroundColor,
+      rowgroups: document.querySelectorAll('[role="rowgroup"]').length,
+      // Exactly one divider parked at the header line at any scroll depth.
+      parked: tops.filter((t) => Math.abs(t - headBottom) <= 1).length,
+    };
+  });
+  {
+    const d = R.deskSticky;
+    if (d.position !== 'sticky') errors.push(`the desktop phase divider is ${d.position}, not sticky`);
+    if (Math.abs(d.pinnedTop - d.headBottom) > 1) errors.push(`the pinned divider sits at ${d.pinnedTop} but the column header ends at ${d.headBottom}`);
+    if (d.transform && d.transform !== 'none') errors.push(`the desktop divider carries ${d.transform}; it must stay out of the reorder animation`);
+    if (d.flipId) errors.push('the desktop sticky divider has a data-flip-id again');
+    if (/rgba\(0, 0, 0, 0\)|transparent/.test(d.opaque)) errors.push('the pinned divider is transparent, so rows show through it');
+    // One rowgroup per phase is what bounds each sticky divider.
+    if (d.rowgroups !== 6) errors.push(`${d.rowgroups} rowgroups in By Phase; expected one per phase`);
+    if (d.parked !== 1) errors.push(`${d.parked} dividers parked at the header line; expected exactly one`);
+  }
+
+  // ---- The canvas ---------------------------------------------------------
+  await deskView(page, 'Spatial');
+  await deskSort(page, DESK_SORT.phase);
+  // Connection lines run behind the band labels, so heading and meter sit on
+  // an opaque pill, about two and a half cards wide.
+  R.bands = await page.evaluate(() => [...document.querySelectorAll('.band-label')].map((el) => {
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    const cards = [...document.querySelectorAll('.card')].map((c) => c.getBoundingClientRect())
+      .filter((c) => c.top > r.bottom - 2 && c.top - r.bottom < 140);
+    return {
+      w: Math.round(r.width), cardW: cards.length ? Math.round(cards[0].width) : null,
+      gapToCards: cards.length ? Math.round(Math.min(...cards.map((c) => c.top)) - r.bottom) : null,
+      bg: cs.backgroundColor, radius: parseFloat(cs.borderRadius),
+      segs: el.querySelectorAll('.pgh-seg').length,
+    };
+  }));
+  if (!R.bands.length) errors.push('no Spatial band labels in By Phase');
+  R.bands.forEach((b, i) => {
+    if (/rgba\(0, 0, 0, 0\)|transparent/.test(b.bg)) errors.push(`band ${i} has no background; the lines run straight through it`);
+    if (!(b.radius > 0)) errors.push(`band ${i} is not a pill (border-radius ${b.radius})`);
+    if (!b.segs) errors.push(`band ${i} has no meter segments`);
+    if (b.cardW) {
+      const inCards = b.w / b.cardW;
+      if (inCards < 2 || inCards > 3) errors.push(`band ${i} is ${inCards.toFixed(2)} cards wide; it should sit between 2 and 3`);
+      if (b.gapToCards < 0) errors.push(`band ${i} overlaps the cards beneath it by ${-b.gapToCards}px`);
+    }
+  });
+  // Framing: the camera leaves room for the first pill — not cut off at the
+  // top, not under the count pill — in each layout that has bands.
+  R.framing = {};
+  for (const sort of ['phase', 'chrono', 'release']) {
+    await deskSort(page, DESK_SORT[sort]);
+    R.framing[sort] = await page.evaluate(() => {
+      const vp = document.querySelector('.viewport').getBoundingClientRect();
+      const count = document.querySelector('.ctx-count').getBoundingClientRect();
+      const first = [...document.querySelectorAll('.band-label')].map(b => b.getBoundingClientRect()).sort((a, b) => a.top - b.top)[0];
+      const ov = document.querySelector('.spatial-overall');
+      const o = ov && ov.getBoundingClientRect();
+      const over = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom));
+      return {
+        firstTop: first ? Math.round(first.top - vp.top) : null,
+        underCount: over(first, count),
+        overallOnBand: [...document.querySelectorAll('.band-label')].some(b => over(b.getBoundingClientRect(), o)),
+      };
+    });
+    const f = R.framing[sort];
+    if (f.firstTop === null) errors.push(`no band label to frame in ${sort} order`);
+    else if (f.firstTop < 0) errors.push(`the camera cuts the first band pill off at the top in ${sort} order (${f.firstTop}px)`);
+    if (f.underCount) errors.push(`the first band pill sits under the count pill in ${sort} order`);
+    if (f.overallOnBand) errors.push(`the All titles meter covers a band pill in ${sort} order`);
+  }
+  // A row name with no meter hugs its text: the space to the right of the
+  // words matches the space to the left, rather than trailing off into room
+  // kept for a meter that is not there.
+  R.plainPills = {};
+  for (const sort of ['release', 'chrono']) {
+    await deskSort(page, DESK_SORT[sort]);
+    R.plainPills[sort] = await page.evaluate(() => [...document.querySelectorAll('.band-label.plain')].map((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const t = range.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const cs = getComputedStyle(el);
+      const bl = parseFloat(cs.borderLeftWidth), br = parseFloat(cs.borderRightWidth);
+      return { left: Math.round(t.left - r.left - bl), right: Math.round(r.right - br - t.right) };
+    }));
+    if (!R.plainPills[sort].length) errors.push(`no plain band pills in ${sort} order`);
+    R.plainPills[sort].forEach((g, i) => {
+      if (Math.abs(g.left - g.right) > 2) errors.push(`${sort} band ${i} has ${g.left}px of padding on the left but ${g.right}px on the right`);
+    });
+  }
+
+  // The whole-catalogue meter stands down with the bands while a title is
+  // selected, and comes back afterwards.
+  await deskSort(page, DESK_SORT.release);
+  R.standDown = await page.evaluate(async () => {
+    const card = document.querySelector('.card button');
+    if (card) card.click();
+    await new Promise(r => setTimeout(r, 1800));
+    const whileSelected = !!document.querySelector('.spatial-overall');
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise(r => setTimeout(r, 1500));
+    return { whileSelected, back: !!document.querySelector('.spatial-overall') };
+  });
+  if (R.standDown.whileSelected) errors.push('the All titles meter stayed up while a title was selected');
+  if (!R.standDown.back) errors.push('the All titles meter did not come back after the selection closed');
+
+  // ---- Phone: the rule in every view and order ----------------------------
+  const { page: m } = await ctxPage(browser, MOBILE, "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.signInNudge.v1','2');");
+  await go(m);
+  for (const view of ['Grid', 'List', 'Spatial']) {
+    const sw = await phoneView(m, view);
+    if (sw !== 'ok') { errors.push(`could not reach the phone ${view}: ${sw}`); continue; }
+    for (const sort of SORTS) {
+      await phoneSort(m, PHONE_SORT[sort]);
+      const got = view === 'Spatial' ? await readCanvas(m) : await readPhone(m);
+      R.rule['phone ' + view.toLowerCase() + ' ' + sort] = got;
+      checkRule('phone ' + view, sort, got, errors);
+    }
+  }
+  // Phone canvas: the meter takes its own row, clear of the count pill and the
+  // zoom control, and the first band pill stays on screen below it.
+  R.phoneCanvas = {};
+  for (const sort of ['release', 'chrono', 'phase', 'title']) {
+    await phoneSort(m, PHONE_SORT[sort]);
+    R.phoneCanvas[sort] = await m.evaluate(() => {
+      const box = s => { const e = document.querySelector(s); return e ? e.getBoundingClientRect() : null; };
+      const vp = box('.viewport');
+      const ov = box('.spatial-overall'), zoom = box('.zoom-ctl'), count = box('.ctx-pill');
+      const first = [...document.querySelectorAll('.band-label')].map(b => b.getBoundingClientRect()).sort((a, b) => a.top - b.top)[0] || null;
+      const card = [...document.querySelectorAll('.card')].map(c => c.getBoundingClientRect()).sort((a, b) => a.top - b.top)[0] || null;
+      const over = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom));
+      return {
+        ovOnZoom: over(ov, zoom), ovOnCount: over(ov, count),
+        bandClipped: first ? first.top < vp.top : false,
+        bandOnChrome: over(first, ov) || over(first, zoom) || over(first, count),
+        cardOnMeter: over(card, ov),
+      };
+    });
+    const c = R.phoneCanvas[sort];
+    if (c.ovOnZoom) errors.push(`on a phone the All titles meter covers the zoom control (${sort})`);
+    if (c.ovOnCount) errors.push(`on a phone the All titles meter covers the count pill (${sort})`);
+    if (c.bandClipped) errors.push(`on a phone the first band pill is cut off at the top (${sort})`);
+    if (c.bandOnChrome) errors.push(`on a phone the first band pill sits under the floating controls (${sort})`);
+    if (c.cardOnMeter) errors.push(`on a phone the first cards sit under the All titles meter (${sort})`);
+  }
+
+  // ---- Phone: Grid and List are the same component (By Phase) -------------
+  const readDividers = (pg) => pg.evaluate(() => {
+    const d = [...document.querySelectorAll('.m-phase-divider.sticky:not(.overall)')];
+    const cs = d.length ? getComputedStyle(d[0]) : null;
+    const lab = d.length ? d[0].querySelector('.pgh-label') : null;
+    return {
+      n: d.length, blocks: document.querySelectorAll('.m-gblock').length,
+      segs: document.querySelectorAll('.m-phase-divider .pgh-seg').length,
+      position: cs && cs.position, top: cs && cs.top,
+      labelSize: lab && getComputedStyle(lab).fontSize,
+    };
+  });
+  await phoneSort(m, PHONE_SORT.phase);
+  await phoneView(m, 'Grid');
+  R.gridPhase = await readDividers(m);
+  // The sticky divider pins flush to the top of the scroll area, and stays out
+  // of the reorder animation: a transform on a sticky element left it hanging.
+  R.gridSticky = await m.evaluate(async () => {
+    const sa = document.querySelector('.m-scrollarea');
+    const d = document.querySelector('.m-phase-divider.sticky');
+    if (!sa || !d) return null;
+    sa.scrollTop = 700;
+    await new Promise(r => setTimeout(r, 500));
+    const out = {
+      pinnedOffset: Math.round(d.getBoundingClientRect().top - sa.getBoundingClientRect().top),
+      transform: getComputedStyle(d).transform, flipId: d.getAttribute('data-flip-id'),
+    };
+    sa.scrollTop = 0;
+    return out;
+  });
+  if (!R.gridSticky) errors.push('no sticky divider in the phone Grid');
+  else {
+    if (Math.abs(R.gridSticky.pinnedOffset) > 1) errors.push(`the pinned Grid divider sits ${R.gridSticky.pinnedOffset}px from the top of the scroll area, not flush`);
+    if (R.gridSticky.transform !== 'none') errors.push(`the sticky divider carries ${R.gridSticky.transform}; it must stay out of the reorder animation`);
+    if (R.gridSticky.flipId) errors.push('the sticky divider has a data-flip-id again');
+  }
+  await phoneView(m, 'List');
+  R.listPhase = await readDividers(m);
+  if (R.gridPhase.n !== 6) errors.push(`the Grid in By Phase shows ${R.gridPhase.n} phase dividers, expected 6`);
+  if (R.listPhase.n !== 6) errors.push(`the List in By Phase shows ${R.listPhase.n} phase dividers, expected 6`);
+  ['position', 'top', 'labelSize'].forEach((k) => {
+    if (R.gridPhase[k] !== R.listPhase[k]) errors.push(`the List divider's ${k} is ${R.listPhase[k]} but the Grid's is ${R.gridPhase[k]}; they must be the same component`);
+  });
+  if (R.listPhase.position !== 'sticky') errors.push(`the List divider is ${R.listPhase.position}, not sticky`);
+  if (R.listPhase.segs !== R.gridPhase.segs) errors.push(`the List draws ${R.listPhase.segs} segments but the Grid draws ${R.gridPhase.segs}`);
+  if (!R.listPhase.segs) errors.push('the meter has no segments');
+
+  // The meter fills when its header comes into view, so the progress is
+  // something you watch happen rather than something already sitting there.
+  R.reveal = await m.evaluate(async () => {
+    const lit = () => [...document.querySelectorAll('.m-phase-divider:not(.overall) .pgh-bar')].map((b) => b.classList.contains('lit'));
+    const sa = document.querySelector('.m-scrollarea');
+    sa.scrollTop = 0;
+    await new Promise((r) => setTimeout(r, 600));
+    const atTop = lit();
+    sa.scrollTop = sa.scrollHeight;
+    await new Promise((r) => setTimeout(r, 1400));
+    return { atTop, atBottom: lit(), scrolled: sa.scrollTop > 0 };
+  });
+  if (!R.reveal.scrolled) errors.push('the List did not scroll, so the reveal was never exercised');
+  else {
+    if (!R.reveal.atTop[0]) errors.push('the first meter never filled, though its header starts on screen');
+    if (R.reveal.atTop[R.reveal.atTop.length - 1]) errors.push('the last meter was already full before it was scrolled to');
+    if (!R.reveal.atBottom[R.reveal.atBottom.length - 1]) errors.push('the last meter did not fill after being scrolled to');
+  }
 
   R.errors = errors;
   console.log(JSON.stringify(R, null, 1));

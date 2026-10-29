@@ -20,6 +20,11 @@ const typeLabel = (type) => tr(type === 'film' ? 'type.film.one' : 'type.series.
 
 const CARD_W = 170;
 const CARD_H = 270;
+// How far above its row a band label's pill starts, in canvas units. The pill
+// is drawn there and the camera leaves room for it, so both read this one
+// number: when they disagreed, By Phase cut the first pill off at the top and
+// Chronological slid its first pill under the count pill.
+const BAND_LABEL_H = 58;
 // Space between the two titles of the pair view (room for the labels).
 const PAIR_GAP = 380;
 
@@ -193,6 +198,10 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
           y: y + row * rowH,
         };
       });
+      // A band per phase, so By Phase carries the same heading and meter the
+      // timeline layouts do. Its width is the widest row of this block, which
+      // is what the meter measures.
+      if (list.length) layoutBands.push({ x: 80, y, phase: Number(p) });
       const rows = Math.ceil(list.length / cols);
       y += rows * rowH + 80;
     });
@@ -225,9 +234,11 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
       if (x < b.x) b.x = x;
       if (chrono) { const yr = storyYear(t); if (yr !== null) b.years.push(yr); } else b.phase = t.phase;
     });
-    layoutBands = Object.values(bands).map(b => chrono
-      ? { x: b.x, y: b.y, era: b.row, from: b.years.length ? Math.min(...b.years) : null, to: b.years.length ? Math.max(...b.years) : null }
-      : { x: b.x, y: b.y, phase: b.phase });
+    layoutBands = Object.values(bands).map(b => Object.assign(
+      { x: b.x, y: b.y },
+      chrono
+        ? { era: b.row, from: b.years.length ? Math.min(...b.years) : null, to: b.years.length ? Math.max(...b.years) : null }
+        : { phase: b.phase }));
   }
 
   // Compute canvas bounds
@@ -1118,17 +1129,32 @@ function App() {
     if (!showProgress) return null;
     const eraOf = chronoEras(filtered);
     const byPhase = {}, byEra = {};
-    const add = (m, k, t) => {
-      const g = m[k] || (m[k] = { seen: 0, released: 0, upcoming: 0 });
+    const bump = (g, t) => {
       // Unreleased titles count towards neither side of the fraction — they are
       // not a gap in what you have watched — but they are still announced.
       if (!window.MCU_isReleased(t)) { g.upcoming += 1; return; }
       g.released += 1;
       if (statusOf(t.id) === 'seen') g.seen += 1;
     };
-    filtered.forEach(t => { add(byPhase, t.phase, t); add(byEra, eraOf[t.id], t); });
-    return { byPhase, byEra };
+    const add = (m, k, t) => bump(m[k] || (m[k] = { seen: 0, released: 0, upcoming: 0 }), t);
+    // `all` is the same tally over the whole set, for the views that group by
+    // nothing: the phone Grid in Release order reads as one run of cards, so
+    // one meter over all of it says more than six phase headings would.
+    const all = { seen: 0, released: 0, upcoming: 0 };
+    filtered.forEach(t => { add(byPhase, t.phase, t); add(byEra, eraOf[t.id], t); bump(all, t); });
+    return { byPhase, byEra, all };
   }, [showProgress, filtered, collectionStates]);
+
+  // Per-group meters belong to the By Phase tab alone; every other order shows
+  // one meter over the whole catalogue. Shaped once here rather than tested at
+  // each call site, so the views stay ignorant of the rule: they draw whichever
+  // of `byPhase` / `byEra` / `all` they are handed, and skip what is null.
+  const viewProgress = useMemo(() => {
+    if (!groupProgress) return null;
+    return sort === 'phase'
+      ? { byPhase: groupProgress.byPhase, byEra: null, all: null }
+      : { byPhase: null, byEra: null, all: groupProgress.all };
+  }, [groupProgress, sort]);
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
@@ -1444,6 +1470,12 @@ function App() {
     const rect = viewportRef.current.getBoundingClientRect();
     const colW = CARD_W + 60;
     const gridSort = sort === 'phase' || sort === 'title' || sort === 'imdb' || sort === 'rt';
+    // Height of the floating chrome at the top of the viewport that content has
+    // to clear. Desktop: the count pill (the whole-catalogue meter sits in the
+    // top-right corner there, out of the way). Phone: the count pill and zoom
+    // control share the first row, so the meter takes a row of its own beneath
+    // them in every order but By Phase.
+    const chromeTop = isTouch ? (sort === 'phase' ? 44 : 113) : 52;
 
     // The scale this sort opens at with no filter applied. Used as the yardstick
     // below: framing a match set is only an improvement if it doesn't mean
@@ -1519,7 +1551,8 @@ function App() {
         return null; // everything fits: nothing needs to peek
       };
       const miss = (f, lo, hi) => f === null ? 0 : f < lo ? lo - f : f > hi ? f - hi : 0;
-      const pill = 44;
+      // By Phase also has a band pill above its first row to keep on screen.
+      const pill = chromeTop + (sort === 'phase' ? BAND_LABEL_H * defaultScale : 0);
       let best = null;
       for (let s = Math.min(1, defaultScale); s >= defaultScale * 0.8; s -= 0.0025) {
         if (xs.length > 3 && 14 + (xs[2] - xs[0]) * s + CARD_W * s > rect.width) continue;
@@ -1537,9 +1570,12 @@ function App() {
       // Grid layouts: match the grid's width (mobile keeps a legibility floor of ~3 columns)
       const scale = defaultScale;
       const zoomed = canvasW * scale > rect.width - 32;
+      // By Phase is the one grid layout with band labels: leave room above the
+      // first row for its pill, below the count pill, as the timelines do.
+      const top = sort === 'phase' ? chromeTop + BAND_LABEL_H * scale : 14;
       setView({
         x: zoomed ? 14 - minX * scale : (rect.width - canvasW * scale) / 2,
-        y: canvasH * scale <= rect.height - 32 ? (rect.height - canvasH * scale) / 2 : 14 - minY * scale,
+        y: canvasH * scale <= rect.height - 32 ? (rect.height - canvasH * scale) / 2 : top - minY * scale,
         scale,
       });
     } else {
@@ -1557,13 +1593,13 @@ function App() {
         if (p.y < y0) y0 = p.y;
         if (p.y + CARD_H > y1) y1 = p.y + CARD_H;
       });
-      // Each row has its label 40 units above it, and the count pill sits at the
-      // top-left of the viewport: keep the first label clear of it.
-      const pill = isTouch ? 44 : 52;
-      const top = pill + 40 * scale;
+      // Each row has its label BAND_LABEL_H units above it, and the count pill
+      // sits at the top-left of the viewport: keep the first label clear of it.
+      const pill = chromeTop;
+      const top = pill + BAND_LABEL_H * scale;
       let y = top - minY * scale;
       if (isFinite(y0)) {
-        const yTop = y0 - 40;
+        const yTop = y0 - BAND_LABEL_H;
         if ((y1 - yTop) * scale <= rect.height - 28 - pill) {
           y = Math.max(rect.height / 2 - ((yTop + y1) / 2) * scale, pill - yTop * scale);
         } else {
@@ -2213,10 +2249,12 @@ function App() {
           const label = b.phase ? tr('phase.label', { n: b.phase })
             : b.era === 0 ? tr('era.before', { year: ERA_STARTS[0] })
             : b.from === null ? '' : b.from === b.to ? String(b.from) : `${b.from}–${b.to}`;
-          const g = groupProgress && (b.phase ? groupProgress.byPhase[b.phase] : groupProgress.byEra[b.era]);
+          const g = viewProgress && (b.phase
+            ? (viewProgress.byPhase && viewProgress.byPhase[b.phase])
+            : (viewProgress.byEra && viewProgress.byEra[b.era]));
           return (
-            <div key={b.phase ? 'p' + b.phase : 'e' + b.era} className={`band-label${b.phase ? ' phase' : ''}`}
-              style={{ transform: `translate(${b.x}px, ${b.y - 40}px)`, ...(b.phase ? { '--band': PHASE_COLORS[b.phase] } : {}) }}>
+            <div key={b.phase ? 'p' + b.phase : 'e' + b.era} className={`band-label${b.phase ? ' phase' : ''}${g ? '' : ' plain'}`}
+              style={{ transform: `translate(${b.x}px, ${b.y - BAND_LABEL_H}px)`, ...(b.phase ? { '--band': PHASE_COLORS[b.phase] } : {}) }}>
               {g ? <window.ProgressHeader band label={label} seen={g.seen} released={g.released} upcoming={g.upcoming}
                      color={b.phase ? PHASE_COLORS[b.phase] : 'var(--accent)'}/> : label}
             </div>
@@ -2311,6 +2349,14 @@ function App() {
       {/* ringIds is the selected title plus everything sharing a character
           with it — exactly the cards left standing on the canvas. */}
       {contextSummary(isTouch ? 'pill' : 'float', false, ringIds ? ringIds.size : null)}
+      {/* Every order but By Phase carries one meter over the whole catalogue.
+          It stands down with the band labels whenever a title is selected,
+          since the canvas is then showing one ring. */}
+      {!selectedId && viewProgress && viewProgress.all && (
+        <div className="spatial-overall">
+          <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>
+        </div>
+      )}
       {focusPop}
     </div>
   );
@@ -2334,8 +2380,8 @@ function App() {
         />
         <div role="main" className={`m-main${charPill ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
-          {viewMode === 'grid' && <window.MobileGrid collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
-          {viewMode === 'list' && <window.MobileList progress={groupProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {viewMode === 'grid' && <window.MobileGrid progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {viewMode === 'list' && <window.MobileList progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
@@ -2409,7 +2455,7 @@ function App() {
         ? <window.DesktopList titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
             onOpen={(id) => setDrawerId(drawerId === id ? null : id)}
-            header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey} progress={groupProgress}/>
+            header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey} progress={viewProgress}/>
         : canvasEl}
 
       {hoveredConnection && (

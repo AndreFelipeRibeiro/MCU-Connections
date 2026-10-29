@@ -218,6 +218,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'sync.synced': 'Coleção sincronizada com sua conta',
     'sync.guest': 'Coleção salva neste dispositivo',
     'progress.seen': '{seen} de {n} vistos',
+    'progress.all': 'Todos os títulos',
     'progress.upcoming': '+{n}',
     'progress.upcomingLong': 'Faltam {n} para estrear.',
     'account.unavailable': 'Sincronização indisponível{reason}. Sua coleção continua salva neste navegador.',

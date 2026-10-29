@@ -249,12 +249,33 @@ window.Synopsis = Synopsis;
 // `label` and `color` belong to the caller (a phase name in its colour, an era
 // label in the accent). `action` is a slot the bulk-select ticket fills with
 // "Mark the rest as seen", so that work needs no change here.
-function ProgressHeader({ label, color, seen, released, upcoming, band, action }) {
+function ProgressHeader({ label, color, seen, released, upcoming, band, width, action }) {
   const tr = mtr;
+  // Hooks run before the early return below: a group with nothing released
+  // still renders a header, it just has no meter to animate.
+  const ref = React.useRef(null);
+  const [lit, setLit] = React.useState(false);
+  React.useEffect(() => {
+    const el = ref.current;
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // No observer, or motion turned down: show the finished meter at once.
+    if (!el || !window.IntersectionObserver || reduced) { setLit(true); return; }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { setLit(true); io.disconnect(); }
+    }, { threshold: 0.35 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  // `width` is the band's real card-row span on the Spatial canvas; everywhere
+  // else the header takes the width of whatever it divides.
+  const style = {};
+  if (color) style['--pm'] = color;
+  if (width) style['--pgw'] = width + 'px';
+  const styleOrNull = Object.keys(style).length ? style : null;
   // Nothing released in this group yet: a bar would be a lie, so just the label.
   if (!released) {
     return (
-      <div className={`pgh${band ? ' band' : ''}`} style={color ? { '--pm': color } : null}>
+      <div className={`pgh${band ? ' band' : ''}`} ref={ref} style={styleOrNull}>
         <span className="pgh-top"><span className="pgh-label">{label}</span>
           {upcoming ? <span className="pgh-up">{tr('progress.upcoming', { n: upcoming })}</span> : null}
         </span>
@@ -263,17 +284,36 @@ function ProgressHeader({ label, color, seen, released, upcoming, band, action }
   }
   const done = seen >= released;
   const pct = Math.round((seen / released) * 100);
+  // One segment per title while they stay wide enough to tell apart. Segments
+  // are what make the meter self-explanatory — six ticks with five lit says
+  // "5 of 6" without reading the number, which a plain line cannot do. Past
+  // that count they would be hairlines, so a solid fill takes over.
+  const segmented = released <= 24;
   return (
-    <div className={`pgh${band ? ' band' : ''}${done ? ' done' : ''}`} style={color ? { '--pm': color } : null}>
+    <div className={`pgh${band ? ' band' : ''}${done ? ' done' : ''}`} ref={ref} style={styleOrNull}>
       <span className="pgh-top">
         <span className="pgh-label">{label}</span>
-        {/* The glyph and the numbers are decoration; the sentence below is what
-            a screen reader reads, so colour is never the only signal. */}
-        <span className="pgh-count" aria-hidden="true">{done ? '✓' : `${seen}/${released}`}</span>
+        {/* The disc and the numbers are decoration; the sentence below is what
+            a screen reader reads, so colour is never the only signal. A full
+            group shows the disc alone — "6/6" beside a filled bar and a check
+            says the same thing three times. */}
+        {done
+          ? <span className="pgh-done" aria-hidden="true">✓</span>
+          : <span className="pgh-count" aria-hidden="true">{seen}/{released}</span>}
         {upcoming ? <span className="pgh-up" aria-hidden="true">{tr('progress.upcoming', { n: upcoming })}</span> : null}
         {action}
       </span>
-      <span className="pgh-bar" aria-hidden="true"><span className="pgh-fill" style={{ width: pct + '%' }}/></span>
+      {segmented ? (
+        <span className={`pgh-bar seg${lit ? ' lit' : ''}`} aria-hidden="true">
+          {Array.from({ length: released }, (_, i) => (
+            <span key={i} className={`pgh-seg${i < seen ? ' on' : ''}`} style={{ '--i': i }}/>
+          ))}
+        </span>
+      ) : (
+        <span className="pgh-bar" aria-hidden="true">
+          <span className="pgh-fill" style={{ width: (lit ? pct : 0) + '%' }}/>
+        </span>
+      )}
       <span className="story-sr">
         {tr('progress.seen', { seen, n: released })}
         {upcoming ? ' ' + tr('progress.upcomingLong', { n: upcoming }) : ''}
@@ -500,17 +540,36 @@ function StoryYear({ title, detail = false, className = '' }) {
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
 // so tapping anywhere except the toggles opens the cast sheet exactly as before.
-function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, markWatch, collapseSeen }) {
+function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, markWatch, collapseSeen, progress, sort }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
   const folds = useSeenFolds();
   const settled = useSettled();
+  // The caller decides which of these it hands over: phase headings belong to
+  // the By Phase tab, and every other order gets one meter over the whole
+  // catalogue instead.
+  const phased = !!(progress && progress.byPhase);
+  const overall = (progress && progress.all) || null;
+  const blocks = [];
+  if (phased) {
+    let last = null;
+    titles.forEach(t => {
+      if (t.phase !== last) { blocks.push({ phase: t.phase, items: [] }); last = t.phase; }
+      blocks[blocks.length - 1].items.push(t);
+    });
+  } else {
+    blocks.push({ phase: null, items: titles });
+  }
   // All tab: runs of seen titles sit under a full-width header and fold away.
   // Each run breaks the grid into sections; when runs form or split the cards
   // glide to their new cells (the run layout is part of the reorder key).
-  const runs = collapseSeen ? seenRuns(titles, statusOf) : [];
-  const runKey = runs.map(r => r[0].id + ':' + r.length).join(',');
-  const flipRef = useReorderAnimation(orderKey + '|' + runKey, { paused: flipPaused });
+  // Runs are found inside each block, so one never straddles a divider: the
+  // phase boundary is the stronger grouping, and a fold that swallowed it
+  // would hide which phase the cards below belong to.
+  const blockRuns = blocks.map(b => (collapseSeen ? seenRuns(b.items, statusOf) : []));
+  const runKey = blockRuns.map(rs => rs.map(r => r[0].id + ':' + r.length).join(',')).join('|');
+  const blockKey = blocks.map(b => (b.phase || 'x') + ':' + b.items.length).join(',');
+  const flipRef = useReorderAnimation(orderKey + '|' + runKey + '|' + blockKey, { paused: flipPaused });
   if (!titles.length) return <div className="m-scrollarea" ref={flipRef}>{header}<EmptyState {...(empty || {})}/></div>;
   const card = (t) => {
     const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
@@ -538,7 +597,8 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
       </div>
     );
   };
-  if (!runs.length) {
+  const anyRuns = blockRuns.some(rs => rs.length);
+  if (!phased && !overall && !anyRuns) {
     return (
       <div className="m-scrollarea" ref={flipRef}>
         {header}
@@ -547,29 +607,57 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
     );
   }
   // Sections: plain cards between runs, and each run (header + its cards).
-  const sections = [];
-  const runOf = new Map();
-  runs.forEach(r => { const info = { key: r[0].id, items: r, shut: folds.isShut(r) }; r.forEach(t => runOf.set(t.id, info)); });
-  titles.forEach(t => {
-    const run = runOf.get(t.id) || null;
-    const last = sections[sections.length - 1];
-    if (last && last.run === run) last.items.push(t);
-    else sections.push({ run, items: [t] });
-  });
+  const sectionsOf = (items, runs) => {
+    const sections = [];
+    const runOf = new Map();
+    runs.forEach(r => { const info = { key: r[0].id, items: r, shut: folds.isShut(r) }; r.forEach(t => runOf.set(t.id, info)); });
+    items.forEach(t => {
+      const run = runOf.get(t.id) || null;
+      const last = sections[sections.length - 1];
+      if (last && last.run === run) last.items.push(t);
+      else sections.push({ run, items: [t] });
+    });
+    return sections.map(sec => sec.run ? (
+      <React.Fragment key={'run:' + sec.run.key}>
+        <Fx appear={settled}>
+          <SeenRunHead items={sec.run.items} shut={sec.run.shut} onToggle={() => folds.toggle(sec.run.items)}/>
+        </Fx>
+        <Fx open={!sec.run.shut}><div className="m-grid">{sec.items.map(card)}</div></Fx>
+      </React.Fragment>
+    ) : (
+      <Fx key={'cards:' + sec.items[0].id}><div className="m-grid">{sec.items.map(card)}</div></Fx>
+    ));
+  };
   return (
     <div className="m-scrollarea" ref={flipRef}>
       {header}
       <div className={`m-gflat${settled ? ' settled' : ''}`}>
-        {sections.map(sec => sec.run ? (
-          <React.Fragment key={'run:' + sec.run.key}>
-            <Fx appear={settled}>
-              <SeenRunHead items={sec.run.items} shut={sec.run.shut} onToggle={() => folds.toggle(sec.run.items)}/>
-            </Fx>
-            <Fx open={!sec.run.shut}><div className="m-grid">{sec.items.map(card)}</div></Fx>
-          </React.Fragment>
-        ) : (
-          <Fx key={'cards:' + sec.items[0].id}><div className="m-grid">{sec.items.map(card)}</div></Fx>
-        ))}
+        {blocks.map((b, i) => {
+          const p = b.phase && progress.byPhase[b.phase];
+          // Each block is its own sticky container, so a phase heading gives
+          // way to the next one at the boundary instead of the two stacking.
+          // The divider sits outside the Fx wrappers on purpose: those take
+          // overflow:hidden while a run folds, which would strand it.
+          return (
+            <div className="m-gblock" key={'b:' + (b.phase || 'x') + '#' + i}>
+              {p && (
+                /* No data-flip-id: the reorder animation moves what it tracks
+                   with a transform, and a sticky element's own rect already
+                   depends on the scroll position — the two together pinned the
+                   bar below the top of the scroll area. */
+                <div className="m-phase-divider sticky">
+                  <ProgressHeader label={mPhaseLabel(b.phase)} color={MPHASE_COLORS[b.phase]} {...p}/>
+                </div>
+              )}
+              {!p && overall && (
+                <div className="m-phase-divider sticky overall">
+                  <ProgressHeader label={mtr('progress.all')} {...overall}/>
+                </div>
+              )}
+              {b.items.length ? sectionsOf(b.items, blockRuns[i]) : null}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -721,6 +809,11 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
       const phase = g.items[0].phase;
       if (phase !== lastPhase) { g.phaseStart = phase; lastPhase = phase; }
     });
+  } else if (sort === 'phase') {
+    // In Phase order every group IS a phase, so the same sticky divider the
+    // Grid uses becomes its heading. Its own label would only repeat it — and
+    // the label was the reason the two views looked different here.
+    groups.forEach(g => { g.phaseStart = g.phase; g.label = null; });
   }
   const row = (t, rank, compact) => {
     const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
@@ -751,6 +844,14 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
     );
   };
   const pg = (phase) => (progress && progress.byPhase && progress.byPhase[phase]) || null;
+  // Every order but By Phase gets one meter over the whole catalogue, in the
+  // same sticky header the phase divider uses.
+  const overall = (progress && progress.all) || null;
+  const overallHead = overall ? (
+    <div className="m-phase-divider sticky overall">
+      <ProgressHeader label={mtr('progress.all')} {...overall}/>
+    </div>
+  ) : null;
   const label = (g) => {
     const p = g.phase ? pg(g.phase) : null;
     return (
@@ -759,11 +860,15 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
       </div>
     );
   };
+  // Same component, same size and the same sticky behaviour as the Grid's.
+  // No data-flip-id: the reorder animation moves what it tracks with a
+  // transform, and a sticky element is already positioned from the scroll
+  // offset — together they leave the bar hanging below the top of the list.
   const phaseDivider = (g) => {
     const p = g.phaseStart ? pg(g.phaseStart) : null;
     if (!p) return null;
     return (
-      <div className="m-phase-divider" data-flip-id={'pd:' + g.key}>
+      <div className="m-phase-divider sticky">
         <ProgressHeader label={mPhaseLabel(g.phaseStart)} color={MPHASE_COLORS[g.phaseStart]} {...p}/>
       </div>
     );
@@ -785,7 +890,15 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
       g.items.forEach(t => entries.push({ kind: 'row', t, g, key: t.id }));
     });
     const rowOf = new Map(entries.filter(e => e.kind === 'row').map(e => [e.t.id, e]));
-    seenRuns(entries.filter(e => e.kind === 'row').map(e => e.t), statusOf).forEach(items => {
+    // Runs are found within a phase, never across one, exactly as the Grid does
+    // it: the divider is the stronger grouping, and a fold that swallowed the
+    // boundary would hide which phase the rows below belong to.
+    const runScopes = [];
+    entries.forEach((e) => {
+      if (e.kind === 'divider' || !runScopes.length) runScopes.push([]);
+      if (e.kind === 'row') runScopes[runScopes.length - 1].push(e.t);
+    });
+    runScopes.flatMap(ts => seenRuns(ts, statusOf)).forEach(items => {
       const r = items.map(t => rowOf.get(t.id));
       const info = { key: items[0].id, items, shut: folds.isShut(items) };
       const a = entries.indexOf(r[0]), b = entries.indexOf(r[r.length - 1]);
@@ -800,46 +913,69 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
     });
     const appear = settled;
     let rank = 0;
+    // Each phase gets its own block so its sticky divider is bounded by it and
+    // hands over at the boundary instead of the two stacking up.
+    const chunks = [];
+    entries.forEach((e) => {
+      if (e.kind === 'divider' || !chunks.length) chunks.push({ key: 'b:' + e.key, items: [] });
+      chunks[chunks.length - 1].items.push(e);
+    });
+    const renderEntry = (e) => {
+      const shut = e.run && e.run.shut;
+      if (e.kind === 'divider') return <React.Fragment key={e.key}>{phaseDivider(e.g)}</React.Fragment>;
+      if (e.kind === 'label') return <Fx key={e.key} open={!shut}>{label(e.g)}</Fx>;
+      rank += 1;
+      return (
+        <React.Fragment key={e.key}>
+          {e.repeatLabel && <Fx key={'again:' + e.key} open={e.repeatLabel.shut}>{label(e.g)}</Fx>}
+          {e.head && (
+            <Fx key={'run:' + e.head.key} appear={appear}>
+              <SeenRunHead items={e.head.items} shut={e.head.shut} onToggle={() => folds.toggle(e.head.items)}/>
+            </Fx>
+          )}
+          <Fx open={!shut}>{row(e.t, rank, statusOf(e.t.id) === 'seen')}</Fx>
+        </React.Fragment>
+      );
+    };
     return (
       <div className="m-scrollarea" ref={flipRef}>
         {header}
+        {overallHead}
         <div className={`m-flat${settled ? ' settled' : ''}`}>
-          {entries.map(e => {
-            const shut = e.run && e.run.shut;
-            if (e.kind === 'divider') return <React.Fragment key={e.key}>{phaseDivider(e.g)}</React.Fragment>;
-            if (e.kind === 'label') return <Fx key={e.key} open={!shut}>{label(e.g)}</Fx>;
-            rank += 1;
-            return (
-              <React.Fragment key={e.key}>
-                {e.repeatLabel && <Fx key={'again:' + e.key} open={e.repeatLabel.shut}>{label(e.g)}</Fx>}
-                {e.head && (
-                  <Fx key={'run:' + e.head.key} appear={appear}>
-                    <SeenRunHead items={e.head.items} shut={e.head.shut} onToggle={() => folds.toggle(e.head.items)}/>
-                  </Fx>
-                )}
-                <Fx open={!shut}>{row(e.t, rank, statusOf(e.t.id) === 'seen')}</Fx>
-              </React.Fragment>
-            );
-          })}
+          {chunks.map((c) => (
+            <div className="m-gblock" key={c.key}>{c.items.map(renderEntry)}</div>
+          ))}
         </div>
       </div>
     );
   }
 
   let n = 0;
+  // Year groups belonging to one phase share a block, so the phase's sticky
+  // divider stays pinned across all of them and steps aside at the next phase.
+  const blocks = [];
+  groups.forEach((g) => {
+    if (g.phaseStart || !blocks.length) blocks.push({ key: 'b:' + g.key, groups: [] });
+    blocks[blocks.length - 1].groups.push(g);
+  });
   return (
     <div className="m-scrollarea" ref={flipRef}>
       {header}
-      {groups.map(g => (
-        <div className="m-group" key={g.key}>
-          {phaseDivider(g)}
-          {g.label && label(g)}
-          <div className="m-list">
-            {g.items.map(t => {
-              n += 1;
-              return <React.Fragment key={t.id}>{row(t, n, false)}</React.Fragment>;
-            })}
-          </div>
+      {overallHead}
+      {blocks.map((b) => (
+        <div className="m-gblock" key={b.key}>
+          {phaseDivider(b.groups[0])}
+          {b.groups.map(g => (
+            <div className="m-group" key={g.key}>
+              {g.label && label(g)}
+              <div className="m-list">
+                {g.items.map(t => {
+                  n += 1;
+                  return <React.Fragment key={t.id}>{row(t, n, false)}</React.Fragment>;
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       ))}
     </div>

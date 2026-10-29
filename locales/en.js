@@ -224,6 +224,7 @@ window.MCU_LOCALES.en = {
     'sync.guest': 'Collection saved on this device',
     // Group progress. 'seen' is the spoken form; the visible count is n/total.
     'progress.seen': '{seen} of {n} seen',
+    'progress.all': 'All titles',
     'progress.upcoming': '+{n}',
     'progress.upcomingLong': '{n} still to come.',
     'account.unavailable': 'Sync unavailable{reason}. Your collection is still saved in this browser.',

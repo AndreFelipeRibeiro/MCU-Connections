@@ -35,6 +35,11 @@ function dlGroups(titles, sort) {
       const phase = g.items[0].phase;
       if (phase !== seen) { g.phaseStart = phase; seen = phase; }
     });
+  } else if (sort === 'phase') {
+    // In Phase order every group IS a phase, so it carries the same divider
+    // Release uses rather than a second header of its own — the phone views
+    // were unified the same way.
+    groups.forEach(g => { g.phaseStart = g.phase; g.label = null; });
   }
   return groups;
 }
@@ -100,6 +105,16 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   // Rows glide to their new places when the sort, order or collection filter
   // changes (same animation as the phone List and Grid).
   const flipRef = window.useReorderAnimation(orderKey, { inside: true });
+  // One rowgroup per phase rather than per year, so the phase's sticky divider
+  // stays pinned across all of that phase's year groups and hands over at the
+  // next phase. Views with no phase headings keep a rowgroup each, as before.
+  const blocks = [];
+  groups.forEach((g) => {
+    const startsPhase = !!(g.phaseStart && progress && progress.byPhase && progress.byPhase[g.phaseStart]);
+    const last = blocks[blocks.length - 1];
+    if (startsPhase || !last || !last.phased) blocks.push({ key: g.id, phased: startsPhase, groups: [g] });
+    else last.groups.push(g);
+  });
   let n = 0;
   return (
     <div className={`dlist${ranked ? ' ranked' : ''}`} ref={flipRef} role="main" aria-label={tr('view.list')}>
@@ -117,14 +132,27 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
               <DlSortHeader key={col} col={col} label={labels[col]} sort={sort} sortDir={sortDir} setSort={setSort} setSortDir={setSortDir}/>
             ))}
           </div>
-          {groups.map(g => (
-            <div key={g.id} role="rowgroup">
-              {g.phaseStart && progress && progress.byPhase[g.phaseStart] && (
-                <div className="dl-phase-divider" data-flip-id={'pd:' + g.id}>
-                  <window.ProgressHeader label={I.upper(I.tr('phase.label', { n: g.phaseStart }))}
-                    color={window.PHASE_COLORS[g.phaseStart]} {...progress.byPhase[g.phaseStart]}/>
+          {progress && progress.all && (
+            <div role="rowgroup">
+              <div className="dl-phase-divider sticky overall">
+                <window.ProgressHeader label={I.upper(I.tr('progress.all'))} {...progress.all}/>
+              </div>
+            </div>
+          )}
+          {blocks.map(b => (
+            <div key={b.key} role="rowgroup">
+              {b.phased && (
+                /* No data-flip-id: the reorder animation moves what it tracks
+                   with a transform, and a sticky element is already positioned
+                   from the scroll offset — together they leave the bar hanging
+                   below the header instead of under it. */
+                <div className="dl-phase-divider sticky">
+                  <window.ProgressHeader label={I.upper(I.tr('phase.label', { n: b.groups[0].phaseStart }))}
+                    color={window.PHASE_COLORS[b.groups[0].phaseStart]} {...progress.byPhase[b.groups[0].phaseStart]}/>
                 </div>
               )}
+              {b.groups.map(g => (
+                <React.Fragment key={g.id}>
               {g.label && (g.phase && progress && progress.byPhase[g.phase]
                 ? <div className="dl-glabel" data-flip-id={'g:' + g.id} style={g.color ? { color: g.color } : null}>
                     <window.ProgressHeader label={g.label} color={g.color} {...progress.byPhase[g.phase]}/>
@@ -174,6 +202,8 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                   </div>
                 );
               })}
+                </React.Fragment>
+              ))}
             </div>
           ))}
         </div>
