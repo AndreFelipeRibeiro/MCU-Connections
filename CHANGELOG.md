@@ -12,6 +12,90 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 workflow — the full suite runs once per batch
+
+Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`24c6150`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/24c6150c6b6521a52e5d30ef40182b52cff0a877))
+
+- User decision: each ticket runs the targeted check for its area before
+  review; the full regression and both accessibility scans run once per batch,
+  on the final tree, before staging, reading the scan's output rather than its
+  exit code. Recorded in AGENTS.md and the handoff doc.
+- [`4eba664`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/4eba664b8693c138243b13aadd635c1c432181df) restores the executable bit on `qa/regress.sh`, which the
+  Batch 7 commits dropped (they were assembled from per-ticket file contents
+  staged as mode 100644). `bash qa/regress.sh` was unaffected.
+
+## V3 feature — mark many titles at once
+
+Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`8e6543d`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/8e6543d826a8848fcaf4c2042226a7386c92c018))
+
+- Desktop List: a checkbox column (header box with a mixed state, Shift-click
+  ranges) and a bar with Mark as seen, Add to Watchlist, More > Mark as unseen
+  and Clear, each showing how many titles it will change. Escape clears the
+  selection before it closes the details.
+- Phones: "Mark all seen" / "Mark 4 more seen" on each By Phase header and on
+  the All titles header in every other order.
+- Per-title writes (user decision): one commit and one guest-storage write per
+  action, then each title through its own writer queue, so failures roll back
+  per title. One rule (`bulkTargets`) decides what an action changes, for the
+  counts and the action alike: unreleased titles are never marked seen in
+  bulk. One toast and one announcement, with Undo restoring each title (a
+  replaced watchlist included); over 20 titles, and any Mark as unseen, ask
+  first, and Cancel keeps the selection.
+- **Verified:** `qa/test-bulk.js` (selection, exact targets, one storage write
+  and one announcement, Undo, the confirmation, real Escape presses, phone
+  headers); looked at the bar, the confirmation and both phone headers.
+- **Limits:** the signed-in path (the same queue a single mark uses) has not
+  been exercised against a real session; not checked on a real phone.
+
+## V3 feature — shareable addresses
+
+Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`2597259`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/2597259ef26aa5a9c63a7549e3c703e5ce2b3f02))
+
+- The address carries the open title, a pinned character, the view, sort,
+  order and catalogue filters; a link opens exactly that state, and what it
+  leaves out takes the app's defaults. The collection filter, search text,
+  language and anything from the account never go in; names avoid the sign-in
+  redirect's `code` / `state` / `error`.
+- The address follows the state without adding history (keeping the phone
+  sheets' Back working); Back and Forward restore the title and character, and
+  a phone sheet closing itself restores nothing. The first version treated that
+  as Back and unpinned a character just pinned from the details; the regression
+  run caught it (`test-align2`).
+- **Verified:** `qa/test-urlstate.js`; looked at two example links rendered.
+- **Limits:** opening a link saves its view and sort as this device's
+  preferences; desktop Back still leaves the site; a first-time visitor sees
+  the welcome first; not checked on a real phone.
+
+## V3 fix — the desktop List's All titles header is valid ARIA, and pins
+
+Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`d8f2434`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/d8f243441dc7be6d52b3a9acde76ff873a1be880))
+
+- Batch 6 shipped the header in a rowgroup with no row: a **critical** axe
+  `aria-required-children` violation in production, and the reason it never
+  pinned. It is now a row owned by the table.
+- `qa/a11y-scan.js` now exits non-zero on any violation. It used to exit 0
+  whatever it found, which is how the Batch 6 entry below came to report a
+  clean scan.
+- **Verified:** axe output empty for 7 screens in both languages; `test-progress`
+  checks the header pins under the column header.
+
+## V3 feature — release status at the precision the catalog knows it
+
+Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging). ([`c54e685`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/c54e6859f814c6aa909a124b214a4da98ea4d962))
+
+- "Released May 2, 2008", "Coming December 18, 2026", or "Expected March 2027 ·
+  day not yet confirmed" in the details; Upcoming / Expected badges on titles
+  not out yet; Released only in the Filters panel. A month window never counts
+  as released.
+- **Verified:** `qa/test-release.js` (expectations from the dates at run time);
+  badge contrast computed (4.83 and 6.51 at worst); looked at in both languages.
+- **Limits:** not checked on a real phone.
+
+## Batch 7 verification
+
+Full regression on the final tree: 29 check runs clean. axe: no violations in
+7 screens × 2 languages, read from the output.
+
 ## V3 feature — progress: phase meters on By Phase, one catalogue meter everywhere else
 
 Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging); merged to main (production) on
@@ -42,7 +126,9 @@ Revises the progress entry below after the user's design review
 - **Verified:** `test-progress` rewritten around the rule — all 30 view and
   order combinations, the counts (released only, collection tab ignored,
   hidden during search), stickiness, framing and the reveal; full regression
-  (26 check runs) clean; axe clean in English and Portuguese. Looked at in the
+  (26 check runs) clean; axe clean in English and Portuguese. **Correction:**
+  it was not — see "the desktop List's All titles header is valid ARIA"
+  above; the claim was read from an exit code that never failed. Looked at in the
   browser at 1440 and 375 wide.
 - **Limits:** not checked on a real iPhone; the phone layout is from Chromium
   device emulation.
