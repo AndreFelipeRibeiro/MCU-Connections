@@ -165,6 +165,16 @@ const go = async page => { await page.goto(URL); await settle(page); };
     if (b.first.photo === b.second.photo) errors.push('the banner portrait does not change with the credited performer');
   }
 
+  // The count beside the performer's name is THEIR share of the chain, not the
+  // character's total: the stepper already carries the total. Norton is in one
+  // of Banner's nine, and the number has to say one.
+  if (b && !b.error) {
+    const n = (sub) => { const m = /(\d+)\s+(title|titles|t\u00edtulo|t\u00edtulos)/.exec(sub || ''); return m ? Number(m[1]) : null; };
+    const first = n(b.first.sub), second = n(b.second.sub);
+    if (first !== 1) errors.push(`the Norton line counts ${first} titles; he is credited on one`);
+    if (second !== 8) errors.push(`the Ruffalo line counts ${second} titles; he is credited on eight of Banner's nine`);
+  }
+
   R.errors = errors;
   console.log(JSON.stringify(R, null, 1));
   await browser.close(); server.close();

@@ -75,10 +75,12 @@ TITLES.forEach(t => t.cast.forEach(id => {
 // Who carries most of each character's run, which is the row a character
 // search offers first and therefore the one this check clicks.
 const topOf = {};
+const tallyOf = {};
 Object.keys(exact).forEach(id => {
   const tally = {};
   TITLES.forEach(t => { if (t.cast.indexOf(id) !== -1) { const n = data.MCU_credit(t, id); tally[n] = (tally[n] || 0) + 1; } });
   topOf[id] = Object.keys(tally).sort((x, y) => tally[y] - tally[x] || x.localeCompare(y))[0];
+  tallyOf[id] = tally;
 });
 const performersOf = id => new Set(TITLES.filter(t => t.cast.indexOf(id) !== -1).map(t => data.MCU_credit(t, id))).size;
 
@@ -86,9 +88,14 @@ const performersOf = id => new Set(TITLES.filter(t => t.cast.indexOf(id) !== -1)
 // particular performer opens the stepper ON their first title, so `.cb-pos`
 // reads "1 of 9"; a pick with no such title stays idle and reads "9 titles".
 // Both are correct, so only the idle case has one exact right answer.
+// Two different numbers, since the banner names ONE performer: `expect` is the
+// stepper's total (the whole chain, "n of expect") and `count` is the figure
+// beside the name in the subtitle, which is that performer's own share. For a
+// character with a single performer the two are equal.
 const subjects = []
   .concat(chars.map(id => ({
     kind: 'character', label: CHARACTERS[id].name, expect: exact[id].size,
+    count: tallyOf[id][topOf[id]],
     who: CHARACTERS[id].name, sub: [topOf[id]],
     starts: performersOf(id) > 1,
   })))
@@ -103,6 +110,9 @@ const subjects = []
     return {
       kind: 'actor', label: a, plays,
       expect: single ? exact[only].size : s.size,
+      // The subtitle counts this performer's own titles; the stepper keeps the
+      // whole chain, so a recast performer reads "1 title" beside "6 of 8".
+      count: s.size,
       who: single ? CHARACTERS[only].name : a,
       sub: single ? [a] : byActor[a].map(id => CHARACTERS[id].name),
       starts: single && s.size < exact[only].size,
@@ -180,8 +190,8 @@ const subjects = []
     const stepOk = s.starts
       ? (got.step >= 1 && got.step <= s.expect)
       : got.step === s.expect;
-    if (got.count !== s.expect || !stepOk || got.who !== s.who || !subOk) {
-      wrongCount.push(s.kind + ': ' + s.label + ' expected ' + s.expect + '/' + JSON.stringify(s.who) +
+    if (got.count !== s.count || !stepOk || got.who !== s.who || !subOk) {
+      wrongCount.push(s.kind + ': ' + s.label + ' expected count=' + s.count + ' of chain ' + s.expect + '/' + JSON.stringify(s.who) +
         ' got count=' + got.count + ' step=' + got.step + ' who=' + JSON.stringify(got.who) +
         (subOk ? '' : ' sub=' + JSON.stringify(got.sub)));
     }

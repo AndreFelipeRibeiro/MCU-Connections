@@ -2062,7 +2062,13 @@ function App() {
     const roster = creditsByChar[activeChar] || [];
     const named = asActor ? pinnedActor : (creditedHere || (roster[0] && roster[0].name) || c.actor);
     const photo = window.performerPortrait(named, activeChar);
-    const count = (pinned ? (pinnedVisibleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
+    // When the subtitle names one performer, the count beside it is that
+    // performer's share — the same number the search suggestion shows for their
+    // row. The whole chain is already in the stepper ("6 of 8"), so repeating it
+    // here said Mike McGill was in 8 titles when he is in one.
+    const namedRow = creditedHere ? roster.find(r => r.name === creditedHere) : null;
+    const count = namedRow ? namedRow.n
+      : (pinned ? (pinnedVisibleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
     const who = asActor ? pinnedActor : I18N.charName(activeChar);
     const sub = asActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
       : (creditedHere || roster.length < 2) ? named
