@@ -77,7 +77,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   title is drawn slightly larger. Unrelated cards fade out
   while the rings show (and come back when it closes), and lines are drawn
   among the ring's titles only. On desktop a click on empty canvas closes the
-  selection, as a background tap does on phones.
+  selection, as a background tap does on phones. While a title is selected the
+  count pill reads, for example, "17 of 64": the titles left on the canvas.
 - When a search or filter leaves no titles, Spatial says so and offers to clear
   the search, the filters or both.
 - Picking a character in the details highlights them: their titles are laid out
@@ -90,6 +91,11 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   their number of titles, then 1/13 and so on)
   and always show only that character's titles; stepping in List or Grid scrolls
   the current title fully into view, clear of the pill and the top edge.
+  Recast characters (Bruce Banner, James Rhodes, Thaddeus Ross, Monica Rambeau)
+  keep one chain across all their performers: the banner names whoever plays
+  the character in the title in view, with that performer's own title count,
+  while the stepper counts the whole chain ("6 of 8"). On desktop the banner
+  stops at the details panel's edge, the same as its hover preview.
 - On phones' All tab, each run of two or more consecutive seen titles gets an
   accordion header that folds it into one summary row; order is never changed.
   In List the seen titles are compact rows (headings inside a folded run hide
@@ -120,6 +126,15 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   toast with Undo; completing every released title in a phase (or the whole MCU)
   adds confetti. Seen and Watchlist show a count badge (hidden at zero) that
   animates as it changes. Motion is skipped with reduced motion.
+- Progress: in By Phase order each phase has a header with a segmented meter
+  (one tick per released title), the count (5/6), a check disc once complete
+  and "+N" for titles not yet released. Every other order shows one All titles
+  meter over the whole catalogue instead. In both Lists and the phone Grid the
+  header pins while its section is on screen and its meter fills as it scrolls
+  into view; on Spatial, phase headers sit on pills above their rows and the
+  All titles meter floats top-right (desktop) or under the count pill (phones).
+  Counts ignore the Seen/Watchlist tab, and the headers stand down during a
+  text search or with a character pinned.
 - About MCU Connections (account menu footer on desktop, account sheet on phones,
   for guests too): what the app is, ways to explore it, and credits. A future
   Settings entry will join it there. First-time visitors see it once as a
@@ -129,7 +144,10 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   matching actors, characters and titles (names in every language). Picking a
   character (or an actor who plays one character) opens that character's view,
   with Their titles / All titles and the stepper, and clears the box; an actor
-  with two roles stays a text search. Picking a title also opens its details.
+  with two roles stays a text search. Picking a title opens its details and
+  clears the box rather than filtering by its name, so on Spatial it is selected
+  among its neighbours; a pinned character steps aside first. A recast
+  character offers one row per performer, each naming who played the part.
   Arrow keys, Enter and Escape work; free-text search is unchanged.
   Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
@@ -288,7 +306,9 @@ OAuth startup. If the initial cloud read/merge cannot reach the service, trackin
 falls back to guest mode with **Sync unavailable**. Account data is never copied
 into guest storage. **Retry connection** reloads to restore the saved session and
 merge local marks once service is reachable. Permission/validation failures offer
-**Retry sync** and pause collection editing until resolved.
+**Retry sync** and pause collection editing until resolved. A failed sync also
+shows a chip with **Retry** in the desktop toolbar and the phone app bar, so it
+is visible without opening Account; while syncing, the chip shows a spinner.
 
 A failed signed-in write can have an uncertain server outcome after a network
 loss; reload to reconcile with the cloud. Unknown title ids are retained and

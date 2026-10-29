@@ -12,10 +12,97 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — progress: phase meters on By Phase, one catalogue meter everywhere else
+
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging).
+Revises the progress entry below after the user's design review
+([`1fc30af`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/1fc30af58978698053888ec313ecc39583bfdb5a)).
+
+- **One rule.** Per-phase meters appear on the By Phase tab only; every other
+  order (Release, Chronological, A–Z, IMDb, Tomatometer) shows one **All
+  titles** meter over the whole catalogue, so the Release and Phase tabs no
+  longer repeat each other. The rule is shaped once (`viewProgress` in
+  `app.jsx`); the views draw whichever tallies they are handed.
+- **Segmented meter**, one tick per released title (a solid bar past 24), so
+  it reads as "5 of 6" without the number. A complete group shows a check disc
+  sized to the label's cap height instead of a glyph that read too small. The
+  meter fills when its header scrolls into view (once; never with reduced
+  motion). Type scale: 13px label, 11px count.
+- **Sticky headers** in the desktop List (one rowgroup per phase, pinned under
+  the column header), the phone List and the phone Grid, which now share one
+  component. Seen runs on the phone no longer straddle a phase boundary.
+- **Spatial:** phase headers sit on opaque pills above their rows (no
+  `backdrop-filter` inside the canvas); row names without a meter hug their
+  text. Pill and camera share `BAND_LABEL_H`, which fixes the first By Phase
+  pill being cut off and the Chronological one sliding under the count pill.
+  By Phase now has bands at all. The All titles meter floats top-right on
+  desktop and takes its own row under the count pill and zoom control on
+  phones, and stands down while a title is selected.
+- **Verified:** `test-progress` rewritten around the rule — all 30 view and
+  order combinations, the counts (released only, collection tab ignored,
+  hidden during search), stickiness, framing and the reveal; full regression
+  (26 check runs) clean; axe clean in English and Portuguese. Looked at in the
+  browser at 1440 and 375 wide.
+- **Limits:** not checked on a real iPhone; the phone layout is from Chromium
+  device emulation.
+
+## V3 improvement — the Spatial count follows a selected title
+
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`3b2a5f5`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/3b2a5f5bc510a47c2606cea35bf91e8119f1adb2))
+
+- Selecting a title fades the unconnected cards out, but the count pill kept
+  saying "64 titles". It now reads, for example, "17 of 64": the selected title
+  plus every title sharing a character with it, the same set the canvas keeps
+  lit. Closing the selection returns it to the total.
+- **Verified:** `test-camera` compares the pill with the number of lit cards
+  rather than a fixed figure; checked by hand on The Incredible Hulk (17 lit,
+  "17 of 64").
+
+## V3 fix — every character has a portrait
+
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`958dc3d`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/958dc3d741a1d620ac0389591000fe4b41cdf27d))
+
+- Ten portraits were missing because adding a character does not add its TMDB
+  path: the five sparse-series characters (Maria Hill, Talos, Monica Rambeau,
+  Mobius, Sylvie), four added earlier (Frank Castle, Tommy, Paladin, Silver
+  Surfer) and the recast credit Akira Akbar. Each path was taken from TMDB's
+  person search and confirmed to return a real image.
+- Mike McGill stays as initials: TMDB has no photo for either person of that
+  name.
+- **Verified:** `test-recastname` fails when any character or credited
+  performer has no portrait, with Mike McGill the one allowed exception.
+
+## V3 improvement — a recast performer's own title count beside their name
+
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`56f44b7`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/56f44b73b68d295883bc22cd138f036b755be67d))
+
+- The banner names the performer credited on the title in view, but counted the
+  whole character's titles beside the name while the stepper already showed
+  the chain ("Mike McGill · 8 titles", "6 of 8"). It now counts that
+  performer's share, the figure the search suggestion shows: Mike McGill 1,
+  Harrison Ford 1, William Hurt 5.
+- **Verified:** `test-pickperson` now keeps the stepper total and the subtitle
+  count apart (it had failed on every recast) and passes for all 179 subjects;
+  `test-recastname` checks Norton (1) and Ruffalo (8).
+
+## V3 improvement — the character banner stops at the details panel
+
+Recorded: 2026-10-28 22:13 EDT (-0400). Pushed to `version/3.0` (staging). ([`3ae170c`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/3ae170c5fefd70911b9f0c9376674abbf925862d))
+
+- Reverses the full-width pinned banner recorded further down ("the pinned
+  banner holds its place…"). That kept the stepper still, but the hover preview
+  stopped at the panel, so pinning a character changed the bar's width, which
+  the user found worse than the controls moving. Both now take the same 402px
+  indent; the panel hangs from the toolbar at full height and the `--cb-h`
+  measurement is removed.
+- **Verified:** `test-bannerhold` rewritten for the new rule (content stops
+  before the panel, panel hangs from the toolbar, hover and pinned indents
+  equal).
+
 ## V3 feature — phase and era progress, on four of the five surfaces
 
-Recorded: 2026-10-28 17:43 EDT (-0400). Not pushed. **Awaiting the user's
-design review**, which the ticket requires before this can merge.
+Recorded: 2026-10-28 17:43 EDT (-0400). Pushed to `version/3.0` (staging).
+Revised after design review; see the progress entry above.
 
 - One shared `ProgressHeader` carries the label, the `9/18` count in JetBrains
   Mono, a slim bar in the group's colour and a screen-reader sentence
@@ -63,7 +150,7 @@ design review**, which the ticket requires before this can merge.
 
 ## V3 maintenance — five source-verified characters for the sparse series
 
-Recorded: 2026-10-28 17:17 EDT (-0400). Not pushed.
+Recorded: 2026-10-28 17:17 EDT (-0400). Pushed to `version/3.0` (staging).
 
 - The review counted 11 series with two or fewer featured characters. Five
   characters were added, each verified per production and each chosen because
@@ -102,7 +189,7 @@ Recorded: 2026-10-28 17:17 EDT (-0400). Not pushed.
 
 ## V3 improvement — picking a title from search navigates to it instead of filtering by its name
 
-Recorded: 2026-10-28 16:59 EDT (-0400). Not pushed.
+Recorded: 2026-10-28 16:59 EDT (-0400). Pushed to `version/3.0` (staging).
 
 - Picking a title put its name in the search box, which left a text filter
   behind. On the Spatial canvas that narrowed 64 cards down to the one just
@@ -131,7 +218,8 @@ Recorded: 2026-10-28 16:59 EDT (-0400). Not pushed.
 
 ## V3 improvement — the pinned banner holds its place when the details panel opens
 
-Recorded: 2026-10-28 16:55 EDT (-0400). Not pushed.
+Recorded: 2026-10-28 16:55 EDT (-0400). Pushed to `version/3.0` (staging).
+Reversed before release by "the character banner stops at the details panel".
 
 - The banner was indented by `padding-right: 402px` to clear the drawer, which
   slid its mode toggle, stepper and close button 402px left the moment a title
@@ -158,7 +246,7 @@ Recorded: 2026-10-28 16:55 EDT (-0400). Not pushed.
 
 ## V3 improvement — a failed collection sync is visible without opening Account
 
-Recorded: 2026-10-28 16:55 EDT (-0400). Not pushed.
+Recorded: 2026-10-28 16:55 EDT (-0400). Pushed to `version/3.0` (staging).
 
 - A failed account-wide load was reported only inside the Account panel, so a
   signed-in visitor browsed on with collection editing silently paused and no
@@ -188,7 +276,7 @@ Recorded: 2026-10-28 16:55 EDT (-0400). Not pushed.
 
 ## V3 improvement — one name for a recast character, everywhere, and one unbroken chain
 
-Recorded: 2026-10-28 16:37 EDT (-0400). Not pushed.
+Recorded: 2026-10-28 16:37 EDT (-0400). Pushed to `version/3.0` (staging).
 
 - **The name now follows the title.** The pinned banner, the phone pill and the
   card match badge all named the character's *default* performer, so the banner
@@ -235,7 +323,7 @@ Recorded: 2026-10-28 16:37 EDT (-0400). Not pushed.
 
 ## V3 workflow — Version and Batch tags on the Notion backlog
 
-Recorded: 2026-10-28 15:45 EDT (-0400). Not pushed.
+Recorded: 2026-10-28 15:45 EDT (-0400). Pushed to `version/3.0` (staging).
 
 - The backlog recorded *when* a ticket was completed but not *what it shipped
   in*, so reconstructing a batch meant reading completion timestamps and
@@ -255,7 +343,7 @@ Recorded: 2026-10-28 15:45 EDT (-0400). Not pushed.
 
 ## V3 improvement — the two open credit-scene cases, decided
 
-Recorded: 2026-10-28 15:35 EDT (-0400). Not pushed.
+Recorded: 2026-10-28 15:35 EDT (-0400). Pushed to `version/3.0` (staging).
 
 - The credit-scene audit left two cases for the user rather than deciding
   them. Both are now settled, and together they sharpen the rule: what counts
@@ -280,7 +368,7 @@ Recorded: 2026-10-28 15:35 EDT (-0400). Not pushed.
 
 ## V3 improvement — credit-scene-only cast comes out of the catalog
 
-Recorded: 2026-10-28 15:30 EDT (-0400). Not pushed.
+Recorded: 2026-10-28 15:30 EDT (-0400). Pushed to `version/3.0` (staging).
 
 - Rule, set by the user: a character counts for a title only if they appear
   in the **main feature**. A character whose sole appearance is a mid- or
@@ -323,7 +411,7 @@ Recorded: 2026-10-28 15:30 EDT (-0400). Not pushed.
 
 ## V3 workflow — the calendar recap format, so it pastes with its formatting
 
-Recorded: 2026-10-28 15:30 EDT (-0400). Not pushed.
+Recorded: 2026-10-28 15:30 EDT (-0400). Pushed to `version/3.0` (staging).
 
 - The recap the user pastes into their Notion Calendar event was specified
   inside a code fence, so it reached them as plain text and pasted
