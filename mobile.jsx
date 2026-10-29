@@ -536,6 +536,54 @@ function StoryYear({ title, detail = false, className = '' }) {
   );
 }
 
+// "Mark all seen" / "Mark 4 more seen" on a phone section header (the
+// ProgressHeader action slot). It counts with the same rule the action uses
+// (MCU_bulkTargets: released, not yet seen), so the label never promises a
+// different number than it marks; with nothing left to mark it is not shown.
+function BulkHeaderAction({ ids, group }) {
+  const { states, requestBulk } = window.useCollection();
+  const n = window.MCU_bulkTargets(ids, 'seen', states).length;
+  if (!n) return null;
+  const anySeen = ids.some(id => states[id] === 'seen');
+  return (
+    <button type="button" className="pgh-action" onClick={() => requestBulk(ids, 'seen')}
+      aria-label={mtr('bulk.header.aria', { n, group })}>
+      {anySeen ? mtr('bulk.header.rest', { n }) : mtr('bulk.header.all')}
+    </button>
+  );
+}
+
+// Release status for the details: "Released 2 May 2008", "Coming 18 December
+// 2026", or "Expected March 2027 · day not yet confirmed" — each at the
+// precision the catalog actually has, so an announced month is never shown as
+// a firm date.
+function ReleaseLine({ title, className = '' }) {
+  if (!title) return null;
+  const r = MI18N.release(title);
+  const text = r.date ? mtr('release.' + r.status, { date: r.date }) : mtr('release.tba');
+  return (
+    <span className={`release-line ${r.status}${className ? ' ' + className : ''}`}>
+      <span className="release-dot" aria-hidden="true"/>
+      <span>{text}{r.status === 'expected' && r.date && <span className="release-note"> · {mtr('release.expectedNote')}</span>}</span>
+    </span>
+  );
+}
+
+// A small badge for cards and rows. Released titles get none: they are the
+// norm, and a badge on 56 of 64 titles would say nothing.
+function ReleaseBadge({ title, className = '' }) {
+  if (!title) return null;
+  const r = MI18N.release(title);
+  if (r.status === 'released') return null;
+  const full = r.date ? mtr('release.' + r.status, { date: r.date }) : mtr('release.tba');
+  return (
+    <span className={`release-badge ${r.status}${className ? ' ' + className : ''}`} title={full}>
+      <span aria-hidden="true">{mtr('release.badge.' + r.status)}</span>
+      <span className="story-sr">{full}</span>
+    </span>
+  );
+}
+
 // The card is a <div> wrapping a dedicated open button rather than one big
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
@@ -586,7 +634,7 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
           <div className="m-cmeta">
             <div className="m-ctitle"><Highlight text={MI18N.titleName(t)} query={search}/></div>
             <div className="m-cyear">
-              <span>{t.year}</span>
+              <span>{t.year}<ReleaseBadge title={t} className="m-crelease"/></span>
               {t.budget != null && <b>{MI18N.budget(t.budget)}</b>}
             </div>
             <StoryYear title={t} className="m-cstory"/>
@@ -646,12 +694,14 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
                    depends on the scroll position — the two together pinned the
                    bar below the top of the scroll area. */
                 <div className="m-phase-divider sticky">
-                  <ProgressHeader label={mPhaseLabel(b.phase)} color={MPHASE_COLORS[b.phase]} {...p}/>
+                  <ProgressHeader label={mPhaseLabel(b.phase)} color={MPHASE_COLORS[b.phase]} {...p}
+                    action={<BulkHeaderAction ids={b.items.map(t => t.id)} group={mPhaseLabel(b.phase)}/>}/>
                 </div>
               )}
               {!p && overall && (
                 <div className="m-phase-divider sticky overall">
-                  <ProgressHeader label={mtr('progress.all')} {...overall}/>
+                  <ProgressHeader label={mtr('progress.all')} {...overall}
+                    action={<BulkHeaderAction ids={titles.map(t => t.id)} group={mtr('progress.all')}/>}/>
                 </div>
               )}
               {b.items.length ? sectionsOf(b.items, blockRuns[i]) : null}
@@ -834,6 +884,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
               <span style={{color:MPHASE_COLORS[t.phase]}}>{mPhaseLabel(t.phase)}</span>
               {t.budget != null && <><span className="m-dot"/><span>{MI18N.budget(t.budget)}</span></>}
               {t.story && !chrono && <><span className="m-dot"/><StoryYear title={t}/></>}
+              <ReleaseBadge title={t} className="m-lrelease"/>
             </div>
             <ScoreBadges title={t} lead={lead}/>
             <MatchBadge matchedChars={matchedChars} query={search} title={t}/>
@@ -849,7 +900,8 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
   const overall = (progress && progress.all) || null;
   const overallHead = overall ? (
     <div className="m-phase-divider sticky overall">
-      <ProgressHeader label={mtr('progress.all')} {...overall}/>
+      <ProgressHeader label={mtr('progress.all')} {...overall}
+        action={<BulkHeaderAction ids={titles.map(t => t.id)} group={mtr('progress.all')}/>}/>
     </div>
   ) : null;
   const label = (g) => {
@@ -869,7 +921,8 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
     if (!p) return null;
     return (
       <div className="m-phase-divider sticky">
-        <ProgressHeader label={mPhaseLabel(g.phaseStart)} color={MPHASE_COLORS[g.phaseStart]} {...p}/>
+        <ProgressHeader label={mPhaseLabel(g.phaseStart)} color={MPHASE_COLORS[g.phaseStart]} {...p}
+          action={<BulkHeaderAction ids={titles.filter(t => t.phase === g.phaseStart).map(t => t.id)} group={mPhaseLabel(g.phaseStart)}/>}/>
       </div>
     );
   };
@@ -1003,7 +1056,14 @@ const sheetHistory = (() => {
   let ignorePops = 0;     // pops caused by our own history.back()
   let seq = 0;
   const isSheetEntry = (st) => !!(st && st.mcuSheet);
+  // Whether the pop being handled right now is one of ours. This listener is
+  // registered first, so later popstate listeners (the address sync in
+  // app.jsx) can ask during the same event and leave our own steps alone: a
+  // sheet that closes itself is not the visitor pressing Back.
+  let ownPop = false;
+  window.MCU_isOwnSheetPop = () => ownPop;
   window.addEventListener('popstate', (e) => {
+    ownPop = ignorePops > 0;
     if (ignorePops > 0) {
       ignorePops--;
       // A sheet opened while our own step back was still in flight: give it
@@ -1151,7 +1211,7 @@ function Sheet({ children, onClose, tall, label }) {
   );
 }
 
-function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, sort, sortDir, setSortDir, onClose, showing, onClear }) {
+function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, sort, sortDir, setSortDir, onClose, showing, onClear }) {
   return (
     <Sheet onClose={onClose} tall label={mtr('filters.title')}>
       <div className="m-sh-head">
@@ -1186,6 +1246,14 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
         </div>
       </div>
       <div className="m-fgroup">
+        <div className="m-flab">{mtr('filter.release')}</div>
+        <div className="m-chips">
+          {[['all','filter.release.all'],['released','filter.release.released']].map(([v,k])=>(
+            <button key={v} className={`m-chip${releaseFilter===v?' on':''}`} aria-pressed={releaseFilter===v} onClick={()=>setReleaseFilter(v)}>{mtr(k)}</button>
+          ))}
+        </div>
+      </div>
+      <div className="m-fgroup">
         <div className="m-flab">{mtr('order.label')}</div>
         <div className="m-chips">
           {window.sortDirectionLabels(sort).map((label, i) => {
@@ -1210,6 +1278,7 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, 
         <div className="m-hero-text">
           <div className="m-eyebrow" style={{color:MPHASE_COLORS[title.phase]}}>{mPhaseLabel(title.phase)} · {mTypeLabel(title.type)} · {title.year}</div>
           <h2 className="m-dtitle">{MI18N.titleName(title)}</h2>
+          <ReleaseLine title={title} className="m-hero-release"/>
           <StoryYear title={title} detail className="m-hero-story"/>
           <ScoreBadges title={title}/>
           <window.TitleStatusActions title={title} variant="inline" className="m-hero-tsa"/>
@@ -1280,4 +1349,4 @@ function SpatialHint({ focused, sharedCount }) {
   );
 }
 
-Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear });
+Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });

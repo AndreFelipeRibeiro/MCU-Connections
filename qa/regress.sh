@@ -41,7 +41,7 @@ run(){
 }
 run "LOC=en-US MODE=all" test-fit.js
 run "LOC=pt-BR MODE=watch" test-fit.js
-for t in test-ctxfn2 test-panel test-i18n test-dlist test-suggest test-layers test-anim test-cel test-align2 test-about test-welcome test-camera test-v2 test-widetouch test-variant test-nudgeundo test-pickperson test-escpin test-mviewport test-inertia test-portrait test-recastname test-bannerhold test-progress; do
+for t in test-ctxfn2 test-panel test-i18n test-dlist test-suggest test-layers test-anim test-cel test-align2 test-about test-welcome test-camera test-v2 test-widetouch test-variant test-nudgeundo test-pickperson test-escpin test-mviewport test-inertia test-portrait test-recastname test-bannerhold test-progress test-release test-urlstate test-bulk; do
   run X=1 $t.js
 done
 # Counted, not hardcoded: the summary said "22" for a run of 23 once.

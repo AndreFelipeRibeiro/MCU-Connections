@@ -37,5 +37,9 @@ const scan = async (page, name, out) => {
   await x.ctx.close();
   console.log(JSON.stringify(out, null, 1));
   await browser.close(); server.close();
+  // A violation fails the run. This scan used to exit 0 whatever it found, so a
+  // critical ARIA error reached production behind a clean exit code.
+  const found = Object.values(out).reduce((n, v) => n + (Array.isArray(v) ? v.length : 0), 0);
+  if (found) { console.error('!! ' + found + ' accessibility violation type(s) above'); process.exitCode = 1; }
 })();
 `);

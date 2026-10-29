@@ -23,6 +23,23 @@ function completedMilestone(e) {
   return null;
 }
 
+// The same for a bulk action, judged on the marks before and after it: the
+// whole catalogue, or the first phase it newly completed. A phase that was
+// already complete before the action is not celebrated again.
+function completedMilestoneBulk(e) {
+  const released = window.MCU_isReleased;
+  if (!released || e.to !== 'seen') return null;
+  const all = (window.TITLES || []).filter(t => released(t));
+  const done = (st, list) => list.length > 0 && list.every(t => st[t.id] === 'seen');
+  if (done(e.after, all) && !done(e.states, all)) return { kind: 'all' };
+  const phases = [...new Set(e.ids.map(id => (all.find(t => t.id === id) || {}).phase).filter(Boolean))].sort((a, b) => a - b);
+  for (const p of phases) {
+    const list = all.filter(t => t.phase === p);
+    if (list.length > 1 && done(e.after, list) && !done(e.states, list)) return { kind: 'phase', phase: p };
+  }
+  return null;
+}
+
 // Lightweight confetti on a full-screen canvas that removes itself.
 function burstConfetti() {
   if (reducedMotion()) return;
@@ -82,15 +99,16 @@ function toastPlacement(touch) {
 }
 
 function StatusToast({ touch }) {
-  const { setStatus } = window.useCollection();
+  const { setStatus, undoMany } = window.useCollection();
   const { tr } = window.useI18n();
   const [toast, setToast] = React.useState(null);
   const timer = React.useRef(null);
 
   React.useEffect(() => window.onStatusChange((e) => {
-    // Removals only update the counters.
-    if (e.to === 'none') return;
-    const milestone = e.to === 'seen' ? completedMilestone(e) : null;
+    // A single removal only updates the counters; a bulk one still gets its
+    // toast, because "Mark as unseen" across many titles needs an Undo.
+    if (e.to === 'none' && !e.bulk) return;
+    const milestone = e.to === 'seen' ? (e.bulk ? completedMilestoneBulk(e) : completedMilestone(e)) : null;
     if (milestone) burstConfetti();
     setToast({ key: Date.now(), ...e, milestone, place: toastPlacement(touch) });
   }), [touch]);
@@ -108,7 +126,8 @@ function StatusToast({ touch }) {
 
   const undo = () => {
     if (!toast) return;
-    setStatus(toast.title.id, toast.from);
+    if (toast.bulk) undoMany(toast.prev);
+    else setStatus(toast.title.id, toast.from);
     setToast(null);
   };
 
@@ -116,15 +135,16 @@ function StatusToast({ touch }) {
   if (toast) {
     const I = window.MCU_I18N;
     const m = toast.milestone;
-    const head = m ? tr(m.kind === 'all' ? 'toast.allDone' : 'toast.phaseDone', { n: m.phase }) : I.titleName(toast.title);
+    const head = m ? tr(m.kind === 'all' ? 'toast.allDone' : 'toast.phaseDone', { n: m.phase })
+      : toast.bulk ? tr('toast.bulk.' + toast.to, { n: toast.ids.length }) : I.titleName(toast.title);
     const sub = m ? tr(m.kind === 'all' ? 'toast.allDoneSub' : 'toast.phaseDoneSub', { n: m.phase })
-      : tr(toast.to === 'seen' ? 'toast.seen' : 'toast.watch');
+      : toast.bulk ? tr('toast.bulk.sub') : tr(toast.to === 'seen' ? 'toast.seen' : 'toast.watch');
     body = (
       <div key={toast.key} className={`mcu-toast ${toast.to}${m ? ' milestone' : ''}${touch ? ' touch' : ''}`}
         style={toast.place} onMouseEnter={() => clearTimeout(timer.current)} onMouseLeave={() => arm(2500)}
         onFocus={() => clearTimeout(timer.current)} onBlur={() => arm(2500)}>
         <span className="mt-ic" aria-hidden="true">
-          {m ? '★' : toast.to === 'seen' ? <window.CheckIcon/> : <window.BookmarkIcon filled/>}
+          {m ? '★' : toast.to === 'seen' ? <window.CheckIcon/> : toast.to === 'none' ? '↺' : <window.BookmarkIcon filled/>}
         </span>
         <span className="mt-text"><b>{head}</b><span>{sub}</span></span>
         <button className="mt-undo" onClick={undo}>{tr('toast.undo')}</button>
@@ -176,7 +196,7 @@ function SignInNudge({ touch }) {
     if (e.to === 'none') return;
     // The event carries the marks as of this tap; the provider's state has not
     // re-rendered yet, so it cannot be used to decide the threshold here.
-    const after = Object.assign({}, e.states, { [e.title.id]: e.to });
+    const after = e.bulk ? e.after : Object.assign({}, e.states, { [e.title.id]: e.to });
     const n = Object.values(after).filter(v => v && v !== 'none').length;
     const a = accountRef.current;
     if (a.status !== 'signed_out' || !a.syncAvailable) return;
@@ -235,4 +255,28 @@ function SignInNudge({ touch }) {
   return <window.ModalDialog onClose={close} labelledBy={titleId} className="nudge-dialog">{body}</window.ModalDialog>;
 }
 
-Object.assign(window, { StatusToast, burstConfetti, SignInNudge });
+// Asks before a bulk action that changes more than 20 titles, or any "Mark as
+// unseen" (tracking.jsx requestBulk). A sheet on phones, a dialog on desktop.
+function BulkConfirm({ touch }) {
+  const { tr } = window.useI18n();
+  const [ask, setAsk] = React.useState(null);
+  React.useEffect(() => window.onBulkConfirm((req) => setAsk(req)), []);
+  if (!ask) return null;
+  const close = () => setAsk(null);
+  const go = () => { const run = ask.run; setAsk(null); run(); };
+  const titleId = touch ? 'bulk-sheet-title' : 'bulk-title';
+  const body = (
+    <div className="about bulk-confirm">
+      <h2 id={titleId} className="about-title">{tr('bulk.confirm.' + ask.to, { n: ask.n })}</h2>
+      <p className="about-lead">{tr(ask.to === 'none' ? 'bulk.confirm.unseenNote' : 'bulk.confirm.note')}</p>
+      <div className="about-cta-row">
+        <button className="about-cta" onClick={go}>{tr('bulk.confirm.go.' + ask.to, { n: ask.n })}</button>
+        <button className="nudge-later" onClick={close}>{tr('bulk.confirm.cancel')}</button>
+      </div>
+    </div>
+  );
+  if (touch) return <window.Sheet onClose={close} label={tr('bulk.confirm.' + ask.to, { n: ask.n })}>{body}</window.Sheet>;
+  return <window.ModalDialog onClose={close} labelledBy={titleId} className="bulk-dialog">{body}</window.ModalDialog>;
+}
+
+Object.assign(window, { StatusToast, burstConfetti, SignInNudge, BulkConfirm });

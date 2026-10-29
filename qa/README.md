@@ -20,8 +20,8 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression, 25 check scripts in 26 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
-| `node qa/a11y-scan.js` | axe-core scan of 7 screens (desktop Spatial, details, List, account menu; phone List, details, Spatial). Add `LOC=pt-BR` for Portuguese. Expect no violations. |
+| `bash qa/regress.sh` | Full regression, 28 check scripts in 29 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
+| `node qa/a11y-scan.js` | axe-core scan of 7 screens (desktop Spatial, details, List, account menu; phone List, details, Spatial). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
 | `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
 
@@ -48,10 +48,25 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   `test-portrait` (a recast row never shows the default performer's face),
   `test-recastname` (the performer named beside a recast character follows
   the title in view, and a character search offers one row per performer),
-  `test-bannerhold` (the pinned banner's controls stay put when the details
-  panel opens, and a hover banner does not move the panel),
-  `test-progress` (phase progress counts released titles only, ignores the
-  collection tab, and hides during a search).
+  `test-bannerhold` (the character banner stops at the details panel with the
+  same indent pinned or hovered, and the panel hangs from the toolbar),
+  `test-progress` (phase meters on By Phase only and one All titles meter on
+  every other order, across all 30 view and order combinations; counts
+  released titles only, ignores the collection tab and hides during a search;
+  sticky headers, Spatial framing and the scroll reveal),
+  `test-release` (release status worked out from the dates at run time:
+  released / upcoming / expected at their real precision, badges only on
+  titles not out yet, the Released only filter, Portuguese dates),
+  `test-urlstate` (a shared address opens the state it names, the address
+  follows changes and survives a reload, bad values are dropped, Back and
+  Forward on a phone close and reopen the details, closing the filter sheet
+  keeps the filter just chosen, and only our keys ever appear),
+  `test-bulk` (desktop List selection, Shift ranges and the mixed header;
+  bulk marks change exactly the right titles, never an unreleased one seen,
+  with one guest-storage write and one announcement; Undo restores each title,
+  a replaced watchlist included; over 20 asks first and Cancel keeps the
+  selection; real Escape presses clear the selection before the details; the
+  phone section headers' "Mark all seen" / "Mark N more seen").
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.

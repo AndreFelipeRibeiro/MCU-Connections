@@ -127,6 +127,12 @@ work:
 - **Progress follows one rule, shaped in one place.** `viewProgress` in
   `app.jsx` hands every view either per-phase tallies (By Phase only) or the
   whole-catalogue tally (every other order); the views draw whichever they get.
+- **Bulk marking goes through the per-title writer queue** (user decision,
+  2026-10-28): `requestBulk` in `tracking.jsx` commits once and writes the
+  guest copy once, then feeds each title to its own queue when signed in, so
+  failures roll back per title. `bulkTargets` is the one rule for which titles
+  an action changes, used for both the counts shown and the action itself.
+  The signed-in path has not been exercised against a real session.
 - **New characters need portraits.** `MEDIA.actors` (by character id) and
   `MEDIA.performers` (by name, for recast credits) are not filled in by adding
   a character; `test-recastname` fails when one is missing. Mike McGill has no
@@ -154,11 +160,11 @@ work:
 
 `qa/` holds the headless Playwright checks used throughout V3, curated
 (qa/README.md lists them):
-- the regression run (`bash qa/regress.sh`: 25 check scripts in 26 runs,
-  about 25 minutes);
-- the axe-core accessibility scan (`node qa/a11y-scan.js`);
+- the regression run (`bash qa/regress.sh`: 28 check scripts in 29 runs,
+  about 28 minutes) and the axe-core accessibility scan
+  (`node qa/a11y-scan.js`), both run once per batch before staging;
 - a startup timing check;
-- one targeted check per recent fix.
+- one targeted check per recent fix, run per ticket before review.
 
 Set up once per machine with `bash qa/setup.sh` (Node 18+). They run headless
 Chromium against the repository root with the pinned libraries served
@@ -184,10 +190,6 @@ locally. They do not replace a look in a real browser and on a real phone.
   - Maintain shared regression checks and real-device evidence; reconcile the
     V3 planning documents with the app.
 - **Decisions waiting on the user:**
-  - Bulk select (Batch 7): reuse the per-title write queue (one request per
-    title, every existing failure and rollback path kept) or build a batched
-    remote write (one request, but a new failure model that needs a signed-in
-    session to verify). Notes are on the Notion ticket.
   - Which preferences sync across devices.
   - How variant characters should behave.
   - A wider first Spatial view on desktop.

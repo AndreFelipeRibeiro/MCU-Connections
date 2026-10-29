@@ -42,6 +42,36 @@ function emitStatusChange(e) {
   statusListeners.forEach((fn) => { try { fn(e); } catch (err) { /* one listener must not stop the rest */ } });
 }
 
+// Which of `ids` a bulk action would actually change, given the current marks.
+// One rule, used both for the counts shown before acting and for the action
+// itself, so a label can never promise a different number than it delivers.
+//   seen      — released titles not already seen (unreleased never, in bulk)
+//   watchlist — titles with no mark (a seen title keeps its seen mark)
+//   none      — "Mark as unseen": seen titles only (a watchlist is left alone)
+function bulkTargets(ids, to, states) {
+  const st = states || {};
+  const byId = {};
+  (window.TITLES || []).forEach((t) => { byId[t.id] = t; });
+  return ids.filter((id) => {
+    const t = byId[id];
+    const cur = st[id] || 'none';
+    if (!t) return false;
+    if (to === 'seen') return cur !== 'seen' && isReleased(t);
+    if (to === 'watchlist') return cur === 'none';
+    if (to === 'none') return cur === 'seen';
+    return false;
+  });
+}
+
+// Bulk actions that need a yes first (more than 20 titles, or any "Mark as
+// unseen") are handed to whoever renders the confirmation (celebrate.jsx).
+const BULK_CONFIRM_OVER = 20;
+const confirmListeners = new Set();
+function onBulkConfirm(fn) {
+  confirmListeners.add(fn);
+  return () => { confirmListeners.delete(fn); };
+}
+
 // The completion denominator. Computed from release dates every time rather
 // than stored, so it moves on its own as the slate ships.
 function releasedCount() {
@@ -366,6 +396,77 @@ function CollectionProvider({ children }) {
     if (modeRef.current === 'guest') clearGuestStates();
   }, [applyStatus]);
 
+  // Several titles at once: one commit and one guest-storage write, then each
+  // title through its own writer queue when signed in — so every failure,
+  // rollback and retry behaves exactly as it does for a single mark (the
+  // user's choice: N small requests over a new batched write path). Returns
+  // each changed title's previous status, which is what Undo puts back.
+  const applyMany = React.useCallback((changes) => {
+    if (loadingRef.current) return null;
+    const prev = statesRef.current;
+    const out = { ...prev };
+    const before = {};
+    Object.keys(changes).forEach((id) => {
+      const next = changes[id];
+      if (!['none', 'seen', 'watchlist'].includes(next)) return;
+      if ((prev[id] || 'none') === next) return;
+      before[id] = prev[id] || 'none';
+      if (next === 'none') delete out[id]; else out[id] = next;
+    });
+    const ids = Object.keys(before);
+    if (!ids.length) return null;
+    commit(out);
+    if (modeRef.current === 'guest') { writeGuestStates(out); return before; }
+    ids.forEach((id) => {
+      const w = writersRef.current[id] || (writersRef.current[id] = {
+        desired: confirmedRef.current[id] || 'none',
+        confirmed: confirmedRef.current[id] || 'none',
+        running: null,
+      });
+      w.desired = out[id] || 'none';
+      setTitleError(id, null);
+      markPending(id, true);
+      drain(id);
+    });
+    return before;
+  }, [commit, drain, markPending, setTitleError]);
+
+  // A bulk action: changes exactly bulkTargets(), then announces it once —
+  // one toast, one celebration, one step toward the sign-in reminder — the way
+  // a single tap announces itself.
+  const markMany = React.useCallback((ids, to) => {
+    const states = statesRef.current;
+    const targets = bulkTargets(ids, to, states);
+    if (!targets.length) return 0;
+    const changes = {};
+    targets.forEach((id) => { changes[id] = to; });
+    const prev = applyMany(changes);
+    if (!prev) return 0;
+    const changed = Object.keys(prev);
+    const after = { ...states };
+    changed.forEach((id) => { if (to === 'none') delete after[id]; else after[id] = to; });
+    emitStatusChange({ bulk: true, ids: changed, to, prev, states, after });
+    return changed.length;
+  }, [applyMany]);
+
+  // What the UI calls: acts at once, or asks first when the rules say so.
+  // `onDone` runs only once the action has actually happened, so cancelling
+  // the confirmation leaves the caller's selection as it was.
+  const requestBulk = React.useCallback((ids, to, onDone) => {
+    const n = bulkTargets(ids, to, statesRef.current).length;
+    if (!n) return;
+    const run = () => { markMany(ids, to); if (onDone) onDone(); };
+    if (n > BULK_CONFIRM_OVER || to === 'none') {
+      confirmListeners.forEach((fn) => fn({ n, to, run }));
+      return;
+    }
+    run();
+  }, [markMany]);
+
+  // Undo puts every title back as it was, including a watchlist that a seen
+  // mark had replaced. Like the single-title Undo, it announces nothing.
+  const undoMany = React.useCallback((prev) => { applyMany(prev); }, [applyMany]);
+
   // ---- Load + merge on sign-in -------------------------------------------
   React.useEffect(() => {
     let cancelled = false;
@@ -488,8 +589,10 @@ function CollectionProvider({ children }) {
     toggleSeen,
     toggleWatchlist,
     clearAll,
+    requestBulk,
+    undoMany,
     progress,
-  }), [states, loading, mode, syncError, retrySync, loadedScope, scope, remoteLoading, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, progress]);
+  }), [states, loading, mode, syncError, retrySync, loadedScope, scope, remoteLoading, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, requestBulk, undoMany, progress]);
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>;
 }
@@ -716,5 +819,7 @@ Object.assign(window, {
   CheckIcon,
   BookmarkIcon,
   MCU_isReleased: (title) => isReleased(title),
+  MCU_bulkTargets: bulkTargets,
+  onBulkConfirm,
   TSA_MIN_SCALE,
 });

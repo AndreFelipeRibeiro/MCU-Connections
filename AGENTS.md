@@ -63,12 +63,17 @@ their "Handoff — 2026-10-24" sections are historical.
 - Hard-refresh (Cmd+Shift+R) after changing `.jsx` files: Babel fetches them
   and browsers can serve a cached copy on a plain refresh.
 - QA checks (`qa/`, details in qa/README.md): once per machine
-  `bash qa/setup.sh` (needs Node 18+). Before handing work over for review, run
-  `bash qa/regress.sh` (25 check scripts in 26 runs, about 25 minutes; it exits non-zero and
-  marks failures with `!!`) and `node qa/a11y-scan.js` (expect no violations; add
-  `LOC=pt-BR` for Portuguese). Also run the targeted check for the area you
-  touched (for example `qa/test-kbspatial.js`), and update checks in the same
-  commit when you rename or restructure UI they rely on.
+  `bash qa/setup.sh` (needs Node 18+). Two levels (user decision, 2026-10-29):
+  - **Per ticket, before handing it over for review:** the targeted check for
+    the area you touched (for example `qa/test-kbspatial.js`), plus any existing
+    check for the same screens. Minutes, not the full run.
+  - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
+    (28 check scripts in 29 runs, about 28 minutes; it exits non-zero and marks
+    failures with `!!`) and `node qa/a11y-scan.js` (exits non-zero on any
+    violation; add `LOC=pt-BR` for Portuguese), on the final tree with nothing
+    edited while it runs. Read the scan's output, not just its exit code.
+  Update checks in the same commit when you rename or restructure UI they
+  rely on.
 - The QA checks are headless Chromium. Still look at the change in a real
   browser (desktop and a phone-sized viewport, English and Portuguese), and
   record what you actually verified, including what was not checked (for
@@ -233,7 +238,8 @@ only create it when the user says yes.
     `app.jsx`), so mouse and touch users never see a ring they didn't cause.
   - Escape closes the nearest layer first: search suggestions, then menus and
     popovers, then dialogs and phone sheets, then the pair view, then the
-    details, then the pinned character or performer. Never close two layers
+    desktop List's bulk selection, then the details, then the pinned character
+    or performer. Never close two layers
     with one press. The details and the pin share one listener for that reason:
     two listeners both see the same press, and React re-renders between them,
     so the second acts on state the first just cleared.

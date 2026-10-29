@@ -117,9 +117,10 @@ function ContextSummary({ variant, inList, showing, total, filters: f }) {
   if (f.typeFilter !== 'all') chips.push(['type', tr(f.typeFilter === 'film' ? 'type.films' : 'type.series'), () => f.setTypeFilter('all')]);
   if (f.phaseFilter !== 'all') chips.push(['phase', tr('phase.label', { n: f.phaseFilter }), () => f.setPhaseFilter('all')]);
   if (f.budgetFilter !== 'all') chips.push(['budget', tr('budget.' + f.budgetFilter), () => f.setBudgetFilter('all')]);
+  if (f.releaseFilter !== 'all') chips.push(['release', tr('filter.release.chip'), () => f.setReleaseFilter('all')]);
   const clearAll = () => {
     f.setSearch(''); f.setCollectionFilter('all'); f.setTypeFilter('all');
-    f.setPhaseFilter('all'); f.setBudgetFilter('all');
+    f.setPhaseFilter('all'); f.setBudgetFilter('all'); f.setReleaseFilter('all');
   };
   const count = showing === total ? tr('header.count', { n: total }) : tr('header.countOf', { shown: showing, total });
   // Keep the canvas pan/pinch handlers from treating a click here as a drag.
@@ -319,7 +320,7 @@ function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusabl
       <div className="card-meta">
         <div className="card-title"><window.Highlight text={I18N.titleName(title)} query={searchQuery}/></div>
         <div className="card-year">
-          <span>{title.year}</span>
+          <span>{title.year}<window.ReleaseBadge title={title} className="card-release"/></span>
           {title.budget != null && (
             <span className="card-budget">{I18N.budget(title.budget)}</span>
           )}
@@ -379,6 +380,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
         <div>
           <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{phaseLabel(title.phase)} · {I18N.upper(typeLabel(title.type))} · {title.year}</div>
           <h2 className="drawer-title" id="drawer-title" ref={headingRef} tabIndex={-1}><window.Highlight text={I18N.titleName(title)} query={search}/></h2>
+          <window.ReleaseLine title={title} className="drawer-release"/>
           <window.StoryYear title={title} detail className="drawer-story"/>
           <window.Synopsis title={title} className="drawer-synopsis"/>
           <window.TitleStatusActions title={title} variant="inline" className="drawer-tsa"/>
@@ -423,11 +425,11 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
 const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
-function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
+function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   // Collection has its own always-visible switch, so it is not counted here.
-  const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
+  const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (releaseFilter !== 'all' ? 1 : 0);
   useEffect(() => {
     if (!popOpen) return;
     const away = (e) => { if (popRef.current && !popRef.current.contains(e.target)) setPopOpen(false); };
@@ -483,6 +485,16 @@ function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopVi
                     ))}
                   </div>
                 </div>
+                {/* Released only sits with the other catalogue filters rather
+                    than in the toolbar, so the navigation does not grow. */}
+                <div className="control-group">
+                  <label>{tr('filter.release')}</label>
+                  <div className="segmented">
+                    {[['all','filter.release.all'],['released','filter.release.released']].map(([v,k])=>(
+                      <button key={v} className={releaseFilter===v?'on':''} aria-pressed={releaseFilter===v} onClick={()=>setReleaseFilter(v)}>{tr(k)}</button>
+                    ))}
+                  </div>
+                </div>
                 <div className="control-group">
                   <label>{tr('order.label')}</label>
                   <div className="segmented">
@@ -494,7 +506,7 @@ function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopVi
                   </div>
                 </div>
                 {activeFilters > 0 && (
-                  <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); }}>{tr('filters.clear')}</button>
+                  <button className="pop-clear" onClick={()=>{ setPhaseFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }}>{tr('filters.clear')}</button>
                 )}
               </div>
             )}
@@ -814,6 +826,44 @@ function readDisplayPrefs() {
   return prefs;
 }
 
+// Public exploration state in the address, so a view can be bookmarked or
+// shared: the open title, a pinned character, the view, sort, order and the
+// catalogue filters. Never the collection filter (it means something different
+// to whoever opens the link), the search text, the language or anything from
+// the account. The names avoid code / state / error, which the sign-in
+// redirect uses (account.jsx stripAuthParams).
+const URL_KEYS = ['view', 'sort', 'order', 'phase', 'type', 'budget', 'release', 'title', 'char'];
+function readURLState() {
+  const out = { any: false };
+  let q;
+  try { q = new URLSearchParams(window.location.search); } catch (e) { return out; }
+  out.any = URL_KEYS.some(k => q.has(k));
+  const v = q.get('view'); if (VIEW_MODE_VALUES.indexOf(v) !== -1) out.view = v;
+  const s = q.get('sort'); if (Object.prototype.hasOwnProperty.call(DEFAULT_SORT_DIR, s)) out.sort = s;
+  const o = q.get('order'); if (o === 'asc' || o === 'desc') out.order = o;
+  const ph = q.get('phase'); if (/^[1-6]$/.test(ph || '')) out.phase = ph;
+  const ty = q.get('type'); if (ty === 'film' || ty === 'series') out.type = ty;
+  const b = q.get('budget'); if (['low', 'mid', 'high', 'mega'].indexOf(b) !== -1) out.budget = b;
+  if (q.get('release') === 'released') out.release = 'released';
+  const t = q.get('title'); if (t && window.TITLES.some(x => x.id === t)) out.title = t;
+  const c = q.get('char'); if (c && window.CHARACTERS && window.CHARACTERS[c]) out.char = c;
+  return out;
+}
+
+// Writes the given state into the address without adding a history entry.
+// history.state is passed through untouched: it carries the phone sheets'
+// token (mobile.jsx sheetHistory), and replacing it would break their Back.
+function writeURLState(params) {
+  try {
+    const url = new URL(window.location.href);
+    URL_KEYS.forEach(k => url.searchParams.delete(k));
+    Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+    const next = url.pathname + url.search + url.hash;
+    const now = window.location.pathname + window.location.search + window.location.hash;
+    if (next !== now) window.history.replaceState(window.history.state, '', next);
+  } catch (e) { /* an out-of-date address is not worth a crash */ }
+}
+
 function writeDisplayPrefs(prefs) {
   try {
     window.localStorage.setItem(PREFS_KEY, JSON.stringify({ version: PREFS_VERSION, ...prefs }));
@@ -823,13 +873,25 @@ function writeDisplayPrefs(prefs) {
 function App() {
   // Re-render the whole tree when the language changes.
   const { lang } = window.useI18n();
-  const [initialPrefs] = useState(readDisplayPrefs);
+  const [urlAtLoad] = useState(readURLState);
+  // A shared address opens what it says, and what it leaves out takes the
+  // app's defaults rather than this device's saved ones, so the link looks the
+  // same to everyone. An address with none of our keys uses the saved prefs.
+  const [initialPrefs] = useState(() => {
+    if (!urlAtLoad.any) return readDisplayPrefs();
+    const p = { viewMode: 'list', desktopView: 'spatial', sort: 'release', sortDir: DEFAULT_SORT_DIR.release };
+    if (urlAtLoad.view) { p.viewMode = urlAtLoad.view; p.desktopView = urlAtLoad.view === 'grid' ? 'list' : urlAtLoad.view; }
+    if (urlAtLoad.sort) { p.sort = urlAtLoad.sort; p.sortDir = DEFAULT_SORT_DIR[urlAtLoad.sort]; }
+    if (urlAtLoad.order) p.sortDir = urlAtLoad.order;
+    return p;
+  });
   const [sort, setSort] = useState(initialPrefs.sort);
   const [sortDir, setSortDir] = useState(initialPrefs.sortDir);
   const changeSort = (v) => { if (v === sort) return; setSort(v); setSortDir(DEFAULT_SORT_DIR[v] || 'asc'); };
-  const [phaseFilter, setPhaseFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [budgetFilter, setBudgetFilter] = useState('all');
+  const [phaseFilter, setPhaseFilter] = useState(urlAtLoad.phase || 'all');
+  const [typeFilter, setTypeFilter] = useState(urlAtLoad.type || 'all');
+  const [budgetFilter, setBudgetFilter] = useState(urlAtLoad.budget || 'all');
+  const [releaseFilter, setReleaseFilter] = useState(urlAtLoad.release || 'all');
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [mediaReady, setMediaReady] = useState(!!window.MEDIA);
@@ -1107,6 +1169,9 @@ function App() {
         return true;
       });
     }
+    // Released only uses the same test as the completion count, so a title
+    // with an announced month never passes as out.
+    if (releaseFilter === 'released') list = list.filter(t => window.MCU_isReleased(t));
     if (searchCharMatches) list = list.filter(t => searchCharMatches[t.id] !== undefined);
     // "Their titles": a pin narrows the layout like search does. Deliberate
     // (the visitor pins or toggles it), so re-laying out is expected.
@@ -1114,7 +1179,7 @@ function App() {
       list = list.filter(t => pinnedTitleIds.has(t.id));
     }
     return list;
-  }, [phaseFilter, typeFilter, budgetFilter, searchCharMatches, pinnedTitleIds, charOnly, isTouch]);
+  }, [phaseFilter, typeFilter, budgetFilter, releaseFilter, searchCharMatches, pinnedTitleIds, charOnly, isTouch]);
 
   // How much of each phase and era has been seen. Deliberately NOT derived from
   // `visible`: the collection tab must not feed back into its own numbers, or
@@ -1264,7 +1329,7 @@ function App() {
   }, [basePositions, overrides, focusId, relatedIds, isTouch, pair]);
 
   // Reset overrides when sort/filter changes the layout
-  useEffect(() => { setOverrides({}); }, [sort, sortDir, phaseFilter, typeFilter, budgetFilter, search]);
+  useEffect(() => { setOverrides({}); }, [sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, search]);
 
   const selectedTitle = selectedId ? window.TITLES.find(t => t.id === selectedId) : null;
   const drawerTitle = drawerId ? window.TITLES.find(t => t.id === drawerId) : null;
@@ -1827,8 +1892,8 @@ function App() {
   // Collection has its own switch in the header, so the Filters badge skips it.
   // Grid and List animate when any of these change: sort, order, collection,
   // phase, films/series and budget. Search is left out so typing stays calm.
-  const flipKey = [sort, sortDir, collectionFilter, phaseFilter, typeFilter, budgetFilter].join(':');
-  const filterCount = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0);
+  const flipKey = [sort, sortDir, collectionFilter, phaseFilter, typeFilter, budgetFilter, releaseFilter].join(':');
+  const filterCount = (phaseFilter !== 'all' ? 1 : 0) + (typeFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (releaseFilter !== 'all' ? 1 : 0);
   // Spatial keeps every card on screen (dimmed), so it counts `filtered`; the
   // flat views actually drop non-matching rows and count what they render.
   // Switching to Spatial with a title open in the drawer selects that card, so
@@ -1883,7 +1948,7 @@ function App() {
     <ContextSummary variant={variant} inList={inList}
       showing={showing == null ? visible.length : showing} total={window.TITLES.length}
       filters={{ search, setSearch, collectionFilter, setCollectionFilter, typeFilter, setTypeFilter,
-        phaseFilter, setPhaseFilter, budgetFilter, setBudgetFilter }}/>
+        phaseFilter, setPhaseFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter }}/>
   );
   const mobileShowing = viewMode === 'spatial' ? filtered.length : visible.length;
   const sharedCharCount = useMemo(() => {
@@ -1956,6 +2021,64 @@ function App() {
     // Desktop details still open: back to that title's connections.
     if (!isTouch && spatialShown && drawerId) setSelectedId(drawerId);
   };
+  // ---- The address ------------------------------------------------------
+  // The pinned character, when it is one portrayal (a performer pin covering
+  // several characters has no single id to share). With a character pinned the
+  // title in the address is the stepper's, since on phones pinning closes the
+  // details and the step lives in stepId.
+  const urlChar = highlightedChar && !pinnedActor ? highlightedChar : null;
+  const urlTitle = urlChar ? (stepId || drawerId) : drawerId;
+  const urlParams = () => {
+    const p = {};
+    const view = isTouch ? viewMode : desktopView;
+    if (view !== (isTouch ? 'list' : 'spatial')) p.view = view;
+    if (sort !== 'release') p.sort = sort;
+    if (sortDir !== DEFAULT_SORT_DIR[sort]) p.order = sortDir;
+    if (phaseFilter !== 'all') p.phase = phaseFilter;
+    if (typeFilter !== 'all') p.type = typeFilter;
+    if (budgetFilter !== 'all') p.budget = budgetFilter;
+    if (releaseFilter !== 'all') p.release = releaseFilter;
+    if (urlTitle) p.title = urlTitle;
+    if (urlChar) p.char = urlChar;
+    return p;
+  };
+  // Applies a title and character from the address: once on load, and again
+  // on Back and Forward.
+  const applyURLSubject = (u) => {
+    if (u.char) {
+      if (urlChar !== u.char) pinSubject([u.char], null, u.title);
+      if (u.title && !isTouch) setDrawerId(u.title);
+      return;
+    }
+    if (urlChar) unpinCharacter();
+    if ((u.title || null) === drawerId) return;
+    if (u.title) pickTitle(u.title);
+    else { setDrawerId(null); if (!isTouch) setSelectedId(null); }
+  };
+  const urlLatest = useRef({});
+  urlLatest.current = { urlParams, applyURLSubject };
+  useEffect(() => {
+    if (urlAtLoad.title || urlAtLoad.char) applyURLSubject(urlAtLoad);
+  }, []);
+  useEffect(() => { writeURLState(urlParams()); },
+    [isTouch, viewMode, desktopView, sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, urlTitle, urlChar]);
+  // Back and Forward restore the title and the character, never the filters:
+  // closing the phone filter sheet is itself a step back in history, and
+  // restoring filters there would undo the choices just made in it. A step
+  // the phone sheets take on their own (a sheet closing itself) restores
+  // nothing at all — pinning a character from the details closes the sheet,
+  // and treating that step as Back unpinned the character just pinned. Either
+  // way the address is then re-synced from the state it describes.
+  useEffect(() => {
+    const onPop = () => {
+      const own = window.MCU_isOwnSheetPop && window.MCU_isOwnSheetPop();
+      if (!own) urlLatest.current.applyURLSubject(readURLState());
+      setTimeout(() => writeURLState(urlLatest.current.urlParams()), 0);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
   const stepCurrent = stepId || drawerId;
   const stepIndex = stepCurrent ? pinnedTitles.findIndex(t => t.id === stepCurrent) : -1;
   const stepTo = (id) => {
@@ -2068,7 +2191,7 @@ function App() {
       if (e.key !== 'Escape' || e.defaultPrevented || pair) return;
       const t = e.target instanceof Element ? e.target : null;
       if (t && t.closest('input, textarea, select, [contenteditable="true"]')) return;
-      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .m-sheet, [role="dialog"], [aria-modal="true"]')) return;
+      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .bulk-more-pop, .m-sheet, [role="dialog"], [aria-modal="true"]')) return;
       if (detailsOpen) { setSelectedId(null); setDrawerId(null); return; }
       unpinCharacter();
     };
@@ -2330,7 +2453,7 @@ function App() {
         // back, instead of an empty canvas. Events stop here so the button
         // never starts a pan or a background tap.
         const searching = !!search.trim();
-        const filtering = phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all';
+        const filtering = phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all' || releaseFilter !== 'all';
         const label = searching && filtering ? tr('empty.clearBoth') : searching ? tr('search.clear') : tr('filters.clear');
         const stop = e => e.stopPropagation();
         return (
@@ -2340,7 +2463,7 @@ function App() {
             {(searching || filtering) && (
               <button className="spatial-empty-btn" onClick={() => {
                 if (searching) setSearch('');
-                if (filtering) { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); }
+                if (filtering) { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }
               }}>{label}</button>
             )}
           </div>
@@ -2396,10 +2519,11 @@ function App() {
             phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
             typeFilter={typeFilter} setTypeFilter={setTypeFilter}
             budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
+            releaseFilter={releaseFilter} setReleaseFilter={setReleaseFilter}
             sort={sort}
             sortDir={sortDir} setSortDir={setSortDir}
             showing={mobileShowing}
-            onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); }}
+            onClear={() => { setPhaseFilter('all'); setTypeFilter('all'); setBudgetFilter('all'); setReleaseFilter('all'); }}
             onClose={() => { setSheet(null); requestAnimationFrame(() => window.playPendingFlip()); }}
           />
         )}
@@ -2413,6 +2537,7 @@ function App() {
         {sheet === 'about' && <window.AboutSheet onClose={() => setSheet(null)}/>}
         <window.StatusToast touch/>
         <window.SignInNudge touch/>
+        <window.BulkConfirm touch/>
         {welcome && !sheet && !drawerTitle && <window.AboutSheet welcome onClose={() => setWelcome(false)}/>}
         {drawerTitle && (
           <window.CastSheet
@@ -2445,6 +2570,7 @@ function App() {
         phaseFilter={phaseFilter} setPhaseFilter={setPhaseFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}
         budgetFilter={budgetFilter} setBudgetFilter={setBudgetFilter}
+        releaseFilter={releaseFilter} setReleaseFilter={setReleaseFilter}
         collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         search={search} setSearch={setSearch}
       />
@@ -2489,6 +2615,7 @@ function App() {
       />
       <window.StatusToast touch={false}/>
       <window.SignInNudge touch={false}/>
+      <window.BulkConfirm touch={false}/>
       {(aboutOpen || welcome) && <window.AboutDialog welcome={welcome && !aboutOpen}
         onClose={() => { setAboutOpen(false); setWelcome(false); }}/>}
     </div>

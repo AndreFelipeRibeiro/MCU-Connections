@@ -57,7 +57,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   while the old layout fades (all off with reduced motion).
 - Menus in the desktop toolbar (language, order, filters, account, search
   suggestions) open over the details drawer; the zoom control moves left of it.
-- Phase, film/series and budget filters. All / Unseen / Seen / Watchlist is an
+- Phase, film/series, budget and release (Released only) filters. All / Unseen / Seen / Watchlist is an
   always-visible switch (desktop toolbar; mobile second header row, beside the
   List/Grid/Spatial menu), with a dashed-ring, check and bookmark icon for each state.
 - English and Brazilian Portuguese. The first visit follows the browser/phone
@@ -72,6 +72,18 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
 - Details show a short, spoiler-light synopsis under the title (three lines, then
   See more), written for this app in each language.
+- Shareable addresses: the open title, a pinned character, the view, sort,
+  order and catalogue filters live in the URL (for example
+  `?sort=chrono&phase=3&title=thor-ragnarok`), so a view can be bookmarked or
+  sent. A link opens exactly that state; what it leaves out takes the app's
+  defaults. The Seen / Unseen / Watchlist filter, the search text, the language
+  and anything from the account never go in. On phones, Back and Forward close
+  and reopen the details.
+- Release status at the precision it is known: "Released May 2, 2008",
+  "Coming December 18, 2026", or "Expected March 2027 · day not yet confirmed"
+  for a title with only an announced month (never counted as released, even
+  once the month passes). Titles not out yet carry an Upcoming or Expected
+  badge on cards and rows; released titles carry none.
 - Selecting a title in Spatial arranges the titles that share its characters in
   rings around it, closest when they share the most; on desktop the selected
   title is drawn slightly larger. Unrelated cards fade out
@@ -152,6 +164,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
   seen moves it to seen; un-seeing returns it to untracked.
+- Marking many at once. In the desktop List, tick rows (Shift-click for a
+  range, the header box for everything shown) and use the bar that appears:
+  Mark as seen, Add to Watchlist, or Mark as unseen under More. On phones, each
+  section header offers "Mark all seen" or "Mark 4 more seen" (each phase in By
+  Phase, All titles in every other order). Unreleased titles are never marked
+  seen in bulk, anything over 20 titles (and any Mark as unseen) asks first, and
+  the toast's Undo puts every title back as it was, a replaced watchlist
+  included. Escape clears the selection before it closes the details.
 - Guest tracking saved in this browser; Google sign-in merges those marks and
   syncs the collection across devices. Merge precedence is seen > watchlist > none.
   A signed-out guest (when sign-in is available) is reminded once, right after
