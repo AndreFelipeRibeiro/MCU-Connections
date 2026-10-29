@@ -176,10 +176,12 @@ body {
 .cb-step button:focus-visible, .cb-close:focus-visible, .cb-mode button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .cb-pos { min-width: 64px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-dim); white-space: nowrap; }
 .cb-close { font-size: 16px; }
-/* The hover banner sits behind the drawer, so its close button needs the room.
-   The PINNED banner does not: the drawer opens below it (see --cb-h), which is
-   what keeps its stepper from sliding 402px sideways the moment you step. */
-.app:not(.touch).drawer-open .char-banner:not(.pinned) { padding-right: 402px; }
+/* Both banners stop before the drawer, so the bar looks the same whether the
+   character is hovered or pinned. Letting the pinned one run the full width
+   (with the drawer opening below it) kept the stepper still, but made the bar
+   change width between those two states, which read worse than the movement
+   it avoided. */
+.app:not(.touch).drawer-open .char-banner { padding-right: 402px; }
 
 /* CARDS — absolutely positioned in canvas */
 .card {
@@ -320,15 +322,13 @@ body {
 
 /* DRAWER */
 .drawer {
-  /* Below the toolbar, and below the pinned character banner when there is one
-     (--tb-h and --cb-h are measured in App), so neither is ever covered. */
-  position: fixed; top: calc(var(--tb-h, 0px) + var(--cb-h, 0px)); right: 0; width: 380px;
-  height: calc(100vh - var(--tb-h, 0px) - var(--cb-h, 0px));
+  /* Below the toolbar (--tb-h is measured in App). The character banner no
+     longer pushes it down: the banner stops at the drawer's edge instead. */
+  position: fixed; top: var(--tb-h, 0px); right: 0; width: 380px;
+  height: calc(100vh - var(--tb-h, 0px));
   background: var(--bg-2); border-left: 1px solid var(--border);
   transform: translateX(100%);
-  transition: transform 360ms cubic-bezier(.2,.8,.2,1),
-              top 360ms cubic-bezier(.2,.8,.2,1),
-              height 360ms cubic-bezier(.2,.8,.2,1);
+  transition: transform 360ms cubic-bezier(.2,.8,.2,1);
   display: flex; flex-direction: column;
   z-index: 60; box-shadow: -20px 0 60px rgba(0,0,0,0.5);
 }
