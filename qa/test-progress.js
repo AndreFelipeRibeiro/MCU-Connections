@@ -98,7 +98,9 @@ const phoneView = (page, name) => page.evaluate(async (n) => {
 // whole-catalogue meter is up.
 const readCanvas = (page) => page.evaluate(() => ({
   phaseMeters: document.querySelectorAll('.band-label .pgh-bar').length,
-  overall: !!document.querySelector('.spatial-overall'),
+  // The floating box can also hold just the Up next row (By Phase has no All
+  // titles meter), so look for a meter inside it, not the box itself.
+  overall: !!document.querySelector('.spatial-overall .pgh'),
 }));
 const readDeskList = (page) => page.evaluate(() => ({
   phaseMeters: document.querySelectorAll('.dl-phase-divider:not(.overall) .pgh-bar').length,

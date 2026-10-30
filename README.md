@@ -75,6 +75,16 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   ("Ratings after release" for a title not out yet), the budget ("Not
   published" when unknown), Seen and Watchlist, the synopsis and the cast.
   Both surfaces render one shared body (`TitleDetailsBody` in `mobile.jsx`).
+- Up next suggests what to watch now: the first released title you haven't
+  marked seen, earliest first in release order (story order on Chronological),
+  or the first of the list itself on A–Z, IMDb and RT. It has Mark seen,
+  Watchlist and a × that hides it until the page is reloaded. It follows the
+  Watchlist tab, a pinned character and the type, phase and budget filters,
+  and says so in one line. Phones show it as a card at the top of the List and
+  Grid (the title's own row is left out, so it never appears twice), the
+  desktop List as a strip above the table, desktop Spatial as a row in the All
+  titles meter and phone Spatial as a chip. When everything out is seen it
+  says you're caught up and names the next arrival.
 - Where to watch: a section of the details, closed until you open it (the
   cast folds the same way), lists the services offering a released title in
   your country (stream and free with their logos, rent or buy on one line),
@@ -406,6 +416,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `celebrate.jsx` | Status toast with Undo, milestone confetti and the guest sign-in reminder |
 | `app.jsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
 | `mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
+| `upnext.jsx` | Up next: the suggestion card, List strip, Spatial meter row and phone chip (the rule is `MCU_nextUp` in `tracking.jsx`) |
 | `watch.jsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
 | `watch-data.js` | The where-to-watch snapshot (written by `tools/refresh-watch.js`; do not edit by hand) |
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |

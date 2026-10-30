@@ -588,11 +588,15 @@ function ReleaseBadge({ title, className = '' }) {
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
 // so tapping anywhere except the toggles opens the cast sheet exactly as before.
-function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, markWatch, collapseSeen, progress, sort }) {
+function MobileGrid({ header, currentId, titles: allTitles, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, markWatch, collapseSeen, progress, sort, upNext }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
   const folds = useSeenFolds();
   const settled = useSettled();
+  // Up next: a full-width card at the top. See upNextPlacement.
+  const place = upNextPlacement(upNext);
+  const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
+  const top = place.topNode && <div className="un-inline top">{place.topNode}</div>;
   // The caller decides which of these it hands over: phase headings belong to
   // the By Phase tab, and every other order gets one meter over the whole
   // catalogue instead.
@@ -617,8 +621,8 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
   const blockRuns = blocks.map(b => (collapseSeen ? seenRuns(b.items, statusOf) : []));
   const runKey = blockRuns.map(rs => rs.map(r => r[0].id + ':' + r.length).join(',')).join('|');
   const blockKey = blocks.map(b => (b.phase || 'x') + ':' + b.items.length).join(',');
-  const flipRef = useReorderAnimation(orderKey + '|' + runKey + '|' + blockKey, { paused: flipPaused });
-  if (!titles.length) return <div className="m-scrollarea" ref={flipRef}>{header}<EmptyState {...(empty || {})}/></div>;
+  const flipRef = useReorderAnimation(orderKey + '|' + runKey + '|' + blockKey + '|' + (place.hideId || ''), { paused: flipPaused });
+  if (!allTitles.length) return <div className="m-scrollarea" ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
   const card = (t) => {
     const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
     const seen = statusOf(t.id) === 'seen';
@@ -650,6 +654,7 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
     return (
       <div className="m-scrollarea" ref={flipRef}>
         {header}
+        {top}
         <div className="m-grid">{titles.map(card)}</div>
       </div>
     );
@@ -679,6 +684,7 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
   return (
     <div className="m-scrollarea" ref={flipRef}>
       {header}
+      {top}
       <div className={`m-gflat${settled ? ' settled' : ''}`}>
         {blocks.map((b, i) => {
           const p = b.phase && progress.byPhase[b.phase];
@@ -695,13 +701,13 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
                    bar below the top of the scroll area. */
                 <div className="m-phase-divider sticky">
                   <ProgressHeader label={mPhaseLabel(b.phase)} color={MPHASE_COLORS[b.phase]} {...p}
-                    action={<BulkHeaderAction ids={b.items.map(t => t.id)} group={mPhaseLabel(b.phase)}/>}/>
+                    action={<BulkHeaderAction ids={allTitles.filter(t => t.phase === b.phase).map(t => t.id)} group={mPhaseLabel(b.phase)}/>}/>
                 </div>
               )}
               {!p && overall && (
                 <div className="m-phase-divider sticky overall">
                   <ProgressHeader label={mtr('progress.all')} {...overall}
-                    action={<BulkHeaderAction ids={titles.map(t => t.id)} group={mtr('progress.all')}/>}/>
+                    action={<BulkHeaderAction ids={allTitles.map(t => t.id)} group={mtr('progress.all')}/>}/>
                 </div>
               )}
               {b.items.length ? sectionsOf(b.items, blockRuns[i]) : null}
@@ -812,7 +818,18 @@ function SeenRunHead({ items, shut, onToggle }) {
   );
 }
 
-function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, collapseSeen, markWatch, progress }) {
+// Up next in a phone List or Grid: always at the top of the list, above the
+// All titles meter, like the desktop List strip (changed from in-line on
+// 2026-10-29). The suggestion's own row or card is left out of the list, so a
+// title never appears twice. Returns the card to show and the title to hide.
+function upNextPlacement(upNext) {
+  if (!upNext) return { topNode: null, hideId: null };
+  const r = upNext.result;
+  if (r.kind === 'next') return { topNode: <window.UpNextCard info={upNext}/>, hideId: r.title.id };
+  return { topNode: <window.UpNextState info={upNext}/>, hideId: null };
+}
+
+function MobileList({ header, currentId, titles: allTitles, sort, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, collapseSeen, markWatch, progress, upNext }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
   const flipRef = useReorderAnimation(orderKey, { paused: flipPaused });
@@ -820,7 +837,12 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
   // The collection arrives after the first paint: rows only animate (shrink,
   // fold, appear) once it has loaded, so the list opens already compact.
   const settled = useSettled();
-  if (!titles.length) return <div className="m-scrollarea" ref={flipRef}>{header}<EmptyState {...(empty || {})}/></div>;
+  const place = upNextPlacement(upNext);
+  const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
+  const top = place.topNode && <div className="un-inline top">{place.topNode}</div>;
+  if (!allTitles.length) return <div className="m-scrollarea" ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
+  // Ranks count the whole list, the suggestion lifted to the top included.
+  const rankOf = (t) => allTitles.indexOf(t) + 1;
   const ranked = sort === 'imdb' || sort === 'rt';
   const lead = sort === 'rt' ? 'rt' : 'imdb';
   // Group headers for the non-score sorts. Chrono groups by in-story timeframe
@@ -872,7 +894,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
     return (
       <div data-flip-id={t.id} data-row-id={t.id} className={`m-lrow${seen ? ' seen' : ''}${compact ? ' compact' : ''}${watch ? ' watch' : ''}${currentId === t.id ? ' current' : ''}`}>
         <button className="m-lrow-open" onClick={()=>onSelect(t.id)}>
-          {ranked && <div className="m-rank">{rank}</div>}
+          {ranked && <div className="m-rank">{rankOf(t)}</div>}
           <div className="m-lthumb"><PosterArt title={t}/></div>
           <div className="m-ltext">
             <div className="m-ltitle"><Highlight text={MI18N.titleName(t)} query={search}/></div>
@@ -901,7 +923,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
   const overallHead = overall ? (
     <div className="m-phase-divider sticky overall">
       <ProgressHeader label={mtr('progress.all')} {...overall}
-        action={<BulkHeaderAction ids={titles.map(t => t.id)} group={mtr('progress.all')}/>}/>
+        action={<BulkHeaderAction ids={allTitles.map(t => t.id)} group={mtr('progress.all')}/>}/>
     </div>
   ) : null;
   const label = (g) => {
@@ -922,7 +944,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
     return (
       <div className="m-phase-divider sticky">
         <ProgressHeader label={mPhaseLabel(g.phaseStart)} color={MPHASE_COLORS[g.phaseStart]} {...p}
-          action={<BulkHeaderAction ids={titles.filter(t => t.phase === g.phaseStart).map(t => t.id)} group={mPhaseLabel(g.phaseStart)}/>}/>
+          action={<BulkHeaderAction ids={allTitles.filter(t => t.phase === g.phaseStart).map(t => t.id)} group={mPhaseLabel(g.phaseStart)}/>}/>
       </div>
     );
   };
@@ -993,6 +1015,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
     return (
       <div className="m-scrollarea" ref={flipRef}>
         {header}
+        {top}
         {overallHead}
         <div className={`m-flat${settled ? ' settled' : ''}`}>
           {chunks.map((c) => (
@@ -1014,6 +1037,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
   return (
     <div className="m-scrollarea" ref={flipRef}>
       {header}
+      {top}
       {overallHead}
       {blocks.map((b) => (
         <div className="m-gblock" key={b.key}>

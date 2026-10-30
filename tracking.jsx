@@ -604,6 +604,48 @@ function useCollection() {
 }
 
 // ---------------------------------------------------------------------------
+// Up next: the earliest released title not marked seen
+// ---------------------------------------------------------------------------
+//
+// One rule, shared by every surface and by Guides later. No React and no DOM,
+// so it can be checked on its own. `titles` arrive already narrowed to the
+// scope (Watchlist, a pinned character, the type/phase/budget filters, or a
+// guide). `order` is 'release' or 'chrono', always earliest first, or one of
+// the list orders 'title', 'imdb' and 'rt', which follow the list's own
+// direction (`dir`): on those, Up next is the first unseen title of the list
+// the visitor is looking at (user decision, 2026-10-29).
+//
+// Returns one of:
+//   { kind: 'next', title, rank, released }  rank = place among released titles in scope
+//   { kind: 'allSkipped' }                   every candidate was skipped this visit
+//   { kind: 'caughtUp', upcoming }           everything out is seen, more is coming
+//   { kind: 'notOut', upcoming }             nothing in scope is out yet
+//   { kind: 'allSeen' }                      everything seen, nothing coming
+//   { kind: 'empty' }                        nothing in scope at all
+//
+// Released means MCU_isReleased, the same test as the progress count, so the
+// two never disagree. Unreleased titles marked seen or watchlisted are simply
+// not candidates: they are never suggested and never block "caught up".
+function nextUp(titles, statusOf, opts) {
+  const o = opts || {};
+  const skipped = o.skipped || new Set();
+  if (!titles || !titles.length) return { kind: 'empty' };
+  const sortBy = window.sortTitles || ((list) => list.slice());
+  const listOrder = o.order === 'title' || o.order === 'imdb' || o.order === 'rt';
+  const ordered = sortBy(titles, listOrder ? o.order : (o.order === 'chrono' ? 'chrono' : 'release'), listOrder && o.dir === 'desc' ? 'desc' : 'asc');
+  const released = ordered.filter((t) => isReleased(t));
+  const unseen = released.filter((t) => statusOf(t.id) !== 'seen');
+  const pick = unseen.find((t) => !skipped.has(t.id));
+  if (pick) return { kind: 'next', title: pick, rank: released.indexOf(pick) + 1, released: released.length };
+  if (unseen.length) return { kind: 'allSkipped' };
+  // The next arrival goes by release date whatever the order: it is "when",
+  // not "where in the story".
+  const upcoming = sortBy(titles.filter((t) => !isReleased(t)), 'release', 'asc')[0] || null;
+  if (!released.length) return upcoming ? { kind: 'notOut', upcoming } : { kind: 'empty' };
+  return upcoming ? { kind: 'caughtUp', upcoming } : { kind: 'allSeen' };
+}
+
+// ---------------------------------------------------------------------------
 // Collection filter
 // ---------------------------------------------------------------------------
 
@@ -820,6 +862,7 @@ Object.assign(window, {
   BookmarkIcon,
   MCU_isReleased: (title) => isReleased(title),
   MCU_bulkTargets: bulkTargets,
+  MCU_nextUp: nextUp,
   onBulkConfirm,
   TSA_MIN_SCALE,
 });

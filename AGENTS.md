@@ -43,8 +43,9 @@ their "Handoff — 2026-10-24" sections are historical.
   drawer, state), `mobile.jsx` (phone views, sheets, `Highlight`, `Portrait`
   users), `desktop-list.jsx` (desktop List), `connections.jsx` (line drawing),
   `poster.jsx` (`PosterArt`, `Portrait`, image fallbacks), `search-suggest.jsx`,
-  `tracking.jsx` (Seen/Watchlist + sync), `watch.jsx` (Where to watch in the
-  details, the region picker), `account.jsx`, `about.jsx`
+  `tracking.jsx` (Seen/Watchlist + sync, the Up next rule), `upnext.jsx`
+  (the Up next card, strip, meter row and chip), `watch.jsx` (Where to watch
+  in the details, the region picker), `account.jsx`, `about.jsx`
   (`ModalDialog`), `celebrate.jsx` (counters, confetti, sign-in reminder),
   `boot.js` (startup screen), `i18n.js` + `locales/*.js`, `data.js` (catalog;
   permanent title ids), `media-data.js` (TMDB paths), `config.js` (public
@@ -69,7 +70,7 @@ their "Handoff — 2026-10-24" sections are historical.
     the area you touched (for example `qa/test-kbspatial.js`), plus any existing
     check for the same screens. Minutes, not the full run.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (30 check scripts in 31 runs, about 28 minutes; it exits non-zero and marks
+    (31 check scripts in 32 runs, about 28 minutes; it exits non-zero and marks
     failures with `!!`) and `node qa/a11y-scan.js` (exits non-zero on any
     violation; add `LOC=pt-BR` for Portuguese), on the final tree with nothing
     edited while it runs. Read the scan's output, not just its exit code.

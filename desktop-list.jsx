@@ -110,7 +110,7 @@ function BulkMore({ open, setOpen, label, children }) {
   );
 }
 
-function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, activeChars, header, empty, orderKey, progress }) {
+function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, activeChars, header, empty, orderKey, progress, upNext }) {
   const I = window.MCU_I18N;
   const tr = I.tr;
   const { statusOf, states, requestBulk } = window.useCollection();
@@ -230,6 +230,9 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   return (
     <div className={`dlist${ranked ? ' ranked' : ''}`} ref={flipRef} role="main" aria-label={tr('view.list')}>
       {header}
+      {/* Up next: a strip above the table. The desktop List does not fold seen
+          titles, so the suggestion can be far down; the strip brings it up. */}
+      {upNext && <window.UpNextStrip info={upNext}/>}
       {!titles.length ? (
         <div className="dl-empty">
           <div className="dl-empty-t">{(empty && empty.title) || tr('empty.title')}</div>
