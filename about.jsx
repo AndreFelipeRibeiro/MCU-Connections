@@ -47,7 +47,7 @@ function AboutIcon({ kind }) {
   );
 }
 
-function AboutContent({ titleId, welcome, onClose }) {
+function AboutContent({ titleId, welcome, onClose, onPick }) {
   const tr = window.MCU_I18N.tr;
   const ways = [['connect', 'about.connect'], ['follow', 'about.follow'], ['order', 'about.order'], ['track', 'about.track']];
   return (
@@ -76,11 +76,21 @@ function AboutContent({ titleId, welcome, onClose }) {
         <p>{tr('about.ratings')}</p>
         <p>{tr('about.fan')}</p>
       </div>
-      {welcome && (
+      {welcome && (onPick ? (
+        // First visit: offer the "What have you seen?" picker (picker.jsx).
+        <div className="welcome-pick">
+          <div className="welcome-q">{tr('picker.welcomeQ')}</div>
+          <p className="welcome-qs">{tr('picker.welcomeText')}</p>
+          <div className="about-cta-row">
+            <button className="picker-go" onClick={onPick}><window.CheckIcon/>{tr('picker.welcomeCta')}</button>
+            <button className="nudge-later welcome-start" onClick={onClose}>{tr('about.start')}</button>
+          </div>
+        </div>
+      ) : (
         <div className="about-cta-row">
           <button className="about-cta" onClick={onClose}>{tr('about.start')}</button>
         </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -98,7 +108,7 @@ function ModalDialog({ onClose, labelledBy, className = '', children }) {
     const siblings = Array.from(box.parentElement.children).filter(el => el !== box && !el.classList.contains('about-scrim'));
     const previous = siblings.map(el => [el, el.inert]);
     previous.forEach(([el]) => { el.inert = true; });
-    const focusable = () => Array.from(box.querySelectorAll('button, a[href], [tabindex="0"]')).filter(el => el.getClientRects().length);
+    const focusable = () => Array.from(box.querySelectorAll('button:not(:disabled), a[href], [tabindex="0"]')).filter(el => el.getClientRects().length && !el.closest('[inert]'));
     // Focus the dialog itself (announced by screen readers, no ring on a
     // control the visitor didn't choose); Tab moves into it.
     box.focus();
@@ -130,19 +140,19 @@ function ModalDialog({ onClose, labelledBy, className = '', children }) {
   );
 }
 
-function AboutDialog({ onClose, welcome }) {
+function AboutDialog({ onClose, welcome, onPick }) {
   return (
     <ModalDialog onClose={onClose} labelledBy="about-title">
-      <AboutContent titleId="about-title" welcome={welcome} onClose={onClose}/>
+      <AboutContent titleId="about-title" welcome={welcome} onClose={onClose} onPick={onPick}/>
     </ModalDialog>
   );
 }
 
-function AboutSheet({ onClose, welcome }) {
+function AboutSheet({ onClose, welcome, onPick }) {
   const Sheet = window.Sheet;
   return (
     <Sheet onClose={onClose} tall label={window.MCU_I18N.tr(welcome ? 'about.welcomeTitle' : 'about.title')}>
-      <AboutContent titleId="about-sheet-title" welcome={welcome} onClose={onClose}/>
+      <AboutContent titleId="about-sheet-title" welcome={welcome} onClose={onClose} onPick={onPick}/>
     </Sheet>
   );
 }

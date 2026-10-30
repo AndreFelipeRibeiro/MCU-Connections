@@ -28,11 +28,11 @@ function completedMilestone(e) {
 // already complete before the action is not celebrated again.
 function completedMilestoneBulk(e) {
   const released = window.MCU_isReleased;
-  if (!released || e.to !== 'seen') return null;
+  if (!released || (e.to !== 'seen' && e.to !== 'mixed')) return null;
   const all = (window.TITLES || []).filter(t => released(t));
   const done = (st, list) => list.length > 0 && list.every(t => st[t.id] === 'seen');
   if (done(e.after, all) && !done(e.states, all)) return { kind: 'all' };
-  const phases = [...new Set(e.ids.map(id => (all.find(t => t.id === id) || {}).phase).filter(Boolean))].sort((a, b) => a - b);
+  const phases = [...new Set((e.seenIds || e.ids).map(id => (all.find(t => t.id === id) || {}).phase).filter(Boolean))].sort((a, b) => a - b);
   for (const p of phases) {
     const list = all.filter(t => t.phase === p);
     if (list.length > 1 && done(e.after, list) && !done(e.states, list)) return { kind: 'phase', phase: p };
@@ -137,6 +137,7 @@ function StatusToast({ touch }) {
     const I = window.MCU_I18N;
     const m = toast.milestone;
     const head = m ? tr(m.kind === 'all' ? 'toast.allDone' : 'toast.phaseDone', { n: m.phase })
+      : toast.to === 'mixed' ? tr('toast.bulk.mixed', { s: toast.seenIds.length, u: toast.unseenIds.length })
       : toast.bulk ? tr('toast.bulk.' + toast.to, { n: toast.ids.length }) : I.titleName(toast.title);
     const sub = m ? tr(m.kind === 'all' ? 'toast.allDoneSub' : 'toast.phaseDoneSub', { n: m.phase })
       : toast.bulk ? tr('toast.bulk.sub') : tr(toast.to === 'seen' ? 'toast.seen' : 'toast.watch');
@@ -145,7 +146,7 @@ function StatusToast({ touch }) {
         style={toast.place} onMouseEnter={() => clearTimeout(timer.current)} onMouseLeave={() => arm(2500)}
         onFocus={() => clearTimeout(timer.current)} onBlur={() => arm(2500)}>
         <span className="mt-ic" aria-hidden="true">
-          {m ? '★' : toast.to === 'seen' ? <window.CheckIcon/> : toast.to === 'none' ? '↺' : <window.BookmarkIcon filled/>}
+          {m ? '★' : toast.to === 'seen' || toast.to === 'mixed' ? <window.CheckIcon/> : toast.to === 'none' ? '↺' : <window.BookmarkIcon filled/>}
         </span>
         <span className="mt-text"><b>{head}</b><span>{sub}</span></span>
         <button className="mt-undo" onClick={undo}>{tr('toast.undo')}</button>

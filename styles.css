@@ -1054,7 +1054,7 @@ body {
 .mcu-toast.touch { width: calc(100vw - 24px); }
 .mt-ic { flex: 0 0 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; color: #0a0c14; font-size: 16px; }
 .mt-ic svg { width: 16px; height: 16px; }
-.mcu-toast.seen .mt-ic { background: #5fa856; }
+.mcu-toast.seen .mt-ic, .mcu-toast.mixed .mt-ic { background: #5fa856; }
 .mcu-toast.watchlist .mt-ic { background: #d4a05a; }
 .mcu-toast.milestone .mt-ic { background: linear-gradient(135deg, #f0c34a, #e84a3a); color: #fff; }
 .mcu-toast.milestone { border-color: color-mix(in oklab, #f0c34a 55%, var(--border-strong)); }
@@ -1645,3 +1645,87 @@ body {
 .card-gnum.dest { background: rgba(10,12,20,.88); color: var(--text); border: 1.5px dashed var(--accent); }
 /* The guide's meter in the floating Spatial box, in the box's own type. */
 .g-meter .pgh-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--text-dim); }
+
+/* "What have you seen?" (picker.jsx): a poster grid by phase. A full-height
+   sheet on phones, a wide dialog on desktop. */
+.picker-go { min-height: 46px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid var(--accent); border-radius: 11px; background: var(--accent); color: #08101e; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.picker-go:hover { background: #5b99ec; }
+.picker-go:disabled { opacity: .45; cursor: default; }
+.picker-go:focus-visible { outline: 2px solid #82b2f0; outline-offset: 2px; }
+.picker-go svg { width: 15px; height: 15px; }
+.pk { position: relative; color: var(--text); }
+.pk-head { padding-right: 44px; }
+.pk-title { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.pk-sub { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: var(--text-dim); }
+.pk-note { display: flex; gap: 9px; align-items: flex-start; margin: 12px 0 0; padding: 10px 12px; border-radius: 11px; background: var(--surface);
+  border: 1px solid var(--border); font-size: 12px; line-height: 1.45; color: var(--text-dim); }
+.pk-note svg { flex: 0 0 auto; width: 13px; height: 13px; margin-top: 2px; color: #d4a05a; }
+.pk-ph { display: flex; align-items: center; gap: 12px; padding: 16px 0 9px; }
+.pk-pl { flex: 1; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; letter-spacing: .14em; color: var(--text-dim); }
+.pk-pl span { margin-left: 8px; letter-spacing: 0; font-size: 11px; color: var(--text-muted); }
+.pk-pa { min-height: 34px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--surface); color: var(--text);
+  font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.pk-pa.clr { background: transparent; color: var(--text-dim); }
+.pk-pa:hover { border-color: var(--text-dim); }
+.pk-pa:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; }
+.pk-p { position: relative; aspect-ratio: 2 / 3; padding: 0; border: 0; border-radius: 8px; overflow: hidden; background: #000; cursor: pointer;
+  font: inherit; text-align: left; color: #fff; }
+.pk-art { position: absolute; inset: 0; }
+.pk-art > *, .pk-art img, .pk-art svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pk-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 7px 6px; font-size: 10.5px; font-weight: 700; line-height: 1.2;
+  background: linear-gradient(to bottom, transparent, rgba(5,6,10,.92) 55%); text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pk-tick { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; box-sizing: border-box; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,.75); background: rgba(10,12,20,.5); display: flex; align-items: center; justify-content: center; color: #0a0c14; }
+.pk-tick svg { width: 12px; height: 12px; }
+.pk-p.on { box-shadow: 0 0 0 2.5px #5fa856; }
+.pk-p.on .pk-tick { background: #5fa856; border-color: #5fa856; }
+.pk-p.un { box-shadow: 0 0 0 2px #d4a05a; }
+.pk-p.un .pk-art { filter: saturate(.4) brightness(.6); }
+.pk-p:focus-visible { outline: 2px solid #82b2f0; outline-offset: 4px; }
+.pk-tag { position: absolute; top: 6px; left: 6px; padding: 2px 4px; border-radius: 3px; background: rgba(10,12,20,.85); color: var(--text);
+  font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.pk-tag.ul { color: #f0c890; }
+.pk-wl { position: absolute; top: 6px; left: 6px; width: 20px; height: 20px; border-radius: 5px; background: rgba(10,12,20,.8); color: #d4a05a;
+  display: flex; align-items: center; justify-content: center; }
+.pk-wl svg { width: 11px; height: 11px; }
+.pk-foot { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border); background: rgba(12,14,23,.97); }
+.pk-count { flex: 1; min-width: 0; font-size: 13px; line-height: 1.35; color: var(--text-dim); }
+.pk-count > span { display: block; }
+.pk-count b { color: var(--text); font-size: 15px; }
+.pk-skip { padding: 0 16px; }
+/* Leaving with unsaved picks: a prompt over the picker. */
+.pk-ask-wrap { position: fixed; inset: 0; z-index: 130; display: flex; align-items: center; justify-content: center; background: rgba(5,6,10,.62); }
+.pk-ask { width: min(440px, calc(100% - 40px)); box-sizing: border-box; padding: 22px 22px 20px; border: 1px solid var(--border-strong); border-radius: 16px;
+  background: var(--bg-2); box-shadow: 0 24px 60px rgba(0,0,0,.6); }
+.pk-ask:focus { outline: none; }
+.pk-ask-t { margin: 0; font-size: 17px; font-weight: 700; }
+.pk-ask-d { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: var(--text-dim); }
+.pk-ask .about-cta-row { margin-top: 18px; }
+.pk-keep { min-height: 42px; border: 0; border-radius: 10px; background: transparent; color: var(--text-dim); font: inherit; font-size: 13.5px; cursor: pointer; }
+.pk-keep:hover { color: var(--text); }
+.pk-keep:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Desktop: a wide dialog whose grid scrolls between the header and footer. */
+.about-dialog.pk-dialog { width: min(1000px, calc(100vw - 48px)); height: calc(100vh - 64px); padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.pk-dialog .pk { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.pk-dialog .about-x { z-index: 2; }
+.pk-dialog .pk-head { padding: 22px 64px 16px 26px; border-bottom: 1px solid var(--border); }
+.pk-dialog .pk-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 26px 20px; }
+.pk-dialog .pk-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+.pk-dialog .pk-foot { padding: 14px 20px 14px 26px; background: var(--bg); }
+.pk-dialog .picker-go { min-height: 42px; }
+/* The welcome's offer: pinned to the bottom of the welcome. */
+.welcome-pick { position: sticky; bottom: -26px; margin: 22px -30px -26px; padding: 16px 30px 22px; border-top: 1px solid var(--border); background: #121624; }
+.welcome-q { font-size: 14.5px; font-weight: 700; }
+.welcome-qs { margin: 4px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--text-dim); }
+.welcome-pick .about-cta-row { margin-top: 12px; }
+/* The Seen tab's empty state and the account row. */
+.empty-action { margin-top: 14px; min-height: 40px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface-2);
+  color: var(--text); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.empty-action:hover { border-color: var(--text-dim); }
+.empty-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.acct-links .acct-pick { flex: 1 0 100%; display: flex; align-items: center; text-align: left; color: var(--text); }
+.acct-pick .pick-ic { color: #5fa856; }
+.acct-pick-text small { display: block; margin-top: 1px; font-size: 10.5px; color: var(--text-muted); }

@@ -966,6 +966,11 @@ function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   // First visit: the same About content as a one-time welcome (about.jsx).
   const [welcome, setWelcome] = useState(() => !!window.MCU_WELCOME);
+  // "What have you seen?" (picker.jsx): from the welcome, the account menu or
+  // sheet, and the Seen tab's empty state. It replaces whatever layer opened it.
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const openPicker = () => { setWelcome(false); setAboutOpen(false); setSheet(null); setPickerOpen(true); };
+  window.MCU_openPicker = openPicker;
   const [selectedId, setSelectedId] = useState(null);
   const [hoveredTitle, setHoveredTitle] = useState(null);
   const [hoveredCharacter, setHoveredCharacter] = useState(null);
@@ -2775,7 +2780,8 @@ function App() {
         <window.StatusToast touch/>
         <window.SignInNudge touch/>
         <window.BulkConfirm touch/>
-        {welcome && !sheet && !drawerTitle && <window.AboutSheet welcome onClose={() => setWelcome(false)}/>}
+        {welcome && !sheet && !drawerTitle && !pickerOpen && <window.AboutSheet welcome onPick={openPicker} onClose={() => setWelcome(false)}/>}
+        {pickerOpen && <window.SeenPicker touch onClose={() => setPickerOpen(false)}/>}
         {drawerTitle && (
           <window.CastSheet
             title={drawerTitle} search={search}
@@ -2862,8 +2868,9 @@ function App() {
       <window.StatusToast touch={false}/>
       <window.SignInNudge touch={false}/>
       <window.BulkConfirm touch={false}/>
-      {(aboutOpen || welcome) && <window.AboutDialog welcome={welcome && !aboutOpen}
+      {(aboutOpen || welcome) && !pickerOpen && <window.AboutDialog welcome={welcome && !aboutOpen} onPick={openPicker}
         onClose={() => { setAboutOpen(false); setWelcome(false); }}/>}
+      {pickerOpen && <window.SeenPicker touch={false} onClose={() => setPickerOpen(false)}/>}
     </div>
   );
 }

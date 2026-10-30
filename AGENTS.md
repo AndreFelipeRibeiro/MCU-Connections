@@ -37,15 +37,19 @@ their "Handoff — 2026-10-24" sections are historical.
   startup and modules. That migration is a planned V4 project with its own plan
   and approval, not something to start during V3 work (docs/decisions.md).
 - Load order lives in `index.html`: `boot.js`, locales + `i18n.js`, CDN
-  libraries, `data.js`, `media-data.js`, `watch-data.js`, `config.js`, `supabase-client.js`, then
-  the `.jsx` files with `app.jsx` last. Keep that order.
+  libraries, `data.js`, `guides.js`, `media-data.js`, `watch-data.js`, `config.js`,
+  `supabase-client.js`, then the `.jsx` files with `app.jsx` last (`guides-ui.jsx`
+  after `watch.jsx`, then `picker.jsx`). Keep that order.
 - Main files: `app.jsx` (app shell, desktop Spatial canvas, toolbar, details
   drawer, state), `mobile.jsx` (phone views, sheets, `Highlight`, `Portrait`
   users), `desktop-list.jsx` (desktop List), `connections.jsx` (line drawing),
   `poster.jsx` (`PosterArt`, `Portrait`, image fallbacks), `search-suggest.jsx`,
   `tracking.jsx` (Seen/Watchlist + sync, the Up next rule), `upnext.jsx`
   (the Up next card, strip, meter row and chip), `watch.jsx` (Where to watch
-  in the details, the region picker), `account.jsx`, `about.jsx`
+  in the details, the region picker), `guides.js` (curated guides and the
+  continuity marker; content needs the user's approval) + `guides-ui.jsx`
+  (the guide menu, views, banner, pill and "Part of"), `picker.jsx` ("What
+  have you seen?", the poster-grid picker), `account.jsx`, `about.jsx`
   (`ModalDialog`), `celebrate.jsx` (counters, confetti, sign-in reminder),
   `boot.js` (startup screen), `i18n.js` + `locales/*.js`, `data.js` (catalog;
   permanent title ids), `media-data.js` (TMDB paths), `config.js` (public

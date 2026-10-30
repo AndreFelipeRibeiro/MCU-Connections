@@ -109,6 +109,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   guides it belongs to ("Part of"). Finishing a guide's essential stops bursts
   green confetti once per guide (none with reduced motion). Every title also
   carries a continuity marker (main, alternate reality or anthology).
+- "What have you seen?": a poster grid of every released title, by phase in
+  release order, to mark many as seen in one go. The first-visit welcome
+  offers it ("Mark what I've seen"), and it stays reachable from the account
+  menu or sheet and from the Seen tab's empty state. Each phase has Select
+  all / Clear; titles already seen start ticked and can be unticked. Saving is
+  one change with one toast and Undo (no extra confirmation: the button names
+  the number); closing with unsaved picks asks first. A full-height sheet on
+  phones, a dialog on desktop.
 - The synopsis is short and spoiler-light (three lines, then See more),
   written for this app in each language.
 - Shareable addresses: the open title, a pinned character, the view, sort,
@@ -438,6 +446,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
 | `guides.js` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
 | `guides-ui.jsx` | Guides: the menu, desktop banner and List, phone views and pill, the meter, "Part of" in the details |
+| `picker.jsx` | "What have you seen?": the poster-grid picker opened from the welcome, the account menu/sheet and the Seen empty state |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
 | `search-suggest.jsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
 | `poster.jsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |

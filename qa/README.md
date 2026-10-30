@@ -110,7 +110,19 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   and route; confetti once per guide, not on opening a complete guide, none
   with reduced motion; the phone sheet and Back, List rows, the optional
   switch, the pill's ×, Grid cards, the Up next chip clear of the pill, the
-  character pill's button; 320px and Portuguese).
+  character pill's button; 320px and Portuguese),
+  `test-picker` ("What have you seen?": a new guest opens it from the
+  welcome; released titles only, by phase in release order; Select all /
+  Clear, picks, the live count, Space and Enter on a poster; saving marks
+  exactly the picks with one toast, no confirmation even over 20, at most one
+  burst, and Undo clears them; the sign-in reminder shows once afterwards;
+  opened later from the account menu, seen titles start ticked and labelled,
+  unticking marks unseen in the same change with one mixed toast and one
+  Undo that restores a replaced Watchlist mark; × closes at once with no
+  changes and asks with some, Escape closing one layer, Keep picking and
+  Leave without saving; on a phone, Back closes it or asks (and asks again),
+  the footer stays on screen, nothing past the edge; the Seen tab's empty
+  state opens it, in Portuguese).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.

@@ -21,7 +21,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   const browser = await chromium.launch();
   const out = {}; globalThis.__o = out;
   const st = (page) => page.evaluate(() => ({ dialog: !!document.querySelector('.about-dialog'), sheet: !!document.querySelector('.m-sheet .about'),
-    title: (document.querySelector('.about-title') || {}).textContent || null, cta: !!document.querySelector('.about-cta'), flag: localStorage.getItem('mcu.welcome.v1'),
+    title: (document.querySelector('.about-title') || {}).textContent || null, cta: !!document.querySelector('.welcome-start, .about-cta'), flag: localStorage.getItem('mcu.welcome.v1'),
     cols: (() => { const u = document.querySelector('.about-ways'); return u ? getComputedStyle(u).gridTemplateColumns.split(' ').length : null; })(),
     scroll: (() => { const d = document.querySelector('.about-dialog'); return d ? d.scrollHeight > d.clientHeight : null; })(), url: location.search }));
   // 1. first visit (desktop): welcome shows, CTA closes, reload doesn't show again
@@ -30,7 +30,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   out.first = await st(page); out.firstFocus = await page.evaluate(() => document.activeElement.className);
   await page.keyboard.press('Tab'); out.tab1 = await page.evaluate(() => document.activeElement.className); await page.keyboard.press('Shift+Tab'); await page.keyboard.press('Shift+Tab'); out.shiftTab = await page.evaluate(() => document.activeElement.className);
   await page.screenshot({ path: path.join(S, 'shots', 'welcome-d.png') });
-  await page.locator('.about-cta').click(); await page.waitForTimeout(400);
+  await page.locator('.welcome-start').click(); await page.waitForTimeout(400);
   out.afterCta = await st(page);
   await page.reload(); await page.waitForTimeout(1800); out.reload = await st(page);
   // About from the menu: not the welcome variant
@@ -52,7 +52,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   await page.screenshot({ path: path.join(S, 'shots', 'welcome-m.png') });
   await page.locator('.m-sheet-body').evaluate(el => el.scrollTop = 9999); await page.waitForTimeout(200);
   await page.screenshot({ path: path.join(S, 'shots', 'welcome-m-end.png') });
-  await page.locator('.about-cta').tap(); await page.waitForTimeout(500);
+  await page.locator('.welcome-start').tap(); await page.waitForTimeout(500);
   out.mAfter = await st(page);
   await page.reload(); await page.waitForTimeout(1800); out.mReload = await st(page);
   out.mErrors = errors; await ctx.close();

@@ -274,6 +274,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
         <div className="dl-empty">
           <div className="dl-empty-t">{(empty && empty.title) || tr('empty.title')}</div>
           <div className="dl-empty-s">{(empty && empty.sub) || tr('empty.sub')}</div>
+          {empty && empty.action && <button type="button" className="empty-action" onClick={empty.action.run}>{empty.action.label}</button>}
         </div>
       ) : (
         <>

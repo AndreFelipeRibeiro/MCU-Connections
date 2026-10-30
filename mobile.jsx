@@ -1063,12 +1063,13 @@ function MobileList({ header, currentId, titles: allTitles, sort, onSelect, sear
   );
 }
 
-function EmptyState({ title, sub, mark }) {
+function EmptyState({ title, sub, mark, action }) {
   return (
     <div className="m-empty">
       <div className="m-empty-mark">{mark || '◍'}</div>
       <div className="m-empty-t">{title || mtr('empty.title')}</div>
       <div className="m-empty-s">{sub || mtr('empty.sub')}</div>
+      {action && <button type="button" className="empty-action" onClick={action.run}>{action.label}</button>}
     </div>
   );
 }
@@ -1131,7 +1132,10 @@ const sheetHistory = (() => {
   };
 })();
 
-function Sheet({ children, onClose, tall, label }) {
+// `onClose` may return false to stay open (the picker asks before dropping
+// unsaved picks): Back then gets the sheet a new history entry, and a swipe
+// springs back.
+function Sheet({ children, onClose, tall, label, className = '' }) {
   const ref = React.useRef(null);
   const closeRef = React.useRef(onClose);
   closeRef.current = onClose;
@@ -1144,7 +1148,7 @@ function Sheet({ children, onClose, tall, label }) {
     previous.forEach(([el]) => { el.inert = true; });
     const overflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const focusable = () => Array.from(sheet.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]')).filter((el) => el.tabIndex >= 0 && el.getClientRects().length);
+    const focusable = () => Array.from(sheet.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]')).filter((el) => el.tabIndex >= 0 && el.getClientRects().length && !el.closest('[inert]'));
     // Focus the sheet itself: screen readers announce it, Tab moves into it, and
     // no focus ring appears on a control the visitor didn't choose.
     sheet.focus();
@@ -1161,7 +1165,9 @@ function Sheet({ children, onClose, tall, label }) {
       }
     };
     document.addEventListener('keydown', keys);
-    const entry = sheetHistory.open(() => closeRef.current());
+    let entry;
+    const onBack = () => { if (closeRef.current() === false) entry = sheetHistory.open(onBack); };
+    entry = sheetHistory.open(onBack);
     return () => {
       sheetHistory.close(entry);
       document.removeEventListener('keydown', keys);
@@ -1213,7 +1219,7 @@ function Sheet({ children, onClose, tall, label }) {
       const fast = d.dy > 40 && d.dy / (performance.now() - d.t) > 0.6;
       if (fast || d.dy > Math.min(160, sheet.offsetHeight * 0.33)) {
         place(sheet.offsetHeight, true);
-        setTimeout(() => closeRef.current(), reduce ? 0 : 190);
+        setTimeout(() => { if (closeRef.current() === false) place(0, true); }, reduce ? 0 : 190);
       } else place(0, true);
     };
     sheet.addEventListener('touchstart', start, { passive: true });
@@ -1230,7 +1236,7 @@ function Sheet({ children, onClose, tall, label }) {
   return (
     <>
       <div className="m-scrim" onClick={onClose} aria-hidden="true"/>
-      <div ref={ref} className={`m-sheet${tall?' tall':''}`} role="dialog" aria-modal="true" aria-label={label || mtr('details.label')} tabIndex={-1}>
+      <div ref={ref} className={`m-sheet${tall?' tall':''}${className ? ' ' + className : ''}`} role="dialog" aria-modal="true" aria-label={label || mtr('details.label')} tabIndex={-1}>
         <button className="m-grab" onClick={onClose} aria-label={mtr('details.close')} tabIndex={-1}/>
         <button className="m-sheet-x" onClick={onClose} aria-label={mtr('details.close')} title={mtr('details.close')}>×</button>
         <div className="m-sheet-body">{children}</div>
