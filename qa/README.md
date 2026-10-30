@@ -74,7 +74,7 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   `test-details` (the desktop drawer and the phone sheet show the same
   sections in the same order from one shared body: poster beside eyebrow,
   title, release and story, then scores, budget, status, synopsis, Where to
-  watch (the Guides slot still empty) and the cast; the cast starts open and
+  watch, Part of (only for a title in a guide, one row per guide) and the cast; the cast starts open and
   Where to watch closed, each toggling only itself; "Ratings after release"
   for a title not out yet, "Not published" for an unknown budget, the search
   highlighted in the title, nothing under the close button or past the edge
@@ -97,7 +97,20 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   Watchlist states and Show from everything; filters narrow it and are named;
   the Grid card, the phone Spatial chip, the desktop List strip and the
   Spatial meter row; 320px; Portuguese. Expectations come from the catalogue
-  and today's date).
+  and today's date),
+  `test-guides` (Guides: the data first, every stop a real title once, both
+  languages, a reason per stop, release order, essential numbers 1..n that
+  never shift when optional stops show, valid continuity; then the desktop
+  popover and Escape, the banner, List rows, next stop, meter, Include
+  optional, the stepper, no All titles switch, `?guide=` on load and a bad value,
+  Escape closing the guide; "Mark N more seen" on its meter with Undo; an
+  empty search box listing every guide; search suggesting it first under
+  Guides by mouse and keyboard; a character with a guide offering it and one without not;
+  Part of in the details opening the guide at that title; Spatial badges
+  and route; confetti once per guide, not on opening a complete guide, none
+  with reduced motion; the phone sheet and Back, List rows, the optional
+  switch, the pill's ×, Grid cards, the Up next chip clear of the pill, the
+  character pill's button; 320px and Portuguese).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.

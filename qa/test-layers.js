@@ -20,7 +20,7 @@ const covered = (page, sel) => page.evaluate((sel) => {
 const MENUS = {
   lang: ['.lang-menu .sort-order-trigger', '.lang-menu .sort-order-pop'],
   order: ['.sort-order:not(.lang-menu) .sort-order-trigger', '.sort-order:not(.lang-menu) .sort-order-pop'],
-  filters: ['.filters-pill', '.filters-pop'],
+  filters: ['.filters-pill:not(.g-btn)', '.filters-pop'],
   account: ['.acct-pill', '.acct-pop'],
 };
 (async () => {

@@ -21,7 +21,7 @@ function ScoreBadges({ title, lead, compact }) {
 // The app bar is already three rows deep on a phone, so the view switch moved
 // off m-appbar-top (where the account avatar now sits) onto its own tight row
 // rather than becoming a fourth control crammed into the brand row.
-function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, collectionFilter, setCollectionFilter }) {
+function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, onOpenGuides, guideActive, collectionFilter, setCollectionFilter }) {
   // The suggestions list spans the whole search row (see SearchInput).
   const [searchRow, setSearchRow] = React.useState(null);
   return (
@@ -32,6 +32,10 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, o
           <h1 className="m-btitle">{mtr('app.name')}</h1>
         </div>
         <window.SyncStatus/>
+        {onOpenGuides && (
+          <button type="button" className={`m-gbtn${guideActive ? ' on' : ''}`} onClick={onOpenGuides}
+            aria-label={mtr('guide.button')} title={mtr('guide.button')}><window.GuideIcon size={18}/></button>
+        )}
         <window.LanguageMenu compact/>
         <window.AccountAvatarButton onOpen={onOpenAccount}/>
       </div>
@@ -1353,10 +1357,11 @@ function DetailSection({ id, label, labelClass = '', bodyClass = '', className =
 
 // Sections that later tickets fill (Where to watch, Guides). Each looks up a
 // component on window.MCU_detailSlots and renders nothing until one exists, so
-// those tickets drop into their place without touching the layout.
+// those tickets drop into their place without touching the layout. A slot
+// with a `has(title)` test is left out entirely when it has nothing to show.
 function DetailSlot({ name, title }) {
   const Slot = (window.MCU_detailSlots || {})[name];
-  if (!Slot) return null;
+  if (!Slot || (Slot.has && !Slot.has(title))) return null;
   return <section className={`td-slot td-slot-${name}`}><Slot title={title}/></section>;
 }
 

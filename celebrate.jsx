@@ -40,8 +40,9 @@ function completedMilestoneBulk(e) {
   return null;
 }
 
-// Lightweight confetti on a full-screen canvas that removes itself.
-function burstConfetti() {
+// Lightweight confetti on a full-screen canvas that removes itself. `palette`
+// (optional) replaces the phase colours: a finished guide bursts in greens.
+function burstConfetti(palette) {
   if (reducedMotion()) return;
   const canvas = document.createElement('canvas');
   canvas.className = 'mcu-confetti';
@@ -53,7 +54,7 @@ function burstConfetti() {
   const ctx = canvas.getContext('2d');
   if (!ctx) { canvas.remove(); return; }
   ctx.scale(dpr, dpr);
-  const colors = Object.values(window.PHASE_COLORS || {}).concat(['#5fa856', '#d4a05a', '#ffffff']);
+  const colors = palette && palette.length ? palette : Object.values(window.PHASE_COLORS || {}).concat(['#5fa856', '#d4a05a', '#ffffff']);
   const parts = [];
   [[0.25, -1], [0.75, 1]].forEach(([x, side]) => {
     for (let i = 0; i < 70; i++) {

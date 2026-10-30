@@ -632,7 +632,8 @@ function nextUp(titles, statusOf, opts) {
   if (!titles || !titles.length) return { kind: 'empty' };
   const sortBy = window.sortTitles || ((list) => list.slice());
   const listOrder = o.order === 'title' || o.order === 'imdb' || o.order === 'rt';
-  const ordered = sortBy(titles, listOrder ? o.order : (o.order === 'chrono' ? 'chrono' : 'release'), listOrder && o.dir === 'desc' ? 'desc' : 'asc');
+  // `ordered`: the titles are already in their order (a guide's stops).
+  const ordered = o.ordered ? titles.slice() : sortBy(titles, listOrder ? o.order : (o.order === 'chrono' ? 'chrono' : 'release'), listOrder && o.dir === 'desc' ? 'desc' : 'asc');
   const released = ordered.filter((t) => isReleased(t));
   const unseen = released.filter((t) => statusOf(t.id) !== 'seen');
   const pick = unseen.find((t) => !skipped.has(t.id));

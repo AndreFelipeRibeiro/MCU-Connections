@@ -94,6 +94,21 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   snapshot from JustWatch via TMDB (`watch-data.js`), refreshed by a
   maintainer script; the app makes no API calls of its own. United States and
   Brazil to start; titles not out yet show their release date instead.
+- Guides: short, curated paths through the catalogue (a Guides button in the
+  desktop toolbar and the phone app bar). Catch up before Avengers: Doomsday,
+  the Infinity Saga essentials, Spider-Man, the Avengers films, the Multiverse
+  Saga and the animated series. Each stop says why it is there; essential
+  stops are numbered and optional ones sit behind "Include optional". An open
+  guide works like a pinned character: the List and Grid show its stops in
+  order with the next one marked, Spatial dims the rest and draws the route
+  between its numbered cards (an arrow on an event guide's destination), the
+  stepper walks the stops, Up next suggests the next stop, Escape or × closes
+  it (closing is how to see every title again: a guide shows only its own),
+  and `?guide=` shares it. Search suggests guides by name, a character
+  with a guide offers "See the curated path", and a title's details list the
+  guides it belongs to ("Part of"). Finishing a guide's essential stops bursts
+  green confetti once per guide (none with reduced motion). Every title also
+  carries a continuity marker (main, alternate reality or anthology).
 - The synopsis is short and spoiler-light (three lines, then See more),
   written for this app in each language.
 - Shareable addresses: the open title, a pinned character, the view, sort,
@@ -421,8 +436,10 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `watch.jsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
 | `watch-data.js` | The where-to-watch snapshot (written by `tools/refresh-watch.js`; do not edit by hand) |
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
+| `guides.js` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
+| `guides-ui.jsx` | Guides: the menu, desktop banner and List, phone views and pill, the meter, "Part of" in the details |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
-| `search-suggest.jsx` | Search box with actor/character/title suggestions, shared by desktop and mobile |
+| `search-suggest.jsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
 | `poster.jsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
 | `connections.jsx` | Standalone connection layer retained for reference; not wired into the app |
 | `styles.css` / `styles-mobile.css` | Desktop/touch layout, status treatments, focus and dialogs |
