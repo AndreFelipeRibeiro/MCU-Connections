@@ -66,7 +66,11 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   with one guest-storage write and one announcement; Undo restores each title,
   a replaced watchlist included; over 20 asks first and Cancel keeps the
   selection; real Escape presses clear the selection before the details; the
-  phone section headers' "Mark all seen" / "Mark N more seen"),
+  phone section headers' "Mark all seen" / "Mark N more seen"; on desktop in
+  By Phase, a phase header's checkbox selects exactly that phase (mixed for
+  part of it, cleared on a second click) and its "Mark N more seen" marks only
+  that phase's remaining released titles, with Undo; the All titles meter's
+  button in Release order),
   `test-details` (the desktop drawer and the phone sheet show the same
   sections in the same order from one shared body: poster beside eyebrow,
   title, release and story, then scores, budget, status, synopsis, Where to

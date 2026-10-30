@@ -110,6 +110,23 @@ function BulkMore({ open, setOpen, label, children }) {
   );
 }
 
+// The checkbox on a phase header (By Phase): selects that phase's rows for the
+// bulk bar, shows a mixed state when only some of them are selected, and
+// clears them when they all are. The phase name is its visible label.
+function DlPhaseCheck({ ids, selected, onToggle, group, label }) {
+  const ref = React.useRef(null);
+  const all = ids.length > 0 && ids.every(id => selected.has(id));
+  const some = !all && ids.some(id => selected.has(id));
+  React.useEffect(() => { if (ref.current) ref.current.indeterminate = some; }, [some]);
+  return (
+    <span className="dl-phase-label">
+      <input type="checkbox" ref={ref} className="dl-check" checked={all} onChange={() => onToggle(ids)}
+        aria-label={window.MCU_I18N.tr('bulk.selectPhase', { group })} title={window.MCU_I18N.tr('bulk.selectPhase', { group })}/>
+      <span>{label}</span>
+    </span>
+  );
+}
+
 function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, activeChars, header, empty, orderKey, progress, upNext }) {
   const I = window.MCU_I18N;
   const tr = I.tr;
@@ -168,6 +185,15 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   const headCheck = React.useRef(null);
   React.useEffect(() => { if (headCheck.current) headCheck.current.indeterminate = someOn; }, [someOn]);
   const toggleAll = () => setSelected(allOn ? new Set() : new Set(shownIds));
+  // One phase at a time (By Phase): its header's checkbox adds the phase's
+  // rows to the selection, or clears them when they are all selected already.
+  const togglePhase = (ids) => setSelected(prev => {
+    const next = new Set(prev);
+    const all = ids.length > 0 && ids.every(id => prev.has(id));
+    ids.forEach(id => { if (all) next.delete(id); else next.add(id); });
+    return next;
+  });
+  const phaseIds = (phase) => titles.filter(t => t.phase === phase).map(t => t.id);
   const clearSelection = () => { setSelected(new Set()); anchorRef.current = null; };
   const selIds = shownIds.filter(id => selected.has(id));
   const counts = {
@@ -222,11 +248,22 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   // later phase's meter pins in the same place at its boundary and covers the
   // one before it, so the current phase is always the one on top.
   const leadPhase = !(progress && progress.all) && blocks[0] && blocks[0].phased ? blocks[0].groups[0].phaseStart : null;
+  // Each meter carries the phones' "Mark N more seen" (the same component, so
+  // the same count rule, confirmation and Undo), and in By Phase a checkbox
+  // that selects the phase for the bulk bar.
+  const phaseMeter = (phase) => {
+    const ids = phaseIds(phase);
+    const group = I.tr('phase.label', { n: phase });
+    return (
+      <window.ProgressHeader color={window.PHASE_COLORS[phase]} {...progress.byPhase[phase]}
+        label={<DlPhaseCheck ids={ids} selected={selected} onToggle={togglePhase} group={group} label={I.upper(group)}/>}
+        action={<window.BulkHeaderAction ids={ids} group={group}/>}/>
+    );
+  };
   const leadMeter = progress && progress.all
-    ? <window.ProgressHeader label={I.upper(I.tr('progress.all'))} {...progress.all}/>
-    : leadPhase
-      ? <window.ProgressHeader label={I.upper(I.tr('phase.label', { n: leadPhase }))} color={window.PHASE_COLORS[leadPhase]} {...progress.byPhase[leadPhase]}/>
-      : null;
+    ? <window.ProgressHeader label={I.upper(I.tr('progress.all'))} {...progress.all}
+        action={<window.BulkHeaderAction ids={shownIds} group={I.tr('progress.all')}/>}/>
+    : leadPhase ? phaseMeter(leadPhase) : null;
   return (
     <div className={`dlist${ranked ? ' ranked' : ''}`} ref={flipRef} role="main" aria-label={tr('view.list')}>
       {header}
@@ -287,9 +324,8 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                    with a transform, and a sticky element is already positioned
                    from the scroll offset — together they leave the bar hanging
                    below the header instead of under it. */
-                <div className="dl-phase-divider sticky">
-                  <window.ProgressHeader label={I.upper(I.tr('phase.label', { n: b.groups[0].phaseStart }))}
-                    color={window.PHASE_COLORS[b.groups[0].phaseStart]} {...progress.byPhase[b.groups[0].phaseStart]}/>
+                <div role="row" className="dl-phase-divider sticky">
+                  <span role="cell" className="dl-overall-cell">{phaseMeter(b.groups[0].phaseStart)}</span>
                 </div>
               )}
               {b.groups.map(g => (

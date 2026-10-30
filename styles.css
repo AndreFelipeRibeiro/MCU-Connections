@@ -1478,3 +1478,11 @@ body {
 .drawer-section-label.td-acc-btn { padding: 12px 24px 8px; }
 /* Phone cast heading: a 44px touch target, as the rows below it. */
 .m-flab.td-acc-btn { padding: 0; min-height: 44px; margin-bottom: 0; }
+
+/* Desktop List phase headers (By Phase): a select-this-phase checkbox in the
+   rows' checkbox column, then the phase name; "Mark N more seen" at the end of
+   the line, as on phones (.pgh-action). */
+.dl-phase-label { display: inline-flex; align-items: center; gap: 14px; }
+.dl-phase-label .dl-check { flex: 0 0 16px; }
+.dl-phase-divider .pgh-top { align-items: center; }
+.dl-phase-divider .pgh-action { height: 30px; }

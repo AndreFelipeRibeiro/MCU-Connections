@@ -188,11 +188,12 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
   seen moves it to seen; un-seeing returns it to untracked.
-- Marking many at once. In the desktop List, tick rows (Shift-click for a
-  range, the header box for everything shown) and use the bar that appears:
-  Mark as seen, Add to Watchlist, or Mark as unseen under More. On phones, each
-  section header offers "Mark all seen" or "Mark 4 more seen" (each phase in By
-  Phase, All titles in every other order). Unreleased titles are never marked
+- Marking many at once. Every progress header, on phones and in the desktop
+  List, offers "Mark all seen" or "Mark 4 more seen" (each phase in By Phase,
+  All titles in every other order). In the desktop List you can also tick rows
+  (Shift-click for a range, a phase header's box for that phase in By Phase,
+  the column header box for everything shown) and use the bar that appears:
+  Mark as seen, Add to Watchlist, or Mark as unseen under More. Unreleased titles are never marked
   seen in bulk, anything over 20 titles (and any Mark as unseen) asks first, and
   the toast's Undo puts every title back as it was, a replaced watchlist
   included. Escape clears the selection before it closes the details.

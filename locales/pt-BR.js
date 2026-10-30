@@ -293,6 +293,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'bulk.col': 'Selecionar',
     'bulk.selectAll': 'Selecionar todos os títulos exibidos',
     'bulk.selectRow': 'Selecionar {title}',
+    'bulk.selectPhase': 'Selecionar todos os títulos da {group}',
     'bulk.selected': { one: '{n} selecionado', other: '{n} selecionados' },
     'bulk.markSeen': 'Marcar como visto',
     'bulk.addWatch': 'Adicionar a Para assistir',

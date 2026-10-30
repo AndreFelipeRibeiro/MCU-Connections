@@ -299,6 +299,7 @@ window.MCU_LOCALES.en = {
     'bulk.col': 'Select',
     'bulk.selectAll': 'Select all titles shown',
     'bulk.selectRow': 'Select {title}',
+    'bulk.selectPhase': 'Select every title in {group}',
     'bulk.selected': { one: '{n} selected', other: '{n} selected' },
     'bulk.markSeen': 'Mark as seen',
     'bulk.addWatch': 'Add to Watchlist',

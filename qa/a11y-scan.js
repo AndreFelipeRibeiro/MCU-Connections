@@ -27,6 +27,11 @@ const scan = async (page, name, out) => {
   await x.page.locator('.acct-pill, .account-btn').first().click().catch(() => {}); await x.page.waitForTimeout(600);
   await scan(x.page, 'desktop account menu', out);
   await x.ctx.close();
+  // By Phase: the phase headers carry a select-this-phase checkbox and the
+  // "Mark N more seen" button (Batch 9), which Release order never shows.
+  x = await open(D, {version:1, viewMode:'list', desktopView:'list', sort:'phase'});
+  await scan(x.page, 'desktop list, By Phase', out);
+  await x.ctx.close();
   x = await open(M, {version:1, viewMode:'list', desktopView:'list', sort:'release'});
   await scan(x.page, 'phone list', out);
   await x.page.locator('.m-lrow-open').nth(2).tap(); await x.page.waitForTimeout(900);
