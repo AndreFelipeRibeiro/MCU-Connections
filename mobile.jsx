@@ -588,11 +588,15 @@ function ReleaseBadge({ title, className = '' }) {
 // <button>, because the status toggles are buttons too and a nested <button>
 // is invalid HTML. The open button still covers the whole poster + meta area,
 // so tapping anywhere except the toggles opens the cast sheet exactly as before.
-function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, markWatch, collapseSeen, progress, sort }) {
+function MobileGrid({ header, currentId, titles: allTitles, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, markWatch, collapseSeen, progress, sort, upNext }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
   const folds = useSeenFolds();
   const settled = useSettled();
+  // Up next: a full-width card at the top. See upNextPlacement.
+  const place = upNextPlacement(upNext);
+  const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
+  const top = place.topNode && <div className="un-inline top">{place.topNode}</div>;
   // The caller decides which of these it hands over: phase headings belong to
   // the By Phase tab, and every other order gets one meter over the whole
   // catalogue instead.
@@ -617,8 +621,8 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
   const blockRuns = blocks.map(b => (collapseSeen ? seenRuns(b.items, statusOf) : []));
   const runKey = blockRuns.map(rs => rs.map(r => r[0].id + ':' + r.length).join(',')).join('|');
   const blockKey = blocks.map(b => (b.phase || 'x') + ':' + b.items.length).join(',');
-  const flipRef = useReorderAnimation(orderKey + '|' + runKey + '|' + blockKey, { paused: flipPaused });
-  if (!titles.length) return <div className="m-scrollarea" ref={flipRef}>{header}<EmptyState {...(empty || {})}/></div>;
+  const flipRef = useReorderAnimation(orderKey + '|' + runKey + '|' + blockKey + '|' + (place.hideId || ''), { paused: flipPaused });
+  if (!allTitles.length) return <div className="m-scrollarea" ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
   const card = (t) => {
     const matchedChars = searchCharMatches ? searchCharMatches[t.id] : null;
     const seen = statusOf(t.id) === 'seen';
@@ -650,6 +654,7 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
     return (
       <div className="m-scrollarea" ref={flipRef}>
         {header}
+        {top}
         <div className="m-grid">{titles.map(card)}</div>
       </div>
     );
@@ -679,6 +684,7 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
   return (
     <div className="m-scrollarea" ref={flipRef}>
       {header}
+      {top}
       <div className={`m-gflat${settled ? ' settled' : ''}`}>
         {blocks.map((b, i) => {
           const p = b.phase && progress.byPhase[b.phase];
@@ -695,13 +701,13 @@ function MobileGrid({ header, currentId, titles, onSelect, searchCharMatches, se
                    bar below the top of the scroll area. */
                 <div className="m-phase-divider sticky">
                   <ProgressHeader label={mPhaseLabel(b.phase)} color={MPHASE_COLORS[b.phase]} {...p}
-                    action={<BulkHeaderAction ids={b.items.map(t => t.id)} group={mPhaseLabel(b.phase)}/>}/>
+                    action={<BulkHeaderAction ids={allTitles.filter(t => t.phase === b.phase).map(t => t.id)} group={mPhaseLabel(b.phase)}/>}/>
                 </div>
               )}
               {!p && overall && (
                 <div className="m-phase-divider sticky overall">
                   <ProgressHeader label={mtr('progress.all')} {...overall}
-                    action={<BulkHeaderAction ids={titles.map(t => t.id)} group={mtr('progress.all')}/>}/>
+                    action={<BulkHeaderAction ids={allTitles.map(t => t.id)} group={mtr('progress.all')}/>}/>
                 </div>
               )}
               {b.items.length ? sectionsOf(b.items, blockRuns[i]) : null}
@@ -812,7 +818,18 @@ function SeenRunHead({ items, shut, onToggle }) {
   );
 }
 
-function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, collapseSeen, markWatch, progress }) {
+// Up next in a phone List or Grid: always at the top of the list, above the
+// All titles meter, like the desktop List strip (changed from in-line on
+// 2026-10-29). The suggestion's own row or card is left out of the list, so a
+// title never appears twice. Returns the card to show and the title to hide.
+function upNextPlacement(upNext) {
+  if (!upNext) return { topNode: null, hideId: null };
+  const r = upNext.result;
+  if (r.kind === 'next') return { topNode: <window.UpNextCard info={upNext}/>, hideId: r.title.id };
+  return { topNode: <window.UpNextState info={upNext}/>, hideId: null };
+}
+
+function MobileList({ header, currentId, titles: allTitles, sort, onSelect, searchCharMatches, search, empty, orderKey, flipPaused, collapseSeen, markWatch, progress, upNext }) {
   const PosterArt = window.PosterArt;
   const { statusOf } = window.useCollection();
   const flipRef = useReorderAnimation(orderKey, { paused: flipPaused });
@@ -820,7 +837,12 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
   // The collection arrives after the first paint: rows only animate (shrink,
   // fold, appear) once it has loaded, so the list opens already compact.
   const settled = useSettled();
-  if (!titles.length) return <div className="m-scrollarea" ref={flipRef}>{header}<EmptyState {...(empty || {})}/></div>;
+  const place = upNextPlacement(upNext);
+  const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
+  const top = place.topNode && <div className="un-inline top">{place.topNode}</div>;
+  if (!allTitles.length) return <div className="m-scrollarea" ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
+  // Ranks count the whole list, the suggestion lifted to the top included.
+  const rankOf = (t) => allTitles.indexOf(t) + 1;
   const ranked = sort === 'imdb' || sort === 'rt';
   const lead = sort === 'rt' ? 'rt' : 'imdb';
   // Group headers for the non-score sorts. Chrono groups by in-story timeframe
@@ -872,7 +894,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
     return (
       <div data-flip-id={t.id} data-row-id={t.id} className={`m-lrow${seen ? ' seen' : ''}${compact ? ' compact' : ''}${watch ? ' watch' : ''}${currentId === t.id ? ' current' : ''}`}>
         <button className="m-lrow-open" onClick={()=>onSelect(t.id)}>
-          {ranked && <div className="m-rank">{rank}</div>}
+          {ranked && <div className="m-rank">{rankOf(t)}</div>}
           <div className="m-lthumb"><PosterArt title={t}/></div>
           <div className="m-ltext">
             <div className="m-ltitle"><Highlight text={MI18N.titleName(t)} query={search}/></div>
@@ -901,7 +923,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
   const overallHead = overall ? (
     <div className="m-phase-divider sticky overall">
       <ProgressHeader label={mtr('progress.all')} {...overall}
-        action={<BulkHeaderAction ids={titles.map(t => t.id)} group={mtr('progress.all')}/>}/>
+        action={<BulkHeaderAction ids={allTitles.map(t => t.id)} group={mtr('progress.all')}/>}/>
     </div>
   ) : null;
   const label = (g) => {
@@ -922,7 +944,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
     return (
       <div className="m-phase-divider sticky">
         <ProgressHeader label={mPhaseLabel(g.phaseStart)} color={MPHASE_COLORS[g.phaseStart]} {...p}
-          action={<BulkHeaderAction ids={titles.filter(t => t.phase === g.phaseStart).map(t => t.id)} group={mPhaseLabel(g.phaseStart)}/>}/>
+          action={<BulkHeaderAction ids={allTitles.filter(t => t.phase === g.phaseStart).map(t => t.id)} group={mPhaseLabel(g.phaseStart)}/>}/>
       </div>
     );
   };
@@ -993,6 +1015,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
     return (
       <div className="m-scrollarea" ref={flipRef}>
         {header}
+        {top}
         {overallHead}
         <div className={`m-flat${settled ? ' settled' : ''}`}>
           {chunks.map((c) => (
@@ -1014,6 +1037,7 @@ function MobileList({ header, currentId, titles, sort, onSelect, searchCharMatch
   return (
     <div className="m-scrollarea" ref={flipRef}>
       {header}
+      {top}
       {overallHead}
       {blocks.map((b) => (
         <div className="m-gblock" key={b.key}>
@@ -1268,48 +1292,149 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
   );
 }
 
+// One definition of a title's details, shared by the desktop drawer
+// (CastDrawer in app.jsx) and the phone sheet (CastSheet below). Each surface
+// keeps its own frame (panel, close button, focus, Escape; sheet handle, swipe,
+// Back) and hands over its own cast list, but the facts appear in the same
+// order on both:
+//   1. identity: poster, eyebrow, title (search highlighted)
+//   2. when: release line, story timeframe
+//   3. scores (or why there are none)
+//   4. facts: budget (runtime or episodes would go here later)
+//   5. your status: Seen / Watchlist
+//   6. synopsis
+//   7. slots for later tickets: Where to watch, Part of (Guides)
+//   8. cast (the surface's own list)
+//   9. surface extras (phones: See connections in Spatial)
+// The surface table keeps the class names each surface's styles and checks
+// already rely on.
+const TD_SURFACE = {
+  drawer: { head: 'drawer-header', eyebrow: 'drawer-eyebrow', title: 'drawer-title', release: 'drawer-release', story: 'drawer-story', synopsis: 'drawer-synopsis', tsa: 'drawer-tsa' },
+  sheet: { head: 'm-cast-hero-wrap', eyebrow: 'm-eyebrow', title: 'm-dtitle', release: 'm-hero-release', story: 'm-hero-story', synopsis: 'm-synopsis', tsa: 'm-hero-tsa' },
+};
+
+// Collapsible sections of the details (the cast, Where to watch), so the panel
+// does not grow without end as sections are added. The cast starts open and
+// Where to watch closed. Open or closed is kept for the visit, so a section
+// stays as the visitor left it while they move between titles; a reload
+// restores the defaults. Nothing is stored.
+const detailOpen = { cast: true, watch: false };
+const detailOpenListeners = new Set();
+function useDetailOpen(key) {
+  const [, bump] = React.useReducer(x => x + 1, 0);
+  React.useEffect(() => { detailOpenListeners.add(bump); return () => { detailOpenListeners.delete(bump); }; }, []);
+  const set = (v) => { detailOpen[key] = v; detailOpenListeners.forEach(fn => fn()); };
+  return [!!detailOpen[key], set];
+}
+
+// An accordion section: a heading that is a real button (aria-expanded,
+// aria-controls), an optional control beside it shown while open (Where to
+// watch's Change), and the body. `labelClass` and `bodyClass` keep each
+// surface's existing look (drawer-section-label / cast-list on desktop,
+// m-flab / m-castlist on phones).
+function DetailSection({ id, label, labelClass = '', bodyClass = '', className = '', extra, children }) {
+  const [open, setOpen] = useDetailOpen(id);
+  const bodyId = 'td-acc-' + id + '-' + React.useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  return (
+    <section className={`td-acc td-acc-${id}${open ? ' open' : ''}${className ? ' ' + className : ''}`}>
+      <div className="td-acc-head">
+        <h3 className="td-acc-h">
+          <button type="button" className={`td-acc-btn ${labelClass}`} aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)}>
+            <span className="td-acc-label">{label}</span>
+            <svg className="td-acc-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+        </h3>
+        {open && extra}
+      </div>
+      <div id={bodyId} className={`td-acc-body ${bodyClass}`} hidden={!open}>{children}</div>
+    </section>
+  );
+}
+
+// Sections that later tickets fill (Where to watch, Guides). Each looks up a
+// component on window.MCU_detailSlots and renders nothing until one exists, so
+// those tickets drop into their place without touching the layout.
+function DetailSlot({ name, title }) {
+  const Slot = (window.MCU_detailSlots || {})[name];
+  if (!Slot) return null;
+  return <section className={`td-slot td-slot-${name}`}><Slot title={title}/></section>;
+}
+
+function DetailScores({ title }) {
+  if (title.imdb != null || title.rt != null) return <div className="td-scores"><ScoreBadges title={title}/></div>;
+  // No scores yet: say why. A title not out yet has none to give, which reads
+  // differently from a released title nobody has rated.
+  const out = MI18N.release(title).status === 'released';
+  return <div className="td-scores"><span className="td-pending">{mtr(out ? 'score.none' : 'details.ratingsAfterRelease')}</span></div>;
+}
+
+function TitleDetailsBody({ title, surface, search, headingRef, headingId, cast, extras }) {
+  const PosterArt = window.PosterArt;
+  const c = TD_SURFACE[surface];
+  const color = MPHASE_COLORS[title.phase];
+  return (
+    <>
+      <div className={`td-head td-${surface} ${c.head}`}>
+        <div className="td-hero">
+          <div className="td-thumb" aria-hidden="true"><PosterArt title={title}/></div>
+          <div className="td-hero-text">
+            <div className={`td-eyebrow ${c.eyebrow}`} style={{ color }}>{mPhaseLabel(title.phase)} · {mTypeLabel(title.type)} · {title.year}</div>
+            <h2 className={`td-title ${c.title}`} id={headingId} ref={headingRef} tabIndex={headingRef ? -1 : undefined}>
+              <Highlight text={MI18N.titleName(title)} query={search}/>
+            </h2>
+            <ReleaseLine title={title} className={`td-release ${c.release}`}/>
+            <StoryYear title={title} detail className={`td-story ${c.story}`}/>
+          </div>
+        </div>
+        <DetailScores title={title}/>
+        <dl className="td-facts">
+          <div className="td-fact">
+            <dt>{mtr('details.budget')}</dt>
+            <dd className={title.budget == null ? 'unknown' : ''}>{title.budget != null ? MI18N.budget(title.budget) : mtr('details.budgetUnknown')}</dd>
+          </div>
+        </dl>
+        <window.TitleStatusActions title={title} variant="inline" className={`td-tsa ${c.tsa}`}/>
+        <Synopsis title={title} className={`td-synopsis ${c.synopsis}`}/>
+        <DetailSlot name="watch" title={title}/>
+        <DetailSlot name="guides" title={title}/>
+      </div>
+      {cast}
+      {extras}
+    </>
+  );
+}
+
 function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, onGoSpatial, inSpatial, search }) {
   if (!title) return null;
-  const PosterArt = window.PosterArt;
   return (
     <Sheet onClose={onClose} tall label={mtr('details.sheetLabel', { title: MI18N.titleName(title) })}>
-      <div className="m-cast-hero">
-        <div className="m-hero-th"><PosterArt title={title}/></div>
-        <div className="m-hero-text">
-          <div className="m-eyebrow" style={{color:MPHASE_COLORS[title.phase]}}>{mPhaseLabel(title.phase)} · {mTypeLabel(title.type)} · {title.year}</div>
-          <h2 className="m-dtitle">{MI18N.titleName(title)}</h2>
-          <ReleaseLine title={title} className="m-hero-release"/>
-          <StoryYear title={title} detail className="m-hero-story"/>
-          <ScoreBadges title={title}/>
-          <window.TitleStatusActions title={title} variant="inline" className="m-hero-tsa"/>
-        </div>
-      </div>
-      <Synopsis title={title} className="m-synopsis"/>
-      <div className="m-flab">{mtr('details.cast', { n: title.cast.length })}</div>
-      <div className="m-castlist">
-        {title.cast.length === 0 && <div className="m-empty-cast">{mtr('details.noCast')}</div>}
-        {title.cast.map(ch => {
-          const c = window.CHARACTERS[ch];
-          if (!c) return null;
-          return (
-            <button key={ch} className={`m-crow${(activeChars?activeChars.indexOf(ch)!==-1:activeChar===ch)?' on':''}`} style={{'--match-color': c.color}} onClick={()=>onCharacterClick(ch)}>
-              <div className="m-port" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-                <window.Portrait
-                  url={window.castPortrait(title, ch)}
-                  alt={MI18N.charName(ch)} initials={c.initials}/>
-              </div>
-              <div className="m-ctext">
-                <div className="m-cn"><Highlight text={MI18N.charName(ch)} query={search}/></div>
-                <div className="m-an"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
-              </div>
-              <span className="m-cdot" style={{background:c.color}}/>
-            </button>
-          );
-        })}
-      </div>
-      {!inSpatial && (
-        <button className="m-apply ghost" onClick={onGoSpatial}>{mtr('details.goSpatial')}</button>
-      )}
+      <TitleDetailsBody title={title} surface="sheet" search={search}
+        cast={
+          <DetailSection id="cast" label={mtr('details.cast', { n: title.cast.length })} labelClass="m-flab" bodyClass="m-castlist">
+            {title.cast.length === 0 && <div className="m-empty-cast">{mtr('details.noCast')}</div>}
+            {title.cast.map(ch => {
+              const c = window.CHARACTERS[ch];
+              if (!c) return null;
+              return (
+                <button key={ch} className={`m-crow${(activeChars?activeChars.indexOf(ch)!==-1:activeChar===ch)?' on':''}`} style={{'--match-color': c.color}} onClick={()=>onCharacterClick(ch)}>
+                  <div className="m-port" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
+                    <window.Portrait
+                      url={window.castPortrait(title, ch)}
+                      alt={MI18N.charName(ch)} initials={c.initials}/>
+                  </div>
+                  <div className="m-ctext">
+                    <div className="m-cn"><Highlight text={MI18N.charName(ch)} query={search}/></div>
+                    <div className="m-an"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
+                  </div>
+                  <span className="m-cdot" style={{background:c.color}}/>
+                </button>
+              );
+            })}
+          </DetailSection>
+        }
+        extras={!inSpatial && (
+          <button className="m-apply ghost" onClick={onGoSpatial}>{mtr('details.goSpatial')}</button>
+        )}/>
     </Sheet>
   );
 }
@@ -1349,4 +1474,4 @@ function SpatialHint({ focused, sharedCount }) {
   );
 }
 
-Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });
+Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, TitleDetailsBody, DetailSection, useDetailOpen, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });

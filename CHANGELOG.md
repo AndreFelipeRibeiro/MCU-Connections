@@ -12,6 +12,84 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — Up next: what to watch now
+
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`9a092a6`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/9a092a62e2b9ac781fdeedd98f924f4a8c85924d))
+
+- One suggestion: the first released title not marked seen, earliest first in
+  release order (story order on Chronological), or the first of the list itself
+  on A–Z, IMDb and RT, in the list's direction. It follows the Watchlist tab, a
+  pinned character and the type, phase and budget filters, and says which.
+- A card at the top of the phone List and Grid (the title's own row left out),
+  a strip above the desktop List, a row in desktop Spatial's All titles meter,
+  a chip in phone Spatial. Mark seen and Watchlist go through the usual toast,
+  Undo and sync; the × hides it until the page is reloaded. Caught up names the
+  next arrival; the Watchlist tab has its own states.
+- Verified: new `qa/test-nextup.js` (expectations from the catalogue and
+  today's date); full suite and both scans on the final tree. Limits: the
+  wait for a signed-in collection was checked as a guest only.
+
+## V3 improvement — collapsible sections in the title details
+
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`0d7d6bd`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/0d7d6bd1bef96d6aa394214b9bf2a6fb87a4265b))
+
+- The cast and Where to watch are collapsible (one shared `DetailSection`):
+  the cast starts open and Where to watch closed, so the details stay short as
+  sections are added. A section stays as you left it while you move between
+  titles; a reload restores the defaults. Nothing is stored.
+- Verified: `qa/test-details.js` and `qa/test-watch.js` check the defaults and
+  that each heading toggles only its own section.
+
+## V3 feature — where to watch, by country
+
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`182acb0`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/182acb0fc03a13f7ba5b5a86284e71d150f7c558))
+
+- A Where to watch section lists the services offering a released title in
+  your country (stream and free with logos, rent or buy on one line), with one
+  link to TMDB's page and a "Checked <date> · Data from JustWatch via TMDB"
+  credit. The country is guessed from the browser and can be changed; it is
+  kept on this device only. United States and Brazil to start.
+- Data: a dated snapshot (`watch-data.js`) written by `tools/refresh-watch.js`
+  from TMDB (token from the maintainer's environment only; the script is not
+  deployed). First run 2026-10-29: 60 released titles, no title or year
+  warnings. The app makes no API calls of its own. About credits JustWatch.
+- Verified: new `qa/test-watch.js` (every state against a test snapshot, plus
+  the real one); screenshots with real logos.
+
+## V3 improvement — the same title details on desktop and phones
+
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`32ba5a5`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/32ba5a56c1a33e52f4f13e3ac471ec940e836055))
+
+- One shared body for the desktop drawer and the phone sheet: poster beside
+  the title and dates, then scores ("Ratings after release" when not out yet),
+  budget ("Not published" when unknown), Seen and Watchlist, synopsis and cast.
+  The drawer gains the poster, scores and budget and scrolls as one; phones
+  gain the budget and the search highlight in the title.
+- Verified: new `qa/test-details.js` (desktop, 390 and 320px).
+
+## V3 improvement — desktop List meters above the column headers
+
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`17a2dde`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/17a2dde8e31b83f08a17e21fd76f7075ef84b4b8))
+
+- The All titles meter (or the current phase's, in By Phase) pins at the top
+  of the List with the column headers right beneath it; each phase takes the
+  top slot at its boundary. The table's ARIA stays valid.
+- Verified: `qa/test-progress.js` updated to the new positions.
+
+## V3 improvement — subtler desktop List checkboxes
+
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`09db23e`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/09db23ec4be718dbab2d0c0d6968226f6014c03a))
+
+- Drawn checkboxes instead of the browser's white boxes: a muted outline, the
+  accent with a dark tick when selected, a dash for the mixed header. Contrast
+  measured at 4.66:1 or better for the outline and 4.83:1 for the fill.
+
 ## V3 workflow — the full suite runs once per batch
 
 Recorded: 2026-10-29 00:15 EDT (-0400). Pushed to `version/3.0` (staging); merged to main

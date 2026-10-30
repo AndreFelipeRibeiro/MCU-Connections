@@ -98,7 +98,9 @@ const phoneView = (page, name) => page.evaluate(async (n) => {
 // whole-catalogue meter is up.
 const readCanvas = (page) => page.evaluate(() => ({
   phaseMeters: document.querySelectorAll('.band-label .pgh-bar').length,
-  overall: !!document.querySelector('.spatial-overall'),
+  // The floating box can also hold just the Up next row (By Phase has no All
+  // titles meter), so look for a meter inside it, not the box itself.
+  overall: !!document.querySelector('.spatial-overall .pgh'),
 }));
 const readDeskList = (page) => page.evaluate(() => ({
   phaseMeters: document.querySelectorAll('.dl-phase-divider:not(.overall) .pgh-bar').length,
@@ -229,32 +231,38 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     const d = document.querySelector('.dl-phase-divider');
     const cs = getComputedStyle(d);
     const r = d.getBoundingClientRect();
-    const headBottom = Math.round(head.getBoundingClientRect().bottom - c.top);
+    const headTop = Math.round(head.getBoundingClientRect().top - c.top);
     dl.scrollTop = 3000;
     await new Promise((r2) => setTimeout(r2, 600));
-    const tops = [...document.querySelectorAll('.dl-phase-divider')]
-      .map((x) => Math.round(x.getBoundingClientRect().top - c.top));
+    const all = [...document.querySelectorAll('.dl-phase-divider')];
+    const tops = all.map((x) => Math.round(x.getBoundingClientRect().top - c.top));
+    // The meter on top at this depth: the last one pinned in the top slot,
+    // which paints over the earlier ones there.
+    const pinned = all.filter((x, i) => Math.abs(tops[i]) <= 1);
+    const hit = document.elementFromPoint(c.left + 60, c.top + 8);
+    const onTop = !!(hit && pinned.length && hit.closest('.dl-phase-divider') === pinned[pinned.length - 1]);
     dl.scrollTop = 0;
     return {
-      pinnedTop: Math.round(r.top - c.top), headBottom,
+      pinnedTop: Math.round(r.top - c.top), pinnedBottom: Math.round(r.bottom - c.top), headTop, onTop,
       position: cs.position, transform: cs.transform,
       flipId: d.getAttribute('data-flip-id'),
       opaque: cs.backgroundColor,
       rowgroups: document.querySelectorAll('[role="rowgroup"]').length,
-      // Exactly one divider parked at the header line at any scroll depth.
-      parked: tops.filter((t) => Math.abs(t - headBottom) <= 1).length,
     };
   });
   {
     const d = R.deskSticky;
     if (d.position !== 'sticky') errors.push(`the desktop phase divider is ${d.position}, not sticky`);
-    if (Math.abs(d.pinnedTop - d.headBottom) > 1) errors.push(`the pinned divider sits at ${d.pinnedTop} but the column header ends at ${d.headBottom}`);
+    // The meters sit above the column headers (user decision, 2026-10-29):
+    // the phase meter pins at the top and the headers pin right beneath it.
+    if (Math.abs(d.pinnedTop) > 1) errors.push(`the pinned phase meter sits at ${d.pinnedTop}, not at the top of the List`);
+    if (Math.abs(d.headTop - d.pinnedBottom) > 1) errors.push(`the column headers start at ${d.headTop} but the phase meter above them ends at ${d.pinnedBottom}`);
     if (d.transform && d.transform !== 'none') errors.push(`the desktop divider carries ${d.transform}; it must stay out of the reorder animation`);
     if (d.flipId) errors.push('the desktop sticky divider has a data-flip-id again');
     if (/rgba\(0, 0, 0, 0\)|transparent/.test(d.opaque)) errors.push('the pinned divider is transparent, so rows show through it');
     // One rowgroup per phase is what bounds each sticky divider.
     if (d.rowgroups !== 6) errors.push(`${d.rowgroups} rowgroups in By Phase; expected one per phase`);
-    if (d.parked !== 1) errors.push(`${d.parked} dividers parked at the header line; expected exactly one`);
+    if (!d.onTop) errors.push('deep in the List, the current phase meter is not the one showing in the top slot');
   }
 
   // The All titles header pins too, in every order but By Phase. It once sat in
@@ -271,7 +279,8 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     await new Promise((r) => setTimeout(r, 600));
     const out = {
       top: Math.round(ov.getBoundingClientRect().top - c.top),
-      headBottom: Math.round(head.getBoundingClientRect().bottom - c.top),
+      bottom: Math.round(ov.getBoundingClientRect().bottom - c.top),
+      headTop: Math.round(head.getBoundingClientRect().top - c.top),
       role: ov.getAttribute('role'),
       parentRole: ov.parentElement.getAttribute('role'),
     };
@@ -282,7 +291,8 @@ const hit = (a, b) => !!(a && b && !(a.right < b.left || a.left > b.right || a.b
     const o = R.overallSticky;
     if (o.error) errors.push(o.error);
     else {
-      if (Math.abs(o.top - o.headBottom) > 1) errors.push(`after scrolling, the All titles header sits at ${o.top}, not pinned under the column header (${o.headBottom})`);
+      if (Math.abs(o.top) > 1) errors.push(`after scrolling, the All titles meter sits at ${o.top}, not pinned at the top of the List`);
+      if (Math.abs(o.headTop - o.bottom) > 1) errors.push(`after scrolling, the column headers start at ${o.headTop}, not right under the All titles meter (${o.bottom})`);
       if (o.role !== 'row' || o.parentRole !== 'table') errors.push(`the All titles header is a ${o.role} inside a ${o.parentRole}; it must be a row owned by the table`);
     }
   }

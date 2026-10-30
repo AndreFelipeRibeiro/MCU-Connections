@@ -97,6 +97,21 @@ function sortTitles(list, sort, dir = 'asc') {
   });
 }
 
+// The budget filter's bands, shared by the views and the Up next scope.
+function budgetMatches(t, band) {
+  const b = t.budget;
+  if (b == null) return false;
+  if (band === 'low') return b < 50;
+  if (band === 'mid') return b >= 50 && b < 200;
+  if (band === 'high') return b >= 200 && b < 300;
+  if (band === 'mega') return b >= 300;
+  return true;
+}
+
+// Shared with the Up next rule (MCU_nextUp in tracking.jsx), so both agree on
+// what release and story order mean.
+window.sortTitles = sortTitles;
+
 // What the view is showing that the controls don't: how many titles match and,
 // when filtering, which filters are on. The sort, order and collection already
 // show on their own controls, so they are not repeated here. Variants:
@@ -365,6 +380,10 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
   useEffect(() => {
     if (open && headingRef.current && lastInput === 'keyboard') headingRef.current.focus({ preventScroll: true });
   }, [open, title && title.id]);
+  // Details and cast scroll as one, so a new title starts at its poster rather
+  // than wherever the last one's cast was scrolled to.
+  const scrollRef = useRef(null);
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, [title && title.id]);
   useEffect(() => {
     if (!current) { setOpen(false); return; }
     setTitle(current);
@@ -373,50 +392,46 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
     return () => { cancelAnimationFrame(outer); cancelAnimationFrame(inner); };
   }, [current]);
   if (!title) return null;
+  // The close button sits in the panel's corner, outside the scrolling body,
+  // so it stays put while the details scroll and the text column keeps its width.
   return (
     <aside ref={asideRef} className={`drawer${open ? ' open' : ''}`} aria-hidden={!open} aria-labelledby="drawer-title"
       onTransitionEnd={e => { if (!current && e.target === e.currentTarget) setTitle(null); }}>
-      <header className="drawer-header">
-        <div>
-          <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{phaseLabel(title.phase)} · {I18N.upper(typeLabel(title.type))} · {title.year}</div>
-          <h2 className="drawer-title" id="drawer-title" ref={headingRef} tabIndex={-1}><window.Highlight text={I18N.titleName(title)} query={search}/></h2>
-          <window.ReleaseLine title={title} className="drawer-release"/>
-          <window.StoryYear title={title} detail className="drawer-story"/>
-          <window.Synopsis title={title} className="drawer-synopsis"/>
-          <window.TitleStatusActions title={title} variant="inline" className="drawer-tsa"/>
-        </div>
-        <button className="drawer-close" onClick={onClose} aria-label={tr('details.close')}>×</button>
-      </header>
-      <div className="drawer-section-label">{tr('details.cast', { n: title.cast.length })}</div>
-      <div className="cast-list">
-        {title.cast.length === 0 && <div className="empty-cast">{tr('details.noCast')}</div>}
-        {title.cast.map(ch => {
-          const c = window.CHARACTERS[ch];
-          if (!c) return null;
-          const isActive = activeChars ? activeChars.indexOf(ch) !== -1 : activeChar === ch;
-          return (
-            <button
-              key={ch}
-              data-char={ch}
-              style={{ '--match-color': c.color }}
-              className={`cast-row ${isActive ? 'active' : ''}`}
-              onClick={() => onCharacterClick(ch)}
-              onMouseEnter={() => onCharacterHover(ch)}
-              onMouseLeave={() => onCharacterHover(null)}
-            >
-              <div className="portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-                <window.Portrait
-                  url={window.castPortrait(current, ch)}
-                  alt={I18N.charName(ch)} initials={c.initials}/>
-              </div>
-              <div className="cast-text">
-                <div className="char-name"><window.Highlight text={I18N.charName(ch)} query={search}/></div>
-                <div className="actor-name"><window.Highlight text={window.MCU_credit(current, ch)} query={search}/></div>
-              </div>
-              <div className="cast-color-dot" style={{background:c.color}}/>
-            </button>
-          );
-        })}
+      <button className="drawer-close" onClick={onClose} aria-label={tr('details.close')}>×</button>
+      <div className="drawer-scroll" ref={scrollRef}>
+        <window.TitleDetailsBody title={title} surface="drawer" search={search} headingRef={headingRef} headingId="drawer-title"
+          cast={
+            <window.DetailSection id="cast" label={tr('details.cast', { n: title.cast.length })} labelClass="drawer-section-label" bodyClass="cast-list">
+              {title.cast.length === 0 && <div className="empty-cast">{tr('details.noCast')}</div>}
+              {title.cast.map(ch => {
+                const c = window.CHARACTERS[ch];
+                if (!c) return null;
+                const isActive = activeChars ? activeChars.indexOf(ch) !== -1 : activeChar === ch;
+                return (
+                  <button
+                    key={ch}
+                    data-char={ch}
+                    style={{ '--match-color': c.color }}
+                    className={`cast-row ${isActive ? 'active' : ''}`}
+                    onClick={() => onCharacterClick(ch)}
+                    onMouseEnter={() => onCharacterHover(ch)}
+                    onMouseLeave={() => onCharacterHover(null)}
+                  >
+                    <div className="portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
+                      <window.Portrait
+                        url={window.castPortrait(current, ch)}
+                        alt={I18N.charName(ch)} initials={c.initials}/>
+                    </div>
+                    <div className="cast-text">
+                      <div className="char-name"><window.Highlight text={I18N.charName(ch)} query={search}/></div>
+                      <div className="actor-name"><window.Highlight text={window.MCU_credit(current, ch)} query={search}/></div>
+                    </div>
+                    <div className="cast-color-dot" style={{background:c.color}}/>
+                  </button>
+                );
+              })}
+            </window.DetailSection>
+          }/>
       </div>
     </aside>
   );
@@ -895,7 +910,7 @@ function App() {
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [mediaReady, setMediaReady] = useState(!!window.MEDIA);
-  const { states: collectionStates, statusOf } = window.useCollection();
+  const { states: collectionStates, statusOf, ready: collectionReady } = window.useCollection();
 
   useEffect(() => { setMediaReady(true); }, []);
   const device = useDevice();
@@ -1158,17 +1173,7 @@ function App() {
     let list = window.TITLES.slice();
     if (phaseFilter !== 'all') list = list.filter(t => String(t.phase) === phaseFilter);
     if (typeFilter !== 'all') list = list.filter(t => t.type === typeFilter);
-    if (budgetFilter !== 'all') {
-      list = list.filter(t => {
-        const b = t.budget;
-        if (b == null) return false;
-        if (budgetFilter === 'low') return b < 50;
-        if (budgetFilter === 'mid') return b >= 50 && b < 200;
-        if (budgetFilter === 'high') return b >= 200 && b < 300;
-        if (budgetFilter === 'mega') return b >= 300;
-        return true;
-      });
-    }
+    if (budgetFilter !== 'all') list = list.filter(t => budgetMatches(t, budgetFilter));
     // Released only uses the same test as the completion count, so a title
     // with an announced month never passes as out.
     if (releaseFilter === 'released') list = list.filter(t => window.MCU_isReleased(t));
@@ -1220,6 +1225,41 @@ function App() {
       ? { byPhase: groupProgress.byPhase, byEra: null, all: null }
       : { byPhase: null, byEra: null, all: groupProgress.all };
   }, [groupProgress, sort]);
+
+  // Up next: the earliest released title not marked seen, in the order being
+  // browsed (MCU_nextUp in tracking.jsx). Its scope follows the collection
+  // switch (Watchlist narrows it, Seen has nothing to suggest), a pinned
+  // character and the type, phase and budget filters. Search does not narrow
+  // it: the card hides while typing instead of jumping about. It waits for the
+  // collection to load, so a signed-in visitor never sees Iron Man flash up
+  // before their own collection arrives. Its × hides it for now: plain state,
+  // nothing stored, so a reload brings it back.
+  const [upHidden, setUpHidden] = useState(false);
+  const hideUpNext = () => setUpHidden(true);
+  const upNextData = useMemo(() => {
+    if (upHidden || !collectionReady || search.trim() || collectionFilter === 'seen') return null;
+    let list = window.TITLES.slice();
+    if (phaseFilter !== 'all') list = list.filter(t => String(t.phase) === phaseFilter);
+    if (typeFilter !== 'all') list = list.filter(t => t.type === typeFilter);
+    if (budgetFilter !== 'all') list = list.filter(t => budgetMatches(t, budgetFilter));
+    if (pinnedTitleIds) list = list.filter(t => pinnedTitleIds.has(t.id));
+    const watchScope = collectionFilter === 'watchlist';
+    if (watchScope) list = list.filter(t => statusOf(t.id) === 'watchlist');
+    // Release and Phase are release order and Chrono story order, earliest
+    // first whatever the list's direction. A-Z, IMDb and RT follow the list
+    // itself, in its direction, so the suggestion is the first unseen title of
+    // the list on screen. The card names the order it used.
+    const order = sort === 'chrono' ? 'chrono' : (sort === 'title' || sort === 'imdb' || sort === 'rt') ? sort : 'release';
+    const result = window.MCU_nextUp(list, statusOf, { order, dir: sortDir });
+    const who = pinnedActor || (highlightedChar ? I18N.charName(highlightedChar) : null);
+    const lead = watchScope ? tr('upnext.fromWatchlist') : who ? tr('upnext.forChar', { name: who }) : tr('upnext.label');
+    const parts = [tr('upnext.order.' + order + (order === 'release' || order === 'chrono' ? '' : '.' + sortDir))];
+    if (typeFilter !== 'all') parts.push(tr(typeFilter === 'film' ? 'type.films' : 'type.series'));
+    if (phaseFilter !== 'all') parts.push(tr('phase.label', { n: phaseFilter }));
+    if (budgetFilter !== 'all') parts.push(tr('budget.' + budgetFilter));
+    const scoped = watchScope || !!pinnedTitleIds || phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all';
+    return { result, lead, detail: parts.join(' · '), scoped, watchScope };
+  }, [collectionReady, search, collectionFilter, phaseFilter, typeFilter, budgetFilter, pinnedTitleIds, pinnedActor, highlightedChar, sort, sortDir, upHidden, collectionStates, lang]);
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
@@ -1910,6 +1950,43 @@ function App() {
     setDrawerId(id);
     if (!isTouch && desktopView === 'spatial') setSelectedId(id);
   };
+  // Opening the suggestion: its details, and in Spatial its card too, so the
+  // camera glides to it. A pinned character stays pinned (the suggestion is
+  // one of their titles) and the stepper moves to it.
+  const openUpNext = (id) => {
+    setPair(null);
+    if (highlightedChar) {
+      if (pinnedCharIds && pinnedCharIds.has(id)) setStepId(id);
+      setDrawerId(id);
+      return;
+    }
+    setDrawerId(id);
+    if (isTouch ? viewMode === 'spatial' : desktopView === 'spatial') setSelectedId(id);
+  };
+  const upNext = upNextData && {
+    ...upNextData,
+    onOpen: openUpNext,
+    onHide: hideUpNext,
+    onShowAll: () => setCollectionFilter('all'),
+  };
+  // Announce a new suggestion politely once the previous one was marked seen
+  // (the toast already announces the mark itself).
+  const upNextId = upNext && upNext.result.kind === 'next' ? upNext.result.title.id : null;
+  const [upAnnounce, setUpAnnounce] = useState('');
+  const upPrevRef = useRef(null);
+  useEffect(() => {
+    const prev = upPrevRef.current;
+    upPrevRef.current = upNextId;
+    if (!prev || !upNextId || prev === upNextId) return;
+    if (statusOf(prev) === 'seen') {
+      setUpAnnounce(tr('upnext.announce', { title: I18N.titleName(upNext.result.title) }));
+    }
+  }, [upNextId]);
+  const upAnnouncer = <div className="story-sr" aria-live="polite">{upAnnounce}</div>;
+  // Desktop Spatial shows it as a row in the floating meter, which (like the
+  // meter) stands down while a title is selected.
+  const upNextInMeter = !isTouch && !!upNext && upNext.result.kind === 'next';
+
   // A character picked from the search suggestions opens the character view
   // (photo, Their titles / All titles, stepper) rather than a text search, as
   // if pinned from a cast list. A character pins that one portrayal; an actor
@@ -2475,9 +2552,11 @@ function App() {
       {/* Every order but By Phase carries one meter over the whole catalogue.
           It stands down with the band labels whenever a title is selected,
           since the canvas is then showing one ring. */}
-      {!selectedId && viewProgress && viewProgress.all && (
+      {!selectedId && ((viewProgress && viewProgress.all) || upNextInMeter) && (
         <div className="spatial-overall">
-          <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>
+          {viewProgress && viewProgress.all && <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>}
+          {/* Desktop only: phones get a chip above the gesture hint. */}
+          {upNextInMeter && <window.UpNextMeterRow info={upNext}/>}
         </div>
       )}
       {focusPop}
@@ -2487,6 +2566,7 @@ function App() {
   if (isTouch) {
     return (
       <div className={`app touch ${device}`}>
+        {upAnnouncer}
         <window.MobileTopBar
           device={device}
           viewMode={viewMode} setViewMode={(v) => {
@@ -2503,11 +2583,12 @@ function App() {
         />
         <div role="main" className={`m-main${charPill ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
-          {viewMode === 'grid' && <window.MobileGrid progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
-          {viewMode === 'list' && <window.MobileList progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {viewMode === 'grid' && <window.MobileGrid upNext={upNext} progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {viewMode === 'list' && <window.MobileList upNext={upNext} progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
+              {filtered.length > 0 && !selectedId && upNext && <window.UpNextChip info={upNext}/>}
               {filtered.length > 0 && <window.SpatialHint focused={!!selectedId} sharedCount={sharedCharCount}/>}
             </div>
           )}
@@ -2562,6 +2643,7 @@ function App() {
 
   return (
     <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
+      {upAnnouncer}
       <Toolbar
         onAbout={() => setAboutOpen(true)}
         onPickTitle={pickTitle} onPickPerson={pickPerson}
@@ -2578,7 +2660,7 @@ function App() {
       {charBanner}
 
       {desktopView === 'list'
-        ? <window.DesktopList titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
+        ? <window.DesktopList upNext={upNext} titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
             onOpen={(id) => setDrawerId(drawerId === id ? null : id)}
             header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey} progress={viewProgress}/>

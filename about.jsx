@@ -72,6 +72,7 @@ function AboutContent({ titleId, welcome, onClose }) {
       <h3 className="about-h">{tr('about.creditsTitle')}</h3>
       <div className="about-credits">
         <p>{tr('about.tmdb')} {tr('about.tmdbNotice')}</p>
+        <p>{tr('about.justwatch')}</p>
         <p>{tr('about.ratings')}</p>
         <p>{tr('about.fan')}</p>
       </div>

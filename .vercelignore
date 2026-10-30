@@ -1,2 +1,4 @@
 # Development-only QA checks are not part of the site.
 qa/
+# Maintainer tools (tools/refresh-watch.js) are not part of the site either.
+tools/
