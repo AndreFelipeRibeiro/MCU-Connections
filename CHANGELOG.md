@@ -14,7 +14,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V3 improvement — move through the desktop List with the arrow keys
 
-Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging). ([`5752bc8`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/5752bc8f7d61ce985f73e345d09bf75b01f847fe))
+Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 9 merge. ([`5752bc8`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/5752bc8f7d61ce985f73e345d09bf75b01f847fe))
 
 - With a title's details open, ← → step through the titles in the order the
   List shows (sort, tab, filters, search), wrapping at the ends, and a screen
@@ -31,7 +32,8 @@ Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging). ([`57
 
 ## V3 feature — "What have you seen?"
 
-Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging). ([`0b7be83`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/0b7be835d20609623e8a7c10802e9296360a3ae8))
+Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 9 merge. ([`0b7be83`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/0b7be835d20609623e8a7c10802e9296360a3ae8))
 
 - A poster grid of every released title by phase, to mark many as seen in one
   go. The first-visit welcome offers it ("Mark what I've seen"); the account
@@ -45,7 +47,8 @@ Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging). ([`0b
 
 ## V3 feature — curated watch guides
 
-Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging). ([`fec0e8b`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/fec0e8ba6f3fe96b655e2074cffc943a46655dda))
+Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 9 merge. ([`fec0e8b`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/fec0e8ba6f3fe96b655e2074cffc943a46655dda))
 
 - Six guides: before Avengers: Doomsday, the Infinity Saga essentials,
   Spider-Man, the Avengers films, the Multiverse Saga and the animated series.
@@ -61,7 +64,8 @@ Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging). ([`fe
 
 ## V3 improvement — a whole phase at once in the desktop List
 
-Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging). ([`40f8fa5`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/40f8fa5656bcfb693cf053dd12fdf95df13168d1))
+Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 9 merge. ([`40f8fa5`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/40f8fa5656bcfb693cf053dd12fdf95df13168d1))
 
 - In By Phase, each phase header has a checkbox that selects that phase for
   the bulk bar, and every progress header offers "Mark all seen" / "Mark N
