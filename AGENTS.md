@@ -37,13 +37,14 @@ their "Handoff — 2026-10-24" sections are historical.
   startup and modules. That migration is a planned V4 project with its own plan
   and approval, not something to start during V3 work (docs/decisions.md).
 - Load order lives in `index.html`: `boot.js`, locales + `i18n.js`, CDN
-  libraries, `data.js`, `media-data.js`, `config.js`, `supabase-client.js`, then
+  libraries, `data.js`, `media-data.js`, `watch-data.js`, `config.js`, `supabase-client.js`, then
   the `.jsx` files with `app.jsx` last. Keep that order.
 - Main files: `app.jsx` (app shell, desktop Spatial canvas, toolbar, details
   drawer, state), `mobile.jsx` (phone views, sheets, `Highlight`, `Portrait`
   users), `desktop-list.jsx` (desktop List), `connections.jsx` (line drawing),
   `poster.jsx` (`PosterArt`, `Portrait`, image fallbacks), `search-suggest.jsx`,
-  `tracking.jsx` (Seen/Watchlist + sync), `account.jsx`, `about.jsx`
+  `tracking.jsx` (Seen/Watchlist + sync), `watch.jsx` (Where to watch in the
+  details, the region picker), `account.jsx`, `about.jsx`
   (`ModalDialog`), `celebrate.jsx` (counters, confetti, sign-in reminder),
   `boot.js` (startup screen), `i18n.js` + `locales/*.js`, `data.js` (catalog;
   permanent title ids), `media-data.js` (TMDB paths), `config.js` (public
@@ -68,7 +69,7 @@ their "Handoff — 2026-10-24" sections are historical.
     the area you touched (for example `qa/test-kbspatial.js`), plus any existing
     check for the same screens. Minutes, not the full run.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (29 check scripts in 30 runs, about 28 minutes; it exits non-zero and marks
+    (30 check scripts in 31 runs, about 28 minutes; it exits non-zero and marks
     failures with `!!`) and `node qa/a11y-scan.js` (exits non-zero on any
     violation; add `LOC=pt-BR` for Portuguese), on the final tree with nothing
     edited while it runs. Read the scan's output, not just its exit code.

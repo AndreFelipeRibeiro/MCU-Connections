@@ -55,7 +55,9 @@ const go = async page => { await page.goto(URL); await settle(page); };
 // without scores, budget unknown), so the check keeps working as release
 // dates pass and the catalogue changes.
 const HEAD = ['td-hero', 'td-scores', 'td-facts', 'tsa', 'synopsis'];
-const SLOT_PROBE = "window.MCU_detailSlots = { watch: function (p) { return window.React.createElement('p', { className: 'slot-probe' }, 'watch ' + p.title.id); } };";
+// The "watch" slot is filled by watch.jsx (Where to watch); "guides" is still
+// empty, so it must render nothing.
+const SLOT_PROBE = null;
 
 const inspect = () => {
   const I = window.MCU_I18N;
@@ -83,7 +85,7 @@ const inspect = () => {
     budgetLabel: root.querySelector('.td-fact dt').textContent,
     closeOverlap: hero.some(e => { const r = e.getBoundingClientRect(); return r.right > close.left && r.left < close.right && r.bottom > close.top && r.top < close.bottom; }),
     overflow: [...root.querySelectorAll('.td-head *')].some(e => e.getBoundingClientRect().right > box.right + 0.5),
-    probe: (() => { const p = root.querySelector('.slot-probe'); if (!p) return null;
+    probe: (() => { const p = root.querySelector('.td-slot-watch .wtw'); if (!p || root.querySelector('.td-slot-guides')) return null;
       const order = [...head.children].map(e => e.className.split(' ')[0]); return order.indexOf('td-slot') - order.indexOf('synopsis'); })(),
   };
 };
@@ -131,7 +133,7 @@ const inspect = () => {
     if (r.shared === false) { err(`${name}: the details do not use the shared body (no .td-head)`); await ctx.close(); continue; }
     heads[name] = r.head.join(',');
     if (r.head.filter(c => c !== 'td-slot').join(',') !== HEAD.join(',')) err(`${name}: sections are ${r.head.join(', ')}, expected ${HEAD.join(', ')} (plus the slot)`);
-    if (r.probe !== 1) err(`${name}: a filled Where to watch slot should sit right after the synopsis (got offset ${r.probe})`);
+    if (r.probe !== 1) err(`${name}: Where to watch should sit right after the synopsis, with the Guides slot still empty (got offset ${r.probe})`);
     const castAfter = phone ? ['m-flab', 'm-castlist', 'm-apply'] : ['drawer-section-label', 'cast-list'];
     if (r.after.join(',') !== castAfter.join(',')) err(`${name}: after the details came ${r.after.join(', ')}, expected ${castAfter.join(', ')}`);
     if (r.heroText.join(',') !== 'td-eyebrow,td-title,release-line,story-year') err(`${name}: hero text is ${r.heroText.join(', ')}`);

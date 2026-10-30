@@ -20,7 +20,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression, 29 check scripts in 30 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
+| `bash qa/regress.sh` | Full regression, 30 check scripts in 31 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
 | `node qa/a11y-scan.js` | axe-core scan of 7 screens (desktop Spatial, details, List, account menu; phone List, details, Spatial). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
 | `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
@@ -69,11 +69,20 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   phone section headers' "Mark all seen" / "Mark N more seen"),
   `test-details` (the desktop drawer and the phone sheet show the same
   sections in the same order from one shared body: poster beside eyebrow,
-  title, release and story, then scores, budget, status, synopsis, the later
-  slots and the cast; "Ratings after release" for a title not out yet, "Not
-  published" for an unknown budget, the search highlighted in the title,
-  nothing under the close button or past the edge at 320px, Portuguese labels;
-  samples picked from the catalogue at run time).
+  title, release and story, then scores, budget, status, synopsis, Where to
+  watch (the Guides slot still empty) and the cast; "Ratings after release"
+  for a title not out yet, "Not published" for an unknown budget, the search
+  highlighted in the title, nothing under the close button or past the edge
+  at 320px, Portuguese labels; samples picked from the catalogue at run time),
+  `test-watch` (Where to watch, against a test snapshot served in place of
+  watch-data.js: the country guessed from the
+  browser's languages, then the time zone, then the US; stream and free logos
+  with the name kept when a logo fails; the rent-or-buy line; rent only; no
+  offers; not checked yet with no "Checked" date beside it; the series note;
+  nothing on a title not out yet; the picker, an unsupported country with
+  TMDB's own page, the choice kept across a reload; the 30-day warning; the
+  external link's target, rel and name with no tracking; the phone sheet in
+  Portuguese; and the real snapshot as committed).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.
@@ -114,7 +123,7 @@ one.
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
 - `test-camera` used to fail at "sort change while selected", and separately to
   report a false "wheel cancels the glide" about one run in four. Both were the
-  check, not the app, and both are fixed. A full run should now report **30 check runs clean**;
+  check, not the app, and both are fixed. A full run should now report **31 check runs clean**;
   treat any `test-camera` failure as real, and compare against a clean copy with
   `SITE=` if in doubt.
   - `page.mouse.click` moves the cursor and presses in the same tick. Hovering a

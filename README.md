@@ -75,6 +75,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   ("Ratings after release" for a title not out yet), the budget ("Not
   published" when unknown), Seen and Watchlist, the synopsis and the cast.
   Both surfaces render one shared body (`TitleDetailsBody` in `mobile.jsx`).
+- Where to watch: the details list the services offering a released title in
+  your country (stream and free with their logos, rent or buy on one line),
+  with one link to TMDB's page for all options and prices. The country is
+  guessed from the browser (language, then time zone, then the US) and can be
+  changed in the section; it is kept on this device only. The data is a dated
+  snapshot from JustWatch via TMDB (`watch-data.js`), refreshed by a
+  maintainer script; the app makes no API calls of its own. United States and
+  Brazil to start; titles not out yet show their release date instead.
 - The synopsis is short and spoiler-light (three lines, then See more),
   written for this app in each language.
 - Shareable addresses: the open title, a pinned character, the view, sort,
@@ -397,6 +405,9 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `celebrate.jsx` | Status toast with Undo, milestone confetti and the guest sign-in reminder |
 | `app.jsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
 | `mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
+| `watch.jsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
+| `watch-data.js` | The where-to-watch snapshot (written by `tools/refresh-watch.js`; do not edit by hand) |
+| `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
 | `search-suggest.jsx` | Search box with actor/character/title suggestions, shared by desktop and mobile |
 | `poster.jsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
@@ -455,6 +466,19 @@ Month-only release windows do not count toward released completion until a day
 is confirmed. A weekly Codex task prepares sourced updates for review on Mondays
 at 9am Eastern; it does not apply, commit or publish changes.
 
+Where to watch is refreshed with the weekly audit, and in the week a title
+reaches streaming. With a TMDB API Read Access Token in your own environment
+(never in the repository or chat):
+
+    TMDB_READ_TOKEN=... node tools/refresh-watch.js
+
+It finds each released title's TMDB id from its IMDb id in
+`docs/CATALOG-SOURCES.json`, warns when the TMDB title or year does not match,
+rewrites `watch-data.js` and prints what changed. Review the diff and commit it
+like any catalogue change. TMDB's data is free for non-commercial use with
+attribution to TMDB and JustWatch; affiliate or tracking links would need a
+commercial licence first.
+
 ## Known limitations
 
 - Catalog/cast lists, ratings and budgets are hand-maintained. Upcoming cast
@@ -484,7 +508,7 @@ maintainer as the primary author.
 | Application | React, ReactDOM, Babel standalone; browser HTML, CSS and JavaScript |
 | Source control and hosting | Git, GitHub and Vercel |
 | Accounts and cloud data | Supabase Auth/Postgres and Google OAuth |
-| Catalog and images | TMDB poster/portrait paths; IMDb user ratings; Rotten Tomatoes critics scores; Marvel and Wikipedia references, with specific catalog evidence in the audit |
+| Catalog and images | TMDB poster/portrait paths; where-to-watch data from JustWatch via TMDB; IMDb user ratings; Rotten Tomatoes critics scores; Marvel and Wikipedia references, with specific catalog evidence in the audit |
 | Development and verification | Claude and ChatGPT/Codex; browser inspection and desktop/mobile manual checks; supporting Python/Node checks outside the application runtime |
 
 [AGENTS.md](AGENTS.md) records the project workflow, changelog maintenance,

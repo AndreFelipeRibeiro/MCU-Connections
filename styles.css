@@ -1309,5 +1309,30 @@ body {
 .td-head.td-sheet .td-fact dd { font-size: 13px; }
 .td-head .td-tsa { margin-top: 14px; }
 .td-head .td-synopsis { margin: 14px 0 0; }
-.td-head.td-sheet .td-synopsis { margin: 14px 0 18px; }
+.td-head.td-sheet .td-synopsis { margin: 14px 0 0; }
+/* The space before the phone sheet's cast, whatever section ends the details. */
+.td-head.td-sheet { margin-bottom: 18px; }
 .td-slot { margin-top: 14px; }
+
+/* Where to watch (watch.jsx), in the details' "watch" slot after the synopsis. */
+.wtw { border-top: 1px solid var(--border); padding-top: 12px; }
+.wtw-head { display: flex; align-items: center; gap: 10px; min-height: 32px; }
+.wtw-title { margin: 0; flex: 1; min-width: 0; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;
+  letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-muted); }
+.wtw-change { min-height: 32px; padding: 0 4px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 12px; cursor: pointer; }
+.wtw-change:hover { text-decoration: underline; }
+.wtw-picker select { min-height: 32px; max-width: 190px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--border-strong);
+  background: var(--surface-2); color: var(--text); font: inherit; font-size: 12.5px; }
+.wtw-series { margin: 2px 0 0; font-size: 11.5px; color: var(--text-muted); }
+.wtw-group { margin-top: 10px; }
+.wtw-kind { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); }
+.wtw-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.wtw-provider { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text); }
+.wtw-logo { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 6px; background: var(--surface-2); object-fit: cover; }
+.wtw-logo.none { display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--text-dim);
+  border: 1px solid var(--border-strong); box-sizing: border-box; }
+.wtw-note, .wtw-also { margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--text-dim); }
+.wtw-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; margin-top: 6px; color: var(--accent); font-size: 12.5px; text-decoration: none; }
+.wtw-link:hover { text-decoration: underline; }
+.wtw-link:focus-visible, .wtw-change:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.wtw-credit { margin: 2px 0 0; font-size: 11px; color: var(--text-muted); }
