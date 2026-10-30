@@ -463,6 +463,28 @@ function CollectionProvider({ children }) {
     run();
   }, [markMany]);
 
+  // The "What have you seen?" picker (picker.jsx): picks become seen and
+  // unticked titles become unseen, as ONE change — one write per title, one
+  // announcement, one Undo that restores both. No confirmation: the picker
+  // itself is the confirmation and its button names the numbers. The same
+  // bulkTargets() rules apply (an unreleased title is never marked seen).
+  const applyPicks = React.useCallback((seenIds, unseenIds) => {
+    const states = statesRef.current;
+    const toSeen = bulkTargets(seenIds || [], 'seen', states);
+    const toNone = bulkTargets(unseenIds || [], 'none', states).filter((id) => toSeen.indexOf(id) === -1);
+    const changes = {};
+    toSeen.forEach((id) => { changes[id] = 'seen'; });
+    toNone.forEach((id) => { changes[id] = 'none'; });
+    const prev = applyMany(changes);
+    if (!prev) return 0;
+    const changed = Object.keys(prev);
+    const after = { ...states };
+    changed.forEach((id) => { if (changes[id] === 'none') delete after[id]; else after[id] = changes[id]; });
+    const to = toSeen.length && toNone.length ? 'mixed' : toSeen.length ? 'seen' : 'none';
+    emitStatusChange({ bulk: true, ids: changed, to, seenIds: toSeen, unseenIds: toNone, prev, states, after, picker: true });
+    return changed.length;
+  }, [applyMany]);
+
   // Undo puts every title back as it was, including a watchlist that a seen
   // mark had replaced. Like the single-title Undo, it announces nothing.
   const undoMany = React.useCallback((prev) => { applyMany(prev); }, [applyMany]);
@@ -590,9 +612,10 @@ function CollectionProvider({ children }) {
     toggleWatchlist,
     clearAll,
     requestBulk,
+    applyPicks,
     undoMany,
     progress,
-  }), [states, loading, mode, syncError, retrySync, loadedScope, scope, remoteLoading, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, requestBulk, undoMany, progress]);
+  }), [states, loading, mode, syncError, retrySync, loadedScope, scope, remoteLoading, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, requestBulk, applyPicks, undoMany, progress]);
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>;
 }
@@ -632,7 +655,8 @@ function nextUp(titles, statusOf, opts) {
   if (!titles || !titles.length) return { kind: 'empty' };
   const sortBy = window.sortTitles || ((list) => list.slice());
   const listOrder = o.order === 'title' || o.order === 'imdb' || o.order === 'rt';
-  const ordered = sortBy(titles, listOrder ? o.order : (o.order === 'chrono' ? 'chrono' : 'release'), listOrder && o.dir === 'desc' ? 'desc' : 'asc');
+  // `ordered`: the titles are already in their order (a guide's stops).
+  const ordered = o.ordered ? titles.slice() : sortBy(titles, listOrder ? o.order : (o.order === 'chrono' ? 'chrono' : 'release'), listOrder && o.dir === 'desc' ? 'desc' : 'asc');
   const released = ordered.filter((t) => isReleased(t));
   const unseen = released.filter((t) => statusOf(t.id) !== 'seen');
   const pick = unseen.find((t) => !skipped.has(t.id));
@@ -672,7 +696,10 @@ function collectionEmptyCopy(filter) {
     return { title: tr('collection.emptyWatchlist'), sub: tr('collection.emptyWatchlistSub') };
   }
   if (filter === 'seen') {
-    return { title: tr('collection.emptySeen'), sub: tr('collection.emptySeenSub') };
+    // Nothing seen yet: offer the picker, to mark several at once.
+    const run = window.MCU_openPicker;
+    return { title: tr('collection.emptySeen'), sub: tr('collection.emptySeenSub'),
+      action: run ? { label: tr('picker.open'), run } : null };
   }
   if (filter === 'unseen') {
     return { title: tr('collection.emptyUnseen'), sub: tr('collection.emptyUnseenSub') };

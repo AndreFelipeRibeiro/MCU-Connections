@@ -21,7 +21,7 @@ function ScoreBadges({ title, lead, compact }) {
 // The app bar is already three rows deep on a phone, so the view switch moved
 // off m-appbar-top (where the account avatar now sits) onto its own tight row
 // rather than becoming a fourth control crammed into the brand row.
-function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, collectionFilter, setCollectionFilter }) {
+function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, onOpenGuides, guideActive, collectionFilter, setCollectionFilter }) {
   // The suggestions list spans the whole search row (see SearchInput).
   const [searchRow, setSearchRow] = React.useState(null);
   return (
@@ -32,6 +32,10 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, o
           <h1 className="m-btitle">{mtr('app.name')}</h1>
         </div>
         <window.SyncStatus/>
+        {onOpenGuides && (
+          <button type="button" className={`m-gbtn${guideActive ? ' on' : ''}`} onClick={onOpenGuides}
+            aria-label={mtr('guide.button')} title={mtr('guide.button')}><window.GuideIcon size={18}/></button>
+        )}
         <window.LanguageMenu compact/>
         <window.AccountAvatarButton onOpen={onOpenAccount}/>
       </div>
@@ -596,7 +600,9 @@ function MobileGrid({ header, currentId, titles: allTitles, onSelect, searchChar
   // Up next: a full-width card at the top. See upNextPlacement.
   const place = upNextPlacement(upNext);
   const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
-  const top = place.topNode && <div className="un-inline top">{place.topNode}</div>;
+  // The lifted title's row, for a step that scrolls to it (a pinned character
+  // or guide stepping onto the suggestion).
+  const top = place.topNode && <div className="un-inline top" data-row-id={place.hideId || undefined}>{place.topNode}</div>;
   // The caller decides which of these it hands over: phase headings belong to
   // the By Phase tab, and every other order gets one meter over the whole
   // catalogue instead.
@@ -839,7 +845,9 @@ function MobileList({ header, currentId, titles: allTitles, sort, onSelect, sear
   const settled = useSettled();
   const place = upNextPlacement(upNext);
   const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
-  const top = place.topNode && <div className="un-inline top">{place.topNode}</div>;
+  // The lifted title's row, for a step that scrolls to it (a pinned character
+  // or guide stepping onto the suggestion).
+  const top = place.topNode && <div className="un-inline top" data-row-id={place.hideId || undefined}>{place.topNode}</div>;
   if (!allTitles.length) return <div className="m-scrollarea" ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
   // Ranks count the whole list, the suggestion lifted to the top included.
   const rankOf = (t) => allTitles.indexOf(t) + 1;
@@ -1059,12 +1067,13 @@ function MobileList({ header, currentId, titles: allTitles, sort, onSelect, sear
   );
 }
 
-function EmptyState({ title, sub, mark }) {
+function EmptyState({ title, sub, mark, action }) {
   return (
     <div className="m-empty">
       <div className="m-empty-mark">{mark || '◍'}</div>
       <div className="m-empty-t">{title || mtr('empty.title')}</div>
       <div className="m-empty-s">{sub || mtr('empty.sub')}</div>
+      {action && <button type="button" className="empty-action" onClick={action.run}>{action.label}</button>}
     </div>
   );
 }
@@ -1127,7 +1136,10 @@ const sheetHistory = (() => {
   };
 })();
 
-function Sheet({ children, onClose, tall, label }) {
+// `onClose` may return false to stay open (the picker asks before dropping
+// unsaved picks): Back then gets the sheet a new history entry, and a swipe
+// springs back.
+function Sheet({ children, onClose, tall, label, className = '' }) {
   const ref = React.useRef(null);
   const closeRef = React.useRef(onClose);
   closeRef.current = onClose;
@@ -1140,7 +1152,7 @@ function Sheet({ children, onClose, tall, label }) {
     previous.forEach(([el]) => { el.inert = true; });
     const overflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const focusable = () => Array.from(sheet.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]')).filter((el) => el.tabIndex >= 0 && el.getClientRects().length);
+    const focusable = () => Array.from(sheet.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]')).filter((el) => el.tabIndex >= 0 && el.getClientRects().length && !el.closest('[inert]'));
     // Focus the sheet itself: screen readers announce it, Tab moves into it, and
     // no focus ring appears on a control the visitor didn't choose.
     sheet.focus();
@@ -1157,7 +1169,9 @@ function Sheet({ children, onClose, tall, label }) {
       }
     };
     document.addEventListener('keydown', keys);
-    const entry = sheetHistory.open(() => closeRef.current());
+    let entry;
+    const onBack = () => { if (closeRef.current() === false) entry = sheetHistory.open(onBack); };
+    entry = sheetHistory.open(onBack);
     return () => {
       sheetHistory.close(entry);
       document.removeEventListener('keydown', keys);
@@ -1209,7 +1223,7 @@ function Sheet({ children, onClose, tall, label }) {
       const fast = d.dy > 40 && d.dy / (performance.now() - d.t) > 0.6;
       if (fast || d.dy > Math.min(160, sheet.offsetHeight * 0.33)) {
         place(sheet.offsetHeight, true);
-        setTimeout(() => closeRef.current(), reduce ? 0 : 190);
+        setTimeout(() => { if (closeRef.current() === false) place(0, true); }, reduce ? 0 : 190);
       } else place(0, true);
     };
     sheet.addEventListener('touchstart', start, { passive: true });
@@ -1226,7 +1240,7 @@ function Sheet({ children, onClose, tall, label }) {
   return (
     <>
       <div className="m-scrim" onClick={onClose} aria-hidden="true"/>
-      <div ref={ref} className={`m-sheet${tall?' tall':''}`} role="dialog" aria-modal="true" aria-label={label || mtr('details.label')} tabIndex={-1}>
+      <div ref={ref} className={`m-sheet${tall?' tall':''}${className ? ' ' + className : ''}`} role="dialog" aria-modal="true" aria-label={label || mtr('details.label')} tabIndex={-1}>
         <button className="m-grab" onClick={onClose} aria-label={mtr('details.close')} tabIndex={-1}/>
         <button className="m-sheet-x" onClick={onClose} aria-label={mtr('details.close')} title={mtr('details.close')}>×</button>
         <div className="m-sheet-body">{children}</div>
@@ -1353,10 +1367,11 @@ function DetailSection({ id, label, labelClass = '', bodyClass = '', className =
 
 // Sections that later tickets fill (Where to watch, Guides). Each looks up a
 // component on window.MCU_detailSlots and renders nothing until one exists, so
-// those tickets drop into their place without touching the layout.
+// those tickets drop into their place without touching the layout. A slot
+// with a `has(title)` test is left out entirely when it has nothing to show.
 function DetailSlot({ name, title }) {
   const Slot = (window.MCU_detailSlots || {})[name];
-  if (!Slot) return null;
+  if (!Slot || (Slot.has && !Slot.has(title))) return null;
   return <section className={`td-slot td-slot-${name}`}><Slot title={title}/></section>;
 }
 
@@ -1474,4 +1489,4 @@ function SpatialHint({ focused, sharedCount }) {
   );
 }
 
-Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, TitleDetailsBody, DetailSection, useDetailOpen, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });
+Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, TitleDetailsBody, DetailSection, useDetailOpen, BulkHeaderAction, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });

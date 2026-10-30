@@ -44,6 +44,91 @@ function dlGroups(titles, sort) {
   return groups;
 }
 
+// Keyboard movement between rows ([data-row-id]: the List and the Guides
+// table). A control is found again in another row by its column (the row's
+// child that holds it) and its place inside that column, so the title moves to
+// the title, the checkbox to the checkbox and Seen to Seen, even when one row
+// carries an extra badge another doesn't.
+const ROW_FOCUSABLE = 'input, button, a[href], [tabindex]:not([tabindex="-1"])';
+function rowControls(cell) {
+  return [...cell.querySelectorAll(ROW_FOCUSABLE)].filter(el => !el.disabled && el.getClientRects().length > 0);
+}
+function sameControlIn(fromEl, toRow) {
+  const from = fromEl && fromEl.closest && fromEl.closest('[data-row-id]');
+  if (!from || from === toRow) return null;
+  const cell = [...from.children].find(c => c.contains(fromEl));
+  if (!cell) return null;
+  const col = [...from.children].indexOf(cell);
+  const k = Math.max(0, rowControls(cell).findIndex(el => el === fromEl || el.contains(fromEl)));
+  const toCell = toRow.children[col];
+  const there = toCell ? rowControls(toCell) : [];
+  return there[Math.min(k, there.length - 1)] || rowControls(toRow)[0] || null;
+}
+// After a step to another title: when keyboard focus sat in a row, it moves
+// to the same control in the new title's row (the caller scrolls).
+window.MCU_followRowFocus = (toRow) => {
+  const target = sameControlIn(document.activeElement, toRow);
+  if (target) target.focus({ preventScroll: true });
+};
+
+// ↑ ↓ / Home / End in a desktop table of titles (the List, the Guides table).
+// rowSelector picks the rows to land on (not headers or meters); openId is the
+// title whose details are open; onFollow(id, n, total) opens another. Returns
+// the table's ref and its keydown handler.
+// - Focus in a row: ↑ ↓ move focus to the same control in the row above or
+//   below, Home and End to the first and last row; they stop at the ends.
+//   With the details open they follow the row, as in a mail app. Shift is left
+//   free for a later range selection.
+// - Details open but focus not in a row (after a mouse click focus is usually
+//   on the page: Safari never focuses a clicked button, and a row itself is
+//   not focusable): ↑ ↓ move from the open title to the row above or below and
+//   open it, with n and total so the caller can announce the position. Focus
+//   in the details, a field, a menu or the bulk bar keeps the keys.
+function useRowKeys(rowSelector, openId, onFollow) {
+  const tableRef = React.useRef(null);
+  const latest = React.useRef(null);
+  latest.current = { rowSelector, openId, onFollow };
+  const rowsNow = () => [...tableRef.current.querySelectorAll(latest.current.rowSelector)];
+  const onKeyDown = (e) => {
+    if (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Home' && e.key !== 'End') return;
+    const row = e.target.closest && e.target.closest(rowSelector);
+    if (!row || !tableRef.current) return;
+    const rows = rowsNow();
+    const i = rows.indexOf(row);
+    const j = e.key === 'Home' ? 0 : e.key === 'End' ? rows.length - 1 : i + (e.key === 'ArrowDown' ? 1 : -1);
+    e.preventDefault();
+    if (j < 0 || j >= rows.length || j === i) return;
+    const to = rows[j];
+    const target = sameControlIn(e.target, to);
+    if (target) target.focus({ preventScroll: true });
+    to.scrollIntoView({ block: 'nearest' });
+    if (openId && onFollow) onFollow(to.getAttribute('data-row-id'));
+  };
+  React.useEffect(() => {
+    const onKey = (e) => {
+      if ((e.key !== 'ArrowUp' && e.key !== 'ArrowDown') || e.defaultPrevented || e.altKey || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      const { openId: id, onFollow: follow } = latest.current;
+      if (!id || !follow || !tableRef.current) return;
+      const t = e.target instanceof Element ? e.target : null;
+      if (t && t.closest('[data-row-id], input, textarea, select, [contenteditable="true"], [role="listbox"], [role="menu"], [role="group"], [role="dialog"], .drawer, .bulk-bar')) return;
+      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .bulk-more-pop, .g-pop, [aria-modal="true"]')) return;
+      const rows = rowsNow();
+      const i = rows.findIndex(r => r.getAttribute('data-row-id') === id);
+      if (i < 0) return;
+      const j = i + (e.key === 'ArrowDown' ? 1 : -1);
+      e.preventDefault();
+      if (j < 0 || j >= rows.length) return;
+      rows[j].scrollIntoView({ block: 'nearest' });
+      follow(rows[j].getAttribute('data-row-id'), j + 1, rows.length);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+  return { tableRef, onKeyDown };
+}
+window.useRowKeys = useRowKeys;
+
 // Character face: the actor photo when there is one, else initials on the
 // character's colour. Matched search characters get a ring.
 // Dark or white initials, whichever reads better on the character's colour
@@ -110,7 +195,24 @@ function BulkMore({ open, setOpen, label, children }) {
   );
 }
 
-function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, activeChar, activeChars, header, empty, orderKey, progress, upNext }) {
+// The checkbox on a phase header (By Phase): selects that phase's rows for the
+// bulk bar, shows a mixed state when only some of them are selected, and
+// clears them when they all are. The phase name is its visible label.
+function DlPhaseCheck({ ids, selected, onToggle, group, label }) {
+  const ref = React.useRef(null);
+  const all = ids.length > 0 && ids.every(id => selected.has(id));
+  const some = !all && ids.some(id => selected.has(id));
+  React.useEffect(() => { if (ref.current) ref.current.indeterminate = some; }, [some]);
+  return (
+    <span className="dl-phase-label">
+      <input type="checkbox" ref={ref} className="dl-check" checked={all} onChange={() => onToggle(ids)}
+        aria-label={window.MCU_I18N.tr('bulk.selectPhase', { group })} title={window.MCU_I18N.tr('bulk.selectPhase', { group })}/>
+      <span>{label}</span>
+    </span>
+  );
+}
+
+function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searchCharMatches, openId, onOpen, onFollow, activeChar, activeChars, header, empty, orderKey, progress, upNext }) {
   const I = window.MCU_I18N;
   const tr = I.tr;
   const { statusOf, states, requestBulk } = window.useCollection();
@@ -168,6 +270,15 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   const headCheck = React.useRef(null);
   React.useEffect(() => { if (headCheck.current) headCheck.current.indeterminate = someOn; }, [someOn]);
   const toggleAll = () => setSelected(allOn ? new Set() : new Set(shownIds));
+  // One phase at a time (By Phase): its header's checkbox adds the phase's
+  // rows to the selection, or clears them when they are all selected already.
+  const togglePhase = (ids) => setSelected(prev => {
+    const next = new Set(prev);
+    const all = ids.length > 0 && ids.every(id => prev.has(id));
+    ids.forEach(id => { if (all) next.delete(id); else next.add(id); });
+    return next;
+  });
+  const phaseIds = (phase) => titles.filter(t => t.phase === phase).map(t => t.id);
   const clearSelection = () => { setSelected(new Set()); anchorRef.current = null; };
   const selIds = shownIds.filter(id => selected.has(id));
   const counts = {
@@ -197,6 +308,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
   }, []);
+  const { tableRef, onKeyDown: onTableKey } = useRowKeys('.dl-row[data-row-id]', openId, onFollow);
   const groups = dlGroups(titles, sort);
   const labels = {
     poster: <span className="story-sr">{tr('list.col.poster')}</span>, title: tr('list.col.title'), type: tr('list.col.type'), phase: tr('list.col.phase'),
@@ -222,11 +334,22 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   // later phase's meter pins in the same place at its boundary and covers the
   // one before it, so the current phase is always the one on top.
   const leadPhase = !(progress && progress.all) && blocks[0] && blocks[0].phased ? blocks[0].groups[0].phaseStart : null;
+  // Each meter carries the phones' "Mark N more seen" (the same component, so
+  // the same count rule, confirmation and Undo), and in By Phase a checkbox
+  // that selects the phase for the bulk bar.
+  const phaseMeter = (phase) => {
+    const ids = phaseIds(phase);
+    const group = I.tr('phase.label', { n: phase });
+    return (
+      <window.ProgressHeader color={window.PHASE_COLORS[phase]} {...progress.byPhase[phase]}
+        label={<DlPhaseCheck ids={ids} selected={selected} onToggle={togglePhase} group={group} label={I.upper(group)}/>}
+        action={<window.BulkHeaderAction ids={ids} group={group}/>}/>
+    );
+  };
   const leadMeter = progress && progress.all
-    ? <window.ProgressHeader label={I.upper(I.tr('progress.all'))} {...progress.all}/>
-    : leadPhase
-      ? <window.ProgressHeader label={I.upper(I.tr('phase.label', { n: leadPhase }))} color={window.PHASE_COLORS[leadPhase]} {...progress.byPhase[leadPhase]}/>
-      : null;
+    ? <window.ProgressHeader label={I.upper(I.tr('progress.all'))} {...progress.all}
+        action={<window.BulkHeaderAction ids={shownIds} group={I.tr('progress.all')}/>}/>
+    : leadPhase ? phaseMeter(leadPhase) : null;
   return (
     <div className={`dlist${ranked ? ' ranked' : ''}`} ref={flipRef} role="main" aria-label={tr('view.list')}>
       {header}
@@ -237,6 +360,7 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
         <div className="dl-empty">
           <div className="dl-empty-t">{(empty && empty.title) || tr('empty.title')}</div>
           <div className="dl-empty-s">{(empty && empty.sub) || tr('empty.sub')}</div>
+          {empty && empty.action && <button type="button" className="empty-action" onClick={empty.action.run}>{empty.action.label}</button>}
         </div>
       ) : (
         <>
@@ -262,7 +386,8 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
             <button className="bulk-btn ghost" onClick={clearSelection}>{tr('bulk.clear')}</button>
           </div>
         )}
-        <div className="dl-table" role="table" aria-label={tr('view.list')} style={{ '--dl-lead-h': leadH + 'px' }}>
+        <div className="dl-table" role="table" aria-label={tr('view.list')} style={{ '--dl-lead-h': leadH + 'px' }}
+          ref={tableRef} onKeyDown={onTableKey}>
           {/* A row owned directly by the table (a rowgroup holding no row is
               invalid ARIA), first so it reads and draws above the headers. */}
           {leadMeter && (
@@ -287,9 +412,8 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
                    with a transform, and a sticky element is already positioned
                    from the scroll offset — together they leave the bar hanging
                    below the header instead of under it. */
-                <div className="dl-phase-divider sticky">
-                  <window.ProgressHeader label={I.upper(I.tr('phase.label', { n: b.groups[0].phaseStart }))}
-                    color={window.PHASE_COLORS[b.groups[0].phaseStart]} {...progress.byPhase[b.groups[0].phaseStart]}/>
+                <div role="row" className="dl-phase-divider sticky">
+                  <span role="cell" className="dl-overall-cell">{phaseMeter(b.groups[0].phaseStart)}</span>
                 </div>
               )}
               {b.groups.map(g => (

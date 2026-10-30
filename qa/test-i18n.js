@@ -109,7 +109,7 @@ const scan = (list) => (() => {
       await page.locator('.coll-switch button').nth(0).click();
       await page.locator('.view-menu .sort-order-trigger').click(); await page.locator('.view-menu .sort-order-pop button').nth(2).click(); await page.waitForTimeout(700); texts.push(...await page.evaluate(scan()));
     } else {
-      await page.locator('.filters-pill').click(); await page.waitForTimeout(250); texts.push(...await page.evaluate(scan())); await page.keyboard.press('Escape');
+      await page.locator('.filters-pill:not(.g-btn)').click(); await page.waitForTimeout(250); texts.push(...await page.evaluate(scan())); await page.keyboard.press('Escape');
       const c = await page.evaluate(() => { const r = document.querySelector('.card').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height * 0.8 }; });
       await page.mouse.click(c.x, c.y); await page.waitForTimeout(800); texts.push(...await page.evaluate(scan()));
       out[name].drawer = await page.evaluate(() => (document.querySelector('.drawer-eyebrow') || {}).textContent + ' | ' + (document.querySelector('.drawer-title') || {}).textContent + ' | ' + (document.querySelector('.drawer-story') || {}).textContent);

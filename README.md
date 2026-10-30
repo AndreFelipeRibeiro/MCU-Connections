@@ -94,6 +94,29 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   snapshot from JustWatch via TMDB (`watch-data.js`), refreshed by a
   maintainer script; the app makes no API calls of its own. United States and
   Brazil to start; titles not out yet show their release date instead.
+- Guides: short, curated paths through the catalogue (a Guides button in the
+  desktop toolbar and the phone app bar). Catch up before Avengers: Doomsday,
+  the Infinity Saga essentials, Spider-Man, the Avengers films, the Multiverse
+  Saga and the animated series. Each stop says why it is there; essential
+  stops are numbered and optional ones sit behind "Include optional". An open
+  guide works like a pinned character: the List and Grid show its stops in
+  order with the next one marked, Spatial dims the rest and draws the route
+  between its numbered cards (an arrow on an event guide's destination), the
+  stepper walks the stops, Up next suggests the next stop, Escape or × closes
+  it (closing is how to see every title again: a guide shows only its own),
+  and `?guide=` shares it. Search suggests guides by name, a character
+  with a guide offers "See the curated path", and a title's details list the
+  guides it belongs to ("Part of"). Finishing a guide's essential stops bursts
+  green confetti once per guide (none with reduced motion). Every title also
+  carries a continuity marker (main, alternate reality or anthology).
+- "What have you seen?": a poster grid of every released title, by phase in
+  release order, to mark many as seen in one go. The first-visit welcome
+  offers it ("Mark what I've seen"), and it stays reachable from the account
+  menu or sheet and from the Seen tab's empty state. Each phase has Select
+  all / Clear; titles already seen start ticked and can be unticked. Saving is
+  one change with one toast and Undo (no extra confirmation: the button names
+  the number); closing with unsaved picks asks first. A full-height sheet on
+  phones, a dialog on desktop.
 - The synopsis is short and spoiler-light (three lines, then See more),
   written for this app in each language.
 - Shareable addresses: the open title, a pinned character, the view, sort,
@@ -155,6 +178,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   when they close.
 - In desktop Spatial, Tab reaches each card (then its Seen and Watchlist
   buttons) and Enter opens it; a card tabbed to off-screen glides into view.
+- In the desktop List, ↑ ↓ move between rows keeping the column (checkbox,
+  title, Seen, Watchlist) and Home / End jump to the first and last row; with a
+  title's details open the details follow, also when it was opened with the
+  mouse (↑ ↓ then move from the open title). ← → then step to the previous or
+  next title in the order shown, wrapping at the ends, and a screen reader
+  hears the title and its position. A pinned character or an open guide keeps
+  stepping through its own titles. A row scrolled into view always clears the
+  pinned meter and column headers.
 - On phones, Spatial's grid layouts (Phase, A–Z, IMDb, RT) open with three
   whole columns and the next column and row peeking past the right and bottom
   edges, so it's clear the canvas pans; the first row sits below the count pill.
@@ -188,11 +219,12 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Mobile opens in List; each device then remembers its last view, sort mode and order.
 - Seen and watchlist controls on cards and details. Marking a watchlisted title
   seen moves it to seen; un-seeing returns it to untracked.
-- Marking many at once. In the desktop List, tick rows (Shift-click for a
-  range, the header box for everything shown) and use the bar that appears:
-  Mark as seen, Add to Watchlist, or Mark as unseen under More. On phones, each
-  section header offers "Mark all seen" or "Mark 4 more seen" (each phase in By
-  Phase, All titles in every other order). Unreleased titles are never marked
+- Marking many at once. Every progress header, on phones and in the desktop
+  List, offers "Mark all seen" or "Mark 4 more seen" (each phase in By Phase,
+  All titles in every other order). In the desktop List you can also tick rows
+  (Shift-click for a range, a phase header's box for that phase in By Phase,
+  the column header box for everything shown) and use the bar that appears:
+  Mark as seen, Add to Watchlist, or Mark as unseen under More. Unreleased titles are never marked
   seen in bulk, anything over 20 titles (and any Mark as unseen) asks first, and
   the toast's Undo puts every title back as it was, a replaced watchlist
   included. Escape clears the selection before it closes the details.
@@ -420,8 +452,11 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `watch.jsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
 | `watch-data.js` | The where-to-watch snapshot (written by `tools/refresh-watch.js`; do not edit by hand) |
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
+| `guides.js` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
+| `guides-ui.jsx` | Guides: the menu, desktop banner and List, phone views and pill, the meter, "Part of" in the details |
+| `picker.jsx` | "What have you seen?": the poster-grid picker opened from the welcome, the account menu/sheet and the Seen empty state |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
-| `search-suggest.jsx` | Search box with actor/character/title suggestions, shared by desktop and mobile |
+| `search-suggest.jsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
 | `poster.jsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
 | `connections.jsx` | Standalone connection layer retained for reference; not wired into the app |
 | `styles.css` / `styles-mobile.css` | Desktop/touch layout, status treatments, focus and dialogs |

@@ -336,6 +336,9 @@
 .char-pill .cb-close { font-size: 17px; color: var(--text-dim); border-left: 1px solid var(--border); border-radius: 0 999px 999px 0; width: 40px; }
 .char-pill .cb-step button:active, .char-pill .cb-close:active { background: rgba(255,255,255,.08); }
 .char-pill .cb-pos { min-width: 42px; font-size: 12px; color: var(--text); }
+.char-pill .cp-guide { width: 38px; height: 38px; flex: 0 0 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  border: 0; border-radius: 50%; background: rgba(74,141,232,.16); color: #8db8f2; cursor: pointer; }
+.char-pill .cp-guide:active { background: rgba(74,141,232,.28); }
 .char-pill button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Keep the last rows clear of the pill; the spatial hint makes way for it. */
 .m-main.has-pill .m-scrollarea { padding-bottom: 84px; }
@@ -343,6 +346,9 @@
    the top edge and the whole row clear of the floating character pill. */
 .m-scrollarea { scroll-padding-top: 10px; }
 .m-main.has-pill .m-scrollarea { scroll-padding-bottom: 84px; }
+/* When a meter pins at the top (about 56px), a row scrolled into view stops
+   below it rather than under it. */
+.m-scrollarea:has(.m-phase-divider.sticky) [data-row-id] { scroll-margin-top: 52px; }
 .m-main.has-pill .m-ghint { display: none; }
 .m-lrow.current, .m-card.current { box-shadow: 0 0 0 2px var(--cur-color, var(--accent)); border-radius: 12px; }
 /* Close button on every sheet, beside the drag handle. */
@@ -493,3 +499,18 @@
   cursor: pointer; white-space: nowrap;
 }
 .pgh-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* "What have you seen?" on phones: a full-height sheet whose footer stays in reach. */
+.m-sheet.pk-sheet { height: calc(100dvh - 24px); max-height: none; }
+.m-sheet.pk-sheet .m-sheet-body { flex: 1; padding-bottom: 0; }
+.pk.touch .pk-head { padding-top: 4px; }
+.pk.touch .pk-title { font-size: 19px; }
+.pk.touch .pk-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.pk.touch .pk-body { padding-bottom: 16px; }
+.pk.touch .pk-foot { position: sticky; bottom: 0; margin: 0 -18px; padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 0px)); }
+.pk.touch .picker-go { min-height: 48px; }
+.pk.touch .pk-ask-wrap { align-items: flex-end; }
+.pk.touch .pk-ask { width: 100%; border-radius: 18px 18px 0 0; border-bottom: 0; padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
+.m-sheet .welcome-pick { bottom: calc(-24px - env(safe-area-inset-bottom, 0px)); margin: 22px -18px calc(-24px - env(safe-area-inset-bottom, 0px));
+  padding: 14px 18px calc(20px + env(safe-area-inset-bottom, 0px)); }
+.m-sheet .acct-links .acct-pick { min-height: 48px; padding: 6px 12px; }

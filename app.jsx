@@ -266,7 +266,7 @@ function computeLayout(titles, sort, dir = DEFAULT_SORT_DIR[sort]) {
   return { positions, bands: layoutBands, width: maxX + 120, height: maxY + 120 };
 }
 
-function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale }) {
+function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusable, isSelected, isHighlighted, isDimmed, isCollDimmed, isRingHidden, isRingFocus, isDragging, isCurrent, curColor, matchedChars, searchQuery, scale, guideBadge }) {
   const phaseColor = PHASE_COLORS[title.phase];
   const downRef = useRef({ x: 0, y: 0, moved: false });
   const { statusOf } = window.useCollection();
@@ -311,7 +311,12 @@ function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusabl
       <div className="card-poster">
         <PosterArt title={title}/>
         <div className="card-badges">
-          <span className="badge type-badge">{I18N.upper(typeLabel(title.type))}</span>
+          {/* An open guide numbers its stops on the canvas (a check once
+              seen, + for optional, an arrow for the destination); the badge
+              takes the type label's corner. */}
+          {guideBadge
+            ? <span className={`card-gnum ${guideBadge.cls}`} role="img" aria-label={guideBadge.label}>{guideBadge.text}</span>
+            : <span className="badge type-badge">{I18N.upper(typeLabel(title.type))}</span>}
           <span className="badge phase-badge" style={{background: phaseColor, color:'#0a0c14'}}>{phaseLabel(title.phase)}</span>
         </div>
         {showActions
@@ -352,6 +357,17 @@ function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusabl
 let lastInput = 'pointer';
 document.addEventListener('keydown', (e) => { if (!e.metaKey && !e.ctrlKey && !e.altKey) lastInput = 'keyboard'; }, true);
 document.addEventListener('pointerdown', () => { lastInput = 'pointer'; }, true);
+// Set by the arrow keys that step from title to title: the details then follow
+// without taking focus, so the next press still reaches the list. Cleared once
+// the details have shown that title, or after a moment if they never change.
+let drawerStepFocus = false;
+const stepReducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+let drawerStepTimer = 0;
+const keepFocusOnStep = () => {
+  drawerStepFocus = true;
+  clearTimeout(drawerStepTimer);
+  drawerStepTimer = setTimeout(() => { drawerStepFocus = false; }, 1000);
+};
 
 function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, activeChars, search }) {
   // Slide in and out: mount closed and open on the next frame, and keep showing
@@ -378,7 +394,9 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
     if (opener && opener.isConnected && lastInput === 'keyboard' && (inPanel || active === document.body)) opener.focus({ preventScroll: true });
   }, [current && current.id]);
   useEffect(() => {
-    if (open && headingRef.current && lastInput === 'keyboard') headingRef.current.focus({ preventScroll: true });
+    if (!open) return;
+    if (headingRef.current && lastInput === 'keyboard' && !drawerStepFocus) headingRef.current.focus({ preventScroll: true });
+    drawerStepFocus = false;
   }, [open, title && title.id]);
   // Details and cast scroll as one, so a new title starts at its poster rather
   // than wherever the last one's cast was scrolled to.
@@ -440,7 +458,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
 const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
-function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
+function Toolbar({ guideId, onOpenGuide, onAbout, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   // Collection has its own always-visible switch, so it is not counted here.
@@ -536,6 +554,7 @@ function Toolbar({ onAbout, onPickTitle, onPickPerson, desktopView, setDesktopVi
         </div>
         <div className="tb-end">
           <window.SyncStatus/>
+          <window.GuidesButton currentId={guideId} onPick={onOpenGuide}/>
           <window.LanguageMenu/>
           <window.AccountButton onPickCollection={setCollectionFilter} onAbout={onAbout}/>
         </div>
@@ -578,7 +597,32 @@ function labelPillWidth(text) {
   }
 }
 
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds }) {
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds, route }) {
+  // An open guide: one route through its stops in guide order, dashed on to
+  // the destination, in place of the character threads. A single path in the
+  // existing layer, so the canvas performance rules hold.
+  if (route) {
+    const centre = (id) => { const p = positions[id]; return p && { x: p.x + CARD_W / 2, y: p.y + CARD_H / 2 }; };
+    const pts = route.ids.map(centre).filter(Boolean);
+    const segs = [];
+    for (let i = 0; i < pts.length - 1; i++) segs.push([pts[i], pts[i + 1], false]);
+    const dest = route.target && centre(route.target);
+    if (dest && pts.length) segs.push([pts[pts.length - 1], dest, true]);
+    const d = (a, b) => {
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const dx = b.x - a.x, dy = b.y - a.y, dist = Math.hypot(dx, dy) || 1;
+      const sag = Math.min(90, 20 + dist * 0.12);
+      return `M ${a.x} ${a.y} Q ${mx - dy / dist * sag} ${my + dx / dist * sag} ${b.x} ${b.y}`;
+    };
+    return (
+      <svg className="connection-layer guide-route" style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}} aria-hidden="true">
+        {segs.map(([a, b, dashed], i) => (
+          <path key={i} d={d(a, b)} fill="none" stroke="#4a8de8" strokeWidth={dashed ? 2.5 : 4} strokeLinecap="round"
+            strokeDasharray={dashed ? '10 9' : undefined} opacity={dashed ? 0.7 : 0.9}/>
+        ))}
+      </svg>
+    );
+  }
   // Group appearances by prime identity so variants share one continuous thread,
   // but remember which specific variant appeared in each title.
   // One appearance per (prime, title): several variants of the same identity can share a
@@ -847,7 +891,7 @@ function readDisplayPrefs() {
 // to whoever opens the link), the search text, the language or anything from
 // the account. The names avoid code / state / error, which the sign-in
 // redirect uses (account.jsx stripAuthParams).
-const URL_KEYS = ['view', 'sort', 'order', 'phase', 'type', 'budget', 'release', 'title', 'char'];
+const URL_KEYS = ['view', 'sort', 'order', 'phase', 'type', 'budget', 'release', 'title', 'char', 'guide'];
 function readURLState() {
   const out = { any: false };
   let q;
@@ -862,6 +906,7 @@ function readURLState() {
   if (q.get('release') === 'released') out.release = 'released';
   const t = q.get('title'); if (t && window.TITLES.some(x => x.id === t)) out.title = t;
   const c = q.get('char'); if (c && window.CHARACTERS && window.CHARACTERS[c]) out.char = c;
+  const g = q.get('guide'); if (g && (window.GUIDES || []).some(x => x.id === g)) out.guide = g;
   return out;
 }
 
@@ -934,6 +979,11 @@ function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   // First visit: the same About content as a one-time welcome (about.jsx).
   const [welcome, setWelcome] = useState(() => !!window.MCU_WELCOME);
+  // "What have you seen?" (picker.jsx): from the welcome, the account menu or
+  // sheet, and the Seen tab's empty state. It replaces whatever layer opened it.
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const openPicker = () => { setWelcome(false); setAboutOpen(false); setSheet(null); setPickerOpen(true); };
+  window.MCU_openPicker = openPicker;
   const [selectedId, setSelectedId] = useState(null);
   const [hoveredTitle, setHoveredTitle] = useState(null);
   const [hoveredCharacter, setHoveredCharacter] = useState(null);
@@ -947,6 +997,56 @@ function App() {
   // stays a real character id either way (the representative one), because
   // colour, photo and name are looked up through window.CHARACTERS.
   const [pinnedActor, setPinnedActor] = useState(null);
+  // An open guide (guides.js, guides-ui.jsx): a curated path through the
+  // catalogue. It works like a pinned character (narrows the flat views,
+  // dims the rest of the canvas, steps through its stops) but in its own
+  // order, with optional stops behind a switch. One of the two at a time.
+  const [guideId, setGuideId] = useState(() => readURLState().guide || null);
+  const [guideOptional, setGuideOptional] = useState(false);
+  const guide = useMemo(() => (guideId && window.MCU_GUIDE ? window.MCU_GUIDE.get(guideId) : null), [guideId]);
+  const guideStepTitles = useMemo(() => (guide ? window.MCU_GUIDE.stops(guide, guideOptional).map(st => st.title) : []), [guide, guideOptional]);
+  // The guide's titles on the canvas (its stops and, for an event guide, the
+  // destination): the rest dim, nothing moves. A guide only ever shows its
+  // own titles; closing it brings back everything.
+  // Number badges for the canvas: a check once seen, the stop's number (or +
+  // for optional), an arrow for an event guide's destination.
+  const guideBadges = useMemo(() => {
+    if (!guide) return null;
+    const m = {};
+    window.MCU_GUIDE.stops(guide, guideOptional).forEach(st => {
+      const seen = collectionStates[st.id] === 'seen';
+      m[st.id] = {
+        text: seen ? '✓' : st.optional ? '+' : String(st.n),
+        cls: `${seen ? 'done' : ''}${st.optional ? ' o' : ''}`,
+        label: st.optional ? tr(seen ? 'guide.optSeenAria' : 'guide.optAria') : tr(seen ? 'guide.stopSeenAria' : 'guide.stopAria', { i: st.n }),
+      };
+    });
+    if (guide.target) m[guide.target] = { text: '→', cls: 'dest', label: tr('guide.dest') };
+    return m;
+  }, [guide, guideOptional, collectionStates, lang]);
+  // Finishing a guide's essential stops while it is open bursts green
+  // confetti, once per guide ever (remembered in this browser). Opening a guide
+  // that is already complete does not, and reduced motion gets none.
+  const guideWasComplete = useRef(null);
+  useEffect(() => {
+    if (!guide || !collectionReady) { guideWasComplete.current = null; return; }
+    const complete = window.MCU_GUIDE.progress(guide, statusOf).complete;
+    const prev = guideWasComplete.current;
+    guideWasComplete.current = { id: guide.id, complete };
+    if (!complete || !prev || prev.id !== guide.id || prev.complete) return;
+    let done = [];
+    try { done = JSON.parse(localStorage.getItem('mcu.guidesDone.v1') || '[]'); } catch (e) { done = []; }
+    if (!Array.isArray(done)) done = [];
+    if (done.indexOf(guide.id) !== -1) return;
+    try { localStorage.setItem('mcu.guidesDone.v1', JSON.stringify(done.concat(guide.id))); } catch (e) { /* private mode */ }
+    window.burstConfetti(['#5fa856', '#7cc46f', '#3d8a4a', '#b6e3a8', '#ffffff']);
+  }, [guide, collectionStates, collectionReady]);
+  const guideIds = useMemo(() => {
+    if (!guide) return null;
+    const set = new Set(guideStepTitles.map(t => t.id));
+    if (guide.target) set.add(guide.target);
+    return set;
+  }, [guide, guideStepTitles]);
   // Characters an actor plays, catalogue-wide and busiest first. Read from
   // TITLES, not the filtered set, since a pin is what narrows that.
   const performers = useMemo(() => {
@@ -1237,7 +1337,13 @@ function App() {
   const [upHidden, setUpHidden] = useState(false);
   const hideUpNext = () => setUpHidden(true);
   const upNextData = useMemo(() => {
-    if (upHidden || !collectionReady || search.trim() || collectionFilter === 'seen') return null;
+    if (upHidden || !collectionReady) return null;
+    // An open guide scopes Up next to its stops, in guide order.
+    if (guide) {
+      const result = window.MCU_nextUp(guideStepTitles, statusOf, { ordered: true });
+      return { result, lead: tr('guide.nextStop'), detail: window.MCU_GUIDE.short(guide), scoped: true, watchScope: false, guide: true };
+    }
+    if (search.trim() || collectionFilter === 'seen') return null;
     let list = window.TITLES.slice();
     if (phaseFilter !== 'all') list = list.filter(t => String(t.phase) === phaseFilter);
     if (typeFilter !== 'all') list = list.filter(t => t.type === typeFilter);
@@ -1259,7 +1365,7 @@ function App() {
     if (budgetFilter !== 'all') parts.push(tr('budget.' + budgetFilter));
     const scoped = watchScope || !!pinnedTitleIds || phaseFilter !== 'all' || typeFilter !== 'all' || budgetFilter !== 'all';
     return { result, lead, detail: parts.join(' · '), scoped, watchScope };
-  }, [collectionReady, search, collectionFilter, phaseFilter, typeFilter, budgetFilter, pinnedTitleIds, pinnedActor, highlightedChar, sort, sortDir, upHidden, collectionStates, lang]);
+  }, [collectionReady, search, collectionFilter, phaseFilter, typeFilter, budgetFilter, pinnedTitleIds, pinnedActor, highlightedChar, sort, sortDir, upHidden, collectionStates, lang, guide, guideStepTitles]);
 
   const layout = useMemo(() => computeLayout(filtered, sort, sortDir), [filtered, sort, sortDir, sort === 'title' ? lang : '']);
   const basePositions = layout.positions;
@@ -1428,7 +1534,8 @@ function App() {
     filtered.forEach(t => { if (pinnedTitleIds.has(t.id)) s.add(t.id); });
     return s;
   }, [pinnedTitleIds, filtered]);
-  const highlightedIds = (highlightedChar ? pinnedVisibleIds : null)
+  const highlightedIds = (guide ? guideIds : null)
+    || (highlightedChar ? pinnedVisibleIds : null)
     || (activeChar && charToTitleIds[activeChar] ? charToTitleIds[activeChar] : null);
 
   // The ids the active canvas filters single out. Collection status and a pinned
@@ -1452,10 +1559,11 @@ function App() {
       sets.push(s);
     }
     if (pinnedCharIds) sets.push(pinnedCharIds);
+    if (guideIds) sets.push(guideIds);
     if (!sets.length) return null;
     const both = sets.reduce((a, b) => new Set([...a].filter(id => b.has(id))));
     return both.size ? both : null;
-  }, [filtered, collectionFilter, collectionStates, pinnedCharIds]);
+  }, [filtered, collectionFilter, collectionStates, pinnedCharIds, guideIds]);
 
   // Read through a ref inside resetView rather than as a dependency. If the
   // match set were a dependency, marking a title seen while "Unseen" is active
@@ -2051,6 +2159,7 @@ function App() {
     const from = startAt || drawerId;
     const covers = from && chars.some(c => { const ids = charToTitleIds[c]; return ids && ids.has(from); });
     const start = covers ? from : null;
+    setGuideId(null);
     setPinnedActor(actor);
     setHighlightedChar(chars[0]);
     setHoveredCharacter(null);
@@ -2098,6 +2207,32 @@ function App() {
     // Desktop details still open: back to that title's connections.
     if (!isTouch && spatialShown && drawerId) setSelectedId(drawerId);
   };
+  // Opening a guide sets any pinned character aside, clears the search, shows
+  // its essential stops and brings Up next back, scoped to the guide (even if
+  // its × was used). `startAt` puts the stepper on a stop ("Part of").
+  const openGuide = (id, startAt) => {
+    if (!window.MCU_GUIDE || !window.MCU_GUIDE.get(id)) return;
+    setPinnedActor(null);
+    setHighlightedChar(null);
+    setHoveredCharacter(null);
+    setSearch('');
+    setPair(null);
+    if (selectedIdRef.current) { selectionReturnRef.current = null; setSelectedId(null); }
+    setGuideId(id);
+    setGuideOptional(false);
+    setStepId(startAt || null);
+    setUpHidden(false);
+    if (isTouch) setDrawerId(null);
+  };
+  const closeGuide = () => { setGuideId(null); setStepId(null); };
+  // Opening a guide (or showing its optional stops) in Spatial frames its
+  // titles once the dimming has applied; nothing on the canvas moves.
+  useEffect(() => {
+    if (!guide || !spatialShown) return undefined;
+    const id = requestAnimationFrame(() => resetView());
+    return () => cancelAnimationFrame(id);
+  }, [guideId, guideOptional, spatialShown]);
+  window.MCU_openGuide = openGuide;
   // ---- The address ------------------------------------------------------
   // The pinned character, when it is one portrayal (a performer pin covering
   // several characters has no single id to share). With a character pinned the
@@ -2117,11 +2252,16 @@ function App() {
     if (releaseFilter !== 'all') p.release = releaseFilter;
     if (urlTitle) p.title = urlTitle;
     if (urlChar) p.char = urlChar;
+    if (guideId) p.guide = guideId;
     return p;
   };
   // Applies a title and character from the address: once on load, and again
   // on Back and Forward.
   const applyURLSubject = (u) => {
+    if ((u.guide || null) !== guideId) {
+      if (u.guide) openGuide(u.guide);
+      else closeGuide();
+    }
     if (u.char) {
       if (urlChar !== u.char) pinSubject([u.char], null, u.title);
       if (u.title && !isTouch) setDrawerId(u.title);
@@ -2138,7 +2278,7 @@ function App() {
     if (urlAtLoad.title || urlAtLoad.char) applyURLSubject(urlAtLoad);
   }, []);
   useEffect(() => { writeURLState(urlParams()); },
-    [isTouch, viewMode, desktopView, sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, urlTitle, urlChar]);
+    [isTouch, viewMode, desktopView, sort, sortDir, phaseFilter, typeFilter, budgetFilter, releaseFilter, urlTitle, urlChar, guideId]);
   // Back and Forward restore the title and the character, never the filters:
   // closing the phone filter sheet is itself a step back in history, and
   // restoring filters there would undo the choices just made in it. A step
@@ -2157,7 +2297,8 @@ function App() {
   }, []);
 
   const stepCurrent = stepId || drawerId;
-  const stepIndex = stepCurrent ? pinnedTitles.findIndex(t => t.id === stepCurrent) : -1;
+  const stepList = guide ? guideStepTitles : pinnedTitles;
+  const stepIndex = stepCurrent ? stepList.findIndex(t => t.id === stepCurrent) : -1;
   const stepTo = (id) => {
     setStepId(id);
     // Desktop opens each title's details; on phones the sheet would cover the
@@ -2183,15 +2324,17 @@ function App() {
     } else {
       requestAnimationFrame(() => {
         const row = document.querySelector(`[data-row-id="${id}"]`);
-        if (row) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        if (!row) return;
+        window.MCU_followRowFocus(row);
+        row.scrollIntoView({ block: 'nearest', behavior: stepReducedMotion() ? 'auto' : 'smooth' });
       });
     }
   };
   const stepBy = (dir) => {
-    const n = pinnedTitles.length;
+    const n = stepList.length;
     if (!n) return;
     const i = stepIndex < 0 ? (dir > 0 ? 0 : n - 1) : (stepIndex + dir + n) % n;
-    stepTo(pinnedTitles[i].id);
+    stepTo(stepList[i].id);
   };
   useEffect(() => {
     const id = pendingStepRef.current;
@@ -2200,15 +2343,38 @@ function App() {
     if (id !== '*' && pinnedTitles.some(t => t.id === id)) stepTo(id);
     else if (spatialShown) resetView();
   }, [pinnedTitles]);
+  // The desktop List with a title's details open and no character or guide:
+  // the arrows step through the titles in the order the List shows them (its
+  // sort, collection tab, filters and search), wrapping at the ends, and the
+  // position is announced.
+  const [listAnnounce, setListAnnounce] = useState('');
+  const listStepOn = !isTouch && desktopView === 'list' && !highlightedChar && !guide && !!drawerId;
+  const listStep = (dir) => {
+    const n = visible.length;
+    if (!n) return;
+    const i = visible.findIndex(t => t.id === drawerId);
+    const j = i < 0 ? (dir > 0 ? 0 : n - 1) : (i + dir + n) % n;
+    const t = visible[j];
+    setDrawerId(t.id);
+    setListAnnounce(tr('list.stepPos', { title: I18N.titleName(t), n: j + 1, total: n }));
+    requestAnimationFrame(() => {
+      const row = document.querySelector(`.dl-row[data-row-id="${t.id}"]`);
+      if (!row) return;
+      window.MCU_followRowFocus(row);
+      row.scrollIntoView({ block: 'nearest', behavior: stepReducedMotion() ? 'auto' : 'smooth' });
+    });
+  };
   // Left/right arrows step too, unless typing or inside a menu.
   const stepRef = useRef(null);
-  stepRef.current = highlightedChar ? stepBy : null;
+  stepRef.current = (highlightedChar || guide) ? stepBy : listStepOn ? listStep : null;
   useEffect(() => {
     const onKey = (e) => {
       if (!stepRef.current || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.altKey || e.metaKey || e.ctrlKey) return;
       const el = e.target;
-      if (el instanceof Element && el.closest('input, textarea, select, [contenteditable="true"], [role="listbox"], [role="group"]')) return;
+      // A checkbox has no use for the arrows, so a List row's checkbox steps too.
+      if (el instanceof Element && el.closest('input:not([type="checkbox"]), textarea, select, [contenteditable="true"], [role="listbox"], [role="group"]')) return;
       e.preventDefault();
+      keepFocusOnStep();
       stepRef.current(e.key === 'ArrowRight' ? 1 : -1);
     };
     window.addEventListener('keydown', onKey);
@@ -2263,20 +2429,22 @@ function App() {
   // two layers at once.
   const detailsOpen = !isTouch && !!(drawerId || selectedId);
   useEffect(() => {
-    if (!detailsOpen && !highlightedChar) return undefined;
+    if (!detailsOpen && !highlightedChar && !guide) return undefined;
     const onKey = (e) => {
       if (e.key !== 'Escape' || e.defaultPrevented || pair) return;
       const t = e.target instanceof Element ? e.target : null;
-      if (t && t.closest('input, textarea, select, [contenteditable="true"]')) return;
-      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .bulk-more-pop, .m-sheet, [role="dialog"], [aria-modal="true"]')) return;
+      // Text fields keep Escape for themselves; a List checkbox has no use for it.
+      if (t && t.closest('input:not([type="checkbox"]), textarea, select, [contenteditable="true"]')) return;
+      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .bulk-more-pop, .g-pop, .m-sheet, [role="dialog"], [aria-modal="true"]')) return;
       if (detailsOpen) { setSelectedId(null); setDrawerId(null); return; }
+      if (guide) { closeGuide(); return; }
       unpinCharacter();
     };
     // Capture phase: runs before the menus' own handlers close them (React
     // re-renders between listeners), so an open menu is still visible here.
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [detailsOpen, highlightedChar, pair]);
+  }, [detailsOpen, highlightedChar, pair, guide]);
   useEffect(() => { setPair(null); }, [basePositions]);
   // Labels steer clear of the cards that are lit; dimmed ones may sit under them.
   const labelAvoidIds = useMemo(() => {
@@ -2323,6 +2491,13 @@ function App() {
           <span className="cb-sub">{sub} · {tr('header.count', { n: count })}</span>
         </span>
         {pinned && <>
+          {/* A character with its own guide offers it: the same titles,
+              curated, with a reason for each. */}
+          {window.MCU_GUIDE && window.MCU_GUIDE.forChar(activeChar) && (
+            <button type="button" className="cb-guide" onClick={() => openGuide(window.MCU_GUIDE.forChar(activeChar).id)}>
+              <window.GuideIcon size={14}/>{tr('guide.seeCurated')}
+            </button>
+          )}
           <div className="segmented cb-mode" role="group" aria-label={tr('highlight.modeAria')}>
             <button className={charOnly ? 'on' : ''} aria-pressed={charOnly} onClick={() => setCharOnly(true)}>{tr('highlight.only')}</button>
             <button className={!charOnly ? 'on' : ''} aria-pressed={!charOnly} onClick={() => setCharOnly(false)}>{tr('highlight.all')}</button>
@@ -2355,6 +2530,7 @@ function App() {
     const named = pinnedActor || creditedHere || (roster[0] && roster[0].name) || c.actor;
     const photo = window.performerPortrait(named, ch);
     const n = pinnedTitles.length;
+    const charGuide = window.MCU_GUIDE ? window.MCU_GUIDE.forChar(ch) : null;
     return (
       <div className="char-pill" style={{ '--char-color': c.color }}>
         <div className="cp-bar">
@@ -2379,6 +2555,12 @@ function App() {
               : <>{n}<span className="story-sr"> {tr('highlight.titlesWord', { n })}</span></>}</span>
             <button onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!n}>›</button>
           </div>
+          {charGuide && (
+            <button type="button" className="cp-guide" aria-label={tr('guide.seeCurated')} title={tr('guide.seeCurated')}
+              onClick={() => openGuide(charGuide.id)}>
+              <window.GuideIcon size={16}/>
+            </button>
+          )}
           <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={unpinCharacter}>×</button>
         </div>
       </div>
@@ -2473,6 +2655,7 @@ function App() {
           pair={pair}
           onPickConnection={pickConnection}
           avoidIds={labelAvoidIds}
+          route={guide ? { ids: guideStepTitles.map(t => t.id), target: guide.target } : null}
         />
         {filtered.map(t => {
           const charHL = highlightedIds ? highlightedIds.has(t.id) : false;
@@ -2498,6 +2681,7 @@ function App() {
               focusable={!isTouch}
               onFocusCard={revealCard}
               isSelected={selectedId === t.id}
+              guideBadge={guideBadges ? guideBadges[t.id] : null}
               isHighlighted={isHighlighted}
               isDimmed={isDimmed}
               isCollDimmed={isCollDimmed}
@@ -2552,9 +2736,10 @@ function App() {
       {/* Every order but By Phase carries one meter over the whole catalogue.
           It stands down with the band labels whenever a title is selected,
           since the canvas is then showing one ring. */}
-      {!selectedId && ((viewProgress && viewProgress.all) || upNextInMeter) && (
+      {!selectedId && ((viewProgress && viewProgress.all) || upNextInMeter || guide) && (
         <div className="spatial-overall">
-          {viewProgress && viewProgress.all && <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>}
+          {guide ? <window.GuideMeter guide={guide} includeOptional={guideOptional}/>
+            : viewProgress && viewProgress.all && <window.ProgressHeader label={tr('progress.all')} {...viewProgress.all}/>}
           {/* Desktop only: phones get a chip above the gesture hint. */}
           {upNextInMeter && <window.UpNextMeterRow info={upNext}/>}
         </div>
@@ -2579,12 +2764,17 @@ function App() {
           filterCount={filterCount}
           sort={sort} sortDir={sortDir} setSortDir={setSortDir}
           onOpenAccount={() => setSheet('account')}
+          onOpenGuides={() => setSheet('guides')} guideActive={!!guide}
           collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         />
-        <div role="main" className={`m-main${charPill ? ' has-pill' : ''}`}
+        <div role="main" className={`m-main${charPill || guide ? ' has-pill' : ''}`}
           style={highlightedChar ? { '--cur-color': window.CHARACTERS[highlightedChar].color } : undefined}>
-          {viewMode === 'grid' && <window.MobileGrid upNext={upNext} progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
-          {viewMode === 'list' && <window.MobileList upNext={upNext} progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {guide && viewMode !== 'spatial' && (
+            <window.GuideView guide={guide} surface="phone" layout={viewMode} includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
+              currentId={stepCurrent} onOpen={(id) => setDrawerId(id)} onContinue={(id) => { setStepId(id); setDrawerId(id); }}/>
+          )}
+          {!guide && viewMode === 'grid' && <window.MobileGrid upNext={upNext} progress={viewProgress} sort={sort} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
+          {!guide && viewMode === 'list' && <window.MobileList upNext={upNext} progress={viewProgress} collapseSeen={collectionFilter === 'all' && !highlightedChar && !search} markWatch={collectionFilter !== 'watchlist'} header={contextSummary('line')} currentId={highlightedChar ? stepId : null} titles={visible} sort={sort} onSelect={onCardTap} searchCharMatches={searchCharMatches} search={search} empty={emptyCopy} orderKey={flipKey} flipPaused={sheet === 'filters'}/>}
           {viewMode === 'spatial' && (
             <div className="m-spatial-wrap">
               {canvasEl}
@@ -2592,7 +2782,11 @@ function App() {
               {filtered.length > 0 && <window.SpatialHint focused={!!selectedId} sharedCount={sharedCharCount}/>}
             </div>
           )}
-          {charPill}
+          {guide ? (
+            <window.GuidePill guide={guide} stepIndex={stepIndex} stepCount={stepList.length}
+              current={stepIndex >= 0 ? stepList[stepIndex] : null}
+              onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onClose={closeGuide}/>
+          ) : charPill}
         </div>
         {device === 'mobile' && <window.SortTabs sort={sort} setSort={changeSort}/>}
         {sheet === 'filters' && (
@@ -2616,10 +2810,17 @@ function App() {
           />
         )}
         {sheet === 'about' && <window.AboutSheet onClose={() => setSheet(null)}/>}
+        {sheet === 'guides' && (
+          <window.Sheet onClose={() => setSheet(null)} tall label={tr('guide.menuTitle')}>
+            <h2 className="g-sheet-title">{tr('guide.menuTitle')}</h2>
+            <window.GuideMenu currentId={guideId} onPick={(id) => { setSheet(null); openGuide(id); }}/>
+          </window.Sheet>
+        )}
         <window.StatusToast touch/>
         <window.SignInNudge touch/>
         <window.BulkConfirm touch/>
-        {welcome && !sheet && !drawerTitle && <window.AboutSheet welcome onClose={() => setWelcome(false)}/>}
+        {welcome && !sheet && !drawerTitle && !pickerOpen && <window.AboutSheet welcome onPick={openPicker} onClose={() => setWelcome(false)}/>}
+        {pickerOpen && <window.SeenPicker touch onClose={() => setPickerOpen(false)}/>}
         {drawerTitle && (
           <window.CastSheet
             title={drawerTitle} search={search}
@@ -2655,14 +2856,39 @@ function App() {
         releaseFilter={releaseFilter} setReleaseFilter={setReleaseFilter}
         collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         search={search} setSearch={setSearch}
+        guideId={guideId} onOpenGuide={(id) => openGuide(id)}
       />
 
-      {charBanner}
+      {guide ? (
+        <window.GuideBanner guide={guide} includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
+          stepIndex={stepIndex} stepCount={stepList.length}
+          onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onClose={closeGuide}/>
+      ) : charBanner}
 
-      {desktopView === 'list'
+      {/* Always present, so each step's title and position is read out. */}
+      {desktopView === 'list' && <div className="story-sr" aria-live="polite">{listAnnounce}</div>}
+      {desktopView === 'list' && guide
+        ? <window.GuideView guide={guide} surface="desktop" includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
+            currentId={stepCurrent} openId={drawerId} onOpen={(id) => setDrawerId(drawerId === id ? null : id)} onContinue={(id) => { setStepId(id); setDrawerId(id); }}
+            onFollow={(id) => {
+              // The stop becomes the guide's current one too, so ← → carry on
+              // from it and the banner announces "Stop n of N", as it does for
+              // ← →.
+              keepFocusOnStep();
+              setStepId(id);
+              setDrawerId(id);
+            }}/>
+        : desktopView === 'list'
         ? <window.DesktopList upNext={upNext} titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
             onOpen={(id) => setDrawerId(drawerId === id ? null : id)}
+            onFollow={(id, n, total) => {
+              keepFocusOnStep();
+              setDrawerId(id);
+              // Focus moving to the row reads it out; without that, say where we are.
+              const t = n && window.TITLES.find(x => x.id === id);
+              if (t) setListAnnounce(tr('list.stepPos', { title: I18N.titleName(t), n, total }));
+            }}
             header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey} progress={viewProgress}/>
         : canvasEl}
 
@@ -2698,8 +2924,9 @@ function App() {
       <window.StatusToast touch={false}/>
       <window.SignInNudge touch={false}/>
       <window.BulkConfirm touch={false}/>
-      {(aboutOpen || welcome) && <window.AboutDialog welcome={welcome && !aboutOpen}
+      {(aboutOpen || welcome) && !pickerOpen && <window.AboutDialog welcome={welcome && !aboutOpen} onPick={openPicker}
         onClose={() => { setAboutOpen(false); setWelcome(false); }}/>}
+      {pickerOpen && <window.SeenPicker touch={false} onClose={() => setPickerOpen(false)}/>}
     </div>
   );
 }

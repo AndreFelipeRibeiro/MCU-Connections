@@ -14,7 +14,7 @@ const T = page => page.evaluate(() => document.querySelector('.canvas').style.tr
   await page.fill('.search-wrap input', 'man');
   await page.locator('.tb-type-controls button').nth(1).click();
   await page.locator('.tb-sort-row .coll-switch button').nth(1).click();
-  await page.click('.filters-pill'); await page.locator('.filters-pop .control-group').first().locator('button', { hasText: '3' }).click();
+  await page.click('.filters-pill:not(.g-btn)'); await page.locator('.filters-pop .control-group').first().locator('button', { hasText: '3' }).click();
   await page.click('.brand-title'); await page.waitForTimeout(700);
   out.dFiltered = await bar();
   out.dUndimmedCards = await page.evaluate(() => document.querySelectorAll('.card:not(.coll-dim)').length);
@@ -22,7 +22,7 @@ const T = page => page.evaluate(() => document.querySelector('.canvas').style.tr
   out.dAfterRemoveFilms = { ...(await bar()), filmsBtnOn: await page.locator('.tb-type-controls button.on').innerText() };
   await page.locator('.ctx-float .ctx-clear').click(); await page.waitForTimeout(700);
   out.dAfterClearAll = { ...(await bar()), search: await page.inputValue('.search-wrap input'), coll: await page.locator('.tb-sort-row .coll-switch button.on').innerText() };
-  await page.click('.filters-pill'); await page.locator('.filters-pop .control-group').first().locator('button', { hasText: '3' }).click();
+  await page.click('.filters-pill:not(.g-btn)'); await page.locator('.filters-pop .control-group').first().locator('button', { hasText: '3' }).click();
   await page.click('.brand-title'); await page.waitForTimeout(600);
   out.dSingleChip = await bar();
   await page.locator('.ctx-chip', { hasText: 'Phase 3' }).click(); await page.waitForTimeout(500);

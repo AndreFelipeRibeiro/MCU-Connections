@@ -265,6 +265,15 @@ function GoogleMark() {
 
 // The body shared by the desktop popover and the mobile sheet, so the two can
 // never drift apart in what they say about the same account.
+// The picker's icon: a grid of posters with a check.
+function PickIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="m14 17.2 2.2 2.2 4-4.4"/>
+    </svg>
+  );
+}
+
 function AccountPanel({ onPickCollection, onClose, onAbout }) {
   const { tr } = window.useI18n();
   const { status, profile, error, syncAvailable, unavailableReason, signIn, signOut } = useAccount();
@@ -309,6 +318,12 @@ function AccountPanel({ onPickCollection, onClose, onAbout }) {
       )}
 
       <div className="acct-links">
+        {window.MCU_openPicker && (
+          <button className="acct-pick" disabled={collectionLoading} onClick={() => { if (onClose) onClose(); window.MCU_openPicker(); }}>
+            <span className="coll-ic pick-ic"><PickIcon/></span>
+            <span className="acct-pick-text"><span>{tr('picker.open')}</span><small>{tr('picker.accountSub')}</small></span>
+          </button>
+        )}
         <button disabled={collectionLoading} onClick={pick('unseen')}><span className="coll-ic"><window.CollectionIcon kind="unseen"/></span>{tr('account.showUnseen')}</button>
         <button disabled={collectionLoading} onClick={pick('seen')}><span className="coll-ic"><window.CollectionIcon kind="seen"/></span>{tr('account.showSeen')}</button>
         <button disabled={collectionLoading} onClick={pick('watchlist')}><span className="coll-ic"><window.CollectionIcon kind="watchlist"/></span>{tr('account.showWatchlist')}</button>

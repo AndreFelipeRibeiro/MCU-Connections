@@ -12,6 +12,70 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 improvement — move through the desktop List with the arrow keys
+
+Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 9 merge. ([`5752bc8`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/5752bc8f7d61ce985f73e345d09bf75b01f847fe))
+
+- With a title's details open, ← → step through the titles in the order the
+  List shows (sort, tab, filters, search), wrapping at the ends, and a screen
+  reader hears "title, n of N". ↑ ↓ move between rows keeping the column, Home
+  and End go to the ends, and the details follow, also after a mouse click.
+  The Guides table works the same way. A pinned character or a guide keeps its
+  own stepping, and arrow steps no longer pull focus into the details.
+- Fixed: a row stepped to (wrapping to Iron Man with Tony pinned, for example)
+  no longer sits half under the pinned meter and column headers: 38px were
+  hidden before, none now. On phones a step onto the Up next title scrolls to
+  its card.
+- Verified: new `qa/test-listkeys.js`; checked in the in-app browser. Limits:
+  not checked in Safari itself or with a real screen reader.
+
+## V3 feature — "What have you seen?"
+
+Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 9 merge. ([`0b7be83`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/0b7be835d20609623e8a7c10802e9296360a3ae8))
+
+- A poster grid of every released title by phase, to mark many as seen in one
+  go. The first-visit welcome offers it ("Mark what I've seen"); the account
+  menu or sheet and the Seen tab's empty state open it later, with titles
+  already seen ticked and untickable. Saving is one change: one toast with
+  Undo, at most one celebration, no extra confirmation. Closing with unsaved
+  picks asks first (Back too, on phones).
+- Verified: new `qa/test-picker.js`; the accessibility scan covers it on
+  desktop and phone. Limits: saving while signed in and a real iPhone not
+  checked.
+
+## V3 feature — curated watch guides
+
+Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 9 merge. ([`fec0e8b`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/fec0e8ba6f3fe96b655e2074cffc943a46655dda))
+
+- Six guides: before Avengers: Doomsday, the Infinity Saga essentials,
+  Spider-Man, the Avengers films, the Multiverse Saga and the animated series.
+  Each stop says why it is there; optional stops sit behind "Include
+  optional". An open guide shows only its own titles (close it to see all):
+  a List and Grid of stops, a route in Spatial, a stepper, Up next on the next
+  stop and "Mark N more seen". Search suggests guides, a character with a guide
+  offers it, a title's details list its guides, and finishing a guide bursts
+  green confetti once.
+- Verified: new `qa/test-guides.js`; the Guides List's columns line up with
+  their headers at every width. Four older checks now tell the Guides button
+  from the Filters button.
+
+## V3 improvement — a whole phase at once in the desktop List
+
+Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 9 merge. ([`40f8fa5`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/40f8fa5656bcfb693cf053dd12fdf95df13168d1))
+
+- In By Phase, each phase header has a checkbox that selects that phase for
+  the bulk bar, and every progress header offers "Mark all seen" / "Mark N
+  more seen" with the phones' confirmation and Undo.
+- Verified: `qa/test-bulk.js` covers the phase checkbox, its mixed state and
+  the header button.
+- Batch verification, on the final tree: `bash qa/regress.sh` 35 check runs
+  clean; the accessibility scan empty for 13 screens in English and
+  Portuguese.
+
 ## V3 feature — Up next: what to watch now
 
 Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main

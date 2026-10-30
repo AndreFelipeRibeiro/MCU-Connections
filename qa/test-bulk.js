@@ -233,6 +233,73 @@ const SPY = `(() => {
     if (R.phoneAll.unreleasedMarked.length) errors.push(`unreleased titles were marked: ${R.phoneAll.unreleasedMarked.join(', ')}`);
   }
 
+  // ---- Desktop, By Phase: a phase at a time (Batch 9) -----------------------
+  // The phase header's checkbox selects exactly that phase's rows, shows a
+  // mixed state for part of it and clears them on a second click; its "Mark N
+  // more seen" is the phones' button, marking only that phase's released,
+  // unseen titles, with one announcement and Undo.
+  const { page: d } = await ctxPage(browser, DESKTOP, seed({ 'iron-man-3': 'seen' }) + SPY);
+  await d.goto(URL + '?view=list&sort=phase'); await d.waitForTimeout(2800);
+  R.deskPhase = await d.evaluate(async () => {
+    const wait = (ms) => new Promise(r => setTimeout(r, ms));
+    // Found by its checkbox's name: the visible text runs "PHASE 2" into "1/11".
+    const head = (n) => { const c = document.querySelector(`.dl-phase-label .dl-check[aria-label="Select every title in Phase ${n}"]`); return c && c.closest('.dl-phase-divider'); };
+    const rowsOf = (n) => [...document.querySelectorAll('.dl-row[data-row-id]')].filter(r => window.TITLES.find(t => t.id === r.dataset.rowId).phase === n);
+    const checked = () => [...document.querySelectorAll('.dl-row[data-row-id] .dl-check')].filter(c => c.checked).map(c => c.closest('.dl-row').dataset.rowId);
+    const p2 = head(2);
+    if (!p2) return { error: 'no Phase 2 header' };
+    const box = p2.querySelector('.dl-phase-label .dl-check');
+    if (!box) return { error: 'no checkbox on the Phase 2 header' };
+    const p2ids = rowsOf(2).map(r => r.dataset.rowId);
+    box.click(); await wait(250);
+    const picked = checked();
+    rowsOf(2)[0].querySelector('.dl-check').click(); await wait(250);
+    const mixed = box.indeterminate && !box.checked;
+    box.click(); await wait(250);
+    const refilled = checked().length;
+    box.click(); await wait(250);
+    const cleared = checked().length;
+    // The button: Phase 2 has one title seen already.
+    const btn = p2.querySelector('.pgh-action');
+    const label = btn && btn.textContent.trim();
+    const want = window.TITLES.filter(t => t.phase === 2 && window.MCU_isReleased(t) && t.id !== 'iron-man-3').map(t => t.id);
+    window.__events = [];
+    btn.click(); await wait(1200);
+    const st = JSON.parse(localStorage.getItem('mcu.collection.v1')).states;
+    const nowSeen = Object.keys(st).filter(k => st[k] === 'seen');
+    const others = nowSeen.filter(k => window.TITLES.find(t => t.id === k).phase !== 2);
+    const undo = document.querySelector('.mt-undo');
+    if (undo) undo.click(); await wait(900);
+    const st2 = JSON.parse(localStorage.getItem('mcu.collection.v1')).states;
+    return { p2: p2ids.length, picked: picked.length, pickedOnly: picked.every(id => p2ids.includes(id)), mixed, refilled, cleared, label, want: want.length,
+      marked: want.filter(id => st[id] === 'seen').length, others, events: window.__events.length,
+      afterUndo: Object.keys(st2).filter(k => st2[k] === 'seen') };
+  });
+  {
+    const x = R.deskPhase;
+    if (x.error) errors.push(x.error);
+    else {
+      if (x.picked !== x.p2 || !x.pickedOnly) errors.push(`the Phase 2 checkbox selected ${x.picked} rows; Phase 2 has ${x.p2}`);
+      if (!x.mixed) errors.push('the Phase 2 checkbox is not mixed with part of the phase selected');
+      if (x.refilled !== x.p2) errors.push(`clicking the mixed Phase 2 checkbox selected ${x.refilled} rows, not the whole phase`);
+      if (x.cleared !== 0) errors.push(`clicking the full Phase 2 checkbox left ${x.cleared} rows selected`);
+      if (x.label !== `Mark ${x.want} more seen`) errors.push(`the Phase 2 button reads "${x.label}"; expected "Mark ${x.want} more seen"`);
+      if (x.marked !== x.want) errors.push(`the Phase 2 button marked ${x.marked} of ${x.want}`);
+      if (x.others.length) errors.push(`the Phase 2 button marked titles outside Phase 2: ${x.others.join(', ')}`);
+      if (x.events !== 1) errors.push(`the Phase 2 button announced ${x.events} times`);
+      if (x.afterUndo.join() !== 'iron-man-3') errors.push(`Undo left ${x.afterUndo.join(', ')} seen; only Iron Man 3 was`);
+    }
+  }
+  // Release order: the All titles meter carries the button too (over 20, so
+  // it asks first).
+  await d.goto(URL + '?view=list'); await d.waitForTimeout(2800);
+  R.deskAll = await d.evaluate(() => {
+    const btn = document.querySelector('.dl-phase-divider.lead .pgh-action');
+    return { label: btn && btn.textContent.trim(), phaseChecks: document.querySelectorAll('.dl-phase-label .dl-check').length };
+  });
+  if (!/^Mark (all|\d+ more) seen$/.test(R.deskAll.label || '')) errors.push(`the desktop All titles meter has no "Mark … seen" button (${R.deskAll.label})`);
+  if (R.deskAll.phaseChecks) errors.push('phase checkboxes appear outside By Phase');
+
   R.errors = errors;
   console.log(JSON.stringify(R, null, 1));
   await browser.close(); server.close();

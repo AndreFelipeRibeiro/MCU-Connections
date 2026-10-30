@@ -1,11 +1,12 @@
 // Search input with suggestions (desktop toolbar and mobile app bar). From two
-// characters it previews matching actors, characters and titles under the box,
+// characters it previews matching guides, actors, characters and titles under the box
+// (an empty box lists the guides),
 // matching names in every language. Picking an actor or character searches for
 // that name; picking a title also opens its details. Typing without picking
 // keeps today's free-text search. Combobox pattern: arrows move, Enter picks,
 // Escape closes.
 
-const SS_LIMIT = { actor: 4, character: 4, title: 4 };
+const SS_LIMIT = { guide: 2, actor: 4, character: 4, title: 4 };
 
 // Lower-case and strip accents, keeping the length so match offsets map back
 // onto the displayed (NFC) name.
@@ -29,6 +30,9 @@ function ssBest(names, q) {
 function ssBuild(query) {
   const I = window.MCU_I18N;
   const q = ssFold(query.trim());
+  // An empty, focused box offers the guides, the way to find them without
+  // knowing their names.
+  if (!q) return (window.GUIDES || []).map(g => ({ kind: 'guide', key: 'g:' + g.id, id: g.id, guide: g, label: window.MCU_GUIDE.name(g), score: 0, n: 0 }));
   if (q.length < 2) return [];
   const titlesOf = {};
   window.TITLES.forEach(t => t.cast.forEach(c => { (titlesOf[c] = titlesOf[c] || new Set()).add(t.id); }));
@@ -44,6 +48,13 @@ function ssBuild(query) {
     a.titles.add(t.id);
   }));
   const out = [];
+  // Guides match their full and short names in every language ("doomsday",
+  // "aranha"); picking one opens it.
+  (window.GUIDES || []).forEach(g => {
+    const names = [].concat(Object.values(g.name || {}), Object.values(g.short || {}));
+    const s = ssBest(names, q);
+    if (s !== null) out.push({ kind: 'guide', key: 'g:' + g.id, id: g.id, guide: g, label: window.MCU_GUIDE.name(g), score: s, n: 0 });
+  });
   Object.values(actors).forEach(a => {
     const s = ssScore(a.name, q);
     if (s !== null) out.push({ kind: 'actor', key: 'a:' + a.name, label: a.name, score: s, n: a.titles.size, chars: a.chars });
@@ -75,7 +86,7 @@ function ssBuild(query) {
   });
   // People: best match, then most titles. Titles: best match, then release order.
   const rank = (a, b) => a.score - b.score || (a.kind === 'title' ? a.year - b.year : b.n - a.n) || I.compare(a.label, b.label);
-  const people = ['actor', 'character'].flatMap(kind => out.filter(o => o.kind === kind).sort(rank).slice(0, SS_LIMIT[kind]));
+  const people = ['guide', 'actor', 'character'].flatMap(kind => out.filter(o => o.kind === kind).sort(rank).slice(0, SS_LIMIT[kind]));
   // Titles get the room people don't use, up to eight rows in all.
   const titles = out.filter(o => o.kind === 'title').sort(rank).slice(0, Math.max(SS_LIMIT.title, 8 - people.length));
   return people.concat(titles);
@@ -94,6 +105,7 @@ function SsThumb({ item }) {
   const media = window.MEDIA;
   const [failed, setFailed] = React.useState(false);
   if (item.kind === 'title') return <span className="ss-thumb poster"><window.PosterArt title={item.title}/></span>;
+  if (item.kind === 'guide') return <span className="ss-thumb guide"><window.GuideArt guide={item.guide} size={32} round/></span>;
   const id = item.kind === 'actor' ? item.chars[0] : item.id;
   const c = window.CHARACTERS[id] || {};
   // A row naming a specific performer shows that performer's face, so the
@@ -124,9 +136,17 @@ function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, 
   React.useEffect(() => { setActive(-1); }, [value]);
 
   const pick = (item, viaKeyboard = false) => {
+    if (item.kind === 'guide' && window.MCU_openGuide) {
+      onChange('');
+      if (inputRef.current) inputRef.current.blur();
+      setDismissed(true);
+      setActive(-1);
+      window.MCU_openGuide(item.id);
+      return;
+    }
     // A character (or an actor who plays one) opens the character view, with
     // its stepper, instead of becoming a text search; the box is cleared.
-    if (item.kind !== 'title' && onPickPerson && onPickPerson(item, { viaKeyboard })) {
+    if ((item.kind === 'actor' || item.kind === 'character') && onPickPerson && onPickPerson(item, { viaKeyboard })) {
       onChange('');
       if (inputRef.current) inputRef.current.blur();
       setDismissed(true);
@@ -170,6 +190,7 @@ function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, 
     if (e.key === 'Enter' && open && active >= 0) { e.preventDefault(); pick(items[active], true); }
   };
   const secondary = (item) => {
+    if (item.kind === 'guide') return `${window.MCU_GUIDE.kind(item.guide)} · ${window.MCU_GUIDE.size(item.guide)}`;
     if (item.kind === 'actor') return tr('suggest.as', { names: item.chars.map(id => I.charName(id)).join(', ') });
     if (item.kind === 'character') return item.actor || window.MCU_creditRoster()[item.id][0].name;
     return `${tr(item.title.type === 'film' ? 'type.film.one' : 'type.series.one')} · ${item.year}`;
@@ -192,7 +213,7 @@ function SearchInput({ value, onChange, onPickTitle, onPickPerson, placeholder, 
                 <span className="ss-main"><SsLabel text={item.label} query={value}/></span>
                 <span className="ss-sub">{secondary(item)}</span>
               </span>
-              {item.kind !== 'title' && <span className="ss-count">{tr('header.count', { n: item.n })}</span>}
+              {item.kind !== 'title' && item.kind !== 'guide' && <span className="ss-count">{tr('header.count', { n: item.n })}</span>}
             </li>
           </React.Fragment>
         );

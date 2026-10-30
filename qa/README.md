@@ -20,8 +20,8 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression, 31 check scripts in 32 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
-| `node qa/a11y-scan.js` | axe-core scan of 7 screens (desktop Spatial, details, List, account menu; phone List, details, Spatial). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). |
+| `bash qa/regress.sh` | Full regression, 34 check scripts in 35 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
+| `node qa/a11y-scan.js` | axe-core scan of 13 screens (desktop Spatial, details, List in Release and in By Phase, account menu, an open guide, the Guides popover, the "What have you seen?" dialog; phone List, details, Spatial, an open guide, the picker sheet). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
 | `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
 
@@ -66,11 +66,15 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   with one guest-storage write and one announcement; Undo restores each title,
   a replaced watchlist included; over 20 asks first and Cancel keeps the
   selection; real Escape presses clear the selection before the details; the
-  phone section headers' "Mark all seen" / "Mark N more seen"),
+  phone section headers' "Mark all seen" / "Mark N more seen"; on desktop in
+  By Phase, a phase header's checkbox selects exactly that phase (mixed for
+  part of it, cleared on a second click) and its "Mark N more seen" marks only
+  that phase's remaining released titles, with Undo; the All titles meter's
+  button in Release order),
   `test-details` (the desktop drawer and the phone sheet show the same
   sections in the same order from one shared body: poster beside eyebrow,
   title, release and story, then scores, budget, status, synopsis, Where to
-  watch (the Guides slot still empty) and the cast; the cast starts open and
+  watch, Part of (only for a title in a guide, one row per guide) and the cast; the cast starts open and
   Where to watch closed, each toggling only itself; "Ratings after release"
   for a title not out yet, "Not published" for an unknown budget, the search
   highlighted in the title, nothing under the close button or past the edge
@@ -93,7 +97,41 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   Watchlist states and Show from everything; filters narrow it and are named;
   the Grid card, the phone Spatial chip, the desktop List strip and the
   Spatial meter row; 320px; Portuguese. Expectations come from the catalogue
-  and today's date).
+  and today's date),
+  `test-guides` (Guides: the data first, every stop a real title once, both
+  languages, a reason per stop, release order, essential numbers 1..n that
+  never shift when optional stops show, valid continuity; then the desktop
+  popover and Escape, the banner, List rows, next stop, meter, Include
+  optional, the stepper, no All titles switch, `?guide=` on load and a bad value,
+  Escape closing the guide; "Mark N more seen" on its meter with Undo; an
+  empty search box listing every guide; search suggesting it first under
+  Guides by mouse and keyboard; a character with a guide offering it and one without not;
+  Part of in the details opening the guide at that title; Spatial badges
+  and route; confetti once per guide, not on opening a complete guide, none
+  with reduced motion; the phone sheet and Back, List rows, the optional
+  switch, the pill's ×, Grid cards, the Up next chip clear of the pill, the
+  character pill's button; 320px and Portuguese),
+  `test-picker` ("What have you seen?": a new guest opens it from the
+  welcome; released titles only, by phase in release order; Select all /
+  Clear, picks, the live count, Space and Enter on a poster; saving marks
+  exactly the picks with one toast, no confirmation even over 20, at most one
+  burst, and Undo clears them; the sign-in reminder shows once afterwards;
+  opened later from the account menu, seen titles start ticked and labelled,
+  unticking marks unseen in the same change with one mixed toast and one
+  Undo that restores a replaced Watchlist mark; × closes at once with no
+  changes and asks with some, Escape closing one layer, Keep picking and
+  Leave without saving; on a phone, Back closes it or asks (and asks again),
+  the footer stays on screen, nothing past the edge; the Seen tab's empty
+  state opens it, in Portuguese),
+  `test-listkeys` (desktop List keys: with the details open, ← → step through
+  the rows shown, across a sort, a filter and a search, wrap at both ends and
+  announce the position; ↑ ↓ keep the column (checkbox, title, Seen), Home
+  and End, stopping at the ends, the details following without taking focus;
+  Enter still focuses the details; Alt+→, the search box, Space, Shift-click
+  ranges and Escape (selection, then details) unchanged; a pinned character
+  and a guide keep their own stepping; a wrapped-to row is never under the
+  meter or column headers, in Release and By Phase at 1280 and 1440px;
+  reduced motion; the Portuguese announcement).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.
@@ -134,7 +172,7 @@ one.
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
 - `test-camera` used to fail at "sort change while selected", and separately to
   report a false "wheel cancels the glide" about one run in four. Both were the
-  check, not the app, and both are fixed. A full run should now report **32 check runs clean**;
+  check, not the app, and both are fixed. A full run should now report **35 check runs clean**;
   treat any `test-camera` failure as real, and compare against a clean copy with
   `SITE=` if in doubt.
   - `page.mouse.click` moves the cursor and presses in the same tick. Hovering a
