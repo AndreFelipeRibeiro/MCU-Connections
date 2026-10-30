@@ -230,9 +230,12 @@ function GuideNum({ stop, seen, next }) {
 // The flat view of an open guide: the phone List and Grid, and the desktop
 // List (`surface`). Stops in guide order with their numbers and reasons, the
 // next stop marked, and the event's destination last.
-function GuideView({ guide, includeOptional, setIncludeOptional, surface, layout = 'list', currentId, onOpen, onContinue }) {
+function GuideView({ guide, includeOptional, setIncludeOptional, surface, layout = 'list', currentId, openId, onOpen, onFollow, onContinue }) {
   const { statusOf } = window.useCollection();
   window.useI18n();
+  // Desktop table: ↑ ↓ / Home / End between stops, as in the List (the
+  // destination row below the stops is not one of them).
+  const rowKeys = window.useRowKeys('.g-stop[data-row-id]:not(.dest)', surface === 'desktop' ? openId : null, onFollow);
   const PosterArt = window.PosterArt;
   const stops = MCU_GUIDE.stops(guide, includeOptional);
   const p = MCU_GUIDE.progress(guide, statusOf);
@@ -358,7 +361,7 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, layout
     <div className="dlist g-desk" role="main" aria-label={MCU_GUIDE.name(guide)}>
       {header}
       <GuideMeter guide={guide} includeOptional={includeOptional} className="desk" bulk/>
-      <div className="g-table" role="table" aria-label={MCU_GUIDE.name(guide)}>
+      <div className="g-table" role="table" aria-label={MCU_GUIDE.name(guide)} ref={rowKeys.tableRef} onKeyDown={rowKeys.onKeyDown}>
         <div className="g-stop g-headrow" role="row">
           <span role="columnheader" className="g-numcell">#</span>
           <span role="columnheader" className="g-colhead">{gtr('guide.colTitle')}</span>

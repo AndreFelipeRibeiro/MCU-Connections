@@ -357,6 +357,17 @@ function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusabl
 let lastInput = 'pointer';
 document.addEventListener('keydown', (e) => { if (!e.metaKey && !e.ctrlKey && !e.altKey) lastInput = 'keyboard'; }, true);
 document.addEventListener('pointerdown', () => { lastInput = 'pointer'; }, true);
+// Set by the arrow keys that step from title to title: the details then follow
+// without taking focus, so the next press still reaches the list. Cleared once
+// the details have shown that title, or after a moment if they never change.
+let drawerStepFocus = false;
+const stepReducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+let drawerStepTimer = 0;
+const keepFocusOnStep = () => {
+  drawerStepFocus = true;
+  clearTimeout(drawerStepTimer);
+  drawerStepTimer = setTimeout(() => { drawerStepFocus = false; }, 1000);
+};
 
 function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacter, onCharacterHover, activeChar, activeChars, search }) {
   // Slide in and out: mount closed and open on the next frame, and keep showing
@@ -383,7 +394,9 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
     if (opener && opener.isConnected && lastInput === 'keyboard' && (inPanel || active === document.body)) opener.focus({ preventScroll: true });
   }, [current && current.id]);
   useEffect(() => {
-    if (open && headingRef.current && lastInput === 'keyboard') headingRef.current.focus({ preventScroll: true });
+    if (!open) return;
+    if (headingRef.current && lastInput === 'keyboard' && !drawerStepFocus) headingRef.current.focus({ preventScroll: true });
+    drawerStepFocus = false;
   }, [open, title && title.id]);
   // Details and cast scroll as one, so a new title starts at its poster rather
   // than wherever the last one's cast was scrolled to.
@@ -2311,7 +2324,9 @@ function App() {
     } else {
       requestAnimationFrame(() => {
         const row = document.querySelector(`[data-row-id="${id}"]`);
-        if (row) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        if (!row) return;
+        window.MCU_followRowFocus(row);
+        row.scrollIntoView({ block: 'nearest', behavior: stepReducedMotion() ? 'auto' : 'smooth' });
       });
     }
   };
@@ -2328,15 +2343,38 @@ function App() {
     if (id !== '*' && pinnedTitles.some(t => t.id === id)) stepTo(id);
     else if (spatialShown) resetView();
   }, [pinnedTitles]);
+  // The desktop List with a title's details open and no character or guide:
+  // the arrows step through the titles in the order the List shows them (its
+  // sort, collection tab, filters and search), wrapping at the ends, and the
+  // position is announced.
+  const [listAnnounce, setListAnnounce] = useState('');
+  const listStepOn = !isTouch && desktopView === 'list' && !highlightedChar && !guide && !!drawerId;
+  const listStep = (dir) => {
+    const n = visible.length;
+    if (!n) return;
+    const i = visible.findIndex(t => t.id === drawerId);
+    const j = i < 0 ? (dir > 0 ? 0 : n - 1) : (i + dir + n) % n;
+    const t = visible[j];
+    setDrawerId(t.id);
+    setListAnnounce(tr('list.stepPos', { title: I18N.titleName(t), n: j + 1, total: n }));
+    requestAnimationFrame(() => {
+      const row = document.querySelector(`.dl-row[data-row-id="${t.id}"]`);
+      if (!row) return;
+      window.MCU_followRowFocus(row);
+      row.scrollIntoView({ block: 'nearest', behavior: stepReducedMotion() ? 'auto' : 'smooth' });
+    });
+  };
   // Left/right arrows step too, unless typing or inside a menu.
   const stepRef = useRef(null);
-  stepRef.current = (highlightedChar || guide) ? stepBy : null;
+  stepRef.current = (highlightedChar || guide) ? stepBy : listStepOn ? listStep : null;
   useEffect(() => {
     const onKey = (e) => {
       if (!stepRef.current || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.altKey || e.metaKey || e.ctrlKey) return;
       const el = e.target;
-      if (el instanceof Element && el.closest('input, textarea, select, [contenteditable="true"], [role="listbox"], [role="group"]')) return;
+      // A checkbox has no use for the arrows, so a List row's checkbox steps too.
+      if (el instanceof Element && el.closest('input:not([type="checkbox"]), textarea, select, [contenteditable="true"], [role="listbox"], [role="group"]')) return;
       e.preventDefault();
+      keepFocusOnStep();
       stepRef.current(e.key === 'ArrowRight' ? 1 : -1);
     };
     window.addEventListener('keydown', onKey);
@@ -2395,8 +2433,9 @@ function App() {
     const onKey = (e) => {
       if (e.key !== 'Escape' || e.defaultPrevented || pair) return;
       const t = e.target instanceof Element ? e.target : null;
-      if (t && t.closest('input, textarea, select, [contenteditable="true"]')) return;
-      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .bulk-more-pop, .m-sheet, [role="dialog"], [aria-modal="true"]')) return;
+      // Text fields keep Escape for themselves; a List checkbox has no use for it.
+      if (t && t.closest('input:not([type="checkbox"]), textarea, select, [contenteditable="true"]')) return;
+      if (document.querySelector('.sort-order-pop, .acct-pop, .filters-pop, .ss-pop, .bulk-more-pop, .g-pop, .m-sheet, [role="dialog"], [aria-modal="true"]')) return;
       if (detailsOpen) { setSelectedId(null); setDrawerId(null); return; }
       if (guide) { closeGuide(); return; }
       unpinCharacter();
@@ -2826,13 +2865,30 @@ function App() {
           onPrev={() => stepBy(-1)} onNext={() => stepBy(1)} onClose={closeGuide}/>
       ) : charBanner}
 
+      {/* Always present, so each step's title and position is read out. */}
+      {desktopView === 'list' && <div className="story-sr" aria-live="polite">{listAnnounce}</div>}
       {desktopView === 'list' && guide
         ? <window.GuideView guide={guide} surface="desktop" includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
-            currentId={stepCurrent} onOpen={(id) => setDrawerId(drawerId === id ? null : id)} onContinue={(id) => { setStepId(id); setDrawerId(id); }}/>
+            currentId={stepCurrent} openId={drawerId} onOpen={(id) => setDrawerId(drawerId === id ? null : id)} onContinue={(id) => { setStepId(id); setDrawerId(id); }}
+            onFollow={(id) => {
+              // The stop becomes the guide's current one too, so ← → carry on
+              // from it and the banner announces "Stop n of N", as it does for
+              // ← →.
+              keepFocusOnStep();
+              setStepId(id);
+              setDrawerId(id);
+            }}/>
         : desktopView === 'list'
         ? <window.DesktopList upNext={upNext} titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
             onOpen={(id) => setDrawerId(drawerId === id ? null : id)}
+            onFollow={(id, n, total) => {
+              keepFocusOnStep();
+              setDrawerId(id);
+              // Focus moving to the row reads it out; without that, say where we are.
+              const t = n && window.TITLES.find(x => x.id === id);
+              if (t) setListAnnounce(tr('list.stepPos', { title: I18N.titleName(t), n, total }));
+            }}
             header={contextSummary('float', true)} empty={emptyCopy} orderKey={flipKey} progress={viewProgress}/>
         : canvasEl}
 

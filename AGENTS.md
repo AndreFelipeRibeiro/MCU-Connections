@@ -74,7 +74,7 @@ their "Handoff — 2026-10-24" sections are historical.
     the area you touched (for example `qa/test-kbspatial.js`), plus any existing
     check for the same screens. Minutes, not the full run.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (31 check scripts in 32 runs, about 28 minutes; it exits non-zero and marks
+    (34 check scripts in 35 runs, about 30 minutes; it exits non-zero and marks
     failures with `!!`) and `node qa/a11y-scan.js` (exits non-zero on any
     violation; add `LOC=pt-BR` for Portuguese), on the final tree with nothing
     edited while it runs. Read the scan's output, not just its exit code.

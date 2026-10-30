@@ -346,6 +346,9 @@
    the top edge and the whole row clear of the floating character pill. */
 .m-scrollarea { scroll-padding-top: 10px; }
 .m-main.has-pill .m-scrollarea { scroll-padding-bottom: 84px; }
+/* When a meter pins at the top (about 56px), a row scrolled into view stops
+   below it rather than under it. */
+.m-scrollarea:has(.m-phase-divider.sticky) [data-row-id] { scroll-margin-top: 52px; }
 .m-main.has-pill .m-ghint { display: none; }
 .m-lrow.current, .m-card.current { box-shadow: 0 0 0 2px var(--cur-color, var(--accent)); border-radius: 12px; }
 /* Close button on every sheet, beside the drag handle. */

@@ -50,6 +50,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'view.list': 'Lista',
     'view.grid': 'Grade',
     'view.spatial': 'Espacial',
+    'list.stepPos': '{title}, {n} de {total}',
     'list.col.title': 'Título',
     'list.col.type': 'Tipo',
     'list.col.phase': 'Fase',

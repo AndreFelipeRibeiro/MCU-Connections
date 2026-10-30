@@ -178,6 +178,14 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   when they close.
 - In desktop Spatial, Tab reaches each card (then its Seen and Watchlist
   buttons) and Enter opens it; a card tabbed to off-screen glides into view.
+- In the desktop List, ↑ ↓ move between rows keeping the column (checkbox,
+  title, Seen, Watchlist) and Home / End jump to the first and last row; with a
+  title's details open the details follow, also when it was opened with the
+  mouse (↑ ↓ then move from the open title). ← → then step to the previous or
+  next title in the order shown, wrapping at the ends, and a screen reader
+  hears the title and its position. A pinned character or an open guide keeps
+  stepping through its own titles. A row scrolled into view always clears the
+  pinned meter and column headers.
 - On phones, Spatial's grid layouts (Phase, A–Z, IMDb, RT) open with three
   whole columns and the next column and row peeking past the right and bottom
   edges, so it's clear the canvas pans; the first row sits below the count pill.

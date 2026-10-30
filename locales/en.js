@@ -51,6 +51,7 @@ window.MCU_LOCALES.en = {
     'view.list': 'List',
     'view.grid': 'Grid',
     'view.spatial': 'Spatial',
+    'list.stepPos': '{title}, {n} of {total}',
     'list.col.title': 'Title',
     'list.col.type': 'Type',
     'list.col.phase': 'Phase',

@@ -855,6 +855,12 @@ body {
 .dl-row[role="row"]:not(.dl-head) { min-height: 70px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 150ms, opacity 150ms; }
 .dl-row:not(.dl-head):hover { background: var(--surface); }
 .dl-row.on { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--accent); }
+/* A row scrolled into view (an arrow step, a search pick, Up next, a title
+   from the address) stops below what stays pinned at the top of the List: the
+   meter (--dl-lead-h; a later phase's meter takes the same slot) and the 38px
+   column headers. One rule, so every caller of scrollIntoView gets it. */
+.dl-row[data-row-id] { scroll-margin-top: calc(var(--dl-lead-h, 0px) + 46px); scroll-margin-bottom: 12px; }
+.dlist:has(> .bulk-bar) .dl-row[data-row-id] { scroll-margin-bottom: 84px; }
 .dl-row.dim { opacity: .35; }
 .dl-row.seen .dl-thumb { opacity: .55; }
 .dl-thumb { display: block; width: 40px; height: 58px; border-radius: 5px; overflow: hidden; background: #000; }

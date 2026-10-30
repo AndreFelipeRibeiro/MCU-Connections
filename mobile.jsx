@@ -600,7 +600,9 @@ function MobileGrid({ header, currentId, titles: allTitles, onSelect, searchChar
   // Up next: a full-width card at the top. See upNextPlacement.
   const place = upNextPlacement(upNext);
   const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
-  const top = place.topNode && <div className="un-inline top">{place.topNode}</div>;
+  // The lifted title's row, for a step that scrolls to it (a pinned character
+  // or guide stepping onto the suggestion).
+  const top = place.topNode && <div className="un-inline top" data-row-id={place.hideId || undefined}>{place.topNode}</div>;
   // The caller decides which of these it hands over: phase headings belong to
   // the By Phase tab, and every other order gets one meter over the whole
   // catalogue instead.
@@ -843,7 +845,9 @@ function MobileList({ header, currentId, titles: allTitles, sort, onSelect, sear
   const settled = useSettled();
   const place = upNextPlacement(upNext);
   const titles = place.hideId ? allTitles.filter(t => t.id !== place.hideId) : allTitles;
-  const top = place.topNode && <div className="un-inline top">{place.topNode}</div>;
+  // The lifted title's row, for a step that scrolls to it (a pinned character
+  // or guide stepping onto the suggestion).
+  const top = place.topNode && <div className="un-inline top" data-row-id={place.hideId || undefined}>{place.topNode}</div>;
   if (!allTitles.length) return <div className="m-scrollarea" ref={flipRef}>{header}{top}<EmptyState {...(empty || {})}/></div>;
   // Ranks count the whole list, the suggestion lifted to the top included.
   const rankOf = (t) => allTitles.indexOf(t) + 1;

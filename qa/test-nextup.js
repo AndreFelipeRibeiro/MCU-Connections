@@ -73,7 +73,7 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
     const meter = kids.findIndex(k => k.matches('.m-phase-divider.overall') || k.querySelector('.m-phase-divider.overall'));
     return { id: c ? c.dataset.titleId : null, n: document.querySelectorAll('.un-gcard').length,
       region: c && c.getAttribute('aria-label'), aboveMeter: c ? (meter === -1 || at < meter) : false,
-      dupe: c ? !!document.querySelector(`[data-row-id="${c.dataset.titleId}"]`) : false,
+      dupe: c ? !!document.querySelector(`[data-row-id="${c.dataset.titleId}"]:not(.un-inline)`) : false,
       live: [...document.querySelectorAll('[aria-live="polite"]')].map(e => e.textContent).filter(Boolean) };
   });
 
@@ -138,7 +138,7 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
     await page.goto(URL + '?view=list&' + q); await settle(page);
     r = await page.evaluate(() => ({ tag: (document.querySelector('.un-gcard .un-tag') || {}).textContent,
       id: (document.querySelector('.un-gcard') || { dataset: {} }).dataset.titleId,
-      dupes: document.querySelectorAll(`[data-row-id="${(document.querySelector('.un-gcard') || { dataset: {} }).dataset.titleId}"]`).length }));
+      dupes: document.querySelectorAll(`[data-row-id="${(document.querySelector('.un-gcard') || { dataset: {} }).dataset.titleId}"]:not(.un-inline)`).length }));
     (out.listOrders = out.listOrders || {})[q] = r;
     if (r.id !== want.id) err(`${q}: suggested ${r.id}, expected ${want.id}`);
     if (!label.test(r.tag || '')) err(`${q}: the card should name the order, says "${r.tag}"`);
