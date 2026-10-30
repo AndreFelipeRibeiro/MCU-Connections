@@ -20,7 +20,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression, 28 check scripts in 29 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
+| `bash qa/regress.sh` | Full regression, 29 check scripts in 30 runs (`test-fit` runs twice, one per language); about 25 min. Every errors field should read `[]` or `0`; lines marked `!!` are failures and the run exits non-zero. |
 | `node qa/a11y-scan.js` | axe-core scan of 7 screens (desktop Spatial, details, List, account menu; phone List, details, Spatial). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
 | `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
@@ -66,7 +66,14 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   with one guest-storage write and one announcement; Undo restores each title,
   a replaced watchlist included; over 20 asks first and Cancel keeps the
   selection; real Escape presses clear the selection before the details; the
-  phone section headers' "Mark all seen" / "Mark N more seen").
+  phone section headers' "Mark all seen" / "Mark N more seen"),
+  `test-details` (the desktop drawer and the phone sheet show the same
+  sections in the same order from one shared body: poster beside eyebrow,
+  title, release and story, then scores, budget, status, synopsis, the later
+  slots and the cast; "Ratings after release" for a title not out yet, "Not
+  published" for an unknown budget, the search highlighted in the title,
+  nothing under the close button or past the edge at 320px, Portuguese labels;
+  samples picked from the catalogue at run time).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.
@@ -107,7 +114,7 @@ one.
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
 - `test-camera` used to fail at "sort change while selected", and separately to
   report a false "wheel cancels the glide" about one run in four. Both were the
-  check, not the app, and both are fixed. A full run should now report **24 check runs clean**;
+  check, not the app, and both are fixed. A full run should now report **30 check runs clean**;
   treat any `test-camera` failure as real, and compare against a clean copy with
   `SITE=` if in doubt.
   - `page.mouse.click` moves the cursor and presses in the same tick. Hovering a

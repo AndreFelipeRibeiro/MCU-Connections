@@ -70,8 +70,13 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   in-story years, IMDb, RT) that stay in step with the sort row; a row opens the
   cast drawer, which sits below the toolbar. Columns drop as the List narrows.
 - Cast drawer on desktop; Grid, List and Spatial views with detail sheets on mobile.
-- Details show a short, spoiler-light synopsis under the title (three lines, then
-  See more), written for this app in each language.
+- Details read the same on desktop and phones: poster beside the phase, type,
+  year, title, release date and story timeframe; then IMDb and RT scores
+  ("Ratings after release" for a title not out yet), the budget ("Not
+  published" when unknown), Seen and Watchlist, the synopsis and the cast.
+  Both surfaces render one shared body (`TitleDetailsBody` in `mobile.jsx`).
+- The synopsis is short and spoiler-light (three lines, then See more),
+  written for this app in each language.
 - Shareable addresses: the open title, a pinned character, the view, sort,
   order and catalogue filters live in the URL (for example
   `?sort=chrono&phase=3&title=thor-ragnarok`), so a view can be bookmarked or

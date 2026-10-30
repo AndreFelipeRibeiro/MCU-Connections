@@ -1268,48 +1268,112 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
   );
 }
 
+// One definition of a title's details, shared by the desktop drawer
+// (CastDrawer in app.jsx) and the phone sheet (CastSheet below). Each surface
+// keeps its own frame (panel, close button, focus, Escape; sheet handle, swipe,
+// Back) and hands over its own cast list, but the facts appear in the same
+// order on both:
+//   1. identity: poster, eyebrow, title (search highlighted)
+//   2. when: release line, story timeframe
+//   3. scores (or why there are none)
+//   4. facts: budget (runtime or episodes would go here later)
+//   5. your status: Seen / Watchlist
+//   6. synopsis
+//   7. slots for later tickets: Where to watch, Part of (Guides)
+//   8. cast (the surface's own list)
+//   9. surface extras (phones: See connections in Spatial)
+// The surface table keeps the class names each surface's styles and checks
+// already rely on.
+const TD_SURFACE = {
+  drawer: { head: 'drawer-header', eyebrow: 'drawer-eyebrow', title: 'drawer-title', release: 'drawer-release', story: 'drawer-story', synopsis: 'drawer-synopsis', tsa: 'drawer-tsa' },
+  sheet: { head: 'm-cast-hero-wrap', eyebrow: 'm-eyebrow', title: 'm-dtitle', release: 'm-hero-release', story: 'm-hero-story', synopsis: 'm-synopsis', tsa: 'm-hero-tsa' },
+};
+
+// Sections that later tickets fill (Where to watch, Guides). Each looks up a
+// component on window.MCU_detailSlots and renders nothing until one exists, so
+// those tickets drop into their place without touching the layout.
+function DetailSlot({ name, title }) {
+  const Slot = (window.MCU_detailSlots || {})[name];
+  if (!Slot) return null;
+  return <section className={`td-slot td-slot-${name}`}><Slot title={title}/></section>;
+}
+
+function DetailScores({ title }) {
+  if (title.imdb != null || title.rt != null) return <div className="td-scores"><ScoreBadges title={title}/></div>;
+  // No scores yet: say why. A title not out yet has none to give, which reads
+  // differently from a released title nobody has rated.
+  const out = MI18N.release(title).status === 'released';
+  return <div className="td-scores"><span className="td-pending">{mtr(out ? 'score.none' : 'details.ratingsAfterRelease')}</span></div>;
+}
+
+function TitleDetailsBody({ title, surface, search, headingRef, headingId, cast, extras }) {
+  const PosterArt = window.PosterArt;
+  const c = TD_SURFACE[surface];
+  const color = MPHASE_COLORS[title.phase];
+  return (
+    <>
+      <div className={`td-head td-${surface} ${c.head}`}>
+        <div className="td-hero">
+          <div className="td-thumb" aria-hidden="true"><PosterArt title={title}/></div>
+          <div className="td-hero-text">
+            <div className={`td-eyebrow ${c.eyebrow}`} style={{ color }}>{mPhaseLabel(title.phase)} · {mTypeLabel(title.type)} · {title.year}</div>
+            <h2 className={`td-title ${c.title}`} id={headingId} ref={headingRef} tabIndex={headingRef ? -1 : undefined}>
+              <Highlight text={MI18N.titleName(title)} query={search}/>
+            </h2>
+            <ReleaseLine title={title} className={`td-release ${c.release}`}/>
+            <StoryYear title={title} detail className={`td-story ${c.story}`}/>
+          </div>
+        </div>
+        <DetailScores title={title}/>
+        <dl className="td-facts">
+          <div className="td-fact">
+            <dt>{mtr('details.budget')}</dt>
+            <dd className={title.budget == null ? 'unknown' : ''}>{title.budget != null ? MI18N.budget(title.budget) : mtr('details.budgetUnknown')}</dd>
+          </div>
+        </dl>
+        <window.TitleStatusActions title={title} variant="inline" className={`td-tsa ${c.tsa}`}/>
+        <Synopsis title={title} className={`td-synopsis ${c.synopsis}`}/>
+        <DetailSlot name="watch" title={title}/>
+        <DetailSlot name="guides" title={title}/>
+      </div>
+      {cast}
+      {extras}
+    </>
+  );
+}
+
 function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, onGoSpatial, inSpatial, search }) {
   if (!title) return null;
-  const PosterArt = window.PosterArt;
   return (
     <Sheet onClose={onClose} tall label={mtr('details.sheetLabel', { title: MI18N.titleName(title) })}>
-      <div className="m-cast-hero">
-        <div className="m-hero-th"><PosterArt title={title}/></div>
-        <div className="m-hero-text">
-          <div className="m-eyebrow" style={{color:MPHASE_COLORS[title.phase]}}>{mPhaseLabel(title.phase)} · {mTypeLabel(title.type)} · {title.year}</div>
-          <h2 className="m-dtitle">{MI18N.titleName(title)}</h2>
-          <ReleaseLine title={title} className="m-hero-release"/>
-          <StoryYear title={title} detail className="m-hero-story"/>
-          <ScoreBadges title={title}/>
-          <window.TitleStatusActions title={title} variant="inline" className="m-hero-tsa"/>
-        </div>
-      </div>
-      <Synopsis title={title} className="m-synopsis"/>
-      <div className="m-flab">{mtr('details.cast', { n: title.cast.length })}</div>
-      <div className="m-castlist">
-        {title.cast.length === 0 && <div className="m-empty-cast">{mtr('details.noCast')}</div>}
-        {title.cast.map(ch => {
-          const c = window.CHARACTERS[ch];
-          if (!c) return null;
-          return (
-            <button key={ch} className={`m-crow${(activeChars?activeChars.indexOf(ch)!==-1:activeChar===ch)?' on':''}`} style={{'--match-color': c.color}} onClick={()=>onCharacterClick(ch)}>
-              <div className="m-port" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-                <window.Portrait
-                  url={window.castPortrait(title, ch)}
-                  alt={MI18N.charName(ch)} initials={c.initials}/>
-              </div>
-              <div className="m-ctext">
-                <div className="m-cn"><Highlight text={MI18N.charName(ch)} query={search}/></div>
-                <div className="m-an"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
-              </div>
-              <span className="m-cdot" style={{background:c.color}}/>
-            </button>
-          );
-        })}
-      </div>
-      {!inSpatial && (
-        <button className="m-apply ghost" onClick={onGoSpatial}>{mtr('details.goSpatial')}</button>
-      )}
+      <TitleDetailsBody title={title} surface="sheet" search={search}
+        cast={<>
+          <div className="m-flab">{mtr('details.cast', { n: title.cast.length })}</div>
+          <div className="m-castlist">
+            {title.cast.length === 0 && <div className="m-empty-cast">{mtr('details.noCast')}</div>}
+            {title.cast.map(ch => {
+              const c = window.CHARACTERS[ch];
+              if (!c) return null;
+              return (
+                <button key={ch} className={`m-crow${(activeChars?activeChars.indexOf(ch)!==-1:activeChar===ch)?' on':''}`} style={{'--match-color': c.color}} onClick={()=>onCharacterClick(ch)}>
+                  <div className="m-port" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
+                    <window.Portrait
+                      url={window.castPortrait(title, ch)}
+                      alt={MI18N.charName(ch)} initials={c.initials}/>
+                  </div>
+                  <div className="m-ctext">
+                    <div className="m-cn"><Highlight text={MI18N.charName(ch)} query={search}/></div>
+                    <div className="m-an"><Highlight text={window.MCU_credit(title, ch)} query={search}/></div>
+                  </div>
+                  <span className="m-cdot" style={{background:c.color}}/>
+                </button>
+              );
+            })}
+          </div>
+        </>}
+        extras={!inSpatial && (
+          <button className="m-apply ghost" onClick={onGoSpatial}>{mtr('details.goSpatial')}</button>
+        )}/>
     </Sheet>
   );
 }
@@ -1349,4 +1413,4 @@ function SpatialHint({ focused, sharedCount }) {
   );
 }
 
-Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });
+Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, TitleDetailsBody, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });

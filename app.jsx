@@ -365,6 +365,10 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
   useEffect(() => {
     if (open && headingRef.current && lastInput === 'keyboard') headingRef.current.focus({ preventScroll: true });
   }, [open, title && title.id]);
+  // Details and cast scroll as one, so a new title starts at its poster rather
+  // than wherever the last one's cast was scrolled to.
+  const scrollRef = useRef(null);
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, [title && title.id]);
   useEffect(() => {
     if (!current) { setOpen(false); return; }
     setTitle(current);
@@ -376,47 +380,42 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
   return (
     <aside ref={asideRef} className={`drawer${open ? ' open' : ''}`} aria-hidden={!open} aria-labelledby="drawer-title"
       onTransitionEnd={e => { if (!current && e.target === e.currentTarget) setTitle(null); }}>
-      <header className="drawer-header">
-        <div>
-          <div className="drawer-eyebrow" style={{color: PHASE_COLORS[title.phase]}}>{phaseLabel(title.phase)} · {I18N.upper(typeLabel(title.type))} · {title.year}</div>
-          <h2 className="drawer-title" id="drawer-title" ref={headingRef} tabIndex={-1}><window.Highlight text={I18N.titleName(title)} query={search}/></h2>
-          <window.ReleaseLine title={title} className="drawer-release"/>
-          <window.StoryYear title={title} detail className="drawer-story"/>
-          <window.Synopsis title={title} className="drawer-synopsis"/>
-          <window.TitleStatusActions title={title} variant="inline" className="drawer-tsa"/>
-        </div>
-        <button className="drawer-close" onClick={onClose} aria-label={tr('details.close')}>×</button>
-      </header>
-      <div className="drawer-section-label">{tr('details.cast', { n: title.cast.length })}</div>
-      <div className="cast-list">
-        {title.cast.length === 0 && <div className="empty-cast">{tr('details.noCast')}</div>}
-        {title.cast.map(ch => {
-          const c = window.CHARACTERS[ch];
-          if (!c) return null;
-          const isActive = activeChars ? activeChars.indexOf(ch) !== -1 : activeChar === ch;
-          return (
-            <button
-              key={ch}
-              data-char={ch}
-              style={{ '--match-color': c.color }}
-              className={`cast-row ${isActive ? 'active' : ''}`}
-              onClick={() => onCharacterClick(ch)}
-              onMouseEnter={() => onCharacterHover(ch)}
-              onMouseLeave={() => onCharacterHover(null)}
-            >
-              <div className="portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
-                <window.Portrait
-                  url={window.castPortrait(current, ch)}
-                  alt={I18N.charName(ch)} initials={c.initials}/>
-              </div>
-              <div className="cast-text">
-                <div className="char-name"><window.Highlight text={I18N.charName(ch)} query={search}/></div>
-                <div className="actor-name"><window.Highlight text={window.MCU_credit(current, ch)} query={search}/></div>
-              </div>
-              <div className="cast-color-dot" style={{background:c.color}}/>
-            </button>
-          );
-        })}
+      <button className="drawer-close" onClick={onClose} aria-label={tr('details.close')}>×</button>
+      <div className="drawer-scroll" ref={scrollRef}>
+        <window.TitleDetailsBody title={title} surface="drawer" search={search} headingRef={headingRef} headingId="drawer-title"
+          cast={<>
+            <div className="drawer-section-label">{tr('details.cast', { n: title.cast.length })}</div>
+            <div className="cast-list">
+              {title.cast.length === 0 && <div className="empty-cast">{tr('details.noCast')}</div>}
+              {title.cast.map(ch => {
+                const c = window.CHARACTERS[ch];
+                if (!c) return null;
+                const isActive = activeChars ? activeChars.indexOf(ch) !== -1 : activeChar === ch;
+                return (
+                  <button
+                    key={ch}
+                    data-char={ch}
+                    style={{ '--match-color': c.color }}
+                    className={`cast-row ${isActive ? 'active' : ''}`}
+                    onClick={() => onCharacterClick(ch)}
+                    onMouseEnter={() => onCharacterHover(ch)}
+                    onMouseLeave={() => onCharacterHover(null)}
+                  >
+                    <div className="portrait" style={{background:`linear-gradient(135deg, ${c.color}, ${c.color}88)`}}>
+                      <window.Portrait
+                        url={window.castPortrait(current, ch)}
+                        alt={I18N.charName(ch)} initials={c.initials}/>
+                    </div>
+                    <div className="cast-text">
+                      <div className="char-name"><window.Highlight text={I18N.charName(ch)} query={search}/></div>
+                      <div className="actor-name"><window.Highlight text={window.MCU_credit(current, ch)} query={search}/></div>
+                    </div>
+                    <div className="cast-color-dot" style={{background:c.color}}/>
+                  </button>
+                );
+              })}
+            </div>
+          </>}/>
       </div>
     </aside>
   );

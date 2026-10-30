@@ -162,6 +162,9 @@ window.MCU_LOCALES.en = {
     'details.noCast': 'No major recurring cast tracked.',
     'details.goSpatial': '◈ See connections in Spatial',
     'details.tapForCast': 'Tap for cast ›',
+    'details.budget': 'Budget',
+    'details.budgetUnknown': 'Not published',
+    'details.ratingsAfterRelease': 'Ratings after release',
 
     'score.imdbSeries': 'IMDb whole-series rating (shared across seasons)',
     'score.imdbMovie': 'IMDb movie rating',

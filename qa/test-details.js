@@ -1,0 +1,202 @@
+const { chromium } = require('playwright');
+const path = require('path');
+const fs = require('fs');
+const http = require('http');
+
+const S = __dirname;
+const SITE = (process.env.SITE ? path.join(S, process.env.SITE) : path.join(S, '..'));
+const V = path.join(S, 'vendor');
+const VENDOR = {
+  'react@18.3.1/umd/react.development.js': 'x-react-18.3.1/package/umd/react.development.js',
+  'react-dom@18.3.1/umd/react-dom.development.js': 'x-react-dom-18.3.1/package/umd/react-dom.development.js',
+  'react@18.3.1/umd/react.production.min.js': 'x-react-18.3.1/package/umd/react.production.min.js',
+  'react-dom@18.3.1/umd/react-dom.production.min.js': 'x-react-dom-18.3.1/package/umd/react-dom.production.min.js',
+  '@babel/standalone@7.29.0/babel.min.js': 'x-babel-standalone-7.29.0/package/babel.min.js',
+  '@supabase/supabase-js@2.112.2/dist/umd/supabase.js': 'x-supabase-supabase-js-2.112.2/package/dist/umd/supabase.js',
+};
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.jsx': 'text/babel', '.css': 'text/css' };
+const server = http.createServer((req, res) => {
+  let p = decodeURIComponent(req.url.split('?')[0]);
+  if (p === '/') p = '/index.html';
+  const f = path.join(SITE, p);
+  if (!f.startsWith(SITE) || !fs.existsSync(f)) { res.writeHead(404); return res.end(); }
+  res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
+  fs.createReadStream(f).pipe(res);
+});
+const URL = 'http://127.0.0.1:8223/';
+const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
+const DESKTOP = { viewport: { width: 1440, height: 900 } };
+
+async function ctxPage(browser, opts, init) {
+  const ctx = await browser.newContext(opts);
+  if (init) await ctx.addInitScript(init);
+  // The sign-in reminder would cover the page after a few marks: off unless a
+  // test asks for it (NUDGE=1).
+  if (!process.env.NUDGE) await ctx.addInitScript("try { if (!localStorage.getItem('mcu.signInNudge.v1')) localStorage.setItem('mcu.signInNudge.v1', '2'); } catch (e) {}");
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_FAILED')) errors.push(m.text()); });
+  page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+  await page.route('**/*', route => {
+    const u = route.request().url();
+    const m = u.match(/^https:\/\/unpkg\.com\/(.+)$/);
+    if (m && VENDOR[m[1]]) return route.fulfill({ status: 200, contentType: 'text/javascript', body: fs.readFileSync(path.join(V, VENDOR[m[1]])) });
+    if (u.startsWith('http://127.0.0.1')) return route.continue();
+    return route.abort();
+  });
+  return { ctx, page, errors };
+}
+const settle = page => page.waitForTimeout(2200);
+const go = async page => { await page.goto(URL); await settle(page); };
+
+// Title details (TitleDetailsBody in mobile.jsx): the desktop drawer and the
+// phone sheet render the same sections in the same order, with the same hero.
+// The sample titles are chosen at run time (released with scores, not out yet
+// without scores, budget unknown), so the check keeps working as release
+// dates pass and the catalogue changes.
+const HEAD = ['td-hero', 'td-scores', 'td-facts', 'tsa', 'synopsis'];
+const SLOT_PROBE = "window.MCU_detailSlots = { watch: function (p) { return window.React.createElement('p', { className: 'slot-probe' }, 'watch ' + p.title.id); } };";
+
+const inspect = () => {
+  const I = window.MCU_I18N;
+  const root = document.querySelector('.drawer.open') || document.querySelector('.m-sheet');
+  if (!root) return { open: false };
+  const head = root.querySelector('.td-head');
+  if (!head) return { open: true, shared: false };
+  const after = [];
+  for (let n = head.nextElementSibling; n; n = n.nextElementSibling) after.push(n.className.split(' ')[0]);
+  const thumb = root.querySelector('.td-hero .td-thumb').getBoundingClientRect();
+  const hero = [...root.querySelectorAll('.td-hero-text > *')];
+  const close = root.querySelector('.drawer-close, .m-sheet-x').getBoundingClientRect();
+  const box = root.getBoundingClientRect();
+  return {
+    open: true,
+    head: [...head.children].map(e => e.className.split(' ')[0]),
+    after,
+    heroText: hero.map(e => e.className.split(' ')[0]),
+    thumb: [Math.round(thumb.width), Math.round(thumb.height)],
+    title: root.querySelector('.td-title').textContent,
+    marks: [...root.querySelectorAll('.td-title mark.hl')].map(m => m.textContent),
+    scores: root.querySelectorAll('.td-scores .m-sc:not(.none)').length,
+    pending: (root.querySelector('.td-pending') || {}).textContent || null,
+    budget: root.querySelector('.td-fact dd').textContent,
+    budgetLabel: root.querySelector('.td-fact dt').textContent,
+    closeOverlap: hero.some(e => { const r = e.getBoundingClientRect(); return r.right > close.left && r.left < close.right && r.bottom > close.top && r.top < close.bottom; }),
+    overflow: [...root.querySelectorAll('.td-head *')].some(e => e.getBoundingClientRect().right > box.right + 0.5),
+    probe: (() => { const p = root.querySelector('.slot-probe'); if (!p) return null;
+      const order = [...head.children].map(e => e.className.split(' ')[0]); return order.indexOf('td-slot') - order.indexOf('synopsis'); })(),
+  };
+};
+
+(async () => {
+  await new Promise(r => server.listen(8223, r));
+  const browser = await chromium.launch();
+  const out = { errors: [] };
+  const err = (m) => out.errors.push(m);
+
+  // Pick the samples from the live catalogue.
+  let { ctx, page, errors } = await ctxPage(browser, DESKTOP);
+  await go(page);
+  const pick = await page.evaluate(() => {
+    const I = window.MCU_I18N;
+    const T = window.TITLES;
+    const released = T.find(t => I.release(t).status === 'released' && t.imdb != null && t.rt != null && t.budget != null && t.story);
+    const upcoming = T.find(t => I.release(t).status !== 'released' && t.imdb == null && t.rt == null);
+    const noBudget = T.find(t => t.budget == null);
+    // Two long casts: both overflow the drawer, so a missing reset would leave
+    // the second one scrolled instead of the browser clamping it to the top.
+    const [longCast, longCast2] = T.slice().sort((a, b) => b.cast.length - a.cast.length);
+    return {
+      released: released && { id: released.id, budget: I.budget(released.budget), name: I.titleName(released) },
+      upcoming: upcoming && { id: upcoming.id },
+      noBudget: noBudget && { id: noBudget.id },
+      longCast: longCast.id, longCast2: { id: longCast2.id, name: I.titleName(longCast2) },
+      strings: { after: I.tr('details.ratingsAfterRelease'), none: I.tr('score.none'), unknown: I.tr('details.budgetUnknown'), budget: I.tr('details.budget') },
+    };
+  });
+  out.samples = { released: pick.released && pick.released.id, upcoming: pick.upcoming && pick.upcoming.id, noBudget: pick.noBudget && pick.noBudget.id };
+  if (!pick.released) err('no released title with scores, budget and story to test with');
+  await ctx.close();
+
+  const surfaces = [['desktop', DESKTOP], ['phone390', MOBILE], ['phone320', { viewport: { width: 320, height: 640 }, hasTouch: true, isMobile: true }]];
+  const heads = {};
+  for (const [name, opts] of surfaces) {
+    ({ ctx, page, errors } = await ctxPage(browser, opts, SLOT_PROBE));
+    const phone = name !== 'desktop';
+    const open = async (id) => { await page.goto(URL + '?title=' + id); await settle(page); return page.evaluate(inspect); };
+
+    const r = await open(pick.released.id);
+    out[name] = { released: r };
+    if (!r.open) { err(`${name}: details did not open for ${pick.released.id}`); await ctx.close(); continue; }
+    if (r.shared === false) { err(`${name}: the details do not use the shared body (no .td-head)`); await ctx.close(); continue; }
+    heads[name] = r.head.join(',');
+    if (r.head.filter(c => c !== 'td-slot').join(',') !== HEAD.join(',')) err(`${name}: sections are ${r.head.join(', ')}, expected ${HEAD.join(', ')} (plus the slot)`);
+    if (r.probe !== 1) err(`${name}: a filled Where to watch slot should sit right after the synopsis (got offset ${r.probe})`);
+    const castAfter = phone ? ['m-flab', 'm-castlist', 'm-apply'] : ['drawer-section-label', 'cast-list'];
+    if (r.after.join(',') !== castAfter.join(',')) err(`${name}: after the details came ${r.after.join(', ')}, expected ${castAfter.join(', ')}`);
+    if (r.heroText.join(',') !== 'td-eyebrow,td-title,release-line,story-year') err(`${name}: hero text is ${r.heroText.join(', ')}`);
+    if (r.thumb[0] !== 66 || r.thumb[1] !== 99) err(`${name}: poster thumbnail is ${r.thumb.join('×')}, expected 66×99`);
+    if (r.scores !== 2) err(`${name}: expected IMDb and RT badges for ${pick.released.id}, saw ${r.scores}`);
+    if (r.budget !== pick.released.budget || r.budgetLabel !== pick.strings.budget) err(`${name}: budget reads "${r.budgetLabel} ${r.budget}", expected "${pick.strings.budget} ${pick.released.budget}"`);
+    if (r.closeOverlap) err(`${name}: the close button overlaps the title text`);
+    if (r.overflow) err(`${name}: something in the details runs past the panel's right edge`);
+
+    if (pick.upcoming) {
+      const u = await open(pick.upcoming.id);
+      out[name].upcoming = { pending: u.pending, scores: u.scores };
+      if (u.pending !== pick.strings.after) err(`${name}: an unreleased title without scores should say "${pick.strings.after}", said "${u.pending}"`);
+    }
+    if (pick.noBudget) {
+      const b = await open(pick.noBudget.id);
+      out[name].noBudget = b.budget;
+      if (b.budget !== pick.strings.unknown) err(`${name}: an unknown budget should read "${pick.strings.unknown}", read "${b.budget}"`);
+      if (/\$\s*0\b|—/.test(b.budget)) err(`${name}: unknown budget shows a placeholder figure`);
+    }
+
+    // Desktop: details and cast scroll as one, and a new title starts at the top.
+    if (!phone) {
+      await page.goto(URL + '?title=' + pick.longCast); await settle(page);
+      const before = await page.evaluate(() => { const sc = document.querySelector('.drawer-scroll'); sc.scrollTop = sc.scrollHeight; return sc.scrollTop; });
+      await page.evaluate((id) => document.querySelector(`.card[data-id="${id}"] .card-open`).click(), pick.longCast2.id);
+      await page.waitForTimeout(1200);
+      const sw = await page.evaluate(() => { const sc = document.querySelector('.drawer-scroll'); return { title: document.querySelector('.drawer.open .td-title').textContent, top: sc.scrollTop, room: sc.scrollHeight - sc.clientHeight }; });
+      out[name].switchScroll = { before, after: sw.top, title: sw.title };
+      if (sw.title !== pick.longCast2.name) err(`${name}: switching titles left "${sw.title}" in the drawer`);
+      else if (before === 0 || sw.room === 0) err(`${name}: ${pick.longCast} did not scroll, so the reset went untested`);
+      else if (sw.top !== 0) err(`${name}: switching titles kept the drawer scrolled to ${sw.top}px`);
+    }
+
+    // Search highlight on the title, on both surfaces.
+    const word = pick.released.name.split(/\s+/)[0];
+    if (phone) {
+      await page.goto(URL); await settle(page);
+      await page.locator('.m-search-input input').fill(word); await page.waitForTimeout(900);
+      // Escape closes the suggestions first (one layer per press), uncovering the list.
+      await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+      await page.locator('.m-lrow-open').first().click(); await page.waitForTimeout(900);
+    } else {
+      await page.goto(URL + '?title=' + pick.released.id); await settle(page);
+      await page.locator('.search-wrap input').fill(word); await page.waitForTimeout(900);
+    }
+    const h = await page.evaluate(inspect);
+    out[name].search = { word, title: h.title, marks: h.marks };
+    if (!h.marks || !h.marks.length) err(`${name}: searching "${word}" does not highlight the details title`);
+    errors.forEach(e => err(`${name} console: ${e}`));
+    await ctx.close();
+  }
+  if (heads.desktop && heads.phone390 && heads.desktop !== heads.phone390) err(`desktop and phone sections differ: ${heads.desktop} / ${heads.phone390}`);
+
+  // Portuguese labels.
+  ({ ctx, page, errors } = await ctxPage(browser, MOBILE, "localStorage.setItem('mcu.lang.v1','pt-BR');"));
+  if (pick.noBudget) {
+    await page.goto(URL + '?title=' + pick.noBudget.id); await settle(page);
+    const pt = await page.evaluate(() => !document.querySelector('.td-fact') ? { dt: null, dd: null } : ({ dt: document.querySelector('.td-fact dt').textContent, dd: document.querySelector('.td-fact dd').textContent, want: [window.MCU_I18N.tr('details.budget'), window.MCU_I18N.tr('details.budgetUnknown')] }));
+    out.pt = pt;
+    if (pt.dt !== 'Orçamento' || pt.dd !== 'Não divulgado') err(`Portuguese budget reads "${pt.dt} ${pt.dd}"`);
+  }
+  errors.forEach(e => err(`pt console: ${e}`));
+  await ctx.close();
+
+  console.log(JSON.stringify(out, null, 1));
+  await browser.close(); server.close();
+})();

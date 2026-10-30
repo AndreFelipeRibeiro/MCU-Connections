@@ -159,6 +159,9 @@ window.MCU_LOCALES['pt-BR'] = {
     'details.noCast': 'Nenhum elenco recorrente principal registrado.',
     'details.goSpatial': '◈ Ver conexões no modo Espacial',
     'details.tapForCast': 'Toque para ver o elenco ›',
+    'details.budget': 'Orçamento',
+    'details.budgetUnknown': 'Não divulgado',
+    'details.ratingsAfterRelease': 'Notas após o lançamento',
 
     'score.imdbSeries': 'Nota IMDb da série inteira (compartilhada entre temporadas)',
     'score.imdbMovie': 'Nota IMDb do filme',
