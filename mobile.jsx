@@ -1289,6 +1289,44 @@ const TD_SURFACE = {
   sheet: { head: 'm-cast-hero-wrap', eyebrow: 'm-eyebrow', title: 'm-dtitle', release: 'm-hero-release', story: 'm-hero-story', synopsis: 'm-synopsis', tsa: 'm-hero-tsa' },
 };
 
+// Collapsible sections of the details (the cast, Where to watch), so the panel
+// does not grow without end as sections are added. The cast starts open and
+// Where to watch closed. Open or closed is kept for the visit, so a section
+// stays as the visitor left it while they move between titles; a reload
+// restores the defaults. Nothing is stored.
+const detailOpen = { cast: true, watch: false };
+const detailOpenListeners = new Set();
+function useDetailOpen(key) {
+  const [, bump] = React.useReducer(x => x + 1, 0);
+  React.useEffect(() => { detailOpenListeners.add(bump); return () => { detailOpenListeners.delete(bump); }; }, []);
+  const set = (v) => { detailOpen[key] = v; detailOpenListeners.forEach(fn => fn()); };
+  return [!!detailOpen[key], set];
+}
+
+// An accordion section: a heading that is a real button (aria-expanded,
+// aria-controls), an optional control beside it shown while open (Where to
+// watch's Change), and the body. `labelClass` and `bodyClass` keep each
+// surface's existing look (drawer-section-label / cast-list on desktop,
+// m-flab / m-castlist on phones).
+function DetailSection({ id, label, labelClass = '', bodyClass = '', className = '', extra, children }) {
+  const [open, setOpen] = useDetailOpen(id);
+  const bodyId = 'td-acc-' + id + '-' + React.useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  return (
+    <section className={`td-acc td-acc-${id}${open ? ' open' : ''}${className ? ' ' + className : ''}`}>
+      <div className="td-acc-head">
+        <h3 className="td-acc-h">
+          <button type="button" className={`td-acc-btn ${labelClass}`} aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)}>
+            <span className="td-acc-label">{label}</span>
+            <svg className="td-acc-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+        </h3>
+        {open && extra}
+      </div>
+      <div id={bodyId} className={`td-acc-body ${bodyClass}`} hidden={!open}>{children}</div>
+    </section>
+  );
+}
+
 // Sections that later tickets fill (Where to watch, Guides). Each looks up a
 // component on window.MCU_detailSlots and renders nothing until one exists, so
 // those tickets drop into their place without touching the layout.
@@ -1347,9 +1385,8 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, 
   return (
     <Sheet onClose={onClose} tall label={mtr('details.sheetLabel', { title: MI18N.titleName(title) })}>
       <TitleDetailsBody title={title} surface="sheet" search={search}
-        cast={<>
-          <div className="m-flab">{mtr('details.cast', { n: title.cast.length })}</div>
-          <div className="m-castlist">
+        cast={
+          <DetailSection id="cast" label={mtr('details.cast', { n: title.cast.length })} labelClass="m-flab" bodyClass="m-castlist">
             {title.cast.length === 0 && <div className="m-empty-cast">{mtr('details.noCast')}</div>}
             {title.cast.map(ch => {
               const c = window.CHARACTERS[ch];
@@ -1369,8 +1406,8 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, 
                 </button>
               );
             })}
-          </div>
-        </>}
+          </DetailSection>
+        }
         extras={!inSpatial && (
           <button className="m-apply ghost" onClick={onGoSpatial}>{mtr('details.goSpatial')}</button>
         )}/>
@@ -1413,4 +1450,4 @@ function SpatialHint({ focused, sharedCount }) {
   );
 }
 
-Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, TitleDetailsBody, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });
+Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, TitleDetailsBody, DetailSection, useDetailOpen, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });

@@ -75,7 +75,8 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   ("Ratings after release" for a title not out yet), the budget ("Not
   published" when unknown), Seen and Watchlist, the synopsis and the cast.
   Both surfaces render one shared body (`TitleDetailsBody` in `mobile.jsx`).
-- Where to watch: the details list the services offering a released title in
+- Where to watch: a section of the details, closed until you open it (the
+  cast folds the same way), lists the services offering a released title in
   your country (stream and free with their logos, rent or buy on one line),
   with one link to TMDB's page for all options and prices. The country is
   guessed from the browser (language, then time zone, then the US) and can be

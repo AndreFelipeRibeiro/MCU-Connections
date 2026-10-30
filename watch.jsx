@@ -168,15 +168,14 @@ function WhereToWatch({ title }) {
     }
   }
   const stale = W.checkedAt && daysSince(W.checkedAt) > STALE_DAYS;
+  // A collapsible section (DetailSection in mobile.jsx), closed by default so
+  // the details stay short; Change sits beside the heading while it is open.
   return (
-    <section className="wtw" aria-labelledby={`wtw-h-${title.id}`}>
-      <div className="wtw-head">
-        <h3 className="wtw-title" id={`wtw-h-${title.id}`}>{wtr('watch.title', { country })}</h3>
-        {picking
-          ? <RegionPicker region={region} setRegion={setRegion} onDone={() => setPicking(false)}/>
-          : <button type="button" className="wtw-change" onClick={() => setPicking(true)}
-              aria-label={wtr('watch.changeAria', { country })}>{wtr('watch.change')}</button>}
-      </div>
+    <window.DetailSection id="watch" className="wtw" labelClass="wtw-title" label={wtr('watch.title', { country })}
+      extra={picking
+        ? <RegionPicker region={region} setRegion={setRegion} onDone={() => setPicking(false)}/>
+        : <button type="button" className="wtw-change" onClick={() => setPicking(true)}
+            aria-label={wtr('watch.changeAria', { country })}>{wtr('watch.change')}</button>}>
       {title.type === 'series' && entry && supported && <p className="wtw-series">{wtr('watch.wholeSeries')}</p>}
       {body}
       {link && (
@@ -193,7 +192,7 @@ function WhereToWatch({ title }) {
           {' · '}{wtr('watch.credit')}
         </p>
       )}
-    </section>
+    </window.DetailSection>
   );
 }
 

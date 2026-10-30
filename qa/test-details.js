@@ -134,13 +134,32 @@ const inspect = () => {
     heads[name] = r.head.join(',');
     if (r.head.filter(c => c !== 'td-slot').join(',') !== HEAD.join(',')) err(`${name}: sections are ${r.head.join(', ')}, expected ${HEAD.join(', ')} (plus the slot)`);
     if (r.probe !== 1) err(`${name}: Where to watch should sit right after the synopsis, with the Guides slot still empty (got offset ${r.probe})`);
-    const castAfter = phone ? ['m-flab', 'm-castlist', 'm-apply'] : ['drawer-section-label', 'cast-list'];
+    // The cast is a collapsible section (open by default) after the details.
+    const castAfter = phone ? ['td-acc', 'm-apply'] : ['td-acc'];
     if (r.after.join(',') !== castAfter.join(',')) err(`${name}: after the details came ${r.after.join(', ')}, expected ${castAfter.join(', ')}`);
     if (r.heroText.join(',') !== 'td-eyebrow,td-title,release-line,story-year') err(`${name}: hero text is ${r.heroText.join(', ')}`);
     if (r.thumb[0] !== 66 || r.thumb[1] !== 99) err(`${name}: poster thumbnail is ${r.thumb.join('×')}, expected 66×99`);
     if (r.scores !== 2) err(`${name}: expected IMDb and RT badges for ${pick.released.id}, saw ${r.scores}`);
     if (r.budget !== pick.released.budget || r.budgetLabel !== pick.strings.budget) err(`${name}: budget reads "${r.budgetLabel} ${r.budget}", expected "${pick.strings.budget} ${pick.released.budget}"`);
     if (r.closeOverlap) err(`${name}: the close button overlaps the title text`);
+    // Accordions: the cast starts open, Where to watch closed; each heading
+    // is a button that toggles its own section only.
+    const acc = await page.evaluate(async () => {
+      const root = document.querySelector('.drawer.open') || document.querySelector('.m-sheet');
+      const btn = (sel) => root.querySelector(sel + ' .td-acc-btn');
+      const castBtn = btn('.td-acc-cast'), watchBtn = btn('.td-acc-watch');
+      const first = { cast: castBtn && castBtn.getAttribute('aria-expanded'), watch: watchBtn && watchBtn.getAttribute('aria-expanded'),
+        rowsVisible: [...root.querySelectorAll('.cast-row, .m-crow')].filter(e => e.getClientRects().length).length };
+      castBtn.click(); await new Promise(r => setTimeout(r, 150));
+      const closed = { cast: castBtn.getAttribute('aria-expanded'), rowsVisible: [...root.querySelectorAll('.cast-row, .m-crow')].filter(e => e.getClientRects().length).length,
+        watch: watchBtn && watchBtn.getAttribute('aria-expanded') };
+      castBtn.click(); await new Promise(r => setTimeout(r, 150));
+      return { first, closed, controls: castBtn.getAttribute('aria-controls') && !!document.getElementById(castBtn.getAttribute('aria-controls')) };
+    });
+    out[name].accordion = acc;
+    if (acc.first.cast !== 'true' || acc.first.watch !== 'false' || !acc.first.rowsVisible) err(`${name}: the cast should start open and Where to watch closed: ${JSON.stringify(acc.first)}`);
+    if (acc.closed.cast !== 'false' || acc.closed.rowsVisible || acc.closed.watch !== 'false') err(`${name}: closing the cast should hide its rows and leave Where to watch alone: ${JSON.stringify(acc.closed)}`);
+    if (!acc.controls) err(`${name}: the cast heading's aria-controls does not point at its body`);
     if (r.overflow) err(`${name}: something in the details runs past the panel's right edge`);
 
     if (pick.upcoming) {

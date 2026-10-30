@@ -70,12 +70,13 @@ relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
   `test-details` (the desktop drawer and the phone sheet show the same
   sections in the same order from one shared body: poster beside eyebrow,
   title, release and story, then scores, budget, status, synopsis, Where to
-  watch (the Guides slot still empty) and the cast; "Ratings after release"
+  watch (the Guides slot still empty) and the cast; the cast starts open and
+  Where to watch closed, each toggling only itself; "Ratings after release"
   for a title not out yet, "Not published" for an unknown budget, the search
   highlighted in the title, nothing under the close button or past the edge
   at 320px, Portuguese labels; samples picked from the catalogue at run time),
   `test-watch` (Where to watch, against a test snapshot served in place of
-  watch-data.js: the country guessed from the
+  watch-data.js: the section starts closed; the country guessed from the
   browser's languages, then the time zone, then the US; stream and free logos
   with the name kept when a logo fails; the rent-or-buy line; rent only; no
   offers; not checked yet with no "Checked" date beside it; the series note;

@@ -76,7 +76,18 @@ const fixture = (checkedAt) => 'window.WATCH = ' + JSON.stringify({
   const browser = await chromium.launch();
   const out = { errors: [] };
   const err = (m) => out.errors.push(m);
-  const open = async (page, id) => { await page.goto(URL + '?title=' + id); await settle(page); };
+  // Where to watch starts closed (user decision, 2026-10-29): open its
+  // section before reading it. `closedAtFirst` records that it was closed.
+  let closedAtFirst = [];
+  const open = async (page, id) => {
+    await page.goto(URL + '?title=' + id); await settle(page);
+    const btn = page.locator('.wtw .td-acc-btn').first();
+    if (await btn.count()) {
+      const exp = await btn.getAttribute('aria-expanded');
+      closedAtFirst.push(exp === 'false');
+      if (exp === 'false') { await btn.click(); await page.waitForTimeout(200); }
+    }
+  };
   const read = (page) => page.evaluate(() => {
     const s = document.querySelector('.wtw');
     if (!s) return null;
@@ -95,7 +106,8 @@ const fixture = (checkedAt) => 'window.WATCH = ' + JSON.stringify({
     };
   });
   const withFixture = async (opts, checkedAt, init) => {
-    const c = await ctxPage(browser, opts, init);
+    // The first-visit welcome would cover the page; mark it seen.
+    const c = await ctxPage(browser, opts, "localStorage.setItem('mcu.welcome.v1','test');" + (init || ''));
     await c.page.route('**/watch-data.js', route => route.fulfill({ status: 200, contentType: 'text/javascript', body: fixture(checkedAt) }));
     return c;
   };
@@ -155,6 +167,8 @@ const fixture = (checkedAt) => 'window.WATCH = ' + JSON.stringify({
   if (!r || !r.notes.includes("We don't have availability for Portugal yet.") || !r.link || !/locale=PT$/.test(r.link.href)) err(`unsupported country: ${JSON.stringify(r)}`);
   if (await page.evaluate(() => localStorage.getItem('mcu.region.v1')) !== 'PT') err('the chosen country is not kept');
   await page.reload(); await settle(page);
+  // A reload closes the section again (it starts closed); open it.
+  await page.locator('.wtw .td-acc-btn').click(); await page.waitForTimeout(200);
   r = await read(page);
   if (!r || !r.title.endsWith('Portugal')) err(`the chosen country did not survive a reload: ${r && r.title}`);
   await page.locator('.wtw-change').click();
@@ -186,7 +200,7 @@ const fixture = (checkedAt) => 'window.WATCH = ' + JSON.stringify({
   // 6. The real snapshot, as committed: before the first refresh every
   //    released title says it has not been checked; after, the section shows
   //    the snapshot's own date.
-  ({ ctx, page, errors } = await ctxPage(browser, { ...DESKTOP, locale: 'en-US' }));
+  ({ ctx, page, errors } = await ctxPage(browser, { ...DESKTOP, locale: 'en-US' }, "localStorage.setItem('mcu.welcome.v1','test');"));
   await open(page, 'iron-man');
   const real = await page.evaluate(() => ({ checkedAt: window.WATCH && window.WATCH.checkedAt, has: !!(window.WATCH && window.WATCH.titles && window.WATCH.titles['iron-man']) }));
   r = await read(page);
@@ -197,6 +211,7 @@ const fixture = (checkedAt) => 'window.WATCH = ' + JSON.stringify({
   errors.forEach(e => err('real snapshot console: ' + e));
   await ctx.close();
 
+  if (!closedAtFirst.length || closedAtFirst.some(c => !c)) err(`Where to watch should start closed on every open (${closedAtFirst.join(',')})`);
   console.log(JSON.stringify(out, null, 1));
   await browser.close(); server.close();
 })();

@@ -383,9 +383,8 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
       <button className="drawer-close" onClick={onClose} aria-label={tr('details.close')}>×</button>
       <div className="drawer-scroll" ref={scrollRef}>
         <window.TitleDetailsBody title={title} surface="drawer" search={search} headingRef={headingRef} headingId="drawer-title"
-          cast={<>
-            <div className="drawer-section-label">{tr('details.cast', { n: title.cast.length })}</div>
-            <div className="cast-list">
+          cast={
+            <window.DetailSection id="cast" label={tr('details.cast', { n: title.cast.length })} labelClass="drawer-section-label" bodyClass="cast-list">
               {title.cast.length === 0 && <div className="empty-cast">{tr('details.noCast')}</div>}
               {title.cast.map(ch => {
                 const c = window.CHARACTERS[ch];
@@ -414,8 +413,8 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
                   </button>
                 );
               })}
-            </div>
-          </>}/>
+            </window.DetailSection>
+          }/>
       </div>
     </aside>
   );
