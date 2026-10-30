@@ -14,7 +14,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V3 feature — Up next: what to watch now
 
-Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging) in Batch 8. ([`9a092a6`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/9a092a62e2b9ac781fdeedd98f924f4a8c85924d))
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`9a092a6`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/9a092a62e2b9ac781fdeedd98f924f4a8c85924d))
 
 - One suggestion: the first released title not marked seen, earliest first in
   release order (story order on Chronological), or the first of the list itself
@@ -31,7 +32,8 @@ Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging) in Bat
 
 ## V3 improvement — collapsible sections in the title details
 
-Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging) in Batch 8. ([`0d7d6bd`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/0d7d6bd1bef96d6aa394214b9bf2a6fb87a4265b))
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`0d7d6bd`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/0d7d6bd1bef96d6aa394214b9bf2a6fb87a4265b))
 
 - The cast and Where to watch are collapsible (one shared `DetailSection`):
   the cast starts open and Where to watch closed, so the details stay short as
@@ -42,7 +44,8 @@ Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging) in Bat
 
 ## V3 feature — where to watch, by country
 
-Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging) in Batch 8. ([`182acb0`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/182acb0fc03a13f7ba5b5a86284e71d150f7c558))
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`182acb0`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/182acb0fc03a13f7ba5b5a86284e71d150f7c558))
 
 - A Where to watch section lists the services offering a released title in
   your country (stream and free with logos, rent or buy on one line), with one
@@ -58,7 +61,8 @@ Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging) in Bat
 
 ## V3 improvement — the same title details on desktop and phones
 
-Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging) in Batch 8. ([`32ba5a5`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/32ba5a56c1a33e52f4f13e3ac471ec940e836055))
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`32ba5a5`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/32ba5a56c1a33e52f4f13e3ac471ec940e836055))
 
 - One shared body for the desktop drawer and the phone sheet: poster beside
   the title and dates, then scores ("Ratings after release" when not out yet),
@@ -69,7 +73,8 @@ Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging) in Bat
 
 ## V3 improvement — desktop List meters above the column headers
 
-Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging) in Batch 8. ([`17a2dde`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/17a2dde8e31b83f08a17e21fd76f7075ef84b4b8))
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`17a2dde`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/17a2dde8e31b83f08a17e21fd76f7075ef84b4b8))
 
 - The All titles meter (or the current phase's, in By Phase) pins at the top
   of the List with the column headers right beneath it; each phase takes the
@@ -78,7 +83,8 @@ Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging) in Bat
 
 ## V3 improvement — subtler desktop List checkboxes
 
-Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging) in Batch 8. ([`09db23e`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/09db23ec4be718dbab2d0c0d6968226f6014c03a))
+Recorded: 2026-10-29 23:28 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-29 after the user's approval, in the Batch 8 merge. ([`09db23e`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/09db23ec4be718dbab2d0c0d6968226f6014c03a))
 
 - Drawn checkboxes instead of the browser's white boxes: a muted outline, the
   accent with a dark tick when selected, a dash for the mixed header. Contrast
