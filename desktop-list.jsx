@@ -152,6 +152,19 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   };
   const allOn = shownIds.length > 0 && shownIds.every(id => selected.has(id));
   const someOn = !allOn && shownIds.some(id => selected.has(id));
+  // The first progress meter (All titles, or Phase 1 in By Phase) sits above
+  // the column headers, which pin just beneath it; its height is measured so
+  // the headers sit flush under it at any size or language.
+  const [leadEl, setLeadEl] = React.useState(null);
+  const [leadH, setLeadH] = React.useState(0);
+  React.useLayoutEffect(() => {
+    if (!leadEl) { setLeadH(0); return undefined; }
+    const measure = () => setLeadH(leadEl.offsetHeight);
+    measure();
+    const ro = window.ResizeObserver ? new ResizeObserver(measure) : null;
+    if (ro) ro.observe(leadEl);
+    return () => { if (ro) ro.disconnect(); };
+  }, [leadEl]);
   const headCheck = React.useRef(null);
   React.useEffect(() => { if (headCheck.current) headCheck.current.indeterminate = someOn; }, [someOn]);
   const toggleAll = () => setSelected(allOn ? new Set() : new Set(shownIds));
@@ -205,6 +218,15 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
     else last.groups.push(g);
   });
   let n = 0;
+  // The meter above the column headers. In By Phase it is Phase 1's; each
+  // later phase's meter pins in the same place at its boundary and covers the
+  // one before it, so the current phase is always the one on top.
+  const leadPhase = !(progress && progress.all) && blocks[0] && blocks[0].phased ? blocks[0].groups[0].phaseStart : null;
+  const leadMeter = progress && progress.all
+    ? <window.ProgressHeader label={I.upper(I.tr('progress.all'))} {...progress.all}/>
+    : leadPhase
+      ? <window.ProgressHeader label={I.upper(I.tr('phase.label', { n: leadPhase }))} color={window.PHASE_COLORS[leadPhase]} {...progress.byPhase[leadPhase]}/>
+      : null;
   return (
     <div className={`dlist${ranked ? ' ranked' : ''}`} ref={flipRef} role="main" aria-label={tr('view.list')}>
       {header}
@@ -237,7 +259,14 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
             <button className="bulk-btn ghost" onClick={clearSelection}>{tr('bulk.clear')}</button>
           </div>
         )}
-        <div className="dl-table" role="table" aria-label={tr('view.list')}>
+        <div className="dl-table" role="table" aria-label={tr('view.list')} style={{ '--dl-lead-h': leadH + 'px' }}>
+          {/* A row owned directly by the table (a rowgroup holding no row is
+              invalid ARIA), first so it reads and draws above the headers. */}
+          {leadMeter && (
+            <div role="row" ref={setLeadEl} className={`dl-phase-divider sticky lead${leadPhase ? '' : ' overall'}`}>
+              <span role="cell" className="dl-overall-cell">{leadMeter}</span>
+            </div>
+          )}
           <div className="dl-row dl-head" role="row">
             <span className="dl-h c-check" role="columnheader">
               <input type="checkbox" ref={headCheck} className="dl-check" checked={allOn} onChange={toggleAll}
@@ -248,20 +277,9 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
               <DlSortHeader key={col} col={col} label={labels[col]} sort={sort} sortDir={sortDir} setSort={setSort} setSortDir={setSortDir}/>
             ))}
           </div>
-          {/* A row owned directly by the table, not wrapped in a rowgroup of its
-              own: a rowgroup holding no row is invalid ARIA, and it was also the
-              header's whole sticky container, so it never pinned. As a child of
-              the table it is valid and pins for the length of the List. */}
-          {progress && progress.all && (
-            <div role="row" className="dl-phase-divider sticky overall">
-              <span role="cell" className="dl-overall-cell">
-                <window.ProgressHeader label={I.upper(I.tr('progress.all'))} {...progress.all}/>
-              </span>
-            </div>
-          )}
-          {blocks.map(b => (
+          {blocks.map((b, bi) => (
             <div key={b.key} role="rowgroup">
-              {b.phased && (
+              {b.phased && !(bi === 0 && leadPhase) && (
                 /* No data-flip-id: the reorder animation moves what it tracks
                    with a transform, and a sticky element is already positioned
                    from the scroll offset — together they leave the bar hanging

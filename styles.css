@@ -837,7 +837,7 @@ body {
 .dl-row { display: grid; align-items: center; gap: 14px; padding: 0 12px;
   grid-template-columns: 28px 44px minmax(200px, 2.4fr) 64px 56px 74px minmax(96px, 1fr) 76px 76px 64px 132px 84px; }
 .ranked .dl-row { grid-template-columns: 28px 28px 44px minmax(200px, 2.4fr) 64px 56px 74px minmax(96px, 1fr) 76px 76px 64px 132px 84px; }
-.dl-head { position: sticky; top: -14px; z-index: 5; height: 38px; background: var(--bg); border-bottom: 1px solid var(--border);
+.dl-head { position: sticky; top: calc(-14px + var(--dl-lead-h, 0px)); z-index: 5; height: 38px; background: var(--bg); border-bottom: 1px solid var(--border);
   font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
 .dl-h button { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 6px; margin-left: -6px; border: 0; border-radius: 6px;
   background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; white-space: nowrap; }
@@ -1148,13 +1148,14 @@ body {
    match all of them and flatten the spacing this rule exists to set. Only the
    group right after the column header is the top of the table. */
 .dl-head + [role="rowgroup"] > .dl-phase-divider { margin-top: 10px; }
-/* The phase header pins under the column header while its own phase is on
-   screen, the same as the phone views. .dl-head sits at top:-14px and is 38px
-   tall, so 24px puts this flush beneath it; the -14px there cancels the list's
-   own 14px top padding, which this offset inherits. The opaque background and
-   the negative side margins let it cover rows passing underneath. */
+/* Phase and All titles meters pin at the very top of the List, above the
+   column headers (which pin beneath them, see .dl-head); the -14px cancels the
+   list's own 14px top padding. A later phase's meter slides up under the
+   headers (z-index below theirs) and then takes the top slot, painting over
+   the one before it. The opaque background and the negative side margins let
+   it cover rows passing underneath. */
 .dl-phase-divider.sticky {
-  position: sticky; top: 24px; z-index: 4;
+  position: sticky; top: -14px; z-index: 4;
   background: var(--bg); margin-left: -12px; margin-right: -12px;
   padding-left: 24px; padding-right: 24px; padding-bottom: 8px; padding-top: 8px;
 }
@@ -1179,7 +1180,12 @@ body {
 
 /* The whole-catalogue meter in the desktop List: same sticky header as a phase
    divider, without a phase colour of its own. */
-.dl-phase-divider.sticky.overall { display: block; color: var(--text-dim); margin-top: 10px; }
+.dl-phase-divider.sticky.overall { display: block; color: var(--text-dim); }
+/* The first meter, above the column headers (desktop-list.jsx): it pins at the
+   top of the List and the headers pin beneath it (--dl-lead-h, measured). Each
+   later phase meter pins in the same slot and, later in the page, paints over
+   it. */
+.dl-phase-divider.sticky.lead { display: block; margin-top: 0; }
 .dl-overall-cell { display: block; }
 .dl-phase-divider.sticky.overall .pgh-label { color: var(--text-dim); }
 
