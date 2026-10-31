@@ -14,7 +14,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V3 feature — guides, phone Spatial and celebrations (Batch 10)
 
-Recorded: 2026-10-30 23:54 EDT (-0400). Pushed to `version/3.0` (staging). ([`43247ea`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/43247ea1bd01527c97259bd9869405ce2dbf783e))
+Recorded: 2026-10-30 23:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 10 merge. ([`43247ea`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/43247ea1bd01527c97259bd9869405ce2dbf783e))
 
 - Guides: skip a stop and bring it back from the List, the Grid, the details
   or a Spatial card; the view options a guide doesn't use are dimmed with a
@@ -42,7 +43,8 @@ Recorded: 2026-10-30 23:54 EDT (-0400). Pushed to `version/3.0` (staging). ([`43
 
 ## V3 maintenance — faster QA checks
 
-Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging). ([`fb64cea`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/fb64cead2ff69f3ecac22c14282d400dfff322fe))
+Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 10 merge. ([`fb64cea`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/fb64cead2ff69f3ecac22c14282d400dfff322fe))
 
 - Checks run four at a time on their own ports, with the app's scripts
   pre-compiled once and a ready signal instead of fixed sleeps. `qa/quick.sh`
@@ -54,7 +56,8 @@ Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging). ([`fb
 
 ## V3 maintenance — reconcile the V3 planning documents
 
-Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging). ([`a643831`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/a6438317b39165ece06b1333c0afbc8e4d1dd714))
+Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 10 merge. ([`a643831`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/a6438317b39165ece06b1333c0afbc8e4d1dd714))
 
 - `V3-SPEC.md`, `V3-TASKS.md` and `KICKOFF-PROMPT.md` open with a note that
   they are history; lines that no longer hold carry dated Superseded notes.
@@ -62,14 +65,16 @@ Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging). ([`a6
 
 ## V3 maintenance — stop loading connections.jsx
 
-Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging). ([`60642d0`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/60642d0f74e5829ec55bca7888158cd53d791ab3))
+Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 10 merge. ([`60642d0`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/60642d0f74e5829ec55bca7888158cd53d791ab3))
 
 - The unused early line layer is no longer fetched and compiled at startup;
   the file stays for reference. Verified by the full check run.
 
 ## V3 fix — audit unknown catalog budgets
 
-Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging). ([`ec6f5bf`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/ec6f5bfee5519c8c4749e1bdece87d56cae51f92))
+Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
+(production) on 2026-10-30 after the user's approval, in the Batch 10 merge. ([`ec6f5bf`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/ec6f5bfee5519c8c4749e1bdece87d56cae51f92))
 
 - Series no longer show the generic per-episode figure: only series with a
   reported total of their own (Secret Invasion, Echo) list one; the rest read
