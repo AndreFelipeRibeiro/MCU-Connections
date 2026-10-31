@@ -12,6 +12,56 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V4 maintenance — build scaffold (Phase 2, step 1)
+
+Recorded: 2026-10-31 13:06 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+`main` still serves V3 and this change is not part of a production release.
+
+- Stands up the V4 build step without converting the app. Added
+  `package.json`, `package-lock.json`, `vite.config.js`, `jsconfig.json` and
+  `vercel.json`; `.gitignore` now covers `node_modules/` and `dist/`.
+- Pinned after checking npm the day the work started: Vite 8.3.5,
+  @vitejs/plugin-react 6.1.2, React and ReactDOM 18.3.1. The plan's draft had
+  named Vite 7, which was out of date.
+- Vite takes `index.html` as its entry unchanged: it bundles the two
+  stylesheets into one fingerprinted file in the head and fingerprints the
+  icons, while every app script still loads the V3 way, compiled by Babel in
+  the browser. A `LEGACY` list in `vite.config.js` copies the 23 unconverted
+  scripts and the root-path assets into the build, and shrinks to nothing as
+  the conversion proceeds. `favicon.png`, `apple-touch-icon.png` and
+  `og-image.jpg` keep their plain root paths, because iOS and crawlers ask for
+  those directly without reading the HTML.
+- A guard plugin fails the build if `index.html` ever loads a script that is
+  neither bundled nor copied, so a missing file is a build error rather than a
+  404 that shows as a blank page.
+- Build settings live in `vercel.json` on this branch, never in the Vercel
+  dashboard: dashboard settings apply to every branch and would break `main`'s
+  static deploy.
+- The dev server runs on port 8126 with a strict port, so the Google OAuth
+  origin registered for local work keeps working and the server stops rather
+  than quietly taking another port.
+- `qa/precompile.js` now serves any file under the root when `SITE` is set, so
+  the checks can be pointed at a built site. Guarded on `SITE`: a run against
+  the working tree is unchanged. This is part of the next ticket, brought
+  forward because this one could not otherwise be verified — the plan had
+  claimed `SITE` alone was enough, and it was not. `docs/V4-PLAN.md` §5.1
+  records the mistake, and §3.1 and §9 now match what was built.
+- Verified: the full regression run three times, once against the working tree
+  and twice against the build. 41 of 44 checks clean in all three, both
+  accessibility scans clean in all three, and the second built-site run was
+  fully green (exit 0) where the working-tree baseline was not. `test-fit`
+  matches the working tree at all 24 viewports. `qa/smoke.js` clean against a
+  locally served build and against the deployed preview. Dev server confirmed
+  on 8126.
+- Limits: the app is not converted to modules, which is the next work. Three
+  checks are noisy for reasons that are not the build's — `test-skip` fails
+  identically on the working tree and the build, `test-camera` is
+  timing-sensitive and was the working-tree run's only flagged failure, and
+  `test-guides` crashed once in one built-site run but passed in the other and
+  twice more on its own; the first two have their own ticket. No real-device
+  check. The AGENTS.md no-build rule is left in force until the conversion
+  lands.
+
 ## V4 maintenance — V4 plan
 
 Recorded: 2026-10-31 12:11 EDT (-0400). Pushed to `version/4.0` (V4 staging);

@@ -68,10 +68,16 @@ on the *old* loading model, listed in §7.
 
 ### 3.1 Tool and language
 
-**Decided 2026-10-31 (Andre): Vite 7 with `@vitejs/plugin-react`, React
-18.3.1, plain JavaScript, with the TypeScript conversion as its own ticket
-straight after Phase 2.** Pin exact patch versions in `package.json` when the
-ticket lands, checked against npm that day rather than copied from this draft.
+**Decided 2026-10-31 (Andre): Vite with `@vitejs/plugin-react`, React 18.3.1,
+plain JavaScript, with the TypeScript conversion as its own ticket straight
+after Phase 2.**
+
+Versions pinned when the scaffold landed, checked against npm that day rather
+than copied from an earlier draft of this plan: **Vite 8.3.5**,
+**@vitejs/plugin-react 6.1.2**, React and ReactDOM **18.3.1**. This draft
+originally said Vite 7, which was out of date by the time the ticket started —
+8.x is the current major and Node 20.19+ satisfies it, which this machine
+(Node 20.20) does.
 
 Vite because it is the default candidate in the kickoff, needs the least
 configuration for this shape of app, has first-class Vercel support, and its
@@ -242,14 +248,27 @@ globally to hand the browser pre-compiled `.jsx` and a rewritten
 
 Three consequences, from the smallest to the largest:
 
-1. **Serving the built site is nearly free.** `precompile.js` already resolves
-   its document root as `process.env.SITE ? path.join(QA, process.env.SITE) :
-   path.join(QA, '..')`. A hook that keeps that root override and drops the
-   Babel compilation lets all 42 checks serve `dist/` with `SITE=../dist` and
-   **no change to the check scripts themselves**. The run becomes
-   `npm run build` once, then the suite. (`vite preview` is the alternative;
-   the `SITE` route is preferred because it keeps each check isolated on its
-   own port, which is what makes the parallel run work.)
+1. **Serving the built site is cheap, but not as free as this plan first
+   claimed.** `precompile.js` already resolves a document root as
+   `process.env.SITE ? path.join(QA, process.env.SITE) : path.join(QA, '..')`,
+   and the draft concluded that `SITE=../dist` alone would point all 42 checks
+   at the build with no change to the check scripts. **That was wrong, and the
+   scaffold proved it.** `precompile.js` intercepts only `.jsx` files and
+   `/index.html`; every other request falls through to each check's own
+   server, which serves the working tree. The built site asks for its
+   stylesheet at a hashed path under `/assets/`, that path does not exist in
+   the working tree, the page renders unstyled, and 50 layout assertions fail
+   for a reason that has nothing to do with the app.
+
+   The correction is still small and still touches no check script: the
+   fall-through gains a branch that serves any existing file under the root
+   when `SITE` is set, with a content type from the extension. Guarded on
+   `SITE`, so a normal run against the working tree behaves exactly as before.
+   That branch landed with the scaffold out of necessity — step 1 cannot be
+   verified without it — and the rest of step 2 (the `checks.json` paths and
+   the globals-surface decision) is unchanged. (`vite preview` is the
+   alternative; the `SITE` route is preferred because it keeps each check
+   isolated on its own port, which is what makes the parallel run work.)
 2. **`test-boot` and `perf2` lose their subject.** Both deliberately bypass
    `precompile.js` to exercise the real in-browser Babel path that production
    used. After the migration there is no such path. `test-boot` should be
@@ -380,8 +399,14 @@ So:
 
 1. **This plan**, approved.
 2. **Build scaffold** — `package.json`, `vite.config.js`, `vercel.json`,
-   `jsconfig.json`, `src/main.jsx`, `index.html` reworked; app not yet
-   converted. Confirm the preview builds and `main` still deploys.
+   `jsconfig.json`; app not yet converted. Confirm the preview builds and
+   `main` still deploys. *(As built: no `src/main.jsx` and no change to
+   `index.html`. Vite takes `index.html` as its entry as it stands, bundles
+   the two stylesheets and fingerprints the icons, while every app script
+   still loads the V3 way; a `LEGACY` list in `vite.config.js` copies those
+   files into the build. An entry module has nothing to do until step 3
+   converts the first file, so creating an empty one would have been a file
+   written to match a plan bullet rather than a need.)*
 3. **QA harness for a built site** — the `SITE=../dist` hook, `checks.json`
    paths, and the decision on the globals surface. Done before the conversion,
    so every conversion commit can be checked.

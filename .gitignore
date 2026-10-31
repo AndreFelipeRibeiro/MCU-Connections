@@ -35,3 +35,7 @@ qa/.cache/
 
 # Editor swap files (an open vim session leaves .<name>.swp beside the file).
 *.swp
+
+# V4 build step (Vite): installed packages and the built site.
+node_modules/
+dist/

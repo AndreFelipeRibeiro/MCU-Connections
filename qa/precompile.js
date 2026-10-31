@@ -50,6 +50,15 @@ function rewriteIndex(html) {
   return html.replace(/<script type="text\/babel" src="([^"]+\.jsx)"><\/script>/g, '<script src="$1"></script>');
 }
 
+const TYPES = {
+  '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript',
+  '.css': 'text/css', '.json': 'application/json', '.map': 'application/json',
+  '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon',
+  '.woff': 'font/woff', '.woff2': 'font/woff2', '.txt': 'text/plain',
+  '.sql': 'text/plain',
+};
+
 const original = http.createServer;
 http.createServer = function (...args) {
   const handler = args.find(a => typeof a === 'function');
@@ -68,6 +77,14 @@ http.createServer = function (...args) {
         if (p === '/index.html') {
           res.writeHead(200, { 'Content-Type': 'text/html' });
           return res.end(rewriteIndex(fs.readFileSync(file, 'utf8')));
+        }
+        // With SITE set the checks are pointed at a different tree (the built
+        // site, qa/README.md), so everything has to come from there, not just
+        // the two kinds above. Without SITE nothing changes: each check's own
+        // server keeps serving the working tree exactly as before.
+        if (process.env.SITE && fs.statSync(file).isFile()) {
+          res.writeHead(200, { 'Content-Type': TYPES[path.extname(p)] || 'application/octet-stream' });
+          return res.end(fs.readFileSync(file));
         }
       }
     } catch (e) {
