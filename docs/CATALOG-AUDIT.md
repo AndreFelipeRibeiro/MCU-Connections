@@ -491,3 +491,56 @@ Doctor Strange and Ms. Marvel are sparse because the credit-scene audit removed
 Thor and Carol respectively — that is the audit working, not a gap. The
 unreleased titles keep provisional casts; nothing was added to a title that has
 not aired.
+
+## Budget audit — 2026-10-30
+
+Budgets are in millions of US dollars (`BUDGETS` in `data.js`), shown as
+"$180M" in the details and the desktop List, and used by the budget filter
+(under $50M, $50–200M, $200–300M, $300M and over). None of them is an audited
+figure: studios rarely publish production costs, so every value is a reported
+estimate.
+
+**Filled, from trade reporting (production totals, before marketing):**
+
+- Thunderbolts*: **$180M**. [Variety](https://variety.com/2025/film/box-office/thunderbolts-opening-weekend-projections-marvel-1236381299)
+  ($180M to produce, about $100M to market), [The Hollywood Reporter](https://www.hollywoodreporter.com/movies/movie-news/thunderbolts-box-office-promising-previews-1236204629)
+  and [The Numbers](https://www.the-numbers.com/movie/Thunderbolts-%282025%29) agree.
+- The Fantastic Four: First Steps: **$200M**. [The Numbers](https://www.the-numbers.com/movie/Fantastic-Four-The-First-Steps-%282025%29)
+  lists $200M, citing Variety. Some outlets estimate $210–250M; the reported
+  figure is used.
+
+**Left unknown (no title-specific, reliable figure found):**
+
+- Daredevil: Born Again (season 1): about $200M for the season is repeated
+  from Screen Rant ([Popverse summary](https://www.thepopverse.com/tv-daredevil-born-again-mcu-marvel-studios-television-netflix-jessica-jones-luke-cage-iron-fist-defenders-punisher)),
+  unconfirmed by Marvel, and the season was partly reshot, so what it covers
+  is unclear.
+- Ironheart: the $100–150M sometimes quoted is a general estimate for Marvel's
+  Disney+ shows, not this one; reviews suggested it cost less than its peers.
+- Wonder Man: no figure published; reported as one of Marvel's cheapest
+  series.
+- Not searched in depth, and very unlikely to be public: What If…? seasons 2
+  and 3, Your Friendly Neighborhood Spider-Man, Eyes of Wakanda, Marvel
+  Zombies, Daredevil: Born Again season 2, VisionQuest. Unreleased titles
+  (Doomsday, Secret Wars, Spider-Man season 2, Daredevil season 3) stay empty.
+
+**Series budgets (decided by the user, 2026-10-30: clear them unless a
+figure for that series itself exists).** The values the catalogue used for
+most series (25 for WandaVision, The Falcon and the Winter Soldier, What If…?,
+Hawkeye, Ms. Marvel, Moon Knight, She-Hulk, Secret Invasion and Loki season 2;
+20 for Loki season 1; 40 for Agatha All Along) were not series-specific: the 25
+traces to a 2019 report that Marvel's Disney+ shows would cost ["as much as $25
+million per episode"](https://comicbookmovie.com/marvel-studios/marvel-studios-disney-tv-shows-reportedly-have-budgets-of-up-to-25-millionper-episode-a170840),
+a per-episode ceiling shown beside film totals. They were removed, so those
+series read "Not published" and fall outside the budget filter's bands.
+
+Kept or replaced with a reported total for that series:
+
+- Secret Invasion: **$211.6M** final cost (six episodes), reported by Forbes
+  from Disney's public UK filings ([summary](https://comicbookmovie.com/tv/marvel/secret-invasion/marvel-studios-secret-invasion-reportedly-has-a-jaw-dropping-budget-a204393)).
+- Echo: **$40M** for five episodes, reported by Forbes ([summary](https://comicbookmovie.com/tv/marvel/echo/echos-budget-sets-a-surprising-marvel-studios-record-cinematographer-shares-potential-season-2-update-a209137)).
+
+Not used: Loki season 2's reported $141.3M covers only pre-production and UK
+filming, not the whole cost; She-Hulk has conflicting second-hand figures
+($212M and $225M) with no primary report found; Agatha All Along is confirmed
+by Marvel as its least expensive series, without a figure.
