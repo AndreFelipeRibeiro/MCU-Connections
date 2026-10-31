@@ -12,6 +12,27 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V4 maintenance — back to React 18.3.1
+
+Recorded: 2026-10-31 14:12 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+`main` still serves V3 and this change is not part of a production release.
+
+- Reverts the move to React 19.3.1 made earlier today with the design-system
+  preview. V4 stays on **18.3.1**, the version the app loads from the CDN.
+- The reasoning for 19 was that nothing imported the npm React, so the upgrade
+  was free. That stopped being true the moment the app's own files began
+  entering the bundle: from then on they use the npm React, and converting the
+  module system and the React major together would break Phase 2's single
+  claim that behaviour is identical.
+- The original driver was shadcn's components expecting `ref` as an ordinary
+  prop. Tested: the eight copied components render on 18.3.1 with no console
+  or page errors, because Base UI supports 18 and those components do not rely
+  on it. They are our code, so `forwardRef` can be added if a later component
+  needs it.
+- A React 19 upgrade becomes its own ticket, to sit with the TypeScript step.
+- Verified: both entries build; the design preview renders on 18.3.1 with no
+  errors (14 controls, 11 phase swatches); the app is unchanged.
+
 ## V4 maintenance — the data layer moves into the bundle (Phase 2, steps 2–3)
 
 Recorded: 2026-10-31 14:09 EDT (-0400). Pushed to `version/4.0` (V4 staging);
