@@ -20,11 +20,11 @@ import React from 'react';
 window.React = React;
 
 // Order matters and matches the order index.html used:
-import './config.js';          // window.MCU_CONFIG, read by supabase-client
-import './supabase-client.js'; // window.mcuSupabase, window.MCU_SUPABASE_STATUS
-import './data/data.js';       // window.TITLES, CHARACTERS, BUDGETS, ratings, credits
-import './data/guides.js';     // window.GUIDES, window.CONTINUITY
-import './data/media-data.js'; // window.MEDIA, window.mediaURL
+import './config';          // window.MCU_CONFIG, read by supabase-client
+import './supabase-client'; // window.mcuSupabase, window.MCU_SUPABASE_STATUS
+import './data/data';       // window.TITLES, CHARACTERS, BUDGETS, ratings, credits
+import './data/guides';     // window.GUIDES, window.CONTINUITY
+import './data/media-data'; // window.MEDIA, window.mediaURL
 
 // The app itself: every view and component, in the order index.html loaded
 // them as `text/babel` scripts. They are imported for their side effects for
@@ -37,18 +37,18 @@ import './data/media-data.js'; // window.MEDIA, window.mediaURL
 // loading paths: a component from the bundled copy calling a hook inside a
 // tree rendered by the CDN UMD copy reads that copy's null dispatcher and
 // throws. docs/V4-PLAN.md §5.7.
-import './app/poster.jsx';
-import './app/tracking.jsx';
-import './app/celebrate.jsx';
-import './app/account.jsx';
-import './app/about.jsx';
-import './app/search-suggest.jsx';
-import './app/mobile.jsx';
-import './app/desktop-list.jsx';
-import './app/upnext.jsx';
-import './app/watch.jsx';
-import './app/guides-ui.jsx';
-import './app/picker.jsx';
+import './app/poster';
+import './app/tracking';
+import './app/celebrate';
+import './app/account';
+import './app/about';
+import './app/search-suggest';
+import './app/mobile';
+import './app/desktop-list';
+import './app/upnext';
+import './app/watch';
+import './app/guides-ui';
+import './app/picker';
 // Last, and it must stay last: this one mounts the app, so everything it
 // renders has to be on `window` by the time it runs.
-import './app/app.jsx';
+import './app/app';

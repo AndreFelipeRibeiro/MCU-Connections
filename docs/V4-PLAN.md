@@ -348,6 +348,16 @@ Three consequences, from the smallest to the largest:
    their expectations should come from the source rather than from whatever
    happens to be in the build.
 
+   *As built:* they read the source tree, but not with `import`. The file kept
+   its `window.X =` publication rather than becoming an ES module, so Phase 2
+   only had to change the path. The TypeScript conversion then broke them a
+   second way — `data.ts` carries annotations Node cannot execute — so they now
+   share `qa/load-catalog.js`, which transpiles it with the TypeScript that is
+   already a pinned devDependency and runs it against a `window` stub. One
+   helper instead of three copies. (`test-refocus` still reads it as text: it
+   wants the literals in the order they are written, not the evaluated
+   catalog.)
+
 6. **One regress check replaces a source file over the network.**
    `test-watch` serves a fixture by intercepting `**/watch-data.js`
    (`qa/test-watch.js:112`). Bundle that file and the request never happens:
@@ -545,7 +555,12 @@ So:
 7. **TypeScript conversion** — its own ticket and its own batch, against the
    green suite from step 6: rename to `.tsx`/`.ts`, type the module boundaries
    and the catalog shapes, no behaviour change. Before Phase 3, so the design
-   system starts typed.
+   system starts typed. *Partly done 2026-10-31: the toolchain, the catalog
+   shapes, the whole shared `window` surface, the data layer, the shadcn
+   components and the design preview are typed at full `strict`, and three of
+   the thirteen V3 app files. The other ten carry a `// @ts-nocheck` header
+   with their remaining error count; converting them is the follow-up ticket.
+   The design system does start typed, which is what this step was for.*
 8. Then Phase 3 onwards, per the kickoff.
 
 **One approved exception to "Phases 2 and 3 do not overlap"** (2026-10-31):

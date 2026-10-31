@@ -79,7 +79,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   year, title, release date and story timeframe; then IMDb and RT scores
   ("Ratings after release" for a title not out yet), the budget ("Not
   published" when unknown), Seen and Watchlist, the synopsis and the cast.
-  Both surfaces render one shared body (`TitleDetailsBody` in `mobile.jsx`).
+  Both surfaces render one shared body (`TitleDetailsBody` in `mobile.tsx`).
 - Up next suggests what to watch now: the first released title you haven't
   marked seen, earliest first in release order (story order on Chronological),
   or the first of the list itself on A–Z, IMDb and RT. It has Mark seen,
@@ -316,7 +316,7 @@ Connections chain on the prime, so *Loki* → *Quantumania* → *Loki Season 2* 
 V4 builds with [Vite](https://vite.dev/); React and ReactDOM 18.3.1 come from
 npm, exactly pinned. (V3 had no build step at all — see docs/decisions.md and
 docs/V4-PLAN.md for why that changed.) The entry point is `index.html`, which
-loads one bundle, `src/main.js`. supabase-js is the one script still fetched
+loads one bundle, `src/main.ts`. supabase-js is the one script still fetched
 from a CDN, pinned and with an SRI hash. Inside the bundle the app's files
 share their components through `window.*` rather than imports; that is
 deliberate for now and docs/V4-PLAN.md §5 explains it.
@@ -499,28 +499,31 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `index.html` | Entry point; startup screen markup, the locale scripts, the pinned/SRI supabase-js script and the app bundle |
 | `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render; a classic script so it runs before the bundle |
 | `favicon.png`, `apple-touch-icon.png`, `og-image.jpg` | Tab icon, home-screen icon and link-preview image (from the brand mark) |
-| `src/data/data.js` | Static titles/characters, ratings, phases, stable ids and variant links |
-| `src/data/media-data.js` | TMDB poster and actor-portrait paths |
-| `src/config.js` | Public Supabase project URL and publishable key |
-| `src/supabase-client.js` | Shared client as `window.mcuSupabase`, or graceful unavailability |
-| `src/app/tracking.jsx` | Guest/account state, merge, request deadlines, queues, progress, status actions |
-| `src/app/account.jsx` | Google auth/session state, account UI, sign-out and degraded-mode recovery |
-| `src/app/about.jsx` | About dialog (desktop) and sheet (phones) with credits; shared dialog shell |
-| `src/app/celebrate.jsx` | Status toast with Undo, milestone confetti and the guest sign-in reminder |
-| `src/app/app.jsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
-| `src/app/mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
-| `src/app/upnext.jsx` | Up next: the suggestion card, List strip, Spatial meter row and phone chip (the rule is `MCU_nextUp` in `tracking.jsx`) |
-| `src/app/watch.jsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
-| `src/main.js` | V4 bundle entry: imports the data layer and then every view below, in the order `index.html` used to load them. The files still share their components through `window`, so the bundle changed how the app is delivered, not how its pieces fit together |
+| `src/data/data.ts` | Static titles/characters, ratings, phases, stable ids and variant links |
+| `src/data/media-data.ts` | TMDB poster and actor-portrait paths |
+| `src/config.ts` | Public Supabase project URL and publishable key |
+| `src/supabase-client.ts` | Shared client as `window.mcuSupabase`, or graceful unavailability |
+| `src/app/tracking.tsx` | Guest/account state, merge, request deadlines, queues, progress, status actions |
+| `src/app/account.tsx` | Google auth/session state, account UI, sign-out and degraded-mode recovery |
+| `src/app/about.tsx` | About dialog (desktop) and sheet (phones) with credits; shared dialog shell |
+| `src/app/celebrate.tsx` | Status toast with Undo, milestone confetti and the guest sign-in reminder |
+| `src/app/app.tsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
+| `src/app/mobile.tsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
+| `src/app/upnext.tsx` | Up next: the suggestion card, List strip, Spatial meter row and phone chip (the rule is `MCU_nextUp` in `tracking.tsx`) |
+| `src/app/watch.tsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
+| `src/main.ts` | V4 bundle entry: imports the data layer and then every view below, in the order `index.html` used to load them. The files still share their components through `window`, so the bundle changed how the app is delivered, not how its pieces fit together |
 | `watch-data.js` | The where-to-watch snapshot (written by `tools/refresh-watch.js`; do not edit by hand) |
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
-| `src/data/guides.js` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
-| `src/app/guides-ui.jsx` | Guides: the menu, desktop module and List, phone views and dock, the meter, "Part of" in the details |
-| `src/app/picker.jsx` | "What have you seen?": the poster-grid picker opened from the welcome, the account menu/sheet and the Seen empty state |
-| `src/app/desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
-| `src/app/search-suggest.jsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
-| `src/app/poster.jsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
+| `src/data/guides.ts` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
+| `src/app/guides-ui.tsx` | Guides: the menu, desktop module and List, phone views and dock, the meter, "Part of" in the details |
+| `src/app/picker.tsx` | "What have you seen?": the poster-grid picker opened from the welcome, the account menu/sheet and the Seen empty state |
+| `src/app/desktop-list.tsx` | Desktop List view: grouped rows, sortable column headers, status actions |
+| `src/app/search-suggest.tsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
+| `src/app/poster.tsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
 | `styles.css` / `styles-mobile.css` | Desktop/touch layout, status treatments, focus and dialogs |
+| `src/types/catalog.ts` | The catalog's shapes (`Title`, `Character`, `Guide`, `Media`, `WatchData`), written from the data itself |
+| `src/types/globals.d.ts` | The shared `window` surface, typed from the modules themselves rather than restated |
+| `tsconfig.json` | TypeScript at full `strict`; `npm run typecheck` |
 | `vite.config.js` / `vercel.json` / `package.json` | The V4 build: entries, the `@` alias, the dev port, the files that stay plain URLs, and the build Vercel runs |
 | `schema.sql` | Watch-state table, constraints, trigger, grants and ownership RLS |
 | `V3-SPEC.md` / `V3-TASKS.md` / `KICKOFF-PROMPT.md` | The original V3 plan (2026-10-24), kept as history with dated notes where it no longer holds; current guidance is this README, AGENTS.md and docs/ |

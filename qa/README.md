@@ -59,6 +59,13 @@ relative to `qa/`, and build it yourself first:
   bundle replaced all of that, and building once is now both faster and a
   closer match to what ships — every check exercises the real artifact, which
   is why `test-boot` and `perf2` no longer need to opt out of it.
+- **One catalog loader:** `test-nextup`, `test-pickperson` and `test-refocus`
+  build their expectations from the catalog source rather than a copy that can
+  drift. Since the TypeScript conversion `src/data/data.ts` carries
+  annotations Node cannot execute, so they share `qa/load-catalog.js`, which
+  transpiles it with the repository's own pinned TypeScript and runs it
+  against a `window` stub. (`test-refocus` reads it as text instead: it wants
+  the literals in the order they are written.)
 - **A ready signal:** the app sets `data-ready="1"` on `<html>` once its first
   render is on screen and the collection has loaded. `qa/ready.js`
   (`appReady(page)`) waits for it plus a short margin (700ms, `QA_READY_MARGIN`)

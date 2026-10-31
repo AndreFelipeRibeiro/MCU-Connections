@@ -1,3 +1,10 @@
+// @ts-nocheck — not yet converted. See docs/V4-PLAN.md §3.1 and the Notion
+// ticket "Convert the app to TypeScript": this file is renamed and inside the
+// type-checked project, but still has 693 errors under `strict`, almost all of
+// them component props and callback parameters that need real types rather
+// than `any`. Delete this line and type the file; the shared surface it reads
+// is already typed in src/types/globals.d.ts, so the errors it reports are the
+// real ones.
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
@@ -17,7 +24,7 @@ window.PHASE_COLORS = PHASE_COLORS; // desktop-list.jsx
 // Text goes through the i18n runtime (i18n.js); `tr` avoids clashing with the
 // `t` used for titles throughout this file.
 const I18N = window.MCU_I18N;
-const tr = (key, vars) => I18N.tr(key, vars);
+const tr = (key: string, vars?: Record<string, unknown>) => I18N.tr(key, vars);
 const phaseLabel = (n) => I18N.upper(tr('phase.label', { n }));
 const typeLabel = (type) => tr(type === 'film' ? 'type.film.one' : 'type.series.one');
 // Both are read as bare names by the other files in src/app, which found them
@@ -3341,3 +3348,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <window.CollectionProvider><App/></window.CollectionProvider>
   </window.AccountProvider>
 );
+
+// Exported so the shared `window` surface can be typed from the real
+// implementations rather than a second, drifting copy of their signatures
+// (src/types/globals.d.ts). The window publication above stays: it is what
+// every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
+export { PHASE_COLORS, tr, typeLabel, sortDirectionLabels, sortTitles };

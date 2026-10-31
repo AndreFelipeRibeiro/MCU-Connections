@@ -14,13 +14,15 @@
 // words and actions are the same everywhere. Seen and Watchlist reuse
 // TitleStatusActions, so marking goes through the usual toast, Undo and sync.
 
+import type { Title, UpNextInfo, UpNextWithTitle } from '../types/catalog';
+
 const UpNI18N = window.MCU_I18N;
-const untr = (key, vars) => UpNI18N.tr(key, vars);
+const untr = (key: string, vars?: Record<string, unknown>) => UpNI18N.tr(key, vars);
 
 // "Up next · release order": the explanation every surface shows. `short`
 // keeps only "Up next" where room is tight (the Spatial meter); the order and
 // filters then move to the tooltip.
-function UpNextTag({ info, short = false, className = '' }) {
+function UpNextTag({ info, short = false, className = '' }: { info: UpNextInfo; short?: boolean; className?: string }) {
   return (
     <div className={`un-tag ${className}`}
       title={short ? `${info.lead} · ${info.detail}. ${untr('upnext.rule')}` : untr('upnext.rule')}>
@@ -32,7 +34,7 @@ function UpNextTag({ info, short = false, className = '' }) {
 // The × that hides Up next for now, on every surface, until the page is
 // reloaded (nothing is stored). It never moves on to another title: closing
 // means "not now", not "something else".
-function UpNextHide({ info, className = '' }) {
+function UpNextHide({ info, className = '' }: { info: UpNextInfo; className?: string }) {
   return (
     <button type="button" className={`un-hide ${className}`}
       onClick={(e) => { e.stopPropagation(); info.onHide(); }}
@@ -43,7 +45,7 @@ function UpNextHide({ info, className = '' }) {
 }
 
 // Seen (and Watchlist outside the Watchlist tab) through the usual controls.
-function UpNextStatus({ info, title, variant, className = '' }) {
+function UpNextStatus({ info, title, variant, className = '' }: { info: UpNextInfo; title: Title; variant?: string; className?: string }) {
   return (
     <window.TitleStatusActions title={title} variant={variant}
       className={`un-tsa${info.watchScope ? ' un-nowatch' : ''} ${className}`}/>
@@ -52,7 +54,7 @@ function UpNextStatus({ info, title, variant, className = '' }) {
 
 // The states with no title to suggest. One component for the phone lists and
 // the desktop List strip; `strip` lays it out in a row.
-function UpNextState({ info, strip = false }) {
+function UpNextState({ info, strip = false }: { info: UpNextInfo; strip?: boolean }) {
   const PosterArt = window.PosterArt;
   const r = info.result;
   let head = null, sub = null, arrival = null, action = null;
@@ -103,14 +105,14 @@ function UpNextState({ info, strip = false }) {
 
 // Meta line shared by the cards: year, budget and, in story order, the note
 // that explains an unusual pick (an anthology, another universe).
-function UpNextNote({ title }) {
+function UpNextNote({ title }: { title: Title }) {
   const note = UpNI18N.storyNote(title);
   if (!note) return null;
   return <div className="un-note"><window.StoryYear title={title} detail/></div>;
 }
 
 // Phones (List and Grid): a full-width card at the top of the list.
-function UpNextCard({ info }) {
+function UpNextCard({ info }: { info: UpNextWithTitle }) {
   const PosterArt = window.PosterArt;
   const t = info.result.title;
   return (
@@ -119,7 +121,7 @@ function UpNextCard({ info }) {
         <button type="button" className="un-open" onClick={() => info.onOpen(t.id)}>
           <span className="un-gposter" aria-hidden="true">
             <PosterArt title={t}/>
-            <span className="m-pbadge" style={{ background: MPHASE_COLORS[t.phase] }}>{untr('phase.short', { n: t.phase })}</span>
+            <span className="m-pbadge" style={{ background: window.MPHASE_COLORS[t.phase] }}>{untr('phase.short', { n: t.phase })}</span>
           </span>
           <span className="un-gtext">
             <UpNextTag info={info}/>
@@ -140,7 +142,7 @@ function UpNextCard({ info }) {
 
 // Desktop List: a strip above the list, which does not fold seen titles, so
 // the suggestion can be far down the table.
-function UpNextStrip({ info }) {
+function UpNextStrip({ info }: { info: UpNextInfo }) {
   const PosterArt = window.PosterArt;
   const r = info.result;
   if (r.kind !== 'next') return <div className="un-strip-wrap"><UpNextState info={info} strip/></div>;
@@ -155,7 +157,7 @@ function UpNextStrip({ info }) {
             <span className="un-stext">
               <span className="un-title">{UpNI18N.titleName(t)}</span>
               <span className="un-meta">
-                {UpNI18N.upper(untr(t.type === 'film' ? 'type.film.one' : 'type.series.one'))} · <span style={{ color: MPHASE_COLORS[t.phase] }}>{UpNI18N.upper(untr('phase.label', { n: t.phase }))}</span> · {t.year} · {untr('upnext.rank', { n: r.rank, total: r.released })}
+                {UpNI18N.upper(untr(t.type === 'film' ? 'type.film.one' : 'type.series.one'))} · <span style={{ color: window.MPHASE_COLORS[t.phase] }}>{UpNI18N.upper(untr('phase.label', { n: t.phase }))}</span> · {t.year} · {untr('upnext.rank', { n: r.rank, total: r.released })}
               </span>
               <UpNextNote title={t}/>
             </span>
@@ -169,7 +171,7 @@ function UpNextStrip({ info }) {
 }
 
 // Desktop Spatial: one row inside the floating All titles meter.
-function UpNextMeterRow({ info }) {
+function UpNextMeterRow({ info }: { info: UpNextInfo }) {
   const PosterArt = window.PosterArt;
   const r = info.result;
   if (r.kind !== 'next') return null;
@@ -192,7 +194,7 @@ function UpNextMeterRow({ info }) {
 }
 
 // Phone Spatial: a chip above the gesture hint.
-function UpNextChip({ info }) {
+function UpNextChip({ info }: { info: UpNextInfo }) {
   const PosterArt = window.PosterArt;
   const r = info.result;
   if (r.kind !== 'next') return null;
@@ -215,3 +217,10 @@ function UpNextChip({ info }) {
 }
 
 Object.assign(window, { UpNextTag, UpNextHide, UpNextState, UpNextCard, UpNextStrip, UpNextMeterRow, UpNextChip, UpNextNote });
+
+// Exported so the shared `window` surface can be typed from the real
+// implementations rather than a second, drifting copy of their signatures
+// (src/types/globals.d.ts). The window publication above stays: it is what
+// every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
+export { UpNextTag, UpNextHide, UpNextState, UpNextCard, UpNextStrip,
+  UpNextMeterRow, UpNextChip, UpNextNote };

@@ -1,20 +1,28 @@
+// @ts-nocheck — not yet converted. See docs/V4-PLAN.md §3.1 and the Notion
+// ticket "Convert the app to TypeScript": this file is renamed and inside the
+// type-checked project, but still has 339 errors under `strict`, almost all of
+// them component props and callback parameters that need real types rather
+// than `any`. Delete this line and type the file; the shared surface it reads
+// is already typed in src/types/globals.d.ts, so the errors it reports are the
+// real ones.
 import React from 'react';
+import type { Title } from '../types/catalog';
 
 const { useState: mUseState } = React;
 
-const MPHASE_COLORS = { 1:'#d4a05a', 2:'#4a8de8', 3:'#d04040', 4:'#a05cd0', 5:'#5fa856', 6:'#c8384a' };
+const MPHASE_COLORS: Record<number, string> = { 1:'#d4a05a', 2:'#4a8de8', 3:'#d04040', 4:'#a05cd0', 5:'#5fa856', 6:'#c8384a' };
 window.MPHASE_COLORS = MPHASE_COLORS; // upnext.jsx
 // Text comes from the i18n runtime (i18n.js); `mtr` avoids clashing with the
 // `t` used for titles throughout this file.
 const MI18N = window.MCU_I18N;
-const mtr = (key, vars) => MI18N.tr(key, vars);
+const mtr = (key: string, vars?: Record<string, unknown>) => MI18N.tr(key, vars);
 const mPhaseLabel = (n) => MI18N.upper(mtr('phase.label', { n }));
 const mTypeLabel = (type) => MI18N.upper(mtr(type === 'film' ? 'type.film.one' : 'type.series.one'));
 // [value, icon]; labels come from sort.short.* and view.* in the active language.
 const SORT_TABS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 const VIEW_MODES = [['list','☰'],['grid','▦'],['spatial','◈']];
 
-function ScoreBadges({ title, lead, compact }) {
+function ScoreBadges({ title, lead, compact }: { title: Title; lead?: 'rt' | 'imdb'; compact?: boolean }) {
   const imdb = title.imdb != null ? <div className="m-sc imdb" key="i" title={mtr(title.type === 'series' ? 'score.imdbSeries' : 'score.imdbMovie')}><span className="tg">IMDb</span>{title.imdb.toFixed(1)}</div> : null;
   const rt = title.rt != null ? <div className="m-sc rt" key="r" title={mtr('score.rt')}><span className="tg">RT</span>{title.rt}%</div> : null;
   if (!imdb && !rt) return <div className={`m-scores${compact?' compact':''}`}><div className="m-sc none">{mtr('score.none')}</div></div>;
@@ -1169,7 +1177,17 @@ const sheetHistory = (() => {
 // `onClose` may return false to stay open (the picker asks before dropping
 // unsaved picks): Back then gets the sheet a new history entry, and a swipe
 // springs back.
-function Sheet({ children, onClose, tall, label, labelledBy, describedBy, className = '' }) {
+function Sheet({ children, onClose, tall, label, labelledBy, describedBy, className = '' }: {
+  children: React.ReactNode;
+  /** Returning false keeps the sheet open (the picker asks before dropping
+   *  unsaved picks). */
+  onClose: () => void | boolean;
+  tall?: boolean;
+  label?: string;
+  labelledBy?: string;
+  describedBy?: string;
+  className?: string;
+}) {
   const ref = React.useRef(null);
   const closeRef = React.useRef(onClose);
   closeRef.current = onClose;
@@ -1519,3 +1537,14 @@ function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, onGuideSkip }) {
 
 
 Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, TitleDetailsBody, DetailSection, useDetailOpen, BulkHeaderAction, FocusPop, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });
+
+// Exported so the shared `window` surface can be typed from the real
+// implementations rather than a second, drifting copy of their signatures
+// (src/types/globals.d.ts). The window publication above stays: it is what
+// every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
+export { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip,
+  MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet,
+  TitleDetailsBody, DetailSection, useDetailOpen, BulkHeaderAction, FocusPop,
+  ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight,
+  StoryYear, ReleaseLine, ReleaseBadge, MPHASE_COLORS, SortOrderMenu,
+  LanguageMenu, Synopsis };

@@ -21,7 +21,7 @@ const SITE = (process.env.SITE ? path.join(S, process.env.SITE) : path.join(S, '
 // data.js moved into the bundle (src/data/data.js) in Phase 2, so it is no
 // longer a file in the served site. Expectations come from the source tree,
 // which is where they belong: they describe the catalog, not the build.
-const DATA_JS = path.join(S, '..', 'src', 'data', 'data.js');
+const { DATA_TS } = require('./load-catalog');
 const V = path.join(S, 'vendor');
 const VENDOR = {
   'react@18.3.1/umd/react.development.js': 'x-react-18.3.1/package/umd/react.development.js',
@@ -49,7 +49,9 @@ const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile:
 // Every released title before She-Hulk in release order, seen: Up next is then
 // She-Hulk (Phase 4), far from Phase 1 where Spatial opens.
 const seenBefore = (target) => {
-  const src = fs.readFileSync(DATA_JS, 'utf8');
+  // Read as text on purpose: this wants the literals in release order as
+  // written, not the evaluated catalog.
+  const src = fs.readFileSync(DATA_TS, 'utf8');
   const rows = [...src.matchAll(/\{ id: '([a-z0-9-]+)', title:.*?release: '([0-9-]+)'/g)].map(m => ({ id: m[1], release: m[2] }));
   rows.sort((a, b) => (a.release < b.release ? -1 : a.release > b.release ? 1 : 0));
   const out = {};

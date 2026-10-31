@@ -1,3 +1,10 @@
+// @ts-nocheck — not yet converted. See docs/V4-PLAN.md §3.1 and the Notion
+// ticket "Convert the app to TypeScript": this file is renamed and inside the
+// type-checked project, but still has 39 errors under `strict`, almost all of
+// them component props and callback parameters that need real types rather
+// than `any`. Delete this line and type the file; the shared surface it reads
+// is already typed in src/types/globals.d.ts, so the errors it reports are the
+// real ones.
 import React from 'react';
 
 // Where to watch: the details section that lists the services offering a title
@@ -13,7 +20,7 @@ import React from 'react';
 // device (mcu.region.v1); it is not synced.
 
 const WI18N = window.MCU_I18N;
-const wtr = (key, vars) => WI18N.tr(key, vars);
+const wtr = (key: string, vars?: Record<string, unknown>) => WI18N.tr(key, vars);
 const REGION_KEY = 'mcu.region.v1';
 // Offered in the picker. Supported ones come from the snapshot; the rest show
 // "not available yet" plus TMDB's own page for that country.
@@ -200,3 +207,10 @@ function WhereToWatch({ title }) {
 
 window.MCU_detailSlots = Object.assign(window.MCU_detailSlots || {}, { watch: WhereToWatch });
 Object.assign(window, { WhereToWatch, MCU_region: regionStore, MCU_guessRegion: guessRegion });
+
+// Exported so the shared `window` surface can be typed from the real
+// implementations rather than a second, drifting copy of their signatures
+// (src/types/globals.d.ts). The window publication above stays: it is what
+// every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
+export { WhereToWatch, regionStore as MCU_region,
+  guessRegion as MCU_guessRegion };

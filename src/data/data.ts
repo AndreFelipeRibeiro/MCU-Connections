@@ -15,7 +15,9 @@
 // otherwise the Wikipedia MCU timeline article (see docs/CATALOG-AUDIT.md).
 // Omitted for unreleased titles.
 
-const TITLES = [
+import type { Title, Character } from '../types/catalog';
+
+const TITLES: Title[] = [
   // Phase 1
   { id: 'iron-man', title: 'Iron Man', year: 2008, phase: 1, type: 'film', release: '2008-05-02', chronOrder: 5, story: '2008', accent: '#d4a05a', cast: ['tony', 'rhodey', 'pepper', 'happy'], credits: { rhodey: 'Terrence Howard' } },
   { id: 'incredible-hulk', title: 'The Incredible Hulk', year: 2008, phase: 1, type: 'film', release: '2008-06-13', chronOrder: 6, story: '2010', accent: '#5fa856', cast: ['ross', 'bruce', 'tony'], credits: { bruce: 'Edward Norton', ross: 'William Hurt' } },
@@ -94,7 +96,7 @@ const TITLES = [
 ];
 
 // Characters with unique connection-line colors
-const CHARACTERS = {
+const CHARACTERS: Record<string, Character> = {
   tony:      { name: 'Tony Stark',       actor: 'Robert Downey Jr.',  color: '#e84a3a', initials: 'TS' },
   steve:     { name: 'Steve Rogers',     actor: 'Chris Evans',         color: '#4a8de8', initials: 'SR' },
   thor:      { name: 'Thor',             actor: 'Chris Hemsworth',     color: '#e8c14a', initials: 'TH' },
@@ -201,7 +203,7 @@ window.CHARACTERS = CHARACTERS;
 // performer can change between titles, so the credit lives on the title and the
 // character's `actor` is only the default. Iron Man credits Terrence Howard as
 // Rhodes; The Incredible Hulk credits Edward Norton and William Hurt.
-window.MCU_credit = function (title, charId) {
+window.MCU_credit = function (title: Title, charId: string) {
   if (title && title.credits && title.credits[charId]) return title.credits[charId];
   const c = CHARACTERS[charId];
   return c ? c.actor : '';
@@ -212,10 +214,11 @@ window.MCU_credit = function (title, charId) {
 // the phone pill and the search suggestions all have to agree on who a
 // character's performers are — naming them differently in two places is the
 // bug this replaced.
-let CREDIT_ROSTER = null;
+type CreditRow = { name: string; n: number };
+let CREDIT_ROSTER: Record<string, CreditRow[]> | null = null;
 window.MCU_creditRoster = function () {
   if (CREDIT_ROSTER) return CREDIT_ROSTER;
-  const m = {};
+  const m: Record<string, CreditRow[]> = {};
   window.TITLES.forEach(t => t.cast.forEach(id => {
     if (!CHARACTERS[id]) return;
     const name = window.MCU_credit(t, id);
@@ -233,7 +236,7 @@ window.MCU_creditRoster = function () {
 // series itself was reported (decision 2026-10-30). The generic "up to $25M
 // per episode" once used for every series was removed, so those read "Not
 // published". Sources and dates: docs/CATALOG-AUDIT.md.
-const BUDGETS = {
+const BUDGETS: Record<string, number> = {
   'brand-new-day': 225, // IMDb production estimate; USD millions, checked 2026-10-24.
   'iron-man': 140, 'incredible-hulk': 150, 'iron-man-2': 200, 'thor': 150,
   'cap-first-avenger': 140, 'avengers': 220,
@@ -264,7 +267,7 @@ window.BUDGETS = BUDGETS;
 // seasons share the series score; these are NOT averages of episode scores.
 // Brand New Day refreshed 2026-10-26 from indexed IMDb ratings-page evidence.
 // Sources, scopes and evidence limits: docs/CATALOG-AUDIT.md / CATALOG-SOURCES.json.
-const IMDB_RATINGS = {
+const IMDB_RATINGS: Record<string, number> = {
   'iron-man': 7.9, 'incredible-hulk': 6.6, 'iron-man-2': 6.9, 'thor': 7.0,
   'cap-first-avenger': 6.9, 'avengers': 8.0, 'iron-man-3': 7.1, 'thor-dark-world': 6.7,
   'cap-winter-soldier': 7.7, 'gotg': 8.0, 'aou': 7.3, 'ant-man': 7.2,
@@ -284,7 +287,7 @@ const IMDB_RATINGS = {
 
 // Rotten Tomatoes Tomatometer (critics), %, checked 2026-10-24.
 // TV entries use their specific season, not audience or series-average scores.
-const RT_SCORES = {
+const RT_SCORES: Record<string, number> = {
   'iron-man': 94, 'incredible-hulk': 68, 'iron-man-2': 72, 'thor': 77,
   'cap-first-avenger': 80, 'avengers': 91, 'iron-man-3': 79, 'thor-dark-world': 67,
   'cap-winter-soldier': 90, 'gotg': 91, 'aou': 75, 'ant-man': 83,

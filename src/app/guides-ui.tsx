@@ -1,3 +1,10 @@
+// @ts-nocheck — not yet converted. See docs/V4-PLAN.md §3.1 and the Notion
+// ticket "Convert the app to TypeScript": this file is renamed and inside the
+// type-checked project, but still has 193 errors under `strict`, almost all of
+// them component props and callback parameters that need real types rather
+// than `any`. Delete this line and type the file; the shared surface it reads
+// is already typed in src/types/globals.d.ts, so the errors it reports are the
+// real ones.
 import React from 'react';
 
 // Guides (guides.js): short, curated paths through the catalogue. This file
@@ -9,7 +16,7 @@ import React from 'react';
 // (no "All titles" switch): closing it brings back the whole catalogue.
 
 const GI18N = window.MCU_I18N;
-const gtr = (key, vars) => GI18N.tr(key, vars);
+const gtr = (key: string, vars?: Record<string, unknown>) => GI18N.tr(key, vars);
 const gloc = (o) => (o ? (o[GI18N.lang] || o.en || '') : '');
 
 const MCU_GUIDE = {
@@ -1012,3 +1019,11 @@ function GuidePromo({ promo, touch, onStart, onClose }) {
 }
 
 Object.assign(window, { GuideMenu, GuideModule, GuidePill, GuideView, GuideMeter, GuideArt, GuidePartOf, GuideIcon, GuidesButton, GuidePromo, GuideOff, GuideOffHint, GuideSkipControl, GuideDetailsSkip });
+
+// Exported so the shared `window` surface can be typed from the real
+// implementations rather than a second, drifting copy of their signatures
+// (src/types/globals.d.ts). The window publication above stays: it is what
+// every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
+export { GuideMenu, GuideModule, GuidePill, GuideView, GuideMeter, GuideArt,
+  GuidePartOf, GuideIcon, GuidesButton, GuidePromo, GuideOff, GuideOffHint,
+  GuideSkipControl, GuideDetailsSkip, MCU_GUIDE, useGuideSkips };

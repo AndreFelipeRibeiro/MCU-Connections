@@ -1,3 +1,10 @@
+// @ts-nocheck — not yet converted. See docs/V4-PLAN.md §3.1 and the Notion
+// ticket "Convert the app to TypeScript": this file is renamed and inside the
+// type-checked project, but still has 17 errors under `strict`, almost all of
+// them component props and callback parameters that need real types rather
+// than `any`. Delete this line and type the file; the shared surface it reads
+// is already typed in src/types/globals.d.ts, so the errors it reports are the
+// real ones.
 import React from 'react';
 
 // "What have you seen?" (V3 Tasks, First-visit picker): a poster grid of every
@@ -14,7 +21,7 @@ import React from 'react';
 // A full-height sheet on phones, a wide dialog on desktop.
 
 const PkI18N = window.MCU_I18N;
-const pktr = (key, vars) => PkI18N.tr(key, vars);
+const pktr = (key: string, vars?: Record<string, unknown>) => PkI18N.tr(key, vars);
 
 // Smaller posters than the app's w342: 60 of them stay light on a phone.
 function PickPoster({ title }) {
@@ -162,3 +169,9 @@ function SeenPicker({ touch, onClose }) {
 }
 
 window.SeenPicker = SeenPicker;
+
+// Exported so the shared `window` surface can be typed from the real
+// implementations rather than a second, drifting copy of their signatures
+// (src/types/globals.d.ts). The window publication above stays: it is what
+// every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
+export { SeenPicker };

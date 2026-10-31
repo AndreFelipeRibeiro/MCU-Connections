@@ -9,7 +9,7 @@
 // something more useful than "something went wrong".
 
 (function () {
-  function unavailable(reason) {
+  function unavailable(reason: string) {
     window.mcuSupabase = null;
     window.MCU_SUPABASE_STATUS = { ok: false, reason: reason };
     // console.info, not error: running without a backend is a supported mode,
@@ -51,6 +51,6 @@
     );
     window.MCU_SUPABASE_STATUS = { ok: true };
   } catch (e) {
-    unavailable('client init failed: ' + ((e && e.message) || e));
+    unavailable('client init failed: ' + ((e instanceof Error && e.message) || e));
   }
 })();

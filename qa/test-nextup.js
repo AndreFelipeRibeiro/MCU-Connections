@@ -9,7 +9,7 @@ const SITE = (process.env.SITE ? path.join(S, process.env.SITE) : path.join(S, '
 // data.js moved into the bundle (src/data/data.js) in Phase 2, so it is no
 // longer a file in the served site. Expectations come from the source tree,
 // which is where they belong: they describe the catalog, not the build.
-const DATA_JS = path.join(S, '..', 'src', 'data', 'data.js');
+const { loadCatalog } = require('./load-catalog');
 const V = path.join(S, 'vendor');
 const VENDOR = {
   'react@18.3.1/umd/react.development.js': 'x-react-18.3.1/package/umd/react.development.js',
@@ -84,9 +84,7 @@ const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobi
 
   // What the rule should say, from the data. Released = a full date on or
   // before today (month windows never count), as MCU_isReleased decides.
-  const sb = { window: {} };
-  require('vm').runInNewContext(fs.readFileSync(DATA_JS, 'utf8'), sb);
-  const T = sb.window.TITLES;
+  const T = loadCatalog().TITLES;
   const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   const isOut = t => /^\d{4}-\d{2}-\d{2}$/.test(t.release) && t.release <= today;
   const byRelease = T.filter(isOut).sort((a, b) => a.release.localeCompare(b.release));

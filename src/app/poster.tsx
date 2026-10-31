@@ -1,15 +1,16 @@
 import React from 'react';
+import type { Title } from '../types/catalog';
 
 // Abstract original poster art — no Marvel imagery, just stylized geometric compositions
 // Generates a deterministic SVG per title from its accent color and title hash
 
-function hashCode(str) {
+function hashCode(str: string) {
   let h = 0;
   for (let i = 0; i < str.length; i++) h = ((h << 5) - h + str.charCodeAt(i)) | 0;
   return Math.abs(h);
 }
 
-function darken(hex, amt) {
+function darken(hex: string, amt: number) {
   const n = parseInt(hex.slice(1), 16);
   let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
   r = Math.max(0, Math.floor(r * (1 - amt)));
@@ -18,7 +19,7 @@ function darken(hex, amt) {
   return `rgb(${r},${g},${b})`;
 }
 
-function lighten(hex, amt) {
+function lighten(hex: string, amt: number) {
   const n = parseInt(hex.slice(1), 16);
   let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
   r = Math.min(255, Math.floor(r + (255 - r) * amt));
@@ -30,17 +31,18 @@ function lighten(hex, amt) {
 // Image addresses that failed to load this session. Shared, so a card that
 // scrolls away and back (or a remount) shows the fallback at once instead of
 // trying the broken address again.
-const failedImages = new Set();
-function useImageFallback(url) {
+const failedImages = new Set<string>();
+function useImageFallback(url: string | null | undefined) {
   const [failed, setFailed] = React.useState(() => !!url && failedImages.has(url));
   React.useEffect(() => { setFailed(!!url && failedImages.has(url)); }, [url]);
   const onError = React.useCallback(() => { if (url) failedImages.add(url); setFailed(true); }, [url]);
-  return [failed, onError];
+  // `as const` so callers get [boolean, handler] rather than a union array.
+  return [failed, onError] as const;
 }
 
 // A real poster when media metadata has one and it loads; otherwise (no
 // address, or the image fails) the generated art below.
-function PosterArt({ title }) {
+function PosterArt({ title }: { title: Title }) {
   const media = window.MEDIA;
   const local = media && media.local_posters && media.local_posters[title.id];
   const path = media && media.posters && media.posters[title.id];
@@ -59,7 +61,7 @@ function PosterArt({ title }) {
 }
 
 // 6 abstract poster styles, picked deterministically per title
-function GeneratedPoster({ title }) {
+function GeneratedPoster({ title }: { title: Title }) {
   const h = hashCode(title.id);
   const variant = h % 6;
   const accent = title.accent;
@@ -167,7 +169,7 @@ function GeneratedPoster({ title }) {
 
 // A cast portrait: the photo, or the character's initials if there is none
 // or it fails to load. The surrounding row already names the character.
-function Portrait({ url, alt, initials }) {
+function Portrait({ url, alt, initials }: { url?: string | null; alt: string; initials: string }) {
   const [failed, onError] = useImageFallback(url);
   return url && !failed
     ? <img src={url} alt={alt} loading="lazy" onError={onError}/>
@@ -180,7 +182,7 @@ function Portrait({ url, alt, initials }) {
 // no portrait is known for the credited performer, this returns null and
 // Portrait falls back to initials — a plain row that is right beats a face that
 // is confidently wrong.
-function castPortrait(title, charId) {
+function castPortrait(title: Title, charId: string) {
   const media = window.MEDIA;
   if (!media) return null;
   const character = window.CHARACTERS && window.CHARACTERS[charId];
@@ -198,7 +200,7 @@ function castPortrait(title, charId) {
 // performer *is* this person, their own portrait already shows them — Jonathan
 // Majors pinned as a performer still gets Kang's photo, which is his face.
 // Otherwise it has to come from the performer map, or not at all.
-function performerPortrait(name, repCharId) {
+function performerPortrait(name: string, repCharId: string) {
   const media = window.MEDIA;
   if (!media) return null;
   const character = window.CHARACTERS && window.CHARACTERS[repCharId];
@@ -215,3 +217,9 @@ window.PosterArt = PosterArt;
 window.Portrait = Portrait;
 window.castPortrait = castPortrait;
 window.performerPortrait = performerPortrait;
+
+// Exported so the shared `window` surface can be typed from the real
+// implementations rather than a second, drifting copy of their signatures
+// (src/types/globals.d.ts). The window publication above stays: it is what
+// every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
+export { PosterArt, Portrait, castPortrait, performerPortrait };

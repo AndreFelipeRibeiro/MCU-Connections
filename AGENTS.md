@@ -33,16 +33,30 @@ plan, the environment and the Figma workflow.
   signed-in collections; supabase-js 2.112.2 is still the one script loaded
   from unpkg, with `crossorigin` and an SRI hash. V3's no-build rule is gone,
   along with in-browser Babel and the CDN React — see docs/V4-PLAN.md and the
-  2026-10-31 rows in docs/decisions.md. Plain JavaScript for now; the
-  TypeScript conversion is its own ticket.
+  2026-10-31 rows in docs/decisions.md.
 - **Every dependency is pinned exactly** in `package.json` (no `^`, no `~`), so
   a build is reproducible. Keep it that way: the shadcn CLI loosens pins when
   it adds a component, so re-pin after running it.
+- **TypeScript, at full `strict`.** `npm run typecheck` must be green before
+  you hand work over. The conversion is partial on purpose: the data layer, the
+  shared `window` surface, the shadcn components and the design preview are
+  typed, and the V3 app files not yet done carry a `// @ts-nocheck` header
+  saying how many errors each still has. **Never add `any` or a new
+  `@ts-nocheck` to reach green** — type the thing, or leave the existing header
+  in place and say so. Deleting one of those headers, and the errors behind it,
+  is a welcome change on its own.
+- **Where the types live:** `src/types/catalog.ts` holds the shapes the catalog
+  publishes (`Title`, `Character`, `Guide`, `Media`, `WatchData`, the Up next
+  result), and `src/types/globals.d.ts` types the whole shared `window`
+  surface. That file takes component signatures straight from the modules with
+  `typeof import(...)` rather than restating them, so a changed prop is an
+  error at every use site. Add to those two rather than re-describing a shape
+  locally.
 - **Exception: `qa/`** is development-only tooling with its own `package.json`
   (Playwright, axe-core). Nothing in the app may load from `qa/`; Vercel does not
   deploy it (`.vercelignore`) and its installs stay out of Git (`.gitignore`).
-- The app is one bundle, entered at `src/main.js`, which imports the data layer
-  and then every view in the order `index.html` used to load them, `app.jsx`
+- The app is one bundle, entered at `src/main.ts`, which imports the data layer
+  and then every view in the order `index.html` used to load them, `app.tsx`
   last because it mounts the app. Keep that order.
 - **The files still talk to each other through `window.*`.** The bundle changed
   how the app is delivered, not how its pieces are shared: each file keeps
@@ -55,21 +69,21 @@ plan, the environment and the Figma workflow.
   `locales/*.js` + `i18n.js` (the startup screen has to speak the visitor's
   language before the bundle arrives) and `watch-data.js` (a QA check replaces
   it over the network, so it must keep its own URL).
-- Main files, all under `src/app/` unless said otherwise: `app.jsx` (app shell,
-  desktop Spatial canvas, toolbar, details drawer, state), `mobile.jsx` (phone
-  views, sheets, `Highlight`, `Portrait` users), `desktop-list.jsx` (desktop
-  List), `poster.jsx` (`PosterArt`, `Portrait`, image fallbacks), `search-suggest.jsx`,
-  `tracking.jsx` (Seen/Watchlist + sync, the Up next rule), `upnext.jsx`
-  (the Up next card, strip, meter row and chip), `watch.jsx` (Where to watch
+- Main files, all under `src/app/` unless said otherwise: `app.tsx` (app shell,
+  desktop Spatial canvas, toolbar, details drawer, state), `mobile.tsx` (phone
+  views, sheets, `Highlight`, `Portrait` users), `desktop-list.tsx` (desktop
+  List), `poster.tsx` (`PosterArt`, `Portrait`, image fallbacks), `search-suggest.tsx`,
+  `tracking.tsx` (Seen/Watchlist + sync, the Up next rule), `upnext.tsx`
+  (the Up next card, strip, meter row and chip), `watch.tsx` (Where to watch
   in the details, the region picker), `guides.js` (curated guides and the
-  continuity marker; content needs the user's approval) + `guides-ui.jsx`
-  (the guide menu, views, banner, pill and "Part of"), `picker.jsx` ("What
-  have you seen?", the poster-grid picker), `account.jsx`, `about.jsx`
-  (`ModalDialog`), `celebrate.jsx` (counters, confetti, sign-in reminder),
+  continuity marker; content needs the user's approval) + `guides-ui.tsx`
+  (the guide menu, views, banner, pill and "Part of"), `picker.tsx` ("What
+  have you seen?", the poster-grid picker), `account.tsx`, `about.tsx`
+  (`ModalDialog`), `celebrate.tsx` (counters, confetti, sign-in reminder),
   `boot.js` (startup screen, at the root), `i18n.js` + `locales/*.js` (root),
-  `src/data/data.js` (catalog; permanent title ids), `src/data/guides.js`,
-  `src/data/media-data.js` (TMDB paths), `src/config.js` (public Supabase URL +
-  publishable key), `src/main.js` (the bundle entry), `schema.sql`,
+  `src/data/data.ts` (catalog; permanent title ids), `src/data/guides.ts`,
+  `src/data/media-data.ts` (TMDB paths), `src/config.ts` (public Supabase URL +
+  publishable key), `src/main.ts` (the bundle entry), `schema.sql`,
   `styles.css`, `styles-mobile.css`. The README's "Project structure" table is the full list.
 - Docs: `README.md` (features, setup, deploy), `CHANGELOG.md`, `docs/` (handoff,
   decisions, catalog audit and sources, privacy review, V3 verification log).
@@ -83,6 +97,8 @@ plan, the environment and the Figma workflow.
   origins the OAuth client allows, and 8126 is the one registered; if the port
   is taken the dev server stops rather than quietly moving. No hard-refresh
   dance any more — Vite reloads on save.
+- Type check: `npm run typecheck` (`tsc --noEmit`), green today and expected
+  to stay green.
 - Build: `npm run build` into `dist/`, `npm run preview` to serve that build.
   Vercel runs the same build on every push, so pushing a branch is still the
   deploy.
@@ -276,7 +292,7 @@ rules carry over unchanged.
   `--surface #161a26`, `--surface-2 #1c2030`, `--border #232838`,
   `--border-strong #2e344a`, `--text #e6e8f0`, `--text-dim #9ea4b8`,
   `--text-muted #8389a1`, `--accent #4a8de8`. Phase colours are
-  `PHASE_COLORS` in `app.jsx`. Use the tokens; do not add near-duplicate greys.
+  `PHASE_COLORS` in `app.tsx`. Use the tokens; do not add near-duplicate greys.
 - Type: Inter for UI, JetBrains Mono for labels, numbers and badges, Bebas Neue
   for display. Brand mark: the conic-gradient square (`.brand-mark`).
 - Contrast: informative text meets WCAG AA (4.5:1 for normal text) against its
@@ -288,7 +304,7 @@ rules carry over unchanged.
 - Focus and keyboard:
   - Focus rings use `:focus-visible`.
   - Scripts move focus only after keyboard input (the `lastInput` tracker in
-    `app.jsx`), so mouse and touch users never see a ring they didn't cause.
+    `app.tsx`), so mouse and touch users never see a ring they didn't cause.
   - Escape closes the nearest layer first: search suggestions, then menus and
     popovers, then dialogs and phone sheets, then the pair view, then the
     desktop List's bulk selection, then the details, then the pinned character
@@ -371,7 +387,7 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
 
 User-facing text is translated: never hard-code UI strings in components. Add a
 key to `locales/en.js` (the complete base), translate it in every other
-`locales/*.js`, and read it with `tr()` (app.jsx), `mtr()` (mobile.jsx) or
+`locales/*.js`, and read it with `tr()` (app.tsx), `mtr()` (mobile.tsx) or
 `window.MCU_I18N.tr()`. Show titles and character names through
 `MCU_I18N.titleName()` / `charName()`; search keeps matching every language's
 names. New catalog titles need an official local title and a short,

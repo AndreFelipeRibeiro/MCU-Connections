@@ -1,3 +1,10 @@
+// @ts-nocheck — not yet converted. See docs/V4-PLAN.md §3.1 and the Notion
+// ticket "Convert the app to TypeScript": this file is renamed and inside the
+// type-checked project, but still has 52 errors under `strict`, almost all of
+// them component props and callback parameters that need real types rather
+// than `any`. Delete this line and type the file; the shared surface it reads
+// is already typed in src/types/globals.d.ts, so the errors it reports are the
+// real ones.
 import React from 'react';
 
 // Auth state machine, session provider and account surfaces.
@@ -507,3 +514,11 @@ Object.assign(window, {
   GoogleMark,
   MCU_AUTH_CONTEXT: AccountContext,
 });
+
+// Exported so the shared `window` surface can be typed from the real
+// implementations rather than a second, drifting copy of their signatures
+// (src/types/globals.d.ts). The window publication above stays: it is what
+// every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
+export { AccountProvider, useAccount, AccountButton, AccountAvatarButton,
+  SyncStatus, AccountSheet, AccountPanel, GoogleMark,
+  AccountContext as MCU_AUTH_CONTEXT };

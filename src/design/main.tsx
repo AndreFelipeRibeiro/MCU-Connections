@@ -7,9 +7,11 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import '../index.css';
-import Preview from './Preview.jsx';
+import Preview from './Preview';
 
-createRoot(document.getElementById('root')).render(
+// The element is in design.html; a missing one is a build mistake, not a
+// runtime case to handle.
+createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Preview />
   </React.StrictMode>

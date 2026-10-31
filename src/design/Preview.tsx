@@ -33,10 +33,12 @@ function useTheme() {
     document.documentElement.classList.toggle('dark', dark);
     try { localStorage.setItem('mcu.design.theme', dark ? 'dark' : 'light'); } catch (e) {}
   }, [dark]);
-  return [dark, setDark];
+  // `as const` so callers get [boolean, (v: boolean) => void] rather than a
+  // union array, which would make setDark not callable.
+  return [dark, setDark] as const;
 }
 
-function Section({ title, hint, children }) {
+function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className="space-y-4">
       <div>
@@ -214,12 +216,12 @@ export default function Preview() {
 
         <Section title="Controls">
           <div className="flex flex-wrap items-center gap-2">
-            {['default', 'secondary', 'outline', 'ghost', 'destructive', 'link'].map((v) => (
+            {(['default', 'secondary', 'outline', 'ghost', 'destructive', 'link'] as const).map((v) => (
               <Button key={v} variant={v}>{v}</Button>
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {['default', 'secondary', 'outline', 'destructive'].map((v) => (
+            {(['default', 'secondary', 'outline', 'destructive'] as const).map((v) => (
               <Badge key={v} variant={v}>{v}</Badge>
             ))}
             <Switch defaultChecked aria-label="Example switch" />
