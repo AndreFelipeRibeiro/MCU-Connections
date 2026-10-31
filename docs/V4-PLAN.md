@@ -325,7 +325,9 @@ Phase 3 proper, sketched here because the build has to support it.
   own a history entry, and `:focus-visible` rings driven by the `lastInput`
   tracker. A kit that fights any of those costs more than it saves. No
   recommendation is offered here on purpose: it deserves evidence, and Andre
-  decides.
+  decides. **Decided 2026-10-31:** shadcn/ui on Base UI, Vega style
+  (decisions.md). The requirements listed here are the setup ticket's
+  acceptance checks.
 - **Two themes from one set of variables**, honouring `prefers-color-scheme`
   with a user override, most likely in a Settings panel (Phase 5). Both themes
   must meet WCAG AA against their real backgrounds; the V3 contrast work
@@ -437,3 +439,4 @@ batch — that is the whole reason the build goes first.
    is on staging, and for how long?
 5. **Component base** (§6): happy for the evaluation to be its own ticket with
    a written recommendation, or do you already have a preference?
+   *Answered 2026-10-31:* shadcn/ui on Base UI, Vega style, light and dark.

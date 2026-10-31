@@ -252,9 +252,10 @@ only create it when the user says yes.
 ## Design, accessibility and interaction standards
 
 These are the V3 standards and still describe the app. The V4 design system
-replaces the visual tokens and type below as it lands (Figma first, then
-code); the accessibility, keyboard, focus, Escape, phone-history,
-reduced-motion and Spatial performance rules carry over unchanged.
+(shadcn/ui, Vega style; see "Design system (V4)") replaces the visual tokens
+and type below as it lands (Figma first, then code); the accessibility,
+keyboard, focus, Escape, phone-history, reduced-motion and Spatial performance
+rules carry over unchanged.
 
 - Dark theme tokens (`styles.css :root`): `--bg #0a0c14`, `--bg-2 #11141f`,
   `--surface #161a26`, `--surface-2 #1c2030`, `--border #232838`,
@@ -319,6 +320,36 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   or components) unless the ticket or the user asks for it.
 - Never put Figma access tokens or other credentials in the repository,
   Notion or chat; the MCP signs in through the browser.
+
+## Design system (V4)
+
+- Decided 2026-10-31 (docs/decisions.md; Notion ticket "Design system:
+  shadcn/ui on Base UI, Vega style (dark + light)"): V4's component base is
+  shadcn/ui on Base UI, starting from shadcn's Vega style with the Neutral base
+  colour and theme, default radius, Inter and lucide icons (shadcn preset
+  `base-vega`). Light and dark themes from day one.
+- Start from the library defaults; V4's art direction arrives later through
+  Figma variables. Do not carry V3's colours (`--bg`, `--accent`, …) in as a
+  starting point.
+- Setup is Phase 3 work (V4-PLAN.md §9). Until that ticket starts, do not
+  install Tailwind, shadcn or Base UI.
+- Install and add components with the shadcn CLI pinned to an exact version
+  (`npx shadcn@<version> init --base base --preset base-vega`); commit
+  `components.json`. Components live in `src/components/ui/` and are our code:
+  restyle and fix them there instead of wrapping them to override styles.
+- Tokens: shadcn's CSS variables (`--background`, `--foreground`, `--primary`,
+  `--border`, `--ring`, `--radius`, …) in one stylesheet with a light `:root`
+  block and a `.dark` block are the token file V4-PLAN.md §6 describes; names
+  match the Figma variables. Phase colours become tokens there (`--phase-1`
+  … `--phase-6`, both themes).
+- Theme: class `dark` on `<html>`, following `prefers-color-scheme` until the
+  user overrides it. Both themes meet WCAG AA.
+- The interaction rules in "Design, accessibility and interaction standards"
+  win over library defaults: Base UI dialogs and popovers join the one Escape
+  ladder, the desktop drawer stays modeless, phone sheets trap focus and own a
+  history entry, focus rings appear only after keyboard input, and nothing
+  inside the Spatial canvas uses `backdrop-filter` (keep Vega's default solid
+  menus).
 
 ## Language
 

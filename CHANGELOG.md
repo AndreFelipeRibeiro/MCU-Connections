@@ -12,6 +12,41 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V4 design — component base decided: shadcn/ui on Base UI, Vega style
+
+Recorded: 2026-10-31 13:17 EDT (-0400). Pushed to `version/4.0` (V4
+staging); `main` still serves V3 and this change is not part of a
+production release.
+
+- Records Andre's decision of 2026-10-31: V4's component base is shadcn/ui on
+  Base UI, starting from shadcn's Vega style (preset `base-vega`: Neutral base
+  colour and theme, default radius, Inter, lucide icons), with light and dark
+  themes from day one. It starts from the library's own defaults, not V3's
+  colours; V4's art direction arrives later through Figma variables.
+- Chosen after comparing shadcn/ui and Radix Themes side by side on their
+  default themes, in both modes, against V3's Spatial card, details drawer and
+  phone sheet. Answers question 5 in `docs/V4-PLAN.md` §10.
+- `AGENTS.md` gains a **Design system (V4)** section after **Figma (V4)**: the
+  decision, the rule to start from library defaults, the CLI pinned to an exact
+  version with `components.json` committed, components owned in
+  `src/components/ui/` and restyled there rather than wrapped, shadcn's CSS
+  variables as the single token file with `:root` and `.dark` blocks (phase
+  colours among them), the `dark` class following `prefers-color-scheme`, and
+  the rule that this repository's interaction standards beat library defaults.
+  The opening line of **Design, accessibility and interaction standards** now
+  names the incoming system.
+- Setup is Phase 3 work and does not start yet: Tailwind, shadcn and Base UI
+  are not to be installed until that ticket begins, after the Phase 2
+  migration and the TypeScript conversion.
+- `docs/decisions.md` gains the 2026-10-31 row, and `docs/V4-PLAN.md` marks §6
+  **Component base** and §10 question 5 as decided.
+- Verified: documentation only, no app code and no dependency change, so no
+  checks were run.
+- Limits: nothing is installed or configured, and the open question of React
+  versions is unresolved — V4 pins React 18.3.1 while shadcn's current
+  components take `ref` as an ordinary prop, which React 18 does not forward.
+  The Notion ticket carries that question, to be settled before setup starts.
+
 ## V4 maintenance — build scaffold (Phase 2, step 1)
 
 Recorded: 2026-10-31 13:06 EDT (-0400). Pushed to `version/4.0` (V4 staging);
@@ -52,7 +87,10 @@ Recorded: 2026-10-31 13:06 EDT (-0400). Pushed to `version/4.0` (V4 staging);
   fully green (exit 0) where the working-tree baseline was not. `test-fit`
   matches the working tree at all 24 viewports. `qa/smoke.js` clean against a
   locally served build and against the deployed preview. Dev server confirmed
-  on 8126.
+  on 8126. `main` was then redeployed from the Vercel dashboard with the build
+  cache off: Ready in 2 seconds with no install or build step, production
+  still serving the unbuilt V3 site (plain stylesheet links, no `/assets/`
+  bundle) and its smoke check clean.
 - Limits: the app is not converted to modules, which is the next work. Three
   checks are noisy for reasons that are not the build's — `test-skip` fails
   identically on the working tree and the build, `test-camera` is
