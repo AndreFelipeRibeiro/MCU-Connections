@@ -12,6 +12,68 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V4 maintenance — three checks that had drifted from the app
+
+Recorded: 2026-10-31 16:37 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+`main` still serves V3 and this change is not part of a production release.
+
+`test-skip`, `test-camera` and later `test-back` had been carried as
+pre-existing failures, with `test-skip` suspected of being a real bug in the
+Batch 10 guide work. **All three were the checks.** This change touches no
+application code at all.
+
+- **`test-skip` read only the phone's guide markup.** Batch 10 replaced the
+  desktop meter row with one taller card (`GuideModule`), which draws progress
+  as `.gm-count` and `.gm-notes` and puts the bulk action in its own footer,
+  while phones kept `GuideMeter` and `.g-meter`. On desktop the check found
+  nothing and reported `count null`, `meter: null / null` and `bulk action
+  reads "null"` — which reads exactly like the guide failing to count its own
+  stops. Four selectors now read both layouts, plus the Spatial Up next, which
+  with a guide open is the guide card's own next stop rather than `.un-mrow`.
+  Every expected value in the check is unchanged (`1/5`, `1/4`, `1 skipped`,
+  `Mark 3 more seen`, `cap-brave`); they had nothing to compare against
+  before, so most of this check had not really run on desktop since Batch 10.
+- **`test-back` was invalidated by a feature a day after it was written.** It
+  landed 2026-10-28; on 2026-10-29 the address gained the open title, so going
+  forward restores `?title=…` and the details reopen — the address doing its
+  job, not the sheet's history entry leaking. Step 2 still expected nothing to
+  reopen, so the sheet stayed over the page and every later click timed out
+  against it, which is why it reported a Playwright timeout instead of a
+  failed assertion. Its init script is now wrapped in try/catch as well,
+  because the check deliberately starts on a `data:` URL where `localStorage`
+  throws and those page errors were its own doing.
+- **`test-back` joins the regress set.** The phone's "each sheet owns one
+  history entry, so Back closes it" rule is an AGENTS.md invariant that
+  nothing else covers. Its absence from the full run is why this drifted
+  unnoticed for three days, and why that rule had to be verified by hand for
+  the previous commit.
+- **`test-camera` needed nothing.** It is clean individually and in the full
+  run; the flakiness the ticket described was already fixed by the earlier
+  `clickCard()` and glide-settle work. Its one known console warning is
+  unchanged and still allowed by name.
+
+Verification:
+
+- `bash qa/regress.sh` on the final tree: **all 45 check runs clean, exit 0,
+  no `!!` lines**, both accessibility scans report no violations. The first
+  fully green suite, and the first whose verdict can be trusted, since the
+  runner bug that could report a failing check as clean was fixed earlier the
+  same day.
+- The full run is now 43 check runs plus two scans (was 42 + 2), about seven
+  minutes. Counts in AGENTS.md, qa/README.md and docs/V4-PLAN.md updated, and
+  the "known failures" notes replaced with what each one actually was.
+- `test-skip`, `test-back` and `test-camera` each also run clean on their own
+  against the built site; `test-camera` was run three times to check it is not
+  flaky.
+
+Limits:
+
+- No application code changed, so there is nothing here to look at in a
+  browser.
+- `test-skip`'s desktop assertions are being exercised for the first time
+  since Batch 10. They pass, but they have less history behind them than the
+  rest of the suite.
+
 ## V4 maintenance — the whole app moves into the bundle (Phase 2, steps 4–5)
 
 Recorded: 2026-10-31 16:05 EDT (-0400). Pushed to `version/4.0` (V4 staging);

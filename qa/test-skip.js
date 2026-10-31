@@ -67,19 +67,32 @@ async function ctxPage(browser, opts, { seen = [], skips = null, lang = 'en' } =
   });
   return { ctx, page, errors };
 }
+// Two guide layouts, so most of these take two selectors.
+//
+// Phones keep the original meter row (GuideMeter -> .g-meter, with the shared
+// ProgressHeader inside it). Desktop replaced it in Batch 10 with one taller
+// card, GuideModule, which draws its own progress as .gm-count / .gm-notes and
+// puts the bulk action in its footer. This check was written before that card
+// existed and still read only the phone markup, so on desktop it found nothing
+// and reported `count null` / `meter: null / null` / `bulk action reads "null"`
+// as though the guide were broken. Updated 2026-10-31; the app was right.
 const STATE = () => {
   const a = document.activeElement;
   return {
     skipped: [...document.querySelectorAll('.g-stop.skipped, .g-card.skipped')].map(e => e.getAttribute('data-row-id')),
-    count: (document.querySelector('.g-meter .pgh-count') || {}).textContent || null,
-    skipNote: (document.querySelector('.g-meter .g-skip-count') || {}).textContent || null,
+    count: (document.querySelector('.g-meter .pgh-count, .gm-count') || {}).textContent || null,
+    // Desktop joins the optional and skipped notes into one line, so this is a
+    // substring test at the call sites, not an equality one.
+    skipNote: (document.querySelector('.g-meter .g-skip-count, .gm-notes') || {}).textContent || null,
     next: (document.querySelector('.g-stop.next, .g-card.next') || { getAttribute: () => null }).getAttribute('data-row-id'),
-    bulk: (document.querySelector('.g-meter .pgh-action button, .g-meter button') || {}).textContent || null,
+    bulk: (document.querySelector('.g-meter .pgh-action, .gm-foot .pgh-action, .g-meter button') || {}).textContent || null,
     stops: (document.querySelector('.guide-banner .cb-pos, .g-pill .cb-pos, .g-pill [aria-live]') || {}).textContent || null,
     focus: a ? (a.className || a.tagName) + '@' + ((a.closest && a.closest('[data-row-id]')) ? a.closest('[data-row-id]').getAttribute('data-row-id') : '') : null,
     live: [...document.querySelectorAll('[aria-live="polite"]')].map(e => e.textContent).filter(Boolean),
     stored: localStorage.getItem('mcu.guideSkips.v1'),
-    ready: !!document.querySelector('.g-ready'),
+    // Complete: phones say so in a .g-ready line; the desktop card says it by
+    // turning green (.done) and showing where the guide leads instead.
+    ready: !!document.querySelector('.g-ready, .g-module.done'),
   };
 };
 
@@ -180,7 +193,9 @@ const STATE = () => {
     await page.goto(URL + G); await appReady(page);
     const r = await page.evaluate(() => {
       const b = document.querySelector('.card[data-id="loki-s2"] .card-gnum');
-      return { badge: b && b.textContent, cls: b && b.className, label: b && b.getAttribute('aria-label'), up: (document.querySelector('.un-mrow .un-open') || {}).textContent || null };
+      return { badge: b && b.textContent, cls: b && b.className, label: b && b.getAttribute('aria-label'), // With a guide open, Spatial's own Up next row gives way to the
+      // guide card, which names the next stop itself.
+      up: (document.querySelector('.un-mrow .un-open, .gm-next .gm-ntitle') || {}).textContent || null };
     });
     out.spatial = r;
     expect(r.badge === '–' && /skip/.test(r.cls || '') && r.label === 'Stop 2, skipped', `Spatial badge: ${JSON.stringify(r)}`);

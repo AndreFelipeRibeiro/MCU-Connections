@@ -421,7 +421,7 @@ Also: `qa/checks.json` maps changed files to checks. Its `files` keys gain the
 contract that `qa/ready.js` waits on must be preserved by `src/main.js`.
 
 **What must pass before Phase 2 ships:** the full `bash qa/regress.sh` on the
-built tree (41 check scripts in 42 runs plus the accessibility scan in English
+built tree (42 check scripts in 43 runs plus the accessibility scan in English
 and Portuguese), green, read as output and not just as an exit code; then
 `node qa/smoke.js` against the V4 preview; then a real-device look at Spatial
 zoomed out on an iPhone, because no headless check covers the iOS memory rule.

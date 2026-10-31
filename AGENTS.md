@@ -100,13 +100,11 @@ plan, the environment and the Figma workflow.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (41 check scripts in 42 runs plus the accessibility scan in English and
+    (42 check scripts in 43 runs plus the accessibility scan in English and
     Portuguese, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code — and note that `test-skip` is a known
-    pre-existing failure, so the run exits non-zero even when nothing is
-    wrong with your change. Compare per check against a run of the tree you
-    started from rather than expecting a clean exit (qa/README.md).
+    output, not just the exit code. A good run is **45 check runs clean**
+    with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
     against the deployed site, once Vercel reports the deploy.

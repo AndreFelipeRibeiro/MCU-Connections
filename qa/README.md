@@ -24,7 +24,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression: 41 check scripts in 42 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English and Portuguese, 4 at a time; about 5–6 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
+| `bash qa/regress.sh` | Full regression: 42 check scripts in 43 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English and Portuguese, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
 | `bash qa/quick.sh [checks…]` | The per-ticket run: the checks `qa/checks.json` lists for the files changed in the working tree, plus the checks named (the ticket's own), side by side. A typical ticket takes 1–3 minutes. |
 | `SITE_URL=<address> node qa/smoke.js` | One-minute smoke check against a deployed site, exactly as a visitor gets it: loads, titles appear, Spatial and List open, details open and close, the phone List opens a sheet, no console errors. Run it against staging after each push and production after each merge. |
 | `node qa/a11y-scan.js` | axe-core scan of 16 screens (desktop Spatial, details, List in Release and in By Phase, account menu, an open guide in the List and in Spatial, the Guides popover, the "What have you seen?" dialog, the guide promotion; phone List, details, Spatial, an open guide, the picker sheet, the guide promotion). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). |
@@ -265,11 +265,10 @@ one.
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
 - `test-camera` used to fail at "sort change while selected", and separately to
   report a false "wheel cancels the glide" about one run in four. Both were the
-  check, not the app, and both are fixed. A full run is 44 runs (42 check
-  runs and two scans); `test-skip` is the one known failure (below), so a
-  good run reports **43 clean and `test-skip` failing**. Treat any
-  `test-camera` failure as real, and compare against a clean copy with
-  `SITE=` if in doubt.
+  check, not the app, and both are fixed. A full run is 45 runs (43 check
+  runs and two scans) and all of them should be clean: as of 2026-10-31
+  there are no known failures. Treat any `test-camera` failure as real, and
+  compare against a clean copy with `SITE=` if in doubt.
   - `page.mouse.click` moves the cursor and presses in the same tick. Hovering a
     card re-lays the canvas out, so the press could land after the cards had
     shifted and select nothing, leaving `.drawer-close` with no target. Card
@@ -281,13 +280,22 @@ one.
   - The glide steps guessed at 60ms and 80ms. They now wait for the transition
     to appear and to clear, which is what the "1 in 4" was.
 
-- `test-skip` **fails, and has since before the V4 build step** (Notion:
-  "Pre-existing check failures on version/4.0: test-skip and test-camera"). It
-  reports `next loki-s2, count null` and `meter: null / null` — the guide's
-  skip control reads nothing back. It may well be a real bug in the Batch 10
-  guide work rather than a problem with the check; nobody has looked yet. It is
-  not caused by the bundle: the failure and its messages are identical before
-  and after it.
+- `test-skip` **used to fail, and it was the check, not the app** (fixed
+  2026-10-31). Batch 10 replaced the desktop guide's meter row with one taller
+  card (`GuideModule`), which draws progress as `.gm-count` / `.gm-notes` and
+  puts the bulk action in its own footer. The check still read only the phone
+  markup (`.g-meter .pgh-count` and friends), found nothing on desktop, and
+  reported `count null`, `meter: null / null` and `bulk action reads "null"`
+  as though the guide were broken. It now reads both layouts. Every expected
+  value in it is unchanged — they simply had nothing to compare against
+  before, so on desktop most of this check had not really run since Batch 10.
+- `test-back` **used to time out, also the check** (fixed 2026-10-31). It was
+  written on 2026-10-28, and the next day the address gained the open title,
+  so going Forward restores `?title=…` and the details reopen. The check still
+  expected nothing to reopen, left the sheet covering the page, and every
+  later click timed out against it. It is now in the regress set, because the
+  phone's "Back closes the sheet" rule is an AGENTS.md invariant and nothing
+  else covered it — which is how this went unnoticed for three days.
 - **The runner used to be able to miss a failure** (fixed 2026-10-31). Its
   verdict pattern read an `"errors": [...]` field only as far as the first `]`,
   wherever that bracket came from. `test-skip`'s own messages contain the text

@@ -1,4 +1,9 @@
-// Checks saved display preferences (mcu.prefs.v1) on mobile and desktop.
+// The phone's Back button against the sheets: each sheet owns one history
+// entry, so Back closes it instead of leaving the app, and closing any other
+// way (×, scrim, Escape) steps back over that entry so none pile up. Also
+// Account handing its entry to About, the first-visit welcome, and that the
+// desktop is unaffected. Reports state after each step; `errors` fields are
+// what regress.sh would gate on. Not in the regress set — run it by name.
 const QA_PORT = +process.env.PORT || 8188; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
@@ -31,7 +36,11 @@ const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
 async function ctxPage(browser, opts, init) {
   const ctx = await browser.newContext(opts);
-  if (init) await ctx.addInitScript(init);
+  // This check starts on a data: URL, so that leaving the app is visible, and
+  // localStorage throws there. The seed is only meant for the app's own page,
+  // so let it fail quietly rather than report a page error that is the
+  // check's own doing.
+  if (init) await ctx.addInitScript('try { ' + init + ' } catch (e) {}');
   // The sign-in reminder would cover the page after a few marks: off unless a
   // test asks for it (NUDGE=1).
   if (!process.env.NUDGE) await ctx.addInitScript("try { if (!localStorage.getItem('mcu.signInNudge.v1')) localStorage.setItem('mcu.signInNudge.v1', '2'); } catch (e) {}");
@@ -69,9 +78,21 @@ const reload = async page => { await page.reload(); await settle(page); };
   R.detailsOpen = await sheets(page);
   await back(page);
   R.afterBack = { sheets: await sheets(page), ...(await info(page)) };
-  // 2. Forward onto the old entry: nothing reopens, no error.
+  // 2. Forward onto the old entry.
+  //
+  // This used to expect that nothing reopened, and that was right when the
+  // check was written (2026-10-28). The next day the address gained the open
+  // title (qa/test-urlstate.js), so going forward restores `?title=…` and the
+  // details open again — the address doing its job, not the sheet's history
+  // entry leaking. The old expectation left the sheet open, and every step
+  // below then clicked into a page covered by it, which is why this check
+  // timed out rather than reporting anything. It is not in the regress set,
+  // so no full run ever showed it. Corrected 2026-10-31.
   await fwd(page);
-  R.afterForward = { sheets: await sheets(page), ...(await info(page)) };
+  R.afterForward = { sheets: await sheets(page), url: (await info(page)).url, ...(await info(page)) };
+  // Back to the bare page again so the steps below start from a clear screen.
+  if (await sheets(page)) await back(page);
+  R.afterForwardBack = { sheets: await sheets(page), ...(await info(page)) };
   // 3. Close with × five times: history does not grow.
   for (let i = 0; i < 5; i++) {
     await page.locator('.m-lrow-open').nth(i).click(); await page.waitForTimeout(400);
