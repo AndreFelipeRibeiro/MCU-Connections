@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Where to watch: the details section that lists the services offering a title
 // in the visitor's country (stream, free, rent or buy). It reads the dated
 // snapshot in watch-data.js (window.WATCH, written by tools/refresh-watch.js

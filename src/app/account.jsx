@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Auth state machine, session provider and account surfaces.
 //
 // There is no router in this app and V3 does not add one: sign-in is a full

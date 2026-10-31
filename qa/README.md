@@ -10,9 +10,13 @@ folder (`.vercelignore`), and installed packages stay out of Git
     bash qa/setup.sh
 
 Installs Playwright and axe-core into `qa/node_modules`, downloads Chromium,
-and fetches the pinned React, ReactDOM, Babel standalone and supabase-js
-packages into `qa/vendor`. The checks serve those packages in place of unpkg,
-so they test exactly the versions `index.html` loads and need no network.
+and fetches the pinned supabase-js package into `qa/vendor` (React, ReactDOM
+and Babel are vendored too, from when the app loaded them from unpkg; only
+supabase-js is still fetched that way). The checks serve it in place of unpkg,
+so they test exactly the version `index.html` loads and need no network.
+
+The app is built before each run, so `npm install` in the repository root is a
+prerequisite as well.
 
 ## Running
 
@@ -22,16 +26,23 @@ Run from the repository root:
 |---|---|
 | `bash qa/regress.sh` | Full regression: 41 check scripts in 42 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English and Portuguese, 4 at a time; about 5–6 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
 | `bash qa/quick.sh [checks…]` | The per-ticket run: the checks `qa/checks.json` lists for the files changed in the working tree, plus the checks named (the ticket's own), side by side. A typical ticket takes 1–3 minutes. |
-| `SITE_URL=<address> node qa/smoke.js` | One-minute smoke check against a deployed site (real CDN libraries and in-browser Babel): loads, titles appear, Spatial and List open, details open and close, the phone List opens a sheet, no console errors. Run it against staging after each push and production after each merge. |
+| `SITE_URL=<address> node qa/smoke.js` | One-minute smoke check against a deployed site, exactly as a visitor gets it: loads, titles appear, Spatial and List open, details open and close, the phone List opens a sheet, no console errors. Run it against staging after each push and production after each merge. |
 | `node qa/a11y-scan.js` | axe-core scan of 16 screens (desktop Spatial, details, List in Release and in By Phase, account menu, an open guide in the List and in Spatial, the Guides popover, the "What have you seen?" dialog, the guide promotion; phone List, details, Spatial, an open guide, the picker sheet, the guide promotion). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
-| `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
+| `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. Needs `SITE` or a built `dist/`. |
+| `node qa/test-boot.js` | The startup screen under a blocked, corrupt or hanging bundle. Not in the full run; `npm run build` first. Its `bundle-tampered` case reports one console error on purpose — that error *is* the scenario. |
 
-Each check starts its own static server, serving the repository root, on the
-port in `PORT` (each check keeps its old fixed port as the default, so a check
-run on its own works as before). `regress.sh` and `quick.sh` give every check
-its own port so they can run side by side. To compare two versions, set `SITE`
-to another folder, relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
+Each check starts its own static server on the port in `PORT` (each check
+keeps its old fixed port as the default, so a check run on its own works as
+before). `regress.sh` and `quick.sh` give every check its own port so they can
+run side by side.
+
+What that server hands out is the **built** site, not the source tree: since
+the app became a bundle the source tree cannot be opened in a browser at all.
+`run.js` builds `dist/` once at the start of a run; to point the checks
+somewhere else — another version, to compare — set `SITE` to that folder,
+relative to `qa/`, and build it yourself first:
+`SITE=../../old-copy/dist node qa/test-panel.js`.
 
 ## What makes the runs fast (2026-10-30)
 
@@ -39,13 +50,15 @@ to another folder, relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js
   and prints them in the list's order, so the report reads the same however
   many run at once. The timing-sensitive checks ("serial" in `checks.json`:
   camera, inertia, animation, wide touch) run afterwards, alone.
-- **Pre-compiled scripts:** `run.js` loads `qa/precompile.js` into every check
-  (`NODE_OPTIONS=--require`). It serves the app's `.jsx` files compiled with the
-  same pinned Babel and the same settings Babel standalone uses in the page,
-  cached in `qa/.cache` (ignored by Git), and serves `index.html` with those
-  script tags as plain scripts in the same order. A check run directly with
-  `node` still compiles in the page, and `test-boot` and `perf2` are never run
-  through it, so production's way of loading stays covered.
+- **One built site for every check:** `run.js` loads `qa/serve-site.js` into
+  every check (`NODE_OPTIONS=--require`), which serves the whole site from one
+  tree whatever the check's own handler would have done. 14 of the regress
+  checks predate `SITE` and hard-code the repository root; this is what makes
+  them honour it. Until 2026-10-31 this file also compiled the `.jsx` files
+  with the pinned Babel, because the page did that itself at startup; the
+  bundle replaced all of that, and building once is now both faster and a
+  closer match to what ships — every check exercises the real artifact, which
+  is why `test-boot` and `perf2` no longer need to opt out of it.
 - **A ready signal:** the app sets `data-ready="1"` on `<html>` once its first
   render is on screen and the collection has loaded. `qa/ready.js`
   (`appReady(page)`) waits for it plus a short margin (700ms, `QA_READY_MARGIN`)
@@ -252,8 +265,10 @@ one.
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
 - `test-camera` used to fail at "sort change while selected", and separately to
   report a false "wheel cancels the glide" about one run in four. Both were the
-  check, not the app, and both are fixed. A full run should now report **44 check runs clean** (42 check runs and two scans);
-  treat any `test-camera` failure as real, and compare against a clean copy with
+  check, not the app, and both are fixed. A full run is 44 runs (42 check
+  runs and two scans); `test-skip` is the one known failure (below), so a
+  good run reports **43 clean and `test-skip` failing**. Treat any
+  `test-camera` failure as real, and compare against a clean copy with
   `SITE=` if in doubt.
   - `page.mouse.click` moves the cursor and presses in the same tick. Hovering a
     card re-lays the canvas out, so the press could land after the cards had
@@ -265,6 +280,22 @@ one.
     a run of `"failed"` is worth looking at.
   - The glide steps guessed at 60ms and 80ms. They now wait for the transition
     to appear and to clear, which is what the "1 in 4" was.
+
+- `test-skip` **fails, and has since before the V4 build step** (Notion:
+  "Pre-existing check failures on version/4.0: test-skip and test-camera"). It
+  reports `next loki-s2, count null` and `meter: null / null` — the guide's
+  skip control reads nothing back. It may well be a real bug in the Batch 10
+  guide work rather than a problem with the check; nobody has looked yet. It is
+  not caused by the bundle: the failure and its messages are identical before
+  and after it.
+- **The runner used to be able to miss a failure** (fixed 2026-10-31). Its
+  verdict pattern read an `"errors": [...]` field only as far as the first `]`,
+  wherever that bracket came from. `test-skip`'s own messages contain the text
+  `{"skipped":[]`, so the value it saw ended in `":[]"` and passed the "is it
+  empty" test: the run printed "44 check runs clean" with a real failure in it.
+  `run.js` now finds the end of the array by scanning, ignoring brackets inside
+  strings. A run recorded before that date may have a softer verdict than it
+  appears to.
 
 ## Assertions have to be named "errors" to count
 

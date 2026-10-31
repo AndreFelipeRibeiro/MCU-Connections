@@ -144,8 +144,9 @@ public/
 qa/                   unchanged (see §5)
 ```
 
-`connections.jsx` is not loaded today and is kept only for reference: it moves
-to `docs/` or is deleted in Phase 2, not ported.
+`connections.jsx` was not loaded and was kept only for reference. Deleted
+2026-10-31 with the conversion, not ported; `git log -- connections.jsx` still
+has it if it is ever wanted.
 
 ### 3.3 Modules replacing `window.*`
 
@@ -172,6 +173,12 @@ Two kinds of global do **not** simply disappear:
 Order of work: one commit per file or small group, each keeping the app running
 (a file can export *and* keep its `window.` publication until its last reader
 is converted, so the tree is never broken for more than one commit).
+
+> **Superseded 2026-10-31.** Steps 1 to 3 above are the eventual shape, but the
+> per-file order is not possible: React cannot be split across the bundled and
+> CDN copies, so all thirteen files had to move in one commit. They moved as
+> *delivery only* — each still publishes on `window`, so steps 1 to 3 remain
+> undone and are a later ticket. §5 point 7 has the detail.
 
 ### 3.4 How the pieces load now
 
@@ -282,12 +289,29 @@ Three consequences, from the smallest to the largest:
    load-bearing, and each conversion slice should be checked against a
    working-tree baseline run rather than against an absolute pass.
 
-3. **`test-boot` and `perf2` lose their subject.** Both deliberately bypass
+3. **`test-boot` and `perf2` lose their subject.** Both deliberately bypassed
    `precompile.js` to exercise the real in-browser Babel path that production
-   used. After the migration there is no such path. `test-boot` should be
-   rewritten to check the startup screen and a failed-start on the built site;
-   `perf2` should be re-pointed at the bundle, and its numbers re-baselined
-   rather than compared to V3's.
+   used. After the migration there is no such path.
+
+   **Done 2026-10-31.** `test-boot`'s three CDN-shaped failures became three
+   bundle-shaped ones: blocked (the script element fails to load), tampered (it
+   arrives but will not parse — this replaces the SRI-mismatch case, since
+   Vite's assets carry no integrity hash) and never answering. `boot.js` itself
+   needed no change: it listens for any script or runtime error, so it reported
+   `failed` and `slow` correctly on all of them, in both languages. `perf2`
+   needed no code change at all, only a built site to point at.
+
+   Re-baselined, same machine, the old tree and the new one back to back
+   (median of three, time to the first title):
+
+   | | before | after |
+   |---|---|---|
+   | desktop | 1507 ms | **134 ms** |
+   | phone, 4× CPU throttle | 6178 ms | **244 ms** |
+
+   That is the "faster startup" the build step was partly for, and it is much
+   larger than expected: the old numbers were dominated by downloading Babel
+   and compiling thirteen files in the page on every single load.
 4. **17 of the 42 checks read the app's globals from inside the page** —
    `window.TITLES` (37 uses), `window.MCU_I18N` (21), `window.MCU_isReleased`
    (13), `window.MCU_GUIDE`, `window.WATCH`, `window.CHARACTERS`,
@@ -337,9 +361,64 @@ Three consequences, from the smallest to the largest:
    files, but it is already being rewritten under point 2 and is not in the
    regress run.)
 
+7. **React cannot be split across the two loading paths, so the files could
+   not convert one at a time.** §3.3 planned a commit per file, each one
+   keeping the app running. That is impossible once React itself comes from
+   npm: a component from the bundled copy calling a hook inside a tree
+   rendered by the CDN UMD copy reads *that* copy's dispatcher, finds it null,
+   and throws "Invalid hook call". Half-converted, the app does not run at
+   all. The alternative — aliasing `react` to a shim re-exporting
+   `window.React` — would have added throwaway machinery to the build and
+   broken the design preview page, which has no UMD React to borrow.
+
+   **So all thirteen `.jsx` files converted in one commit on 2026-10-31**,
+   which necessarily carried step 5 (the CDN scripts and Babel) with it. What
+   kept that commit honest is that it changed only *delivery*: every file
+   still publishes its components on `window` and its readers still read them
+   from there, so the diff per file is an `import React` line and nothing
+   else. Two consequences found while doing it:
+
+   - **`i18n.js` used `React` as a global too.** It stays a classic script —
+     the startup screen has to speak the visitor's language before the bundle
+     arrives — and its `useI18n()` calls `React.useSyncExternalStore`. The
+     bundle therefore publishes `window.React`. The same scan found three
+     names that other files read bare because every file once shared one
+     global scope (`tr` and `typeLabel` from `app.jsx`, `MPHASE_COLORS` from
+     `mobile.jsx`); those are published explicitly now. **The lesson: the
+     scope audit has to cover the legacy classic scripts, not just the files
+     being moved.** Missing `i18n.js` cost a blank page and one debug cycle.
+   - **The source tree is no longer runnable.** `python3 -m http.server` on
+     the repository root now serves an `index.html` whose only script is an
+     unbuilt module, so the checks cannot run against the working tree at all.
+     `qa/run.js` therefore builds once at the start of every run and points
+     every check at `dist`. This retires `precompile.js` entirely: with no
+     Babel to run and no tags to rewrite, what is left is serving the built
+     site, and the file is now `qa/serve-site.js`.
+
+8. **The runner could report a failing check as clean, and did.** Found
+   2026-10-31 while reading the first full run after the conversion, which
+   said "all 44 check runs clean" — with `test-skip` visibly failing three
+   lines above. `qa/run.js` judged a check by matching
+   `/"[^"]*[Ee]rrors?": *(\[[^\]]*\]|[0-9]+)/` and asking whether the captured
+   value was `[]` or `0`. `[^\]]*` stops at the first `]` whatever it belongs
+   to, and `test-skip`'s messages contain the text `{"skipped":[]`, so the
+   captured value *ended* in `":[]"` and passed. Fixed by finding the end of
+   the array with a scan that ignores brackets inside strings, and by allowing
+   `test-camera`'s known warning only when it is the whole field rather than
+   anywhere in it.
+
+   This is worth more than the one check it hid. **The two commits before it
+   (`698227c`, `0e0308b`) were verified with this runner**, so "regression
+   exit 0" meant less for them than it sounded: a check whose messages
+   happened to contain a bracket could have failed silently. The per-check
+   comparison against a baseline run is what actually carried those commits,
+   and it still holds — the comparison was of printed output, which was always
+   right, not of the verdict. The conversion itself was re-verified with the
+   fixed runner.
+
 Also: `qa/checks.json` maps changed files to checks. Its `files` keys gain the
 `src/` prefix in the same commit that moves the files, and the `data-ready="1"`
-contract that `qa/ready.js` waits on must be preserved by `src/main.jsx`.
+contract that `qa/ready.js` waits on must be preserved by `src/main.js`.
 
 **What must pass before Phase 2 ships:** the full `bash qa/regress.sh` on the
 built tree (41 check scripts in 42 runs plus the accessibility scan in English
@@ -456,9 +535,12 @@ So:
 3. **QA harness for a built site** — the `SITE=../dist` hook, `checks.json`
    paths, and the decision on the globals surface. Done before the conversion,
    so every conversion commit can be checked.
-4. **Convert the modules**, leaves first, `app.jsx` last, in small commits.
+4. **Convert the modules** — *done 2026-10-31, in one commit rather than
+   several; see §5 point 7 for why that was forced.*
 5. **Retire the old loading path** — CDN scripts, `precompile.js`'s Babel role,
-   `test-boot` and `perf2` rewritten; `connections.jsx` removed.
+   `test-boot` and `perf2` rewritten; `connections.jsx` removed. *Done
+   2026-10-31, in the same commit as step 4, because removing the CDN React is
+   what step 4 required.*
 6. **Full regression, real-device check, batch to staging** (Phase 2 ends).
 7. **TypeScript conversion** — its own ticket and its own batch, against the
    green suite from step 6: rename to `.tsx`/`.ts`, type the module boundaries

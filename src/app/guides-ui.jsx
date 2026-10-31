@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Guides (guides.js): short, curated paths through the catalogue. This file
 // holds the helpers every surface shares and the guide's own pieces of UI:
 // the Guides menu (desktop popover and phone sheet), the desktop module, the

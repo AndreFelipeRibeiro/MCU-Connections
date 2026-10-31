@@ -1,3 +1,6 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+
 // Search input with suggestions (desktop toolbar and mobile app bar). From two
 // characters it previews matching guides, actors, characters and titles under the box
 // (an empty box lists the guides),

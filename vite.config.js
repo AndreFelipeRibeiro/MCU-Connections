@@ -1,11 +1,9 @@
 // V4 build step. See docs/V4-PLAN.md §3 (the build) and §9 (the order).
 //
-// Phase 2 step 1 (this file's first version) stands up the toolchain WITHOUT
-// converting the app. Vite owns index.html, the stylesheets and the icons;
-// every app script still loads the V3 way, as a classic <script> compiled by
-// Babel in the browser, so behaviour is unchanged. Step 3 converts those files
-// to modules one at a time, and each one converted is deleted from LEGACY
-// below until the list is empty and this plugin goes away with it.
+// Steps 1 to 3 are done: Vite owns index.html, the stylesheets and the icons,
+// and the app itself is one bundle (src/main.js) with no in-browser Babel.
+// What is left in LEGACY is not waiting to be converted — each entry has its
+// own reason to keep a plain URL, given beside it.
 import { readFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import react from '@vitejs/plugin-react';
@@ -25,19 +23,6 @@ const LEGACY = [
   // network to serve a fixture (qa/test-watch.js), so it must keep its own
   // URL. docs/V4-PLAN.md §5.5.
   'watch-data.js',
-  'poster.jsx',
-  'tracking.jsx',
-  'celebrate.jsx',
-  'account.jsx',
-  'about.jsx',
-  'search-suggest.jsx',
-  'mobile.jsx',
-  'desktop-list.jsx',
-  'upnext.jsx',
-  'watch.jsx',
-  'guides-ui.jsx',
-  'picker.jsx',
-  'app.jsx',
   // Vite fingerprints the icons and rewrites the tags that point at them, but
   // clients ask for these paths directly without reading the HTML (iOS asks
   // for /apple-touch-icon.png; crawlers follow the absolute og:image URL), so
@@ -62,9 +47,9 @@ const copyLegacy = () => ({
   },
 });
 
-// The checks and the QA harness read index.html to find the app's scripts, and
-// a missing file here is a 404 the browser reports as a blank page, so fail
-// the build loudly rather than shipping a site with a hole in it.
+// A file index.html loads as a classic script but LEGACY does not copy is a
+// 404 the browser reports as a blank page, so fail the build loudly rather
+// than shipping a site with a hole in it.
 const checkLegacy = () => ({
   name: 'mcu-check-legacy',
   apply: 'build',

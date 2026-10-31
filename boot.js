@@ -1,11 +1,12 @@
 // Startup screen. index.html puts a brand mark and spinner inside #root, so
-// visitors see the app at once instead of a blank page while the libraries
-// download and the JSX compiles; React's first render replaces it.
+// visitors see the app at once instead of a blank page while the app's bundle
+// downloads; React's first render replaces it.
 //
-// This file loads first, before any CDN script, so it can notice when startup
-// goes wrong: a script that fails to load (network, blocked, SRI mismatch) or
-// an error before the first render turns the screen into a short explanation
-// with a Reload button, and a start that is merely slow says so after a while.
+// This file loads first, before any other script, so it can notice when
+// startup goes wrong: a script that fails to load (network, blocked, or a
+// bundle that will not parse) or an error before the first render turns the
+// screen into a short explanation with a Reload button, and a start that is
+// merely slow says so after a while.
 // Words come from the locale files once they are loaded; until then the screen
 // shows only the brand and spinner (and, if even the locales failed, a Reload
 // button marked with an icon).

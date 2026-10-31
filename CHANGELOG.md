@@ -12,6 +12,87 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V4 maintenance — the whole app moves into the bundle (Phase 2, steps 4–5)
+
+Recorded: 2026-10-31 16:05 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+`main` still serves V3 and this change is not part of a production release.
+
+- All thirteen `.jsx` files move to `src/app/` and are imported by
+  `src/main.js`. `index.html` loads one bundle instead of thirteen
+  `text/babel` scripts, and the React, ReactDOM and Babel CDN tags are gone
+  with them. supabase-js is the only script still fetched from unpkg.
+- **They had to convert together, not one at a time as the plan expected.**
+  React cannot be split across the two loading paths: a component from the
+  bundled copy calling a hook inside a tree rendered by the CDN UMD copy reads
+  that copy's null dispatcher and throws, so a half-converted app does not run
+  at all. Removing the CDN React is therefore part of converting at all, which
+  pulled plan step 5 into step 4. docs/V4-PLAN.md §5 point 7.
+- **A change of delivery, not of design.** Every file still publishes its
+  components on `window` and its readers still read them from there, so the
+  thirteen files together add 34 lines and remove none — an `import React`
+  line each, two more for `app.jsx`. No application logic was touched.
+  Replacing `window` with real imports stays a later ticket.
+- `tr`, `typeLabel` and `MPHASE_COLORS` are published explicitly now: other
+  files read them as bare names, which worked only while every file shared one
+  script scope. The bundle also publishes `window.React`, because `i18n.js`
+  stays a classic script — the startup screen has to speak the visitor's
+  language before the bundle arrives — and its `useI18n()` calls
+  `React.useSyncExternalStore`.
+- The source tree can no longer be opened in a browser, so `qa/run.js` builds
+  once at the start of a run and serves every check that build. That retires
+  `qa/precompile.js`: with no Babel to run and no tags to rewrite, what is left
+  is serving the site, as `qa/serve-site.js`. `test-boot`'s three CDN-shaped
+  failures become bundle-shaped ones (blocked, will not parse, never answers);
+  `boot.js` itself needed no change.
+- **Fixes a bug in the check runner that could report a failing check as
+  clean.** It read an `"errors"` field only as far as the first `]`, and
+  `test-skip`'s messages contain `{"skipped":[]`, so the value it saw ended in
+  `":[]"` and passed the "is it empty" test. The first full run after the
+  conversion printed "44 check runs clean" with a real failure in it. It now
+  finds the end of the array by scanning, ignoring brackets inside strings.
+  The two commits before this one were verified with the broken runner, so
+  their "regression exit 0" meant less than it sounded; what carried them was
+  the per-check comparison against a baseline, which compared printed output.
+- Local development changes: `npm install`, then `npm run dev` on port 8126
+  (strict, so the Google OAuth origin keeps working) instead of
+  `python3 -m http.server 8123`, which can no longer serve the app at all.
+  README, AGENTS.md and qa/README.md updated; `connections.jsx`, which was not
+  loaded, is deleted.
+- **Startup, measured on this machine with the old tree and the new one back
+  to back** (`qa/perf2.js`, median of three, time to the first title): desktop
+  1507 ms to **134 ms**; phone at 4× CPU throttle 6178 ms to **244 ms**. The
+  old numbers were dominated by downloading Babel and compiling thirteen files
+  in the page on every load.
+
+Verification:
+
+- `bash qa/regress.sh` on the final tree, re-run after the runner fix:
+  **43 of 44 runs clean**, both accessibility scans report no violations.
+- The one failure, `test-skip`, is **pre-existing and not caused by the
+  bundle**, proven rather than assumed: run against the pre-conversion tree
+  through in-page Babel it produces the same 7 errors with the same messages.
+  `test-back` fails identically on both trees too (a Playwright timeout where
+  the details sheet intercepts a click); it is not in the regress set, so no
+  full run had shown it. Both are recorded on the pre-existing-failures ticket.
+- `node qa/test-boot.js`: all five startup scenarios behave correctly, in both
+  languages.
+- Real browser (Chromium, the built output through `npm run preview`): desktop
+  Spatial with bands, connection lines and Up next; the details drawer opens
+  and Escape closes it and clears the URL; the language switch to Portuguese
+  and back; phone at 375×812 in both languages, the guide promotion sheet, a
+  details sheet, and browser Back closing that sheet — that last one by hand,
+  because `test-back` is broken. No console errors anywhere.
+- `data-ready="1"` is preserved and every `window` name the checks read is
+  present.
+
+Limits:
+
+- **No real-device check.** Everything above is desktop Chromium, the phone
+  sizes included. Spatial zoomed out on real iOS Safari is what the canvas
+  memory rules exist for and what no headless check covers.
+- Google sign-in was not exercised against the bundle.
+- `test-skip` and `test-back` are left failing, exactly as they were before.
+
 ## V4 maintenance — back to React 18.3.1
 
 Recorded: 2026-10-31 14:12 EDT (-0400). Pushed to `version/4.0` (V4 staging);

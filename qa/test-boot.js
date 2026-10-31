@@ -1,4 +1,7 @@
-// Checks saved display preferences (mcu.prefs.v1) on mobile and desktop.
+// The startup screen (boot.js) under every way a start can go wrong: normal,
+// a bundle that is blocked, one that will not parse, and one that never
+// arrives. Run by hand, not part of qa/regress.sh, and it needs a built site:
+//   npm run build && node qa/test-boot.js
 const QA_PORT = +process.env.PORT || 8194; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
@@ -6,17 +9,19 @@ const fs = require('fs');
 const http = require('http');
 
 const S = __dirname;
-const SITE = (process.env.SITE ? path.join(S, process.env.SITE) : path.join(S, '..'));
+const SITE = path.join(S, process.env.SITE || '../dist');
 const V = path.join(S, 'vendor');
+// React, ReactDOM and Babel came from unpkg until the app became a bundle;
+// supabase-js is the only CDN script left.
 const VENDOR = {
-  'react@18.3.1/umd/react.development.js': 'x-react-18.3.1/package/umd/react.development.js',
-  'react-dom@18.3.1/umd/react-dom.development.js': 'x-react-dom-18.3.1/package/umd/react-dom.development.js',
-  'react@18.3.1/umd/react.production.min.js': 'x-react-18.3.1/package/umd/react.production.min.js',
-  'react-dom@18.3.1/umd/react-dom.production.min.js': 'x-react-dom-18.3.1/package/umd/react-dom.production.min.js',
-  '@babel/standalone@7.29.0/babel.min.js': 'x-babel-standalone-7.29.0/package/babel.min.js',
   '@supabase/supabase-js@2.112.2/dist/umd/supabase.js': 'x-supabase-supabase-js-2.112.2/package/dist/umd/supabase.js',
 };
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.jsx': 'text/babel', '.css': 'text/css' };
+const TYPES = {
+  '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.woff2': 'font/woff2',
+};
+// The bundle's name is fingerprinted, so the scenarios below match on shape.
+const BUNDLE = '**/assets/main-*.js';
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0]);
   if (p === '/') p = '/index.html';
@@ -74,15 +79,20 @@ const reload = async page => { await page.reload(); await settle(page); };
   };
   await run('normal-en', DESKTOP, null, async (p, r) => { await p.waitForTimeout(100); r.shortlyAfter = await bootState(p); });
   await run('normal-pt-phone', { ...MOBILE, locale: 'pt-BR' }, async p => {
-    // Hold Babel back briefly so the loading screen is observable after the locales run.
-    await p.route('**/babel.min.js', async route => { await new Promise(r => setTimeout(r, 1500)); route.fallback(); });
+    // Hold the bundle back briefly so the loading screen is observable after
+    // the locales have run and can give it words.
+    await p.route(BUNDLE, async route => { await new Promise(r => setTimeout(r, 1500)); route.fallback(); });
   }, async (p, r) => { await p.waitForTimeout(1000); r.whileWaiting = await bootState(p); await p.screenshot({ path: 'shots/boot-phone.png' }); });
-  await run('react-blocked', DESKTOP, async p => { await p.route('**/react.production.min.js', route => route.abort()); });
-  await run('sri-mismatch', { ...MOBILE, locale: 'pt-BR' }, async p => { await p.route('**/react-dom.production.min.js', route => route.fulfill({ status: 200, contentType: 'text/javascript', body: '/* tampered */' })); }, async p => { await p.waitForTimeout(1500); await p.screenshot({ path: 'shots/boot-failed-phone.png' }); });
-  await run('jsx-error', DESKTOP, async p => { await p.route('**/desktop-list.jsx', route => route.fulfill({ status: 200, contentType: 'text/babel', body: 'const x = <div>;' })); });
+  // Blocked outright (offline, a filter, a bad deploy): the script element
+  // fails to load and boot.js catches it in the capture phase.
+  await run('bundle-blocked', DESKTOP, async p => { await p.route(BUNDLE, route => route.abort()); });
+  // Served but corrupt. This replaces the old SRI-mismatch scenario: Vite's
+  // assets carry no integrity hash, so a damaged bundle is caught when it
+  // fails to parse rather than before it runs.
+  await run('bundle-tampered', { ...MOBILE, locale: 'pt-BR' }, async p => { await p.route(BUNDLE, route => route.fulfill({ status: 200, contentType: 'text/javascript', body: 'const x = ;' })); }, async p => { await p.waitForTimeout(1500); await p.screenshot({ path: 'shots/boot-failed-phone.png' }); });
   await run('slow', DESKTOP, async p => {
     await p.clock.install();
-    await p.route('**/babel.min.js', () => {});   // never answers
+    await p.route(BUNDLE, () => {});   // never answers
   }, async (p, r) => { await p.waitForTimeout(500); await p.clock.fastForward(26000); await p.waitForTimeout(300); r.afterSlow = await bootState(p); });
   console.log(JSON.stringify(R, null, 1));
   await browser.close(); server.close();

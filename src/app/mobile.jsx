@@ -1,6 +1,9 @@
+import React from 'react';
+
 const { useState: mUseState } = React;
 
 const MPHASE_COLORS = { 1:'#d4a05a', 2:'#4a8de8', 3:'#d04040', 4:'#a05cd0', 5:'#5fa856', 6:'#c8384a' };
+window.MPHASE_COLORS = MPHASE_COLORS; // upnext.jsx
 // Text comes from the i18n runtime (i18n.js); `mtr` avoids clashing with the
 // `t` used for titles throughout this file.
 const MI18N = window.MCU_I18N;

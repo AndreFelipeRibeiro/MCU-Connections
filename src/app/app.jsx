@@ -1,3 +1,6 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+
 // MCU Explorer — Floating canvas layout
 
 const { useState, useEffect, useMemo, useRef, useLayoutEffect, useCallback } = React;
@@ -17,6 +20,12 @@ const I18N = window.MCU_I18N;
 const tr = (key, vars) => I18N.tr(key, vars);
 const phaseLabel = (n) => I18N.upper(tr('phase.label', { n }));
 const typeLabel = (type) => tr(type === 'film' ? 'type.film.one' : 'type.series.one');
+// Both are read as bare names by the other files in src/app, which found them
+// in the shared global scope while every file was its own classic script.
+// Inside a module they are no longer global, so publish them as the names
+// those readers already use (docs/V4-PLAN.md §5.7).
+window.tr = tr;               // about, account, celebrate, desktop-list, mobile, tracking
+window.typeLabel = typeLabel; // desktop-list.jsx
 
 const CARD_W = 170;
 const CARD_H = 270;

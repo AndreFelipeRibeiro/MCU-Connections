@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Watch tracking — per-title collection state (seen / watchlist), guest
 // persistence, and the shared status controls.
 //

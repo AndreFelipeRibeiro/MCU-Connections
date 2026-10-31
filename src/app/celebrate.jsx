@@ -1,3 +1,6 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+
 // Feedback when someone marks a title seen or adds it to the watchlist (and,
 // further down, the guest sign-in reminder):
 // a toast with Undo (every time), and confetti for milestones (a whole phase,

@@ -1,3 +1,5 @@
+import React from 'react';
+
 // "What have you seen?" (V3 Tasks, First-visit picker): a poster grid of every
 // released title, grouped by phase in release order, to mark many as seen in
 // one go. Offered by the first-visit welcome, the account menu/sheet and the

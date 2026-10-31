@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Desktop List view: one row per title, in the current sort, as an alternative
 // to Spatial for scanning and comparing. Rows follow `visible` (every filter,
 // including the collection one, actually removes rows here). Column headers

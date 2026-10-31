@@ -27,32 +27,38 @@ plan, the environment and the Figma workflow.
 
 ## Stack and layout
 
-- Static site, no build: React 18.3.1 and ReactDOM (production UMD builds),
-  Babel standalone 7.29.0 (compiles the `.jsx` files in the browser) and
-  supabase-js 2.112.2, all from unpkg with pinned versions, `crossorigin` and SRI
-  hashes. Supabase (Postgres + Google OAuth) stores signed-in collections.
-  Vercel serves the repository as static files.
-- **Rule for V3: the app has no build step.** No npm, package.json, bundler,
-  router or ES modules in the app; files share APIs through `window.*`. Do not
-  migrate piecemeal (no partial bundling or precompiling).
+- **V4 has a build step.** Vite 8.3.5 with `@vitejs/plugin-react` 6.1.2 builds
+  the app; React and ReactDOM 18.3.1 come from npm, exactly pinned, and Vercel
+  runs the build (`vercel.json`). Supabase (Postgres + Google OAuth) stores
+  signed-in collections; supabase-js 2.112.2 is still the one script loaded
+  from unpkg, with `crossorigin` and an SRI hash. V3's no-build rule is gone,
+  along with in-browser Babel and the CDN React — see docs/V4-PLAN.md and the
+  2026-10-31 rows in docs/decisions.md. Plain JavaScript for now; the
+  TypeScript conversion is its own ticket.
+- **Every dependency is pinned exactly** in `package.json` (no `^`, no `~`), so
+  a build is reproducible. Keep it that way: the shadcn CLI loosens pins when
+  it adds a component, so re-pin after running it.
 - **Exception: `qa/`** is development-only tooling with its own `package.json`
   (Playwright, axe-core). Nothing in the app may load from `qa/`; Vercel does not
   deploy it (`.vercelignore`) and its installs stay out of Git (`.gitignore`).
-- **V4 moves to a build step** (React with a standard bundler such as Vite,
-  built by Vercel) to unlock design-system tooling, Figma round trips, faster
-  startup and modules. That migration is the first V4 project, with its own plan
-  and approval (docs/decisions.md, docs/V4-KICKOFF.md). On `version/4.0` the
-  no-build rule above stays in force until that plan is approved; the ticket
-  that lands it rewrites this section.
-- Load order lives in `index.html`: `boot.js`, locales + `i18n.js`, CDN
-  libraries, `data.js`, `guides.js`, `media-data.js`, `watch-data.js`, `config.js`,
-  `supabase-client.js`, then the `.jsx` files with `app.jsx` last (`guides-ui.jsx`
-  after `watch.jsx`, then `picker.jsx`). Keep that order.
-- Main files: `app.jsx` (app shell, desktop Spatial canvas, toolbar, details
-  drawer, state), `mobile.jsx` (phone views, sheets, `Highlight`, `Portrait`
-  users), `desktop-list.jsx` (desktop List), `connections.jsx` (an early line layer,
-  kept for reference and not loaded; the lines are drawn in `app.jsx`),
-  `poster.jsx` (`PosterArt`, `Portrait`, image fallbacks), `search-suggest.jsx`,
+- The app is one bundle, entered at `src/main.js`, which imports the data layer
+  and then every view in the order `index.html` used to load them, `app.jsx`
+  last because it mounts the app. Keep that order.
+- **The files still talk to each other through `window.*`.** The bundle changed
+  how the app is delivered, not how its pieces are shared: each file keeps
+  publishing its components on `window` and its readers keep picking them up
+  from there. That is deliberate — it is also the surface 15 QA checks read
+  (docs/V4-PLAN.md §5.3). Replacing it with real imports is a later ticket, not
+  something to do in passing.
+- `index.html` still loads four things as plain classic scripts, each for its
+  own reason, listed in `LEGACY` in `vite.config.js`: `boot.js` and
+  `locales/*.js` + `i18n.js` (the startup screen has to speak the visitor's
+  language before the bundle arrives) and `watch-data.js` (a QA check replaces
+  it over the network, so it must keep its own URL).
+- Main files, all under `src/app/` unless said otherwise: `app.jsx` (app shell,
+  desktop Spatial canvas, toolbar, details drawer, state), `mobile.jsx` (phone
+  views, sheets, `Highlight`, `Portrait` users), `desktop-list.jsx` (desktop
+  List), `poster.jsx` (`PosterArt`, `Portrait`, image fallbacks), `search-suggest.jsx`,
   `tracking.jsx` (Seen/Watchlist + sync, the Up next rule), `upnext.jsx`
   (the Up next card, strip, meter row and chip), `watch.jsx` (Where to watch
   in the details, the region picker), `guides.js` (curated guides and the
@@ -60,36 +66,47 @@ plan, the environment and the Figma workflow.
   (the guide menu, views, banner, pill and "Part of"), `picker.jsx` ("What
   have you seen?", the poster-grid picker), `account.jsx`, `about.jsx`
   (`ModalDialog`), `celebrate.jsx` (counters, confetti, sign-in reminder),
-  `boot.js` (startup screen), `i18n.js` + `locales/*.js`, `data.js` (catalog;
-  permanent title ids), `media-data.js` (TMDB paths), `config.js` (public
-  Supabase URL + publishable key), `schema.sql`, `styles.css`,
-  `styles-mobile.css`. The README's "Project structure" table is the full list.
+  `boot.js` (startup screen, at the root), `i18n.js` + `locales/*.js` (root),
+  `src/data/data.js` (catalog; permanent title ids), `src/data/guides.js`,
+  `src/data/media-data.js` (TMDB paths), `src/config.js` (public Supabase URL +
+  publishable key), `src/main.js` (the bundle entry), `schema.sql`,
+  `styles.css`, `styles-mobile.css`. The README's "Project structure" table is the full list.
 - Docs: `README.md` (features, setup, deploy), `CHANGELOG.md`, `docs/` (handoff,
   decisions, catalog audit and sources, privacy review, V3 verification log).
 
 ## Commands
 
-- Install: nothing to install.
-- Run locally, from the repository root: `python3 -m http.server 8123`, then
-  open `http://localhost:8123/`. Google sign-in works only from origins the
-  OAuth client allows: use port **8126** (`python3 -m http.server 8126`) to test
-  sign-in locally. Other ports browse fine but cannot sign in.
-- Build: none. Pushing a branch is the deploy.
-- Hard-refresh (Cmd+Shift+R) after changing `.jsx` files: Babel fetches them
-  and browsers can serve a cached copy on a plain refresh.
+- Install: `npm install` (Node 18+). `qa/` installs separately, once per
+  machine, with `bash qa/setup.sh`.
+- Run locally: `npm run dev`, then open `http://localhost:8126/`. The port is
+  fixed and strict (`vite.config.js`) because Google sign-in only works from
+  origins the OAuth client allows, and 8126 is the one registered; if the port
+  is taken the dev server stops rather than quietly moving. No hard-refresh
+  dance any more — Vite reloads on save.
+- Build: `npm run build` into `dist/`, `npm run preview` to serve that build.
+  Vercel runs the same build on every push, so pushing a branch is still the
+  deploy.
+- The app cannot be opened from the source tree any more (`python3 -m
+  http.server` on the repository root serves an `index.html` whose only script
+  is an unbuilt module). Use `npm run dev`, or `npm run preview` for the real
+  built output.
 - QA checks (`qa/`, details in qa/README.md): once per machine
-  `bash qa/setup.sh` (needs Node 18+). Checks run side by side (4 at a time)
-  with the app's scripts pre-compiled and wait for the app's ready signal, so
-  a full run takes minutes (user decisions, 2026-10-29 and 2026-10-30):
+  `bash qa/setup.sh` (needs Node 18+). The runner builds the site once and
+  serves every check that build, 4 at a time, each waiting for the app's ready
+  signal, so a full run takes minutes (user decisions, 2026-10-29 and
+  2026-10-30):
   - **Per ticket, before handing it over for review:** `bash qa/quick.sh
     <the ticket's own check>`. It also runs every check that `qa/checks.json`
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
     (41 check scripts in 42 runs plus the accessibility scan in English and
-    Portuguese, about 5–6 minutes; it exits non-zero and marks failures with
+    Portuguese, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code.
+    output, not just the exit code — and note that `test-skip` is a known
+    pre-existing failure, so the run exits non-zero even when nothing is
+    wrong with your change. Compare per check against a run of the tree you
+    started from rather than expecting a clean exit (qa/README.md).
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
     against the deployed site, once Vercel reports the deploy.

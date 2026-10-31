@@ -7,10 +7,11 @@
 //   node qa/run.js test-guides test-promo
 //
 // JOBS (default 4) runs that many at once; JOBS=1 runs one at a time. Each
-// check gets its own PORT, and the app's .jsx files are served pre-compiled
-// (qa/precompile.js). The timing-sensitive checks ("serial" in checks.json)
-// run afterwards, alone. Output is buffered per check and printed in the
-// list's order, so the report reads the same however many run at once.
+// check gets its own PORT, and every check is served the built site
+// (qa/serve-site.js); the build runs once, first, unless SITE says to use a
+// tree that is already built. The timing-sensitive checks ("serial" in
+// checks.json) run afterwards, alone. Output is buffered per check and printed
+// in the list's order, so the report reads the same however many run at once.
 // A run fails (exit 1, "!!") when a check exits non-zero, prints no errors
 // field, or any errors field is not [] or 0, as regress.sh always did.
 const { spawn, execSync } = require('child_process');
@@ -24,8 +25,47 @@ const JOBS = Math.max(1, +process.env.JOBS || 4);
 const CAP_MS = 300000; // the old per-check cap
 const PORT_BASE = +process.env.QA_PORT_BASE || 9100;
 const NOISE = 'Unable to preventDefault inside passive event listener';
-// Same rule as regress.sh: every "…errors": [...] or "…Errors": N field.
-const FIELD = /"[^"]*[Ee]rrors?": *(\[[^\]]*\]|[0-9]+)/g;
+// Every "…errors": [...] or "…Errors": N field. A field is clean when it
+// reads [] or 0, and a failure otherwise, which is the rule regress.sh always
+// had.
+//
+// Finding the end of the array needs a scan rather than a pattern: the
+// messages inside it are JSON strings that can contain brackets of their own.
+// The pattern this replaced was /"[^"]*[Ee]rrors?": *(\[[^\]]*\]|[0-9]+)/,
+// which stopped at the first ] whatever it belonged to. test-skip's output
+// holds the text {"skipped":[], so the value it captured *ended* in ":[]" and
+// passed the "is it []" test: a check that was failing was reported clean, and
+// the whole run said "44 check runs clean" with a failure in it (2026-10-31).
+const FIELD = /"[^"]*[Ee]rrors?": */g;
+
+// From the `[` at `i`, the index just past the matching `]`, ignoring brackets
+// inside double-quoted strings.
+function arrayEnd(s, i) {
+  let depth = 0, inStr = false;
+  for (let j = i; j < s.length; j++) {
+    const c = s[j];
+    if (inStr) {
+      if (c === '\\') j++;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') inStr = true;
+    else if (c === '[') depth++;
+    else if (c === ']' && --depth === 0) return j + 1;
+  }
+  return -1;
+}
+
+// The field at a FIELD match: its name, its value as written, and whether it
+// is clean. `rest` is the flattened output from just after the colon.
+function fieldAt(name, rest) {
+  if (rest[0] === '[') {
+    const end = arrayEnd(rest, 0);
+    const value = end === -1 ? rest : rest.slice(0, end);
+    return { name, value, clean: /^\[ *\]$/.test(value) };
+  }
+  const num = rest.match(/^[0-9]+/);
+  if (num) return { name, value: num[0], clean: num[0] === '0' };
+  return { name, value: '(unreadable)', clean: false };
+}
 
 const norm = (c) => (typeof c === 'string' ? { check: c, env: {} } : { check: c.check, env: c.env || {}, exitOnly: !!c.exitOnly });
 const keyOf = (c) => c.check + JSON.stringify(c.env);
@@ -62,7 +102,7 @@ function pick(args) {
 function runOne(c, port) {
   return new Promise(resolve => {
     const t0 = Date.now();
-    const env = { ...process.env, ...c.env, PORT: String(port), NODE_OPTIONS: ((process.env.NODE_OPTIONS || '') + ' --require ' + path.join(QA, 'precompile.js')).trim() };
+    const env = { ...process.env, ...c.env, PORT: String(port), NODE_OPTIONS: ((process.env.NODE_OPTIONS || '') + ' --require ' + path.join(QA, 'serve-site.js')).trim() };
     const child = spawn(process.execPath, [path.join(QA, c.check + '.js')], { cwd: QA, env });
     let out = '';
     child.stdout.on('data', d => { out += d; });
@@ -86,14 +126,21 @@ function report(r) {
     return { text: lines.join('\n'), bad };
   }
   const flat = r.out.replace(/\s+/g, ' ');
-  const found = flat.match(FIELD) || [];
+  const found = [];
+  for (const m of flat.matchAll(FIELD)) {
+    found.push(fieldAt(m[0].trim(), flat.slice(m.index + m[0].length)));
+  }
+  const text = f => f.name + ' ' + (f.value.length > 300 ? f.value.slice(0, 300) + '…' : f.value);
   const counts = {};
-  found.forEach(f => { counts[f] = (counts[f] || 0) + 1; });
+  found.forEach(f => { counts[text(f)] = (counts[text(f)] || 0) + 1; });
   Object.entries(counts).sort().forEach(([f, n]) => lines.push(`${String(n).padStart(4)} ${f}`));
   let bad = false;
   if (r.code !== 0) { lines.push(`  !! exited ${r.code}`); bad = true; }
   if (!found.length) { lines.push('  !! no errors field in output'); bad = true; }
-  found.filter(f => !/: *(\[\]|0)$/.test(f) && !f.includes(NOISE)).forEach(f => { lines.push('  !! ' + f); bad = true; });
+  // test-camera's one known console warning is allowed by name, but only when
+  // it is the only thing in the field.
+  const onlyNoise = f => f.value.replace(/"[^"]*"/g, m => (m.includes(NOISE) ? '' : m)).replace(/[\[\], ]/g, '') === '';
+  found.filter(f => !f.clean && !onlyNoise(f)).forEach(f => { lines.push('  !! ' + text(f)); bad = true; });
   lines.push(`  (${r.secs}s)`);
   if (bad && process.env.QA_VERBOSE) lines.push(r.out.split('\n').slice(-40).map(l => '  | ' + l).join('\n'));
   return { text: lines.join('\n'), bad };
@@ -104,6 +151,21 @@ function report(r) {
   const list = pick(args);
   if (list.changedFiles) console.log('changed: ' + (list.changedFiles.join(', ') || '(nothing)'));
   if (!list.length) { console.log('=== no checks to run'); return; }
+  // The app is a bundle, so the checks need a built site to point at
+  // (qa/serve-site.js). SITE set by hand means "this tree is already built",
+  // so leave it alone; otherwise build dist/ now, once, for the whole run.
+  if (!process.env.SITE) {
+    const b0 = Date.now();
+    process.stdout.write('=== building dist ');
+    try {
+      execSync('npm run build', { cwd: ROOT, stdio: ['ignore', 'ignore', 'pipe'] });
+    } catch (e) {
+      console.log('\n=== BUILD FAILED\n' + (e.stderr || '').toString().slice(-3000));
+      process.exitCode = 1;
+      return;
+    }
+    console.log(`(${Math.round((Date.now() - b0) / 1000)}s)`);
+  }
   const serialSet = new Set(CFG.serial);
   const parallel = list.filter(c => !serialSet.has(c.check));
   const serial = list.filter(c => serialSet.has(c.check));

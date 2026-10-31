@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Abstract original poster art — no Marvel imagery, just stylized geometric compositions
 // Generates a deterministic SVG per title from its accent color and title hash
 
