@@ -1,3 +1,4 @@
+const QA_PORT = +process.env.PORT || 8221; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -23,7 +24,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const URL = 'http://127.0.0.1:8221/';
+const URL = 'http://127.0.0.1:' + QA_PORT + '/';
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
@@ -46,7 +47,7 @@ async function ctxPage(browser, opts, init) {
   });
   return { ctx, page, errors };
 }
-const settle = page => page.waitForTimeout(2200);
+const settle = page => require('./ready').appReady(page);
 const go = async page => { await page.goto(URL); await settle(page); };
 
 // Shareable state in the address. A link opens exactly the state it names, the
@@ -54,10 +55,10 @@ const go = async page => { await page.goto(URL); await settle(page); };
 // title and character, and nothing private ever reaches the address.
 const OURS = ['view', 'sort', 'order', 'phase', 'type', 'budget', 'release', 'title', 'char'];
 const params = (page) => page.evaluate(() => Object.fromEntries(new URLSearchParams(location.search)));
-const at = async (page, qs) => { await page.goto(URL + qs); await page.waitForTimeout(2600); };
+const at = async (page, qs) => { await page.goto(URL + qs); await require('./ready').appReady(page); };
 
 (async () => {
-  await new Promise(r => server.listen(8221, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const R = {}; const errors = [];
   const { page } = await ctxPage(browser, DESKTOP, "localStorage.setItem('mcu.welcome.v1','test');");
@@ -91,7 +92,7 @@ const at = async (page, qs) => { await page.goto(URL + qs); await page.waitForTi
   R.follow.sorted = await params(page);
   if (R.follow.sorted.sort !== 'imdb') errors.push(`changing the sort wrote ${JSON.stringify(R.follow.sorted)}`);
   if ('order' in R.follow.sorted) errors.push('the default order for IMDb was written to the address; defaults stay out');
-  await page.reload(); await page.waitForTimeout(2600);
+  await page.reload(); await require('./ready').appReady(page);
   R.follow.reloaded = await page.evaluate(() => ({
     imdbOn: !!([...document.querySelectorAll('.toolbar button')].find(b => b.textContent.includes('IMDb Rating') && (b.classList.contains('on') || b.getAttribute('aria-pressed') === 'true'))),
     chips: [...document.querySelectorAll('.ctx-chip')].map(c => c.textContent.replace('×', '').trim()),
@@ -121,7 +122,7 @@ const at = async (page, qs) => { await page.goto(URL + qs); await page.waitForTi
 
   // ---- Phone: Back closes the details, Forward reopens them ---------------
   const { page: m } = await ctxPage(browser, MOBILE, "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.signInNudge.v1','2');");
-  await m.goto(URL); await m.waitForTimeout(2600);
+  await m.goto(URL); await require('./ready').appReady(m);
   await m.evaluate(async () => { const row = document.querySelector('.m-lrow-open, .m-card-open'); row.click(); await new Promise(r => setTimeout(r, 1200)); });
   R.phone = { opened: await params(m) };
   await m.goBack(); await m.waitForTimeout(1200);
@@ -138,7 +139,7 @@ const at = async (page, qs) => { await page.goto(URL + qs); await page.waitForTi
   // Pinning closes the sheet, and the sheet then steps back in history on its
   // own. That step is not the visitor pressing Back: treating it as one read an
   // address with no character and unpinned the character just pinned.
-  await m.goto(URL); await m.waitForTimeout(2600);
+  await m.goto(URL); await require('./ready').appReady(m);
   R.pin = await m.evaluate(async () => {
     const row = [...document.querySelectorAll('.m-lrow-open')].find(r => /Iron Man/.test(r.textContent));
     row.click(); await new Promise(r => setTimeout(r, 900));

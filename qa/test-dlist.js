@@ -1,13 +1,14 @@
+const QA_PORT = +process.env.PORT || 8187; // regress/quick give each check its own port
 const base = require('fs').readFileSync(__dirname + '/test-jit2.js', 'utf8');
 const head = base.slice(0, base.indexOf('(async () => {'));
 eval(head + `
 const T = page => page.evaluate(() => { const c = document.querySelector('.canvas'); return c && c.style.transform; });
 (async () => {
-  await new Promise(r => server.listen(8187, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {}; globalThis.__o = out;
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 }, locale: 'en-US' }, SEED);
-  await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(2200);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   const fresh = await T(page);
   out.defaultSpatial = !!(await page.$('.viewport')) && !(await page.$('.dlist'));
   await page.locator('.tb-view-switch button', { hasText: 'List' }).click(); await page.waitForTimeout(600);
@@ -53,7 +54,7 @@ const T = page => page.evaluate(() => { const c = document.querySelector('.canva
   await page.locator('.dlist .ctx-clear, .dlist .ctx-chip').first().click(); await page.waitForTimeout(300);
   await page.locator('.dlist .ctx-chip').first().click().catch(() => {}); await page.waitForTimeout(300);
   // reload remembers List; back to Spatial frames like a fresh load
-  await page.reload(); await page.waitForTimeout(2200);
+  await page.reload(); await require('./ready').appReady(page);
   out.reload = { list: !!(await page.$('.dlist')), prefs: await page.evaluate(() => localStorage.getItem('mcu.prefs.v1')) };
   await page.locator('.tb-view-switch button', { hasText: 'Spatial' }).click(); await page.waitForTimeout(800);
   out.reenter = { fresh, now: await T(page) };
@@ -62,7 +63,7 @@ const T = page => page.evaluate(() => { const c = document.querySelector('.canva
   out.widths = {};
   for (const w of [900, 1000, 1100, 1279, 1280, 1440, 1600, 1920]) {
     ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 900 }, locale: 'pt-BR' }, SEED + "localStorage.setItem('mcu.prefs.v1', JSON.stringify({version:1, desktopView:'list', sort:'imdb', sortDir:'desc'}));"));
-    await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(2000);
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
     const a = await st();
     await page.locator('.dl-row:not(.dl-head)').nth(2).click(); await page.waitForTimeout(500);
     const b = await st();

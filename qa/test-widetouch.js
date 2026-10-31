@@ -1,6 +1,7 @@
 // Spatial touch input on a wide screen: a touch laptop or a landscape tablet
 // takes the desktop layout, and must still pan and pinch by finger while mouse
 // drag, wheel and control taps keep working.
+const QA_PORT = +process.env.PORT || 8200; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -26,7 +27,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const URL = 'http://127.0.0.1:8200/';
+const URL = 'http://127.0.0.1:' + QA_PORT + '/';
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
@@ -74,7 +75,7 @@ const TOUCH_HELPERS = `
 `;
 
 (async () => {
-  await new Promise(r => server.listen(8200, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const R = {};
   const { page, errors } = await ctxPage(browser, WIDE_TOUCH, "localStorage.setItem('mcu.welcome.v1','test');");

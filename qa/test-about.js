@@ -1,3 +1,4 @@
+const QA_PORT = +process.env.PORT || 8195; // regress/quick give each check its own port
 const base = require('fs').readFileSync(__dirname + '/test-jit2.js', 'utf8');
 const head = base.slice(0, base.indexOf('(async () => {'));
 eval(head + `
@@ -17,12 +18,12 @@ const probe = (page) => page.evaluate(() => new Promise(res => requestAnimationF
 }, 60))));
 const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector('.m-flip-layer'), running: document.getAnimations().filter(a => a.playState === 'running' && a.id === 'm-flip').length }));
 (async () => {
-  await new Promise(r => server.listen(8195, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {}; globalThis.__o = out;
   for (const loc of ['en-US', 'pt-BR']) {
     let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 }, locale: loc }, ART + SEED);
-    await page.goto('http://127.0.0.1:8195/'); await page.waitForTimeout(1800);
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
     await page.locator('.acct-pill').click(); await page.waitForTimeout(300);
     out[loc + 'link'] = await page.locator('.acct-foot-link').innerText();
     await page.screenshot({ path: path.join(S, 'shots', 'about-menu-' + loc + '.png'), clip: { x: 1000, y: 0, width: 440, height: 520 } });
@@ -41,7 +42,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   }
   for (const [loc, w] of [['pt-BR', 390], ['en-US', 320]]) {
     let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 760 }, hasTouch: true, isMobile: true, locale: loc }, ART + SEED);
-    await page.goto('http://127.0.0.1:8195/'); await page.waitForTimeout(1800);
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
     await page.locator('.m-acct').tap(); await page.waitForTimeout(500);
     await page.screenshot({ path: path.join(S, 'shots', 'about-m-acct-' + w + '.png') });
     await page.locator('.acct-foot-link').tap(); await page.waitForTimeout(600);

@@ -1,3 +1,4 @@
+const QA_PORT = +process.env.PORT || 8192; // regress/quick give each check its own port
 const base = require('fs').readFileSync(__dirname + '/test-jit2.js', 'utf8');
 const head = base.slice(0, base.indexOf('(async () => {'));
 eval(head + `
@@ -17,12 +18,12 @@ const probe = (page) => page.evaluate(() => new Promise(res => requestAnimationF
 }, 60))));
 const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector('.m-flip-layer'), running: document.getAnimations().filter(a => a.playState === 'running' && a.id === 'm-flip').length }));
 (async () => {
-  await new Promise(r => server.listen(8192, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {}; globalThis.__o = out;
   // phone
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, ART + SEED);
-  await page.goto('http://127.0.0.1:8192/'); await page.waitForTimeout(1800);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await page.waitForTimeout(1800);
   const coll = async (i) => { await page.locator('.coll-switch button').nth(i).tap(); return probe(page); };
   out.mSeen = await coll(2); await page.waitForTimeout(900); out.mSeenAfter = await settled(page);
   out.mRows = await page.locator('.m-lrow').count();
@@ -39,7 +40,7 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
   out.mErrors = errors; await ctx.close();
   // desktop list
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, ART + SEED));
-  await page.goto('http://127.0.0.1:8192/'); await page.waitForTimeout(1800);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await page.waitForTimeout(1800);
   await page.locator('.tb-view-switch button', { hasText: 'List' }).click(); await page.waitForTimeout(800);
   const dcoll = async (i) => { await page.locator('.coll-switch button').nth(i).click(); return probe(page); };
   out.dUnseen = await dcoll(1); await page.waitForTimeout(150);

@@ -1,4 +1,5 @@
 // Checks saved display preferences (mcu.prefs.v1) on mobile and desktop.
+const QA_PORT = +process.env.PORT || 8187; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -24,7 +25,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const URL = 'http://127.0.0.1:8187/';
+const URL = 'http://127.0.0.1:' + QA_PORT + '/';
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
@@ -47,7 +48,7 @@ async function ctxPage(browser, opts, init) {
   });
   return { ctx, page, errors };
 }
-const settle = page => page.waitForTimeout(2200);
+const settle = page => require('./ready').appReady(page);
 const go = async page => { await page.goto(URL); await settle(page); };
 const reload = async page => { await page.reload(); await settle(page); };
 
@@ -73,14 +74,14 @@ const pickOrder = async (page, nth) => {
 const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:1, states:{'iron-man':'seen','incredible-hulk':'seen','iron-man-2':'seen','thor':'seen','cap-first-avenger':'seen','avengers':'seen','iron-man-3':'seen','thor-dark-world':'seen','cap-winter-soldier':'seen','gotg':'seen','aou':'seen','civil-war':'seen','loki-s1':'watchlist','shang-chi':'watchlist','thunderbolts':'watchlist','agatha':'watchlist'}}));";
 
 (async () => {
-  await new Promise(r => server.listen(8187, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const variants = [['new', null, null]];
   for (const sort of ['release', 'chrono', 'phase', 'title', 'imdb', 'rt']) {
     for (const [name, jx, jy] of variants) {
       const init = SEED + `localStorage.setItem('mcu.prefs.v1', JSON.stringify({version:1, sort:'${sort}'}));` + (jx == null ? '' : `window.__JX=${jx};window.__JY=${jy};`);
       const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, init);
-      await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(2500);
+      await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
       const m = await page.evaluate(() => {
         const r = [...document.querySelectorAll('.card')].map(e => e.getBoundingClientRect()).filter(b => b.width);
         const s = r[0] ? r[0].width / 170 : 1;

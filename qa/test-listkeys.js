@@ -33,7 +33,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const PORT = 8228;
+const PORT = +process.env.PORT || 8228;
 const URL = `http://127.0.0.1:${PORT}/`;
 const DESK = { viewport: { width: 1440, height: 900 } };
 const DESK_1280 = { viewport: { width: 1280, height: 800 } };
@@ -99,7 +99,7 @@ const COVER = (id) => {
   // ---- 1. ← → in Release order, with the details open ----------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK);
-    await page.goto(URL + '?view=list'); await page.waitForTimeout(2600);
+    await page.goto(URL + '?view=list'); await require('./ready').appReady(page);
     let s = await snap(page);
     const rows = s.rows;
     out.rows = rows.length;
@@ -167,7 +167,7 @@ const COVER = (id) => {
   // ---- 2. ← → follow another sort and a filter ------------------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK);
-    await page.goto(URL + '?view=list&sort=imdb&type=series'); await page.waitForTimeout(2600);
+    await page.goto(URL + '?view=list&sort=imdb&type=series'); await require('./ready').appReady(page);
     let s = await snap(page);
     const rows = s.rows;
     out.sortedRows = rows.length;
@@ -187,7 +187,7 @@ const COVER = (id) => {
   // ---- 3. ↑ ↓ Home End, Space, Shift-click, Escape --------------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK);
-    await page.goto(URL + '?view=list'); await page.waitForTimeout(2600);
+    await page.goto(URL + '?view=list'); await require('./ready').appReady(page);
     let s = await snap(page);
     const rows = s.rows;
     // Checkbox column, details closed: focus moves, nothing opens.
@@ -289,7 +289,7 @@ const COVER = (id) => {
     ['release1280', DESK_1280, '?view=list&char=tony'],
   ]) {
     const { ctx, page, errors: e } = await ctxPage(browser, opts);
-    await page.goto(URL + q); await page.waitForTimeout(2600);
+    await page.goto(URL + q); await require('./ready').appReady(page);
     const tonyIds = await page.evaluate(() => window.TITLES.filter(t => t.cast.includes('tony')).map(t => t.id));
     const seq = [];
     await page.locator('body').click({ position: { x: 5, y: 400 } });
@@ -309,7 +309,7 @@ const COVER = (id) => {
   // ---- 5. A guide open in the List: its stops, and the wrap clears ----------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK);
-    await page.goto(URL + '?view=list&guide=infinity-saga'); await page.waitForTimeout(2600);
+    await page.goto(URL + '?view=list&guide=infinity-saga'); await require('./ready').appReady(page);
     const stops = await page.evaluate(() => [...document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest)')].map(r => r.getAttribute('data-row-id')));
     await page.locator('body').click({ position: { x: 5, y: 600 } });
     await press(page, 'ArrowLeft', 1300);
@@ -326,7 +326,7 @@ const COVER = (id) => {
   // ---- 5b. ↑ ↓ / Home / End in the Guides table -----------------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK);
-    await page.goto(URL + '?view=list&guide=infinity-saga'); await page.waitForTimeout(2600);
+    await page.goto(URL + '?view=list&guide=infinity-saga'); await require('./ready').appReady(page);
     const stops = await page.evaluate(() => [...document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest)')].map(r => r.getAttribute('data-row-id')));
     const g = () => page.evaluate(() => {
       const a = document.activeElement;
@@ -379,7 +379,7 @@ const COVER = (id) => {
   // ---- 6. Reduced motion: the row is in place at once -----------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, { ...DESK, reducedMotion: 'reduce' });
-    await page.goto(URL + '?view=list'); await page.waitForTimeout(2600);
+    await page.goto(URL + '?view=list'); await require('./ready').appReady(page);
     const rows = (await snap(page)).rows;
     await page.locator(`.dl-row[data-row-id="${rows[0]}"] .dl-open`).click();
     await page.waitForTimeout(700);
@@ -395,7 +395,7 @@ const COVER = (id) => {
   // ---- 7. Portuguese announcement -------------------------------------------
   {
     const { ctx, page, errors: e } = await ctxPage(browser, DESK, "localStorage.setItem('mcu.lang.v1','pt-BR');");
-    await page.goto(URL + '?view=list'); await page.waitForTimeout(2600);
+    await page.goto(URL + '?view=list'); await require('./ready').appReady(page);
     const rows = (await snap(page)).rows;
     await page.locator(`.dl-row[data-row-id="${rows[0]}"] .dl-open`).click();
     await page.waitForTimeout(700);

@@ -23,7 +23,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const PORT = 8227;
+const PORT = +process.env.PORT || 8227;
 const URL = `http://127.0.0.1:${PORT}/`;
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobile: true };
@@ -46,7 +46,7 @@ async function ctxPage(browser, opts, init, nudge) {
   });
   return { ctx, page, errors };
 }
-const settle = page => page.waitForTimeout(2200);
+const settle = page => require('./ready').appReady(page);
 const seedJs = (states) => `localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.collection.v1', JSON.stringify({ version: 1, states: ${JSON.stringify(states)} }));`;
 const COUNT_CONFETTI = "window.__c=0;document.addEventListener('DOMContentLoaded',()=>new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.classList&&n.classList.contains('mcu-confetti'))window.__c++;}))).observe(document.body,{childList:true}));";
 const saved = page => page.evaluate(() => (JSON.parse(localStorage.getItem('mcu.collection.v1') || '{}').states) || {});

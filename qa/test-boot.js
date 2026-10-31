@@ -1,4 +1,5 @@
 // Checks saved display preferences (mcu.prefs.v1) on mobile and desktop.
+const QA_PORT = +process.env.PORT || 8194; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -24,7 +25,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const URL = 'http://127.0.0.1:8194/';
+const URL = 'http://127.0.0.1:' + QA_PORT + '/';
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
@@ -51,7 +52,7 @@ const settle = page => page.waitForTimeout(2200);
 const go = async page => { await page.goto(URL); await settle(page); };
 const reload = async page => { await page.reload(); await settle(page); };
 (async () => {
-  await new Promise(r => server.listen(8194, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const R = {};
   const bootState = p => p.evaluate(() => { const b = document.getElementById('mcu-boot'); if (!b) return null; const btn = b.querySelector('.boot-reload'); return { state: b.dataset.state, msg: b.querySelector('.boot-msg').textContent, btn: btn.hidden ? null : btn.textContent }; });
@@ -60,7 +61,7 @@ const reload = async page => { await page.reload(); await settle(page); };
     if (setup) await setup(page);
     let early = null;
     page.on('domcontentloaded', async () => { try { early = await bootState(page); } catch (e) {} });
-    await page.goto('http://127.0.0.1:8194/', { waitUntil: 'commit' }); await page.waitForSelector('#root', { state: 'attached' });
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/', { waitUntil: 'commit' }); await page.waitForSelector('#root', { state: 'attached' });
     const r = { early };
     if (after) await after(page, r);
     await page.waitForFunction(() => !!document.querySelector('.toolbar, .m-appbar'), null, { timeout: 8000 }).catch(() => {});

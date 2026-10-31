@@ -5,8 +5,10 @@ Code, Codex, or any other). It assumes no chat history. `CLAUDE.md` only imports
 this file; put new rules here. For the current state of the project, open
 threads and why things are the way they are, read
 [docs/HANDOFF.md](docs/HANDOFF.md) and [docs/decisions.md](docs/decisions.md)
-before starting. `V3-SPEC.md` and `V3-TASKS.md` remain the V3 specification;
-their "Handoff — 2026-10-24" sections are historical.
+before starting. `V3-SPEC.md`, `V3-TASKS.md` and `KICKOFF-PROMPT.md` are the
+original V3 plan, kept as history: each opens with a note saying so, and lines
+that no longer hold carry dated *Superseded* notes. The README describes the
+app as it is now.
 
 ## Start of every session
 
@@ -42,7 +44,8 @@ their "Handoff — 2026-10-24" sections are historical.
   after `watch.jsx`, then `picker.jsx`). Keep that order.
 - Main files: `app.jsx` (app shell, desktop Spatial canvas, toolbar, details
   drawer, state), `mobile.jsx` (phone views, sheets, `Highlight`, `Portrait`
-  users), `desktop-list.jsx` (desktop List), `connections.jsx` (line drawing),
+  users), `desktop-list.jsx` (desktop List), `connections.jsx` (an early line layer,
+  kept for reference and not loaded; the lines are drawn in `app.jsx`),
   `poster.jsx` (`PosterArt`, `Portrait`, image fallbacks), `search-suggest.jsx`,
   `tracking.jsx` (Seen/Watchlist + sync, the Up next rule), `upnext.jsx`
   (the Up next card, strip, meter row and chip), `watch.jsx` (Where to watch
@@ -69,15 +72,21 @@ their "Handoff — 2026-10-24" sections are historical.
 - Hard-refresh (Cmd+Shift+R) after changing `.jsx` files: Babel fetches them
   and browsers can serve a cached copy on a plain refresh.
 - QA checks (`qa/`, details in qa/README.md): once per machine
-  `bash qa/setup.sh` (needs Node 18+). Two levels (user decision, 2026-10-29):
-  - **Per ticket, before handing it over for review:** the targeted check for
-    the area you touched (for example `qa/test-kbspatial.js`), plus any existing
-    check for the same screens. Minutes, not the full run.
+  `bash qa/setup.sh` (needs Node 18+). Checks run side by side (4 at a time)
+  with the app's scripts pre-compiled and wait for the app's ready signal, so
+  a full run takes minutes (user decisions, 2026-10-29 and 2026-10-30):
+  - **Per ticket, before handing it over for review:** `bash qa/quick.sh
+    <the ticket's own check>`. It also runs every check that `qa/checks.json`
+    lists for the files changed in the working tree. A new check goes into
+    `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (34 check scripts in 35 runs, about 30 minutes; it exits non-zero and marks
-    failures with `!!`) and `node qa/a11y-scan.js` (exits non-zero on any
-    violation; add `LOC=pt-BR` for Portuguese), on the final tree with nothing
-    edited while it runs. Read the scan's output, not just its exit code.
+    (41 check scripts in 42 runs plus the accessibility scan in English and
+    Portuguese, about 5–6 minutes; it exits non-zero and marks failures with
+    `!!`), on the final tree with nothing edited while it runs. Read the
+    output, not just the exit code.
+  - **After each push to staging, and after each merge to `main`:**
+    `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
+    against the deployed site, once Vercel reports the deploy.
   Update checks in the same commit when you rename or restructure UI they
   rely on.
 - The QA checks are headless Chromium. Still look at the change in a real
@@ -275,8 +284,8 @@ key to `locales/en.js` (the complete base), translate it in every other
 names. New catalog titles need an official local title and a short,
 spoiler-light synopsis per locale; write synopses rather than copying studio or
 TMDB text. Preserve permanent title ids and the spatial-filter invariants
-described in V3-SPEC.md (collection status dims cards, it never removes them
-from the Spatial layout).
+described in V3-SPEC.md §7.1 (collection status dims cards, it never removes
+them from the Spatial layout).
 
 ## Deferred work and constraints
 

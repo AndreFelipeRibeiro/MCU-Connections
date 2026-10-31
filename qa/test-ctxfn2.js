@@ -1,21 +1,22 @@
+const QA_PORT = +process.env.PORT || 8187; // regress/quick give each check its own port
 const base = require('fs').readFileSync(__dirname + '/test-jit2.js', 'utf8');
 const head = base.slice(0, base.indexOf('(async () => {'));
 eval(head + `
 const T = page => page.evaluate(() => document.querySelector('.canvas').style.transform);
 (async () => {
-  await new Promise(r => server.listen(8187, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {}; globalThis.__o = out;
   // ---- Desktop
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 }, locale: 'en-US' }, SEED);
-  await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(2200);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   const bar = () => page.evaluate(() => { const fl = document.querySelector('.ctx-float'); const fr = fl.getBoundingClientRect(); const over = [...document.querySelectorAll('.card:not(.coll-dim)')].filter(c => { const r = c.getBoundingClientRect(); return r.left < fr.right && r.right > fr.left && r.top < fr.bottom && r.bottom > fr.top; }).length; return { text: fl.querySelector('.ctx-count').textContent, chips: [...fl.querySelectorAll('.ctx-chip')].map(c => c.textContent), clear: !!fl.querySelector('.ctx-clear'), recenter: !!document.querySelector('.ctx-recenter, .ctx-bar'), coversCards: over, h: Math.round(fr.height) }; });
   out.dInitial = await bar();
   await page.fill('.search-wrap input', 'man');
   await page.locator('.tb-type-controls button').nth(1).click();
   await page.locator('.tb-sort-row .coll-switch button').nth(1).click();
   await page.click('.filters-pill:not(.g-btn)'); await page.locator('.filters-pop .control-group').first().locator('button', { hasText: '3' }).click();
-  await page.click('.brand-title'); await page.waitForTimeout(700);
+  await page.keyboard.press('Escape'); await page.waitForTimeout(700);
   out.dFiltered = await bar();
   out.dUndimmedCards = await page.evaluate(() => document.querySelectorAll('.card:not(.coll-dim)').length);
   await page.locator('.ctx-chip', { hasText: 'Films' }).click(); await page.waitForTimeout(500);
@@ -23,14 +24,14 @@ const T = page => page.evaluate(() => document.querySelector('.canvas').style.tr
   await page.locator('.ctx-float .ctx-clear').click(); await page.waitForTimeout(700);
   out.dAfterClearAll = { ...(await bar()), search: await page.inputValue('.search-wrap input'), coll: await page.locator('.tb-sort-row .coll-switch button.on').innerText() };
   await page.click('.filters-pill:not(.g-btn)'); await page.locator('.filters-pop .control-group').first().locator('button', { hasText: '3' }).click();
-  await page.click('.brand-title'); await page.waitForTimeout(600);
+  await page.keyboard.press('Escape'); await page.waitForTimeout(600);
   out.dSingleChip = await bar();
   await page.locator('.ctx-chip', { hasText: 'Phase 3' }).click(); await page.waitForTimeout(500);
   out.dAfterSingle = { ...(await bar()), phaseAll: await page.evaluate(() => document.querySelectorAll('.card').length) };
   out.dErrors = errors; await ctx.close();
   // ---- Mobile
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true, locale: 'pt-BR' }, SEED));
-  await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(2200);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   const line = (sel) => page.evaluate(sel => { const e = document.querySelector(sel); return e && { text: e.querySelector('.ctx-text').textContent, clear: !!e.querySelector('.ctx-clear'), trunc: e.querySelector('.ctx-text').scrollWidth > e.querySelector('.ctx-text').clientWidth + 1 }; }, sel);
   out.mInitial = await line('.ctx-line');
   await page.fill('.m-searchbar input', 'man');

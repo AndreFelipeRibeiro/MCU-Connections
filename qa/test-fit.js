@@ -1,4 +1,5 @@
 // Checks saved display preferences (mcu.prefs.v1) on mobile and desktop.
+const QA_PORT = +process.env.PORT || 8187; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -24,7 +25,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const URL = 'http://127.0.0.1:8187/';
+const URL = 'http://127.0.0.1:' + QA_PORT + '/';
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
@@ -47,7 +48,7 @@ async function ctxPage(browser, opts, init) {
   });
   return { ctx, page, errors };
 }
-const settle = page => page.waitForTimeout(2200);
+const settle = page => require('./ready').appReady(page);
 const go = async page => { await page.goto(URL); await settle(page); };
 const reload = async page => { await page.reload(); await settle(page); };
 
@@ -73,7 +74,7 @@ const pickOrder = async (page, nth) => {
 const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:1, states:{'iron-man':'seen','incredible-hulk':'seen','iron-man-2':'seen','thor':'seen','cap-first-avenger':'seen','avengers':'seen','iron-man-3':'seen','thor-dark-world':'seen','cap-winter-soldier':'seen','gotg':'seen','aou':'seen','civil-war':'seen','loki-s1':'watchlist','shang-chi':'watchlist','thunderbolts':'watchlist','agatha':'watchlist'}}));";
 
 (async () => {
-  await new Promise(r => server.listen(8187, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {};
   const fit = () => {
@@ -88,7 +89,7 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
   };
   for (const w of [900, 999, 1000, 1100, 1199, 1200, 1250, 1279, 1280, 1300, 1301, 1439, 1440, 1600, 1919, 1920, 2199, 2200, 2559, 2560]) {
     const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 900 }, locale: process.env.LOC || 'en-US' }, SEED);
-    await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(2000);
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
     if (process.argv[2] === 'watch') { await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); }
     out['d' + w] = { ...(await page.evaluate(fit)), errors: errors.length };
     if ([900, 1279, 1280, 1440, 1920].includes(w)) await page.screenshot({ path: path.join(S, 'shots', 'fit-' + (process.env.LOC||'en') + '-d' + w + (process.argv[2] || '') + '.png'), clip: { x: 0, y: 0, width: w, height: 200 } });
@@ -96,7 +97,7 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
   }
   for (const w of [320, 360, 390, 430]) {
     const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 760 }, hasTouch: true, isMobile: true, locale: process.env.LOC || 'en-US' }, SEED);
-    await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(2000);
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
     if (process.argv[2] === 'watch') { await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); }
     out['m' + w] = { ...(await page.evaluate(fit)), errors: errors.length };
     await ctx.close();

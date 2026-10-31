@@ -1,4 +1,5 @@
 // Checks saved display preferences (mcu.prefs.v1) on mobile and desktop.
+const QA_PORT = +process.env.PORT || 8186; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -24,7 +25,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const URL = 'http://127.0.0.1:8186/';
+const URL = 'http://127.0.0.1:' + QA_PORT + '/';
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
@@ -44,7 +45,7 @@ async function ctxPage(browser, opts, init) {
   });
   return { ctx, page, errors };
 }
-const settle = page => page.waitForTimeout(2200);
+const settle = page => require('./ready').appReady(page);
 const go = async page => { await page.goto(URL); await settle(page); };
 const reload = async page => { await page.reload(); await settle(page); };
 
@@ -81,14 +82,14 @@ const scan = (list) => (() => {
   return texts;
 });
 (async () => {
-  await new Promise(r => server.listen(8186, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {};
   const findLeft = (texts) => [...new Set(leftovers.filter(e => texts.some(t => new RegExp('(^|[^\p{L}])' + e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\p{L}])', 'u').test(t))))];
   // ---- Portuguese by browser locale, mobile
   for (const [name, opts] of [['ptMobile', { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: 'pt-BR' }], ['ptDesktop', { viewport: { width: 1440, height: 900 }, locale: 'pt-BR' }]]) {
     const { ctx, page, errors } = await ctxPage(browser, opts, SEED);
-    await page.goto('http://127.0.0.1:8186/'); await page.waitForTimeout(2200);
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
     const texts = [];
     texts.push(...await page.evaluate(scan()));
     out[name] = { htmlLang: await page.evaluate(() => document.documentElement.lang) };
@@ -124,7 +125,7 @@ const scan = (list) => (() => {
   // ---- English default, switch to PT and persistence
   {
     const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: 'en-US' }, SEED);
-    await page.goto('http://127.0.0.1:8186/'); await page.waitForTimeout(2200);
+    await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
     out.en = { htmlLang: await page.evaluate(() => document.documentElement.lang), tab0: await page.locator('.m-tabs button').first().textContent() };
     await page.fill('.m-search-input input', 'Vingadores'); await page.waitForTimeout(300);
     out.en.searchPtInEn = await page.evaluate(() => [...document.querySelectorAll('.m-ltitle')].map(e => e.textContent));
@@ -137,7 +138,7 @@ const scan = (list) => (() => {
     out.en.afterSwitch = { lang: await page.evaluate(() => document.documentElement.lang), tab0: await page.locator('.m-tabs button').first().textContent(), stored: await page.evaluate(() => localStorage.getItem('mcu.lang.v1')) };
     await page.fill('.m-search-input input', 'Avengers'); await page.waitForTimeout(300);
     out.en.searchEnInPt = await page.evaluate(() => [...document.querySelectorAll('.m-ltitle')].map(e => e.textContent));
-    await page.reload(); await page.waitForTimeout(2200);
+    await page.reload(); await require('./ready').appReady(page);
     out.en.afterReload = await page.evaluate(() => document.documentElement.lang);
     out.en.errors = errors;
     await ctx.close();

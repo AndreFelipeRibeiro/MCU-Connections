@@ -1,13 +1,14 @@
+const QA_PORT = +process.env.PORT || 8187; // regress/quick give each check its own port
 const base = require('fs').readFileSync(__dirname + '/test-jit2.js', 'utf8');
 const head = base.slice(0, base.indexOf('(async () => {'));
 eval(head + `
 const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v) { v.posters = {}; this.__m = v; }, get() { return this.__m; } });";
 (async () => {
-  await new Promise(r => server.listen(8187, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {};
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1100, height: 860 } }, ART + SEED + "localStorage.setItem('mcu.prefs.v1', JSON.stringify({version:1, desktopView:'list'}));");
-  await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(2000);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   const tx = () => page.evaluate(() => { const d = document.querySelector('.drawer'); return d ? { open: d.classList.contains('open'), x: Math.round(d.getBoundingClientRect().left), top: Math.round(d.getBoundingClientRect().top) } : null; });
   await page.locator('.dl-row:not(.dl-head)', { hasText: 'Thor' }).first().click();
   const samples = [];
@@ -30,14 +31,14 @@ const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v)
   out.errors = errors; await ctx.close();
   // spatial: open a card, drawer animates too
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, SEED));
-  await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(2200);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   const card = page.locator('.card', { hasText: 'Iron Man' }).first(); const r = await card.boundingBox();
   await page.mouse.click(r.x + r.width / 2, r.y + r.height * 0.8);
   const s3 = []; for (let i = 0; i < 5; i++) { s3.push(await tx()); await page.waitForTimeout(80); }
   out.spatialSlide = s3; out.spatialErrors = errors; await ctx.close();
   // mobile sheet highlight
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, SEED));
-  await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(1800);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   await page.fill('.m-searchbar input', 'Sam'); await page.waitForTimeout(400);
   await page.locator('.m-lrow-open').first().tap(); await page.waitForTimeout(700);
   out.mobileMarks = await page.evaluate(() => [...document.querySelectorAll('.m-crow mark.hl')].map(m => m.textContent));
