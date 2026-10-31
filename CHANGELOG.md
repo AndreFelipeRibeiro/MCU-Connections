@@ -12,6 +12,40 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V4 maintenance — V4 plan
+
+Recorded: 2026-10-31 12:11 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+`main` still serves V3 and this change is not part of a production release.
+
+- `docs/V4-PLAN.md` added and approved by the user: the Phase 1 plan for V4.
+  Goals, non-goals and what "done" means for the release to `main`; the build
+  step (Vite 7, React 18.3.1, plain JavaScript, folder layout, how the locales
+  and data files load); Vercel build settings from a committed `vercel.json` so
+  `main`'s static deploy is untouched; how `qa/` runs against the built site;
+  the design-system and Figma token approach; the risks; and how V3 fixes merge
+  forward.
+- Records the language decision: the build step lands in plain JavaScript, and
+  the TypeScript conversion is its own ticket and batch straight after Phase 2,
+  before the design system starts. Phase 2's only claim is "behaviour
+  identical" and the regression suite certifies it, so a type migration in the
+  same commits would leave a failing check unable to say which change caused
+  it.
+- Three findings from measuring the current tree shaped the plan: every file
+  already declares its exports through a trailing `Object.assign(window, …)`,
+  so the module conversion is largely mechanical; `qa/precompile.js` already
+  resolves its document root through `process.env.SITE`, so the checks can
+  serve the built site without being rewritten; and 17 of the 42 checks read
+  the app's globals from inside the page, which is the migration's most likely
+  hidden breakage.
+- `docs/decisions.md` gains the 2026-10-31 row for the language decision.
+- Verified: documentation only, no app code. Smoke check run against the V4
+  preview after the push.
+- Limits: the plan is approved, the work in it is not started. Five questions
+  in §10 are still open — `watch-data.js` lazy loading, the QA globals surface,
+  Supabase config, the V3 support window and the component base. The no-build
+  rule in AGENTS.md stays in force until the ticket that lands the build step
+  rewrites that section.
+
 ## V4 maintenance — V4 workspace setup
 
 Recorded: 2026-10-31 10:59 EDT (-0400). Pushed to `version/4.0` (V4 staging);
