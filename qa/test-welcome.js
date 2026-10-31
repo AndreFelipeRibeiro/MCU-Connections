@@ -1,3 +1,4 @@
+const QA_PORT = +process.env.PORT || 8196; // regress/quick give each check its own port
 const base = require('fs').readFileSync(__dirname + '/test-jit2.js', 'utf8');
 const head = base.slice(0, base.indexOf('(async () => {'));
 eval(head + `
@@ -17,7 +18,7 @@ const probe = (page) => page.evaluate(() => new Promise(res => requestAnimationF
 }, 60))));
 const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector('.m-flip-layer'), running: document.getAnimations().filter(a => a.playState === 'running' && a.id === 'm-flip').length }));
 (async () => {
-  await new Promise(r => server.listen(8196, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {}; globalThis.__o = out;
   const st = (page) => page.evaluate(() => ({ dialog: !!document.querySelector('.about-dialog'), sheet: !!document.querySelector('.m-sheet .about'),
@@ -26,39 +27,39 @@ const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector
     scroll: (() => { const d = document.querySelector('.about-dialog'); return d ? d.scrollHeight > d.clientHeight : null; })(), url: location.search }));
   // 1. first visit (desktop): welcome shows, CTA closes, reload doesn't show again
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, ART);
-  await page.goto('http://127.0.0.1:8196/'); await page.waitForTimeout(1800);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   out.first = await st(page); out.firstFocus = await page.evaluate(() => document.activeElement.className);
   await page.keyboard.press('Tab'); out.tab1 = await page.evaluate(() => document.activeElement.className); await page.keyboard.press('Shift+Tab'); await page.keyboard.press('Shift+Tab'); out.shiftTab = await page.evaluate(() => document.activeElement.className);
   await page.screenshot({ path: path.join(S, 'shots', 'welcome-d.png') });
   await page.locator('.welcome-start').click(); await page.waitForTimeout(400);
   out.afterCta = await st(page);
-  await page.reload(); await page.waitForTimeout(1800); out.reload = await st(page);
+  await page.reload(); await require('./ready').appReady(page); out.reload = await st(page);
   // About from the menu: not the welcome variant
   await page.locator('.acct-pill').click(); await page.locator('.acct-foot-link').click(); await page.waitForTimeout(400);
   out.menuAbout = await st(page);
   await page.screenshot({ path: path.join(S, 'shots', 'about-d-grid.png') });
   await page.keyboard.press('Escape');
   // ?welcome forces it, and the param is removed from the address
-  await page.goto('http://127.0.0.1:8196/?welcome'); await page.waitForTimeout(1800); out.forced = await st(page);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/?welcome'); await require('./ready').appReady(page); out.forced = await st(page);
   out.dErrors = errors; await ctx.close();
   // 2. returning visitor (has a collection): never shown
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, ART + SEED));
-  await page.goto('http://127.0.0.1:8196/'); await page.waitForTimeout(1800); out.returning = await st(page);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page); out.returning = await st(page);
   await ctx.close();
   // 3. phone first visit (pt-BR)
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true, locale: 'pt-BR' }, ART));
-  await page.goto('http://127.0.0.1:8196/'); await page.waitForTimeout(1800);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   out.mFirst = await st(page); out.mFocus = await page.evaluate(() => document.activeElement.className);
   await page.screenshot({ path: path.join(S, 'shots', 'welcome-m.png') });
   await page.locator('.m-sheet-body').evaluate(el => el.scrollTop = 9999); await page.waitForTimeout(200);
   await page.screenshot({ path: path.join(S, 'shots', 'welcome-m-end.png') });
   await page.locator('.welcome-start').tap(); await page.waitForTimeout(500);
   out.mAfter = await st(page);
-  await page.reload(); await page.waitForTimeout(1800); out.mReload = await st(page);
+  await page.reload(); await require('./ready').appReady(page); out.mReload = await st(page);
   out.mErrors = errors; await ctx.close();
   // 4. storage blocked: no welcome, no errors
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, "Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } });"));
-  await page.goto('http://127.0.0.1:8196/'); await page.waitForTimeout(1800);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   out.blocked = await page.evaluate(() => ({ dialog: !!document.querySelector('.about-dialog') }));
   out.blockedErrors = errors.filter(e => !/blocked/.test(e)); await ctx.close();
   console.log(JSON.stringify(out));

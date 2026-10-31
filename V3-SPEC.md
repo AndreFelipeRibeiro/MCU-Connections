@@ -2,6 +2,12 @@
 
 Target worktree: `<your-developer-folder>/MCU-V3`
 
+> **History (noted 2026-10-30).** This spec was written for the original V3
+> build (2026-10-24) and is kept as a record; it is no longer the source of
+> truth. For how the app works now, see [README.md](README.md); for where things stand, [docs/HANDOFF.md](docs/HANDOFF.md); for decisions, [docs/decisions.md](docs/decisions.md); for working rules, [AGENTS.md](AGENTS.md). The backlog is the Notion V3 Tasks board. Lines marked *Superseded* below no longer hold; the
+> rest is as written. §7.1 (collection status dims cards in Spatial, never
+> removes them) and decisions D1–D8 still apply.
+
 This spec is the source of truth for V3. It was written after reading the actual
 codebase, so the code references below are real — verify them before assuming
 anything has drifted.
@@ -60,10 +66,21 @@ current files and script order, including tracking/auth and the Supabase client.
 | `app.jsx` | Desktop app + the single `App()` root (`function App()`, ~line 553) that branches to the mobile shell. Ends with `ReactDOM.createRoot(...).render(<App/>)`. |
 | `styles.css` / `styles-mobile.css` | Desktop and touch stylesheets. Both are loaded on every device. |
 
+> *Superseded:* `index.html` now loads about twenty local scripts (boot.js,
+> the locales and i18n.js, guides.js, watch-data.js, desktop-list.jsx,
+> upnext.jsx, watch.jsx, guides-ui.jsx, picker.jsx and more), and the line
+> numbers above no longer hold; the README's Project structure table is
+> current. `connections.jsx` is no longer loaded at all (Batch 10,
+> 2026-10-30).
+
 **Critical conventions to preserve:**
 
 - No `package.json`, no bundler, no router, no server, no tests. Do not add any
   of these. JSX is compiled in the browser by Babel standalone.
+  > *Superseded 2026-10-28 (`31b9d25`):* `qa/` holds development-only
+  > Playwright and axe checks with their own `package.json`; nothing in the app
+  > loads from it and Vercel doesn't deploy it. The app itself still has no
+  > build step.
 - Scripts are **not** ES modules. Cross-file sharing happens exclusively through
   `window.*`. Any new `.jsx` file must end with an `Object.assign(window, {...})`
   or `window.X = X` export, and must be added to `index.html` in dependency order.
@@ -72,6 +89,8 @@ current files and script order, including tracking/auth and the Supabase client.
 - Desktop is **spatial-canvas only**. `viewMode` (grid/list/spatial) exists only
   behind `isTouch`. The desktop render tree is `Toolbar` → canvas → `CastDrawer`.
   Do not add grid/list to desktop as part of V3.
+  > *Superseded 2026-10-25 (`52a1f60`):* desktop has a List view as well as
+  > Spatial (`desktop-list.jsx`); see docs/decisions.md.
 - The breakpoint is `window.innerWidth < 900` → mobile shell (`useDevice()`).
 
 ---
@@ -444,9 +463,15 @@ neither is called `filterCount` in `App()`:
 Also wire it into both clear-filters paths: `pop-clear` in `Toolbar`, and the
 `onClear` passed to `FilterSheet` from `App()` (line 1096).
 
+> *Superseded 2026-10-24 (`0a39304`):* All / Unseen / Seen / Watchlist is its
+> own always-visible switch, not a group inside Filters.
+
 ### 7.5 Progress display
 
 - `X of N released titles seen`, N computed at runtime (D3).
+  > *Superseded 2026-10-28 (`1fc30af`):* progress is the shared meter
+  > (`ProgressHeader`): one per phase in By Phase, one for the whole catalogue
+  > elsewhere, with titles not out yet shown as "+n".
 - Watchlist count shown separately.
 - Seen cards get a check badge plus a subtle desaturation/overlay. It must not
   obscure connection lines or the phase colour coding.
@@ -535,6 +560,9 @@ Detail and acceptance criteria in `V3-TASKS.md`. Summary:
 ## 10. Verification
 
 There is no test runner and V3 is not adding one, so **all of this is manual**.
+
+> *Superseded 2026-10-28 (`31b9d25`):* the `qa/` checks run per ticket and in
+> full once per batch (qa/README.md). Real-device checks are still manual.
 Write it into the README as a checklist.
 
 1. **Cross-device sync** — mark titles on desktop, sign in on phone, same state.

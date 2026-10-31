@@ -1,4 +1,5 @@
 // Checks saved display preferences (mcu.prefs.v1) on mobile and desktop.
+const QA_PORT = +process.env.PORT || 8187; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -24,7 +25,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const URL = 'http://127.0.0.1:8187/';
+const URL = 'http://127.0.0.1:' + QA_PORT + '/';
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
@@ -52,7 +53,7 @@ const go = async page => { await page.goto(URL); await settle(page); };
 const reload = async page => { await page.reload(); await settle(page); };
 const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:1, states:{'iron-man':'seen','incredible-hulk':'seen','iron-man-2':'seen','thor':'seen','cap-first-avenger':'seen','avengers':'seen','iron-man-3':'seen','thor-dark-world':'seen','cap-winter-soldier':'seen','gotg':'seen','aou':'seen','civil-war':'seen','loki-s1':'watchlist','shang-chi':'watchlist','thunderbolts':'watchlist','agatha':'watchlist'}}));";
 (async () => {
-  await new Promise(r => server.listen(8187, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {};
   for (const [label, scaleFactor] of [['dpr3', 3]]) {
@@ -99,7 +100,8 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
     for (let i = 0; i < 40; i++) {
       const b = page.locator('.zoom-btn[aria-label]').first();
       if (await b.isDisabled()) break;
-      await b.click(); await page.waitForTimeout(30);
+      // The phone zoom control rests hidden and shows while it holds focus.
+      await b.focus(); await page.keyboard.press('Enter'); await page.waitForTimeout(30);
     }
     await snap('min'); await fps('min');
     // Pan sideways with touch, several strokes.

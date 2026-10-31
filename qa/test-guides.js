@@ -23,7 +23,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const PORT = 8226;
+const PORT = +process.env.PORT || 8226;
 const URL = `http://127.0.0.1:${PORT}/`;
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const PHONE320 = { viewport: { width: 320, height: 640 }, hasTouch: true, isMobile: true };
@@ -46,7 +46,7 @@ async function ctxPage(browser, opts, init) {
   });
   return { ctx, page, errors };
 }
-const settle = page => page.waitForTimeout(2200);
+const settle = page => require('./ready').appReady(page);
 // Counts confetti canvases from the moment the page loads.
 const COUNT_CONFETTI = "window.__c=0;document.addEventListener('DOMContentLoaded',()=>new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.classList&&n.classList.contains('mcu-confetti'))window.__c++;}))).observe(document.body,{childList:true}));";
 const seedJs = (states) => `localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.collection.v1', JSON.stringify({ version: 1, states: ${JSON.stringify(states)} }));`;
@@ -170,7 +170,11 @@ const DATA = () => {
     nums: [...document.querySelectorAll('.g-desk .g-stop[data-row-id]:not(.dest) .g-num')].map(n => n.textContent),
     dest: (document.querySelector('.g-desk .g-stop.dest') || {}).dataset ? document.querySelector('.g-desk .g-stop.dest').dataset.rowId : null,
     next: (document.querySelector('.g-desk .g-stop.next') || { dataset: {} }).dataset.rowId || null,
-    meter: (document.querySelector('.g-desk .g-meter') || {}).textContent || '',
+    meter: (document.querySelector('.g-desk .g-module .gm-meter') || {}).textContent || '',
+    // The guide's module heads the List (V3 Tasks, "Desktop guide: one taller
+    // module…"); seen stops are compact (no reason, no scores).
+    module: !!document.querySelector('.g-desk > .g-module.list'),
+    compact: [...document.querySelectorAll('.g-desk .g-stop.seen')].map(r => ({ c: r.classList.contains('compact'), why: !!r.querySelector('.g-why'), scores: !!r.querySelector('.g-col .score, .g-col [class*="badge"], .g-col .m-scores') })),
     mains: document.querySelectorAll('[role="main"]').length,
   }));
   out.desk = { rows: desk.rows.length, next: desk.next, dest: desk.dest };
@@ -183,6 +187,8 @@ const DATA = () => {
   if (desk.next !== nextExpected) err(`desktop: next stop is ${desk.next}, expected ${nextExpected}`);
   if (desk.mains !== 1) err(`desktop: ${desk.mains} main landmarks`);
   if (desk.meter.indexOf(`1/${plan.essRel.length}`) === -1) err(`desktop meter reads "${desk.meter}", expected 1/${plan.essRel.length}`);
+  if (!desk.module) err('desktop List: the guide module does not head the List');
+  if (!desk.compact.length || desk.compact.some(r => !r.c || r.why || r.scores)) err(`desktop List: a seen stop is not compact: ${JSON.stringify(desk.compact)}`);
 
   // Include optional: every stop, essential numbers unchanged.
   if (plan.all.length > plan.ess.length) {
@@ -197,7 +203,7 @@ const DATA = () => {
   }
 
   // "Mark N more seen" on the guide's meter: the released stops left, with Undo.
-  const bulkBtn = page.locator('.g-desk .g-meter .pgh-action');
+  const bulkBtn = page.locator('.g-desk .g-module .pgh-action');
   const wantN = plan.essRel.length - 1;
   if (!wantN) { if (await bulkBtn.count()) err('desktop: a bulk button on a guide with nothing left'); }
   else if (!(await bulkBtn.count())) err('desktop: no "Mark N more seen" on the guide meter');
@@ -308,7 +314,8 @@ const DATA = () => {
   const sp = await page.evaluate(() => ({
     badges: [...document.querySelectorAll('.card-gnum')].map(b => b.textContent),
     route: document.querySelectorAll('.guide-route path').length,
-    meter: (document.querySelector('.g-meter') || {}).textContent || '',
+    meter: (document.querySelector('.g-module.spatial .gm-meter') || {}).textContent || '',
+    overall: !!document.querySelector('.spatial-overall'),
   }));
   out.spatial = sp;
   const wantBadges = plan.ess.length + (plan.target ? 1 : 0);
@@ -316,25 +323,27 @@ const DATA = () => {
   if (sp.badges.filter(b => b === '✓').length !== 1) err(`desktop Spatial: expected one ✓ badge (${sp.badges.join(' ')})`);
   if (plan.target && sp.badges.indexOf('→') === -1) err('desktop Spatial: no → badge on the destination');
   if (!sp.route) err('desktop Spatial: no guide route drawn');
-  if (!sp.meter) err('desktop Spatial: no guide meter');
+  if (!sp.meter) err('desktop Spatial: no guide meter in the floating module');
+  if (sp.overall) err('desktop Spatial: the catalogue meter shows beside the guide module');
   await finish('spatial', ctx, errors);
 
-  // Completion: marking the last released essential stop bursts confetti once
-  // per guide, never on opening a guide that is already complete.
+  // Completion: marking the last released essential stop bursts confetti, and
+  // again each time it becomes complete; never on opening a guide that is
+  // already complete.
   const almost = {}; plan.essRel.slice(0, -1).forEach(id => { almost[id] = 'seen'; });
   const lastStop = plan.essRel[plan.essRel.length - 1];
   ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, seedJs(almost)));
   await page.goto(URL + `?view=list&guide=${plan.id}`); await settle(page);
   await page.evaluate(() => { window.__confetti = 0; new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.classList && n.classList.contains('mcu-confetti')) window.__confetti++; }))).observe(document.body, { childList: true }); });
   await page.locator(`.g-desk .g-stop[data-row-id="${lastStop}"] .tsa-btn.seen`).click(); await page.waitForTimeout(600);
-  const done1 = await page.evaluate(() => ({ n: window.__confetti, store: localStorage.getItem('mcu.guidesDone.v1'), ready: !!document.querySelector('.g-desk .g-ready') }));
+  const done1 = await page.evaluate(() => ({ n: window.__confetti, ready: !!document.querySelector('.g-desk .g-module.done') }));
   if (done1.n !== 1) err(`completion: ${done1.n} confetti bursts, expected 1`);
-  if (!done1.store || JSON.parse(done1.store).indexOf(plan.id) === -1) err('completion: the guide is not remembered as celebrated');
-  if (!done1.ready) err('completion: no "ready" line after the last essential stop');
-  // Unmark and mark again: no second burst.
+  if (!done1.ready) err('completion: the guide module did not turn complete after the last essential stop');
+  // Unmark and mark again: it becomes complete again, so it bursts again.
   await page.locator(`.g-desk .g-stop[data-row-id="${lastStop}"] .tsa-btn.seen`).click(); await page.waitForTimeout(400);
+  if ((await page.evaluate(() => window.__confetti)) !== 1) err('completion: unmarking a stop burst confetti');
   await page.locator(`.g-desk .g-stop[data-row-id="${lastStop}"] .tsa-btn.seen`).click(); await page.waitForTimeout(600);
-  if ((await page.evaluate(() => window.__confetti)) !== 1) err('completion: a guide celebrated twice');
+  if ((await page.evaluate(() => window.__confetti)) !== 2) err('completion: completing the guide again did not burst confetti');
   await finish('complete', ctx, errors);
   // Opening an already-complete guide: no burst.
   const full = Object.assign({}, almost, { [lastStop]: 'seen' });
@@ -385,21 +394,19 @@ const DATA = () => {
   if (closed.g || closed.pill || !closed.list) err(`phone: closing the guide left ${JSON.stringify(closed)}`);
   await finish('phone', ctx, errors);
 
-  // Phone Grid and Spatial: cards, and the Up next chip clear of the pill.
+  // Phone Grid and Spatial: cards, and the guide's dock carrying the next stop
+  // (the separate Up next chip steps aside while a guide is open).
   ({ ctx, page, errors } = await ctxPage(browser, MOBILE, seedJs(seed1)));
   await page.goto(URL + `?view=grid&guide=${plan.id}`); await settle(page);
   const cards = await page.locator('.g-grid .g-card').count();
   if (cards !== plan.ess.length) err(`phone Grid: ${cards} cards, expected ${plan.ess.length}`);
   await page.goto(URL + `?view=spatial&guide=${plan.id}`); await settle(page); await page.waitForTimeout(600);
-  const chip = await page.evaluate(() => {
-    const c = document.querySelector('.un-chip'), p = document.querySelector('.guide-pill');
-    if (!c || !p) return { chip: !!c, pill: !!p };
-    const a = c.getBoundingClientRect(), b = p.getBoundingClientRect();
-    return { chip: true, pill: true, overlap: a.bottom > b.top && a.top < b.bottom };
-  });
-  if (!chip.pill) err('phone Spatial: no guide pill');
-  if (nextExpected && !chip.chip) err('phone Spatial: no Up next chip for the next stop');
-  if (chip.overlap) err('phone Spatial: the Up next chip overlaps the guide pill');
+  const chip = await page.evaluate(() => ({
+    pill: !!document.querySelector('.guide-pill.g-dock'), chip: !!document.querySelector('.un-chip'),
+    next: !!document.querySelector('.g-dock .g-dock-next'), seen: !!document.querySelector('.g-dock .g-dock-tsa .tsa-btn.seen') }));
+  if (!chip.pill) err('phone Spatial: no guide dock');
+  if (chip.chip) err('phone Spatial: the Up next chip shows beside the guide dock');
+  if (nextExpected && !(chip.next && chip.seen)) err('phone Spatial: the dock does not offer the next stop with Seen');
   await finish('phone-grid', ctx, errors);
 
   // A character with a guide: an icon button on the pill.

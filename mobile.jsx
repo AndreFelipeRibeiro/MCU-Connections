@@ -21,20 +21,36 @@ function ScoreBadges({ title, lead, compact }) {
 // The app bar is already three rows deep on a phone, so the view switch moved
 // off m-appbar-top (where the account avatar now sits) onto its own tight row
 // rather than becoming a fourth control crammed into the brand row.
-function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, onOpenGuides, guideActive, collectionFilter, setCollectionFilter }) {
+function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, onOpenGuides, guideActive, guideName, collectionFilter, setCollectionFilter }) {
   // The suggestions list spans the whole search row (see SearchInput).
   const [searchRow, setSearchRow] = React.useState(null);
+  // An open guide shortens the bar (V3 Tasks, "Phone guide: one bar…"):
+  // Filters folds away, the view menu slides up beside search and the
+  // collection row folds up, all animated; what is hidden leaves the tab order.
+  // Order stays, dimmed outside Spatial (see GuideOff).
+  const Off = window.GuideOff;
+  const orderOff = guideActive && viewMode !== 'spatial';
+  const fslot = React.useRef(null), row3 = React.useRef(null);
+  React.useEffect(() => {
+    const hide = (el, off) => {
+      if (!el) return;
+      if (off) { el.setAttribute('inert', ''); el.setAttribute('aria-hidden', 'true'); }
+      else { el.removeAttribute('inert'); el.removeAttribute('aria-hidden'); }
+    };
+    hide(fslot.current, guideActive); hide(row3.current, guideActive);
+  }, [guideActive]);
   return (
-    <div className="m-appbar" role="banner">
+    <div className={`m-appbar${guideActive ? ' guide' : ''}`} role="banner">
+      {guideActive && <window.GuideOffHint/>}
       <div className="m-appbar-top">
-        <div className="m-brandrow">
-          <div className="m-mark"/>
+        <a className="m-brandrow" href="/" onClick={onHome} aria-label={mtr('home.link')}>
+          <span className="m-mark" aria-hidden="true"/>
           <h1 className="m-btitle">{mtr('app.name')}</h1>
-        </div>
+        </a>
         <window.SyncStatus/>
         {onOpenGuides && (
           <button type="button" className={`m-gbtn${guideActive ? ' on' : ''}`} onClick={onOpenGuides}
-            aria-label={mtr('guide.button')} title={mtr('guide.button')}><window.GuideIcon size={18}/></button>
+            aria-label={guideActive && guideName ? mtr('guide.buttonOpen', { name: guideName }) : mtr('guide.button')} title={mtr('guide.button')}><window.GuideIcon size={18}/><span className="m-gbtn-label" aria-hidden="true">{mtr('guide.button')}</span></button>
         )}
         <window.LanguageMenu compact/>
         <window.AccountAvatarButton onOpen={onOpenAccount}/>
@@ -46,16 +62,19 @@ function MobileTopBar({ viewMode, setViewMode, search, setSearch, onPickTitle, o
             ariaLabel={mtr('search.aria')} placeholder={mtr('search.placeholder')} portalTo={searchRow}/></div>
           {search && <button className="m-clear" onClick={()=>setSearch('')} aria-label={mtr('search.clear')}>×</button>}
         </div>
-        <SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir} mobile/>
-        <button className={`m-fpill${filterCount?' act':''}`} onClick={onOpenFilters}
+        <Off off={orderOff}><SortOrderMenu sort={sort} sortDir={sortDir} setSortDir={setSortDir} mobile/></Off>
+        <span className="m-fslot" ref={fslot}><button className={`m-fpill${filterCount?' act':''}`} onClick={onOpenFilters}
           aria-label={filterCount ? mtr('filters.aria', { n: filterCount }) : mtr('filters.title')} title={mtr('filters.title')}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
           {filterCount ? <span className="m-fcount">{filterCount}</span> : null}
-        </button>
+        </button></span>
+        {guideActive && <span className="m-vslot"><ViewMenu viewMode={viewMode} setViewMode={setViewMode}/></span>}
       </div>
-      <div className="m-viewrow">
-        <window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter} variant="compact"/>
-        <ViewMenu viewMode={viewMode} setViewMode={setViewMode}/>
+      <div className="m-row3" ref={row3}>
+        <div className="m-viewrow">
+          <window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter} variant="compact"/>
+          <ViewMenu viewMode={viewMode} setViewMode={setViewMode}/>
+        </div>
       </div>
     </div>
   );
@@ -160,7 +179,7 @@ function ViewMenu({ viewMode, setViewMode }) {
     onBlur={e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
     <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
       aria-label={mtr('view.aria', { label: currentLabel })} onClick={() => setOpen(v => !v)}>
-      <span className="vi" aria-hidden="true">{current[1]}</span>{currentLabel}
+      <span className="vi" aria-hidden="true">{current[1]}</span><span className="vm-label">{currentLabel}</span>
       <svg className="sort-order-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="m6 9 6 6 6-6"/>
@@ -176,9 +195,13 @@ function ViewMenu({ viewMode, setViewMode }) {
   </div>;
 }
 
-function SortTabs({ sort, setSort }) {
+// While a guide is open the bar slides down out of view (the guide has its own
+// order) and comes back when it closes; hidden, it is out of the tab order.
+function SortTabs({ sort, setSort, away = false }) {
+  const ref = React.useRef(null);
+  React.useEffect(() => { if (ref.current) { if (away) ref.current.setAttribute('inert', ''); else ref.current.removeAttribute('inert'); } }, [away]);
   return (
-    <div className="m-sort-footer">
+    <div className={`m-sort-footer${away ? ' away' : ''}`} ref={ref} aria-hidden={away || undefined}>
     <nav className="m-tabs" aria-label={mtr('sort.navAria')}>
       {SORT_TABS.map(([v,ic])=>(
         <button key={v} className={`m-tab${sort===v?' on':''}`} onClick={()=>setSort(v)} aria-pressed={sort===v}>
@@ -272,8 +295,12 @@ function ProgressHeader({ label, color, seen, released, upcoming, band, width, a
   }, []);
   // `width` is the band's real card-row span on the Spatial canvas; everywhere
   // else the header takes the width of whatever it divides.
+  // Meters without a colour of their own (All titles, eras, guides) turn the
+  // "seen" green once complete, so a full meter doesn't read as in progress;
+  // a phase keeps its phase colour.
   const style = {};
   if (color) style['--pm'] = color;
+  else if (released > 0 && seen >= released) style['--pm'] = '#5fa856';
   if (width) style['--pgw'] = width + 'px';
   const styleOrNull = Object.keys(style).length ? style : null;
   // Nothing released in this group yet: a bar would be a lie, so just the label.
@@ -1139,7 +1166,7 @@ const sheetHistory = (() => {
 // `onClose` may return false to stay open (the picker asks before dropping
 // unsaved picks): Back then gets the sheet a new history entry, and a swipe
 // springs back.
-function Sheet({ children, onClose, tall, label, className = '' }) {
+function Sheet({ children, onClose, tall, label, labelledBy, describedBy, className = '' }) {
   const ref = React.useRef(null);
   const closeRef = React.useRef(onClose);
   closeRef.current = onClose;
@@ -1240,7 +1267,7 @@ function Sheet({ children, onClose, tall, label, className = '' }) {
   return (
     <>
       <div className="m-scrim" onClick={onClose} aria-hidden="true"/>
-      <div ref={ref} className={`m-sheet${tall?' tall':''}${className ? ' ' + className : ''}`} role="dialog" aria-modal="true" aria-label={label || mtr('details.label')} tabIndex={-1}>
+      <div ref={ref} className={`m-sheet${tall?' tall':''}${className ? ' ' + className : ''}`} role="dialog" aria-modal="true" aria-label={labelledBy ? undefined : (label || mtr('details.label'))} aria-labelledby={labelledBy} aria-describedby={describedBy} tabIndex={-1}>
         <button className="m-grab" onClick={onClose} aria-label={mtr('details.close')} tabIndex={-1}/>
         <button className="m-sheet-x" onClick={onClose} aria-label={mtr('details.close')} title={mtr('details.close')}>×</button>
         <div className="m-sheet-body">{children}</div>
@@ -1332,7 +1359,9 @@ const TD_SURFACE = {
 // Where to watch closed. Open or closed is kept for the visit, so a section
 // stays as the visitor left it while they move between titles; a reload
 // restores the defaults. Nothing is stored.
-const detailOpen = { cast: true, watch: false };
+// "Part of" (the guides a title belongs to) keeps two states: open while no
+// guide is open, closed while one is, since the banner already says it there.
+const detailOpen = { cast: true, watch: false, guides: true, guidesInGuide: false };
 const detailOpenListeners = new Set();
 function useDetailOpen(key) {
   const [, bump] = React.useReducer(x => x + 1, 0);
@@ -1346,8 +1375,10 @@ function useDetailOpen(key) {
 // watch's Change), and the body. `labelClass` and `bodyClass` keep each
 // surface's existing look (drawer-section-label / cast-list on desktop,
 // m-flab / m-castlist on phones).
-function DetailSection({ id, label, labelClass = '', bodyClass = '', className = '', extra, children }) {
-  const [open, setOpen] = useDetailOpen(id);
+// `stateKey` (default: the id) names the remembered open/closed state, so one
+// section can keep separate states for different contexts.
+function DetailSection({ id, stateKey, label, labelClass = '', bodyClass = '', className = '', extra, children }) {
+  const [open, setOpen] = useDetailOpen(stateKey || id);
   const bodyId = 'td-acc-' + id + '-' + React.useId().replace(/[^a-zA-Z0-9_-]/g, '');
   return (
     <section className={`td-acc td-acc-${id}${open ? ' open' : ''}${className ? ' ' + className : ''}`}>
@@ -1409,6 +1440,7 @@ function TitleDetailsBody({ title, surface, search, headingRef, headingId, cast,
           </div>
         </dl>
         <window.TitleStatusActions title={title} variant="inline" className={`td-tsa ${c.tsa}`}/>
+        {window.GuideDetailsSkip && <window.GuideDetailsSkip title={title}/>}
         <Synopsis title={title} className={`td-synopsis ${c.synopsis}`}/>
         <DetailSlot name="watch" title={title}/>
         <DetailSlot name="guides" title={title}/>
@@ -1455,7 +1487,7 @@ function CastSheet({ title, onClose, onCharacterClick, activeChar, activeChars, 
 }
 
 // Unscaled overlay that "pops" the focused card out of the zoomed canvas so it stays legible
-function FocusPop({ title, x, y, onOpenCast }) {
+function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, onGuideSkip }) {
   const { statusOf } = window.useCollection();
   if (!title) return null;
   const PosterArt = window.PosterArt;
@@ -1474,19 +1506,13 @@ function FocusPop({ title, x, y, onOpenCast }) {
           <div className="m-fp-cta">{mtr('details.tapForCast')}</div>
         </div>
       </button>
-      <window.TitleStatusActions title={title} className="m-fp-tsa"/>
+      {/* In a guide, Skip sits beside Seen and Watchlist; a skipped stop shows
+          Unskip in their place. */}
+      {!(guideSkip && guideSkip.state === 'skipped') && <window.TitleStatusActions title={title} className="m-fp-tsa"/>}
+      {guideSkip && <window.GuideSkipControl guide={guide} info={guideSkip} className="m-fp-skip" onDone={onGuideSkip}/>}
     </div>
   );
 }
 
-function SpatialHint({ focused, sharedCount }) {
-  return (
-    <div className="m-ghint">
-      {focused
-        ? <span><b>{sharedCount}</b> {mtr('canvas.hintShared', { n: sharedCount })} · {mtr('canvas.hintClear')}</span>
-        : <span>{mtr('canvas.hintIdle')}</span>}
-    </div>
-  );
-}
 
-Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, TitleDetailsBody, DetailSection, useDetailOpen, BulkHeaderAction, FocusPop, SpatialHint, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });
+Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, TitleDetailsBody, DetailSection, useDetailOpen, BulkHeaderAction, FocusPop, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });

@@ -1,14 +1,15 @@
+const QA_PORT = +process.env.PORT || 8187; // regress/quick give each check its own port
 const base = require('fs').readFileSync(__dirname + '/test-jit2.js', 'utf8');
 const head = base.slice(0, base.indexOf('(async () => {'));
 eval(head + `
 const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v) { v.posters = {}; this.__m = v; }, get() { return this.__m; } });";
 (async () => {
-  await new Promise(r => server.listen(8187, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const out = {};
   const items = page => page.evaluate(() => [...document.querySelectorAll('.ss-pop > li')].map(li => li.classList.contains('ss-head') ? '# ' + li.textContent : (li.classList.contains('on') ? '> ' : '  ') + li.querySelector('.ss-main').textContent + ' | ' + li.querySelector('.ss-sub').textContent));
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 } }, ART + SEED);
-  await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(2000);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   const box = page.locator('.search-wrap input');
   await box.click(); await box.type('t'); out.oneChar = await items(page);
   await box.type('om'); out.tom = await items(page);
@@ -33,7 +34,7 @@ const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v)
   out.errors = errors; await ctx.close();
   // pt-BR: names in either language
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1100, height: 900 }, locale: 'pt-BR' }, ART + SEED));
-  await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(2000);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   await page.locator('.search-wrap input').click(); await page.locator('.search-wrap input').type('iron');
   out.ptIron = await items(page);
   await page.locator('.search-wrap input').fill(''); await page.locator('.search-wrap input').type('vinga'); out.ptVinga = await items(page);
@@ -41,7 +42,7 @@ const ART = "Object.defineProperty(window, 'MEDIA', { configurable: true, set(v)
   out.ptErrors = errors; await ctx.close();
   // mobile
   ({ ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, ART + SEED));
-  await page.goto('http://127.0.0.1:8187/'); await page.waitForTimeout(1800);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   const mb = page.locator('.m-searchbar input');
   await mb.tap(); await mb.type('tom'); await page.waitForTimeout(300);
   out.mPop = await page.evaluate(() => { const p = document.querySelector('.ss-pop'); if (!p) return null; const r = p.getBoundingClientRect(); return { left: Math.round(r.left), right: Math.round(r.right), vw: innerWidth, n: p.querySelectorAll('.ss-item').length }; });

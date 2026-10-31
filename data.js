@@ -228,7 +228,11 @@ window.MCU_creditRoster = function () {
   return m;
 };
 
-// Approximate production budgets in millions USD (publicly reported figures)
+// Approximate production budgets in millions USD (publicly reported figures).
+// Production totals only: a series is listed only when a figure for that
+// series itself was reported (decision 2026-10-30). The generic "up to $25M
+// per episode" once used for every series was removed, so those read "Not
+// published". Sources and dates: docs/CATALOG-AUDIT.md.
 const BUDGETS = {
   'brand-new-day': 225, // IMDb production estimate; USD millions, checked 2026-10-24.
   'iron-man': 140, 'incredible-hulk': 150, 'iron-man-2': 200, 'thor': 150,
@@ -238,12 +242,20 @@ const BUDGETS = {
   'civil-war': 250, 'doctor-strange': 165, 'gotg-2': 200, 'homecoming': 175,
   'thor-ragnarok': 180, 'black-panther': 200, 'infinity-war': 316,
   'ant-man-wasp': 162, 'captain-marvel': 175, 'endgame': 356, 'far-from-home': 160,
-  'wandavision': 25, 'falcon-winter': 25, 'loki-s1': 20, 'black-widow': 200,
-  'what-if': 25, 'shang-chi': 200, 'eternals': 200, 'hawkeye': 25,
-  'no-way-home': 200, 'ms-marvel': 25, 'multiverse-madness': 200, 'thor-love': 250,
-  'moon-knight': 25, 'she-hulk': 25, 'wakanda-forever': 250,
-  'quantumania': 200, 'gotg-3': 250, 'secret-invasion': 25, 'loki-s2': 25,
-  'marvels': 274.8, 'echo': 40, 'deadpool-3': 200, 'agatha': 40, 'cap-brave': 180,
+  'black-widow': 200,
+  'shang-chi': 200, 'eternals': 200,
+  'no-way-home': 200, 'multiverse-madness': 200, 'thor-love': 250,
+  'wakanda-forever': 250,
+  'quantumania': 200, 'gotg-3': 250,
+  'marvels': 274.8, 'deadpool-3': 200, 'cap-brave': 180,
+  // Series with a reported total of their own (Forbes, from Disney's public UK
+  // filings), checked 2026-10-30.
+  'secret-invasion': 211.6, // final cost, six episodes
+  'echo': 40, // five episodes
+  // Reported production budgets (trade press), checked 2026-10-30; totals,
+  // before marketing, not audited figures. Sources in docs/CATALOG-AUDIT.md.
+  'thunderbolts': 180, // Variety, The Hollywood Reporter, The Numbers
+  'fantastic-four': 200, // Variety (via The Numbers); some outlets estimate more
 };
 TITLES.forEach(t => { t.budget = BUDGETS[t.id] || null; });
 window.BUDGETS = BUDGETS;

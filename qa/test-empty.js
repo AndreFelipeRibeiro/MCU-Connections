@@ -1,4 +1,5 @@
 // Checks saved display preferences (mcu.prefs.v1) on mobile and desktop.
+const QA_PORT = +process.env.PORT || 8191; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -24,7 +25,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const URL = 'http://127.0.0.1:8191/';
+const URL = 'http://127.0.0.1:' + QA_PORT + '/';
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
@@ -47,11 +48,11 @@ async function ctxPage(browser, opts, init) {
   });
   return { ctx, page, errors };
 }
-const settle = page => page.waitForTimeout(2200);
+const settle = page => require('./ready').appReady(page);
 const go = async page => { await page.goto(URL); await settle(page); };
 const reload = async page => { await page.reload(); await settle(page); };
 (async () => {
-  await new Promise(r => server.listen(8191, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const R = {};
   const panel = p => p.evaluate(() => { const e = document.querySelector('.spatial-empty'); if (!e) return null; const r = e.getBoundingClientRect(); const b = e.querySelector('button'); return { text: e.textContent, btn: b && b.textContent, box: [r.left|0, r.top|0, r.width|0, r.height|0], vw: innerWidth }; });
@@ -80,13 +81,12 @@ const reload = async page => { await page.reload(); await settle(page); };
   {
     const { ctx, page, errors } = await ctxPage(browser, { ...MOBILE, locale: 'pt-BR' }, "localStorage.setItem('mcu.welcome.v1','test');localStorage.setItem('mcu.prefs.v1', JSON.stringify({version:1, viewMode:'spatial'}));");
     await go(page);
-    R.mHintBefore = await page.locator('.m-ghint').count();
     const mb = page.locator('.m-searchbar input');
     await mb.fill('zzzz'); await page.mouse.click(10, 500); await page.waitForTimeout(500);
-    R.mSearch = await panel(page); R.mHint = await page.locator('.m-ghint').count();
+    R.mSearch = await panel(page);
     await page.screenshot({ path: 'shots/empty-phone.png' });
     await page.locator('.spatial-empty-btn').tap(); await page.waitForTimeout(800);
-    R.mAfter = { panel: await panel(page), cards: await page.locator('.canvas .card').count(), hint: await page.locator('.m-ghint').count(), value: await mb.inputValue() };
+    R.mAfter = { panel: await panel(page), cards: await page.locator('.canvas .card').count(), value: await mb.inputValue() };
     R.mErrors = errors; await ctx.close();
   }
   console.log(JSON.stringify(R, null, 1));

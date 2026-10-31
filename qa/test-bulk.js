@@ -1,3 +1,4 @@
+const QA_PORT = +process.env.PORT || 8222; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -23,7 +24,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
 });
-const URL = 'http://127.0.0.1:8222/';
+const URL = 'http://127.0.0.1:' + QA_PORT + '/';
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
@@ -46,7 +47,7 @@ async function ctxPage(browser, opts, init) {
   });
   return { ctx, page, errors };
 }
-const settle = page => page.waitForTimeout(2200);
+const settle = page => require('./ready').appReady(page);
 const go = async page => { await page.goto(URL); await settle(page); };
 
 // Bulk marking: desktop List selection and its bar, phone section headers,
@@ -68,14 +69,14 @@ const SPY = `(() => {
 })();`;
 
 (async () => {
-  await new Promise(r => server.listen(8222, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const R = {}; const errors = [];
 
   // Iron Man starts on the Watchlist, so Undo has a replaced watchlist to restore.
   const { page } = await ctxPage(browser, DESKTOP, seed({ 'iron-man': 'watchlist' }) + SPY);
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-  await page.goto(URL + '?view=list'); await page.waitForTimeout(2600);
+  await page.goto(URL + '?view=list'); await require('./ready').appReady(page);
   const st = () => page.evaluate((k) => JSON.parse(localStorage.getItem(k) || '{"states":{}}').states, KEY);
 
   // ---- Selecting ----------------------------------------------------------
@@ -187,7 +188,7 @@ const SPY = `(() => {
 
   // ---- Phones: the section header action ----------------------------------
   const { page: m } = await ctxPage(browser, MOBILE, seed({}) + SPY);
-  await m.goto(URL + '?sort=phase'); await m.waitForTimeout(2600);
+  await m.goto(URL + '?sort=phase'); await require('./ready').appReady(m);
   R.phone = await m.evaluate(async () => {
     const p1div = [...document.querySelectorAll('.m-phase-divider')].find(d => /Phase 1/i.test(d.textContent));
     const btn = p1div && p1div.querySelector('.pgh-action');
@@ -209,7 +210,7 @@ const SPY = `(() => {
     if (R.phone.buttonAfter) errors.push(`the Phase 1 header still offers "${R.phone.buttonAfter}" with nothing left to mark`);
   }
   // Release order: one All titles header; more than 20 to mark, so it asks.
-  await m.goto(URL); await m.waitForTimeout(2600);
+  await m.goto(URL); await require('./ready').appReady(m);
   R.phoneAll = await m.evaluate(async () => {
     const btn = document.querySelector('.m-phase-divider.overall .pgh-action');
     if (!btn) return { error: 'no action on the All titles header' };
@@ -239,7 +240,7 @@ const SPY = `(() => {
   // more seen" is the phones' button, marking only that phase's released,
   // unseen titles, with one announcement and Undo.
   const { page: d } = await ctxPage(browser, DESKTOP, seed({ 'iron-man-3': 'seen' }) + SPY);
-  await d.goto(URL + '?view=list&sort=phase'); await d.waitForTimeout(2800);
+  await d.goto(URL + '?view=list&sort=phase'); await require('./ready').appReady(d);
   R.deskPhase = await d.evaluate(async () => {
     const wait = (ms) => new Promise(r => setTimeout(r, ms));
     // Found by its checkbox's name: the visible text runs "PHASE 2" into "1/11".
@@ -292,7 +293,7 @@ const SPY = `(() => {
   }
   // Release order: the All titles meter carries the button too (over 20, so
   // it asks first).
-  await d.goto(URL + '?view=list'); await d.waitForTimeout(2800);
+  await d.goto(URL + '?view=list'); await require('./ready').appReady(d);
   R.deskAll = await d.evaluate(() => {
     const btn = document.querySelector('.dl-phase-divider.lead .pgh-action');
     return { label: btn && btn.textContent.trim(), phaseChecks: document.querySelectorAll('.dl-phase-label .dl-check').length };

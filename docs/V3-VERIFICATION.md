@@ -465,3 +465,11 @@ details rung this rewrote, still passes.
   axe-core scan, not by eye in a real browser at 320px.
 - `test-camera`'s own flake was identified but not fixed; its "wheel cancels
   the glide" and mobile selection steps remain timing-sensitive.
+
+## After Batch 4 (noted 2026-10-30)
+
+This log stops at Batch 4 (2026-10-28), by decision. From Batch 5 on, each
+batch's verification (the checks run, what was looked at in a real browser
+and the limits) is recorded on its Notion V3 Tasks tickets and in
+[CHANGELOG.md](../CHANGELOG.md); the checks themselves are described in
+[qa/README.md](../qa/README.md).

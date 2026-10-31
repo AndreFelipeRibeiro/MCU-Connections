@@ -3,14 +3,27 @@
 Written 2026-10-28 when development moved from a Claude chat session to Claude
 Code. Codex continues to contribute; [AGENTS.md](../AGENTS.md) is the shared
 rulebook and [decisions.md](decisions.md) the running decision log. This file is
-the current handoff; the "Handoff — 2026-10-24" sections in `V3-SPEC.md`,
-`V3-TASKS.md` and `KICKOFF-PROMPT.md` are historical.
+the current handoff. `V3-SPEC.md`, `V3-TASKS.md` and `KICKOFF-PROMPT.md` are
+the original V3 plan, kept as history (each says so at the top). Updated
+2026-10-30 after Batch 9.
 
 ## Where things stand
 
 - Production (`main`) and staging (`version/3.0`) are at the same commit, the
-  merge of Batch 6 (2026-10-28; `git log -1 main` names it). Batches 4–6
-  shipped on 2026-10-28:
+  merge of Batch 9 (`0bc6e5a`, 2026-10-30; `git log -1 main` names it).
+  Batch 10 is in progress in the working tree (Notion shows its tickets).
+- Batches 7–9 shipped on 2026-10-29 and 2026-10-30 (details in CHANGELOG.md):
+  - **Batch 7:** release status (Released, Coming with a date, Expected by
+    month) and a Released-only filter; the desktop List's All titles header
+    made valid for screen readers; shareable links; marking many titles at
+    once; the full check run once per batch.
+  - **Batch 8:** quieter List checkboxes; the progress meter above the List's
+    column headers; the same title details on desktop and phones; Where to
+    watch by country; collapsible details sections; Up next.
+  - **Batch 9:** selecting or marking a whole phase in the desktop List;
+    curated watch guides; "What have you seen?" for first visits; arrow keys
+    in the desktop List and Guides.
+- Batches 4–6 shipped on 2026-10-28:
   - **Batch 4:** "Lançamento" in Portuguese; the guest sign-in reminder after
     Undo; character-variant scope; search picks open the character widget;
     Escape closes it; regression reporting; Spatial touch on wide screens; the
@@ -32,9 +45,8 @@ the current handoff; the "Handoff — 2026-10-24" sections in `V3-SPEC.md`,
   - **Batch 3:** WCAG AA contrast; page landmarks and List column labels; Escape
     and keyboard focus in desktop details; favicon, home-screen icon and link
     previews; Spatial cards reachable from the keyboard.
-- The Notion V3 Tasks board matches: nothing In progress or Awaiting review.
-  Batch 7 is queued (bulk select, suggest what to watch next, shareable URLs,
-  first-visit picker, where-to-watch links, release status).
+- The Notion V3 Tasks board is the live record of what is in progress,
+  awaiting review or queued.
 
 ## Architecture in short
 
@@ -160,9 +172,11 @@ work:
 
 `qa/` holds the headless Playwright checks used throughout V3, curated
 (qa/README.md lists them):
-- the regression run (`bash qa/regress.sh`: 34 check scripts in 35 runs,
-  about 28 minutes) and the axe-core accessibility scan
-  (`node qa/a11y-scan.js`), both run once per batch before staging;
+- the regression run (`bash qa/regress.sh`, which includes the axe-core
+  accessibility scan in both languages; about 5–6 minutes, 4 checks at a time;
+  qa/README.md gives the current count), once per batch before staging;
+- `bash qa/quick.sh <check>` per ticket (the checks for the files changed);
+- `node qa/smoke.js` against the deployed site after each push and merge;
 - a startup timing check;
 - one targeted check per recent fix, run per ticket before review.
 
@@ -172,8 +186,11 @@ locally. They do not replace a look in a real browser and on a real phone.
 
 ## Open threads and what's next
 
-- **Backlog** (Notion, in the user's board order). At handoff it held the
-  following, not in priority order:
+- **Backlog:** the Notion board, in the user's order, is the live list. The
+  items below were recorded at handoff on 2026-10-28. All have since shipped
+  except the budget audit and the planning-document reconciliation (both in
+  Batch 10) and "Expose selected filter states and group labels", which is no
+  longer on the board:
   - Align character-variant scope, counts and browsing (for example "Peter
     Parker (Raimi)" says 1 title but opens all 13).
   - Correct per-title actor and voice-performer credits; Cast (movie vs
@@ -191,8 +208,10 @@ locally. They do not replace a look in a real browser and on a real phone.
     V3 planning documents with the app.
 - **Decisions waiting on the user:**
   - Which preferences sync across devices.
-  - How variant characters should behave.
-  - A wider first Spatial view on desktop.
+  - ~~How variant characters should behave~~: decided 2026-10-28 (one exact
+    portrayal; see decisions.md).
+  - ~~A wider first Spatial view on desktop~~: dropped 2026-10-30 (not to be
+    built).
 - **Deferred:**
   - Phase 6 email/password accounts (needs a custom domain, a plan and
     approval).
@@ -200,11 +219,13 @@ locally. They do not replace a look in a real browser and on a real phone.
   - V4 tooling: the move to a build step (Notion "V4 - Tooling and build
     step"). Plan it together with the V4 design pass so tokens and components
     come from the design system.
-  - Feature ideas in the Deferred column: shareable URLs, "what to watch next",
-    watch guides and catch-up paths, Coming Soon, where to watch, character
-    journeys, title comparison, spoiler-aware browsing, installable app and
-    offline catalog, Spanish, collection backups, a first-visit walkthrough,
-    community features.
+  - Ideas in the Deferred column (as of 2026-10-30): a first-landing
+    walkthrough, contextual guidance for Spatial and character browsing,
+    spoiler-aware browsing, an installable app and offline catalog, Spanish,
+    collection backups, community features, and deciding which preferences
+    sync across devices. (Shareable URLs, Up next, watch guides, where to
+    watch and the first-visit "What have you seen?" picker have shipped; the
+    guide promotion is in Batch 10.)
 - **Design pass.** The user is a designer and wants a Figma round trip: take the
   running app into Figma, refine the art direction and design system, then bring
   it back to code for V4 on the new build setup. The tokens and standards in

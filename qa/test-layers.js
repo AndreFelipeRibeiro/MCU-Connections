@@ -29,7 +29,7 @@ const MENUS = {
   const out = {}; globalThis.__o = out;
   for (const vw of [1440, 1100]) {
     let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: vw, height: 900 } }, ART + SEED);
-    await page.goto('http://127.0.0.1:' + PORT + '/'); await page.waitForTimeout(2000);
+    await page.goto('http://127.0.0.1:' + PORT + '/'); await require('./ready').appReady(page);
     // details open + character pinned
     await page.fill('.search-wrap input', 'Iron Man'); await page.waitForTimeout(400);
     await page.locator('.ss-item', { hasText: 'Iron Man' }).first().click(); await page.waitForTimeout(1200);
@@ -59,7 +59,7 @@ const MENUS = {
   }
   // mobile
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, ART + SEED);
-  await page.goto('http://127.0.0.1:' + PORT + '/'); await page.waitForTimeout(1800);
+  await page.goto('http://127.0.0.1:' + PORT + '/'); await require('./ready').appReady(page);
   await page.locator('.m-lrow-open', { hasText: 'Iron Man' }).first().tap(); await page.waitForTimeout(700);
   await page.locator('.m-crow', { hasText: 'Tony Stark' }).tap(); await page.waitForTimeout(900);
   for (const view of ['list', 'spatial']) {

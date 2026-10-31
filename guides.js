@@ -9,7 +9,11 @@
 // Fields: `group` places the guide in the Guides menu (coming, stories,
 // characters, animation); `short` is the name on the pill and the meter;
 // `color` tints its art; `done` is the line shown when every essential stop is
-// seen; event guides name their unreleased `target`.
+// seen; event guides name their unreleased `target`. Any other guide can name
+// the upcoming title it prepares for with `preparesFor`: from 60 days before
+// that title's release (or the target's), the guide is promoted to returning
+// visitors. One guide is `evergreen`: promoted when nothing is coming up.
+// A Secret Wars guide added later as an event guide needs no code.
 //
 // Rules for editing:
 //   - Ids are permanent: they are used in addresses (?guide=) and progress.
@@ -69,6 +73,7 @@ window.GUIDES = [
     id: 'infinity-saga',
     group: 'stories',
     color: '#7a4060',
+    evergreen: true,
     short: { en: 'Infinity Saga', 'pt-BR': 'Saga do Infinito' },
     kind: 'arc',
     reviewed: '2026-10-29',
@@ -164,6 +169,7 @@ window.GUIDES = [
     id: 'animated',
     group: 'animation',
     color: '#a06030',
+    preparesFor: 'friendly-spidey-s2',
     short: { en: 'Animated series', 'pt-BR': 'Séries animadas' },
     kind: 'arc',
     reviewed: '2026-10-29',

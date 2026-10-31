@@ -1,3 +1,4 @@
+const QA_PORT = +process.env.PORT || 8212; // regress/quick give each check its own port
 const base = require('fs').readFileSync(__dirname + '/test-jit2-env.js', 'utf8');
 const head = base.slice(0, base.indexOf('(async () => {'));
 eval(head + `
@@ -17,12 +18,12 @@ const probe = (page) => page.evaluate(() => new Promise(res => requestAnimationF
 }, 60))));
 const settled = (page) => page.evaluate(() => ({ layer: !!document.querySelector('.m-flip-layer'), running: document.getAnimations().filter(a => a.playState === 'running' && a.id === 'm-flip').length }));
 (async () => {
-  await new Promise(r => server.listen(8212, r));
+  await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
   const NOWELCOME = "try { localStorage.setItem('mcu.welcome.v1', 'test'); } catch (e) {}";
   const out = {};
   let { ctx, page, errors } = await ctxPage(browser, { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 }, NOWELCOME + ART + SEED);
-  await page.goto('http://127.0.0.1:8212/'); await page.waitForTimeout(1800);
+  await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
   // pill padding: right gap between text end and pill edge, per label
   const pads = () => page.evaluate(() => [...document.querySelectorAll('.connection-labels g')].map(g => { const r = g.querySelectorAll('rect')[1].getBBox(), t = g.querySelector('text').getBBox();
     return { name: g.querySelector('text').textContent, right: Math.round(r.x + r.width - (t.x + t.width)), left: Math.round(t.x - r.x) }; }));

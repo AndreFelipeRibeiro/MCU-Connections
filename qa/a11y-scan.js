@@ -15,7 +15,7 @@ const scan = async (page, name, out) => {
   const browser = await chromium.launch();
   const out = {};
   const LOCALE = process.env.LOC || 'en-US'; const D = { viewport: { width: 1440, height: 900 }, locale: LOCALE }, M = { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true, locale: LOCALE };
-  const open = async (opts, prefs, q = '') => { const x = await ctxPage(browser, opts, NOWELCOME + ART + SEED + "localStorage.setItem('mcu.prefs.v1', '" + JSON.stringify(prefs) + "');"); await x.page.goto('http://127.0.0.1:' + PORT + '/' + q); await x.page.waitForTimeout(3500); return x; };
+  const open = async (opts, prefs, q = '') => { const x = await ctxPage(browser, opts, NOWELCOME + ART + SEED + "localStorage.setItem('mcu.prefs.v1', '" + JSON.stringify(prefs) + "');"); await x.page.goto('http://127.0.0.1:' + PORT + '/' + q); await require('./ready').appReady(x.page, 1200); return x; };
   let x = await open(D, {version:1, viewMode:'list', desktopView:'spatial', sort:'release'});
   await scan(x.page, 'desktop spatial', out);
   const c = await x.page.evaluate(() => { const r = [...document.querySelectorAll('.card')].map(c => c.getBoundingClientRect()).find(r => r.left > 50 && r.top > 200 && r.right < 1000 && r.bottom < 850); return { x: r.left + r.width / 2, y: r.top + r.height * 0.8 }; });
@@ -37,6 +37,10 @@ const scan = async (page, name, out) => {
   await scan(x.page, 'desktop guide', out);
   await x.page.locator('.g-btn').click(); await x.page.waitForTimeout(500);
   await scan(x.page, 'desktop guides popover', out);
+  await x.ctx.close();
+  // The guide's module floating over desktop Spatial.
+  x = await open(D, {version:1, viewMode:'list', desktopView:'spatial', sort:'release'}, '?guide=before-doomsday');
+  await scan(x.page, 'desktop guide spatial', out);
   await x.ctx.close();
   // "What have you seen?": the desktop dialog and the phone sheet, opened
   // from the account menu with some titles already seen.
@@ -61,6 +65,18 @@ const scan = async (page, name, out) => {
   x = await open(M, {version:1, viewMode:'spatial', desktopView:'list', sort:'release'});
   await scan(x.page, 'phone spatial', out);
   await x.ctx.close();
+  // The guide promotion (Option C) on desktop and phone, on a fixed date inside
+  // Doomsday's window. The app offers none to automated browsers, so the scan
+  // clears navigator.webdriver for these two.
+  const PERSON = "Object.defineProperty(navigator, 'webdriver', { get: () => false });";
+  for (const [opts, name] of [[D, 'desktop guide promotion'], [M, 'phone guide promotion']]) {
+    x = await ctxPage(browser, opts, NOWELCOME + ART + SEED + PERSON);
+    await x.page.clock.setFixedTime(new Date('2026-11-01T12:00:00'));
+    await x.page.goto('http://127.0.0.1:' + PORT + '/'); await x.page.waitForTimeout(4200);
+    out[name + ' shown'] = (await x.page.locator('.gp').count()) ? [] : [{ id: 'promotion-missing', impact: 'critical', n: 1, help: 'the promotion did not appear', sample: [] }];
+    await scan(x.page, name, out);
+    await x.ctx.close();
+  }
   console.log(JSON.stringify(out, null, 1));
   await browser.close(); server.close();
   // A violation fails the run. This scan used to exit 0 whatever it found, so a

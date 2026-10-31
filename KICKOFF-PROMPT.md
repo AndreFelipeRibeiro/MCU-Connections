@@ -1,5 +1,9 @@
 # Kickoff prompt
 
+> **History (noted 2026-10-30).** This prompt started the original V3 build
+> and is kept as a record. To start or resume work now, follow
+> [AGENTS.md](AGENTS.md) "Start of every session". For the app, see [README.md](README.md); for where things stand, [docs/HANDOFF.md](docs/HANDOFF.md); for decisions, [docs/decisions.md](docs/decisions.md); for working rules, [AGENTS.md](AGENTS.md). The backlog is the Notion V3 Tasks board.
+
 ## Handoff — 2026-10-24 (historical; current: docs/HANDOFF.md)
 
 Phases 1–5 were initially released to `main` at `1f79b74`.
@@ -102,6 +106,8 @@ Same text works. Two adjustments:
 
 - Codex is more likely to reach for a build step or npm on its own. Restate rule
   2 if you see it creating a `package.json`.
+  > *Superseded 2026-10-28 (`31b9d25`):* `qa/` has a `package.json` on purpose
+  > (development-only checks). The app itself still has none.
 - Ask it to show you the diff for the `mobile.jsx` button refactor (task 1.3)
   before it moves on — that's the change most likely to quietly break tap
   handling.
@@ -113,6 +119,9 @@ For later phases, replace rule 1 with:
 > Phases 1–N are done and committed. Read `V3-SPEC.md` and `V3-TASKS.md`, check
 > the current state of the code against what Phase N claims to have landed, then
 > give me a plan for Phase N+1 and wait for my go-ahead.
+
+*Superseded 2026-10-28 (`e3d40d2`):* resuming now follows AGENTS.md "Start of
+every session" and the Notion board, not the phase list.
 
 
 When the next phase is Phase 6, explicitly say that email/password work is

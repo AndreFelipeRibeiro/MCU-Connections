@@ -1,5 +1,9 @@
 # MCU Connections V3 — Phased Task Breakdown
 
+> **History (noted 2026-10-30).** This checklist planned the original V3
+> build (2026-10-24) and is a read-only archive. Work is now tracked on the
+> Notion V3 Tasks board. For how the app works now, see [README.md](README.md); for where things stand, [docs/HANDOFF.md](docs/HANDOFF.md); for decisions, [docs/decisions.md](docs/decisions.md); for working rules, [AGENTS.md](AGENTS.md).
+
 Companion to `V3-SPEC.md`. Section references below (§) point into that file.
 
 Ground rule: **each phase ends in a working, committed, manually verified
