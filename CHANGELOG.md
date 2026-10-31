@@ -12,6 +12,70 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V3 feature — guides, phone Spatial and celebrations (Batch 10)
+
+Recorded: 2026-10-30 23:54 EDT (-0400). Pushed to `version/3.0` (staging). ([`43247ea`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/43247ea1bd01527c97259bd9869405ce2dbf783e))
+
+- Guides: skip a stop and bring it back from the List, the Grid, the details
+  or a Spatial card; the view options a guide doesn't use are dimmed with a
+  tooltip; a completed guide turns green and bursts confetti every time it
+  completes; "Part of" in the details folds; a guide leading to a coming
+  release is offered once to returning visitors.
+- Desktop guide module: one card heads the guide List (the guide and its
+  blurb, progress segments, the next stop with Seen and Open, Include
+  optional, Mark N more seen, the stepper and ×) and one row floats over
+  Spatial. Seen stops are compact rows on desktop and phones.
+- Phones: one guide dock at the bottom and a shorter top bar; the List keeps
+  its last card clear of the dock; the arrows step on to the destination.
+  Spatial opens on Up next once anything is Seen, at one card size in every
+  order; a guide opens on its next stop at 85%; the zoom control shows only
+  while zooming; the instruction line is gone.
+- Closing a title's details lands on that title (a title opened from Up next
+  is centred, with no ring left behind). Confetti bursts from the toast's
+  edges, aligned with it when the details are open; All titles progress
+  turns green when complete. The logo goes back home; titles not yet out
+  hide Seen.
+- Verified: `bash qa/regress.sh` on the final tree, 44 check runs clean in
+  5m43s with both accessibility scans clean; checked in the in-app browser on
+  desktop and a phone-sized viewport, English and Portuguese. Limits: not
+  checked on a real iPhone or in Safari itself.
+
+## V3 maintenance — faster QA checks
+
+Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging). ([`fb64cea`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/fb64cead2ff69f3ecac22c14282d400dfff322fe))
+
+- Checks run four at a time on their own ports, with the app's scripts
+  pre-compiled once and a ready signal instead of fixed sleeps. `qa/quick.sh`
+  runs a ticket's check plus those mapped to the changed files
+  (`qa/checks.json`); `qa/smoke.js` checks a deployed site.
+- Measured: the full run with both accessibility scans went from about 24
+  minutes to 5m43s; a typical ticket's checks from about 5.5 to about 1.5
+  minutes.
+
+## V3 maintenance — reconcile the V3 planning documents
+
+Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging). ([`a643831`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/a6438317b39165ece06b1333c0afbc8e4d1dd714))
+
+- `V3-SPEC.md`, `V3-TASKS.md` and `KICKOFF-PROMPT.md` open with a note that
+  they are history; lines that no longer hold carry dated Superseded notes.
+  The handoff and decisions record the current state and open questions.
+
+## V3 maintenance — stop loading connections.jsx
+
+Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging). ([`60642d0`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/60642d0f74e5829ec55bca7888158cd53d791ab3))
+
+- The unused early line layer is no longer fetched and compiled at startup;
+  the file stays for reference. Verified by the full check run.
+
+## V3 fix — audit unknown catalog budgets
+
+Recorded: 2026-10-30 23:53 EDT (-0400). Pushed to `version/3.0` (staging). ([`ec6f5bf`](https://github.com/AndreFelipeRibeiro/MCU-Connections/commit/ec6f5bfee5519c8c4749e1bdece87d56cae51f92))
+
+- Series no longer show the generic per-episode figure: only series with a
+  reported total of their own (Secret Invasion, Echo) list one; the rest read
+  "Not published". Thunderbolts* and The Fantastic Four: First Steps gain
+  reported budgets. Sources and dates in `docs/CATALOG-AUDIT.md`.
+
 ## V3 improvement — move through the desktop List with the arrow keys
 
 Recorded: 2026-10-30 08:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
