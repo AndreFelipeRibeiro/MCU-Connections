@@ -10,6 +10,10 @@
 // testing (an incognito window also counts as a first visit).
 const WELCOME_KEY = 'mcu.welcome.v1';
 const RETURNING_KEYS = ['mcu.prefs.v1', 'mcu.lang.v1', 'mcu.collection.v1', 'mcu.auth.v1'];
+// A returning visitor: this browser has been here before (the welcome was
+// already decided on an earlier visit, or it holds earlier history). Guide
+// promotions are for them only, never for a first visit.
+let returningVisit = false;
 function decideWelcome() {
   try {
     const url = new URL(window.location.href);
@@ -19,9 +23,10 @@ function decideWelcome() {
       return true;
     }
     const ls = window.localStorage;
-    if (ls.getItem(WELCOME_KEY)) return false;
+    if (ls.getItem(WELCOME_KEY)) { returningVisit = true; return false; }
     const returning = RETURNING_KEYS.some(k => ls.getItem(k) !== null);
     ls.setItem(WELCOME_KEY, returning ? 'returning' : 'shown');
+    returningVisit = returning;
     return !returning;
   } catch (e) {
     // No storage: it couldn't be remembered, so don't show it on every visit.
@@ -29,6 +34,7 @@ function decideWelcome() {
   }
 }
 window.MCU_WELCOME = decideWelcome();
+window.MCU_RETURNING = returningVisit;
 
 function AboutIcon({ kind }) {
   const common = { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
@@ -97,7 +103,7 @@ function AboutContent({ titleId, welcome, onClose, onPick }) {
 
 // Desktop dialog shell, shared by About and the sign-in reminder: scrim,
 // focus kept inside, Escape or × closes, focus returns to whatever opened it.
-function ModalDialog({ onClose, labelledBy, className = '', children }) {
+function ModalDialog({ onClose, labelledBy, describedBy, className = '', children }) {
   const tr = window.MCU_I18N.tr;
   const ref = React.useRef(null);
   const closeRef = React.useRef(onClose);
@@ -132,7 +138,7 @@ function ModalDialog({ onClose, labelledBy, className = '', children }) {
   return (
     <>
       <div className="about-scrim" onClick={onClose} aria-hidden="true"/>
-      <div ref={ref} className={`about-dialog${className ? ' ' + className : ''}`} role="dialog" aria-modal="true" aria-labelledby={labelledBy} tabIndex={-1}>
+      <div ref={ref} className={`about-dialog${className ? ' ' + className : ''}`} role="dialog" aria-modal="true" aria-labelledby={labelledBy} aria-describedby={describedBy} tabIndex={-1}>
         <button className="about-x" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}>×</button>
         {children}
       </div>

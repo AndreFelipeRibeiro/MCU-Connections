@@ -40,33 +40,68 @@ function completedMilestoneBulk(e) {
   return null;
 }
 
-// Lightweight confetti on a full-screen canvas that removes itself. `palette`
-// (optional) replaces the phase colours: a finished guide bursts in greens.
+// The space a celebration belongs to: the window, less the desktop details
+// drawer when it is open (phones show details in a sheet, so they keep the
+// full width). The toast centres in it and the confetti stays inside it, so
+// the two line up whether or not the details are open.
+function celebrationArea() {
+  const drawer = document.querySelector('.drawer.open');
+  const right = drawer ? Math.round(drawer.getBoundingClientRect().width) : 0;
+  return { width: Math.max(0, window.innerWidth - right) };
+}
+
+// Lightweight confetti on a canvas over the celebration area that removes
+// itself. The two bursts start just inside the toast's ends, under it (the
+// toast sits above the canvas), so they seem to come from behind it and fan
+// out up and away; a toast at the top (a phone sheet is open) sends them down.
+// With no toast on screen they rise from a quarter and three quarters across
+// the bottom. `palette` (optional) replaces the phase colours: a finished
+// guide bursts in greens.
 function burstConfetti(palette) {
   if (reducedMotion()) return;
   const canvas = document.createElement('canvas');
   canvas.className = 'mcu-confetti';
   canvas.setAttribute('aria-hidden', 'true');
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const W = window.innerWidth, H = window.innerHeight;
+  const W = celebrationArea().width || window.innerWidth, H = window.innerHeight;
   canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
   if (!ctx) { canvas.remove(); return; }
   ctx.scale(dpr, dpr);
   const colors = palette && palette.length ? palette : Object.values(window.PHASE_COLORS || {}).concat(['#5fa856', '#d4a05a', '#ffffff']);
   const parts = [];
-  [[0.25, -1], [0.75, 1]].forEach(([x, side]) => {
-    for (let i = 0; i < 70; i++) {
-      const a = (-90 + side * (8 + Math.random() * 30)) * Math.PI / 180;
-      const v = 9 + Math.random() * 9;
-      parts.push({ x: W * x, y: H + 10, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 1.35, w: 6 + Math.random() * 6, h: 4 + Math.random() * 6,
-        r: Math.random() * 6, vr: (Math.random() - .5) * 0.4, c: colors[(Math.random() * colors.length) | 0] });
-    }
-  });
+  // Called once the toast has rendered (it usually has by the first frame).
+  const launch = () => {
+    const toast = document.querySelector('.mcu-toast');
+    const r = toast ? toast.getBoundingClientRect() : null;
+    const fromToast = !!(r && r.width > 0);
+    // A full-width toast (phones) starts the bursts further in and aims them
+    // higher, or most of the confetti would leave the screen at once.
+    const wide = fromToast && r.width > W * 0.7;
+    const inset = !fromToast ? 0 : wide ? r.width * 0.16 : Math.min(26, r.width * 0.1);
+    const down = fromToast && r.top + r.height / 2 < H / 2;
+    const y0 = fromToast ? r.top + r.height / 2 : H + 10;
+    const ends = fromToast ? [r.left + inset, r.right - inset] : [W * 0.25, W * 0.75];
+    // Where it started, for the QA checks.
+    canvas.dataset.origin = [ends[0], ends[1], y0].map(Math.round).join(',');
+    [[ends[0], -1], [ends[1], 1]].forEach(([x0, side]) => {
+      for (let i = 0; i < 70; i++) {
+        const spread = (wide ? 4 : 10) + Math.random() * (wide ? 24 : fromToast ? 45 : 30);
+        const a = (down ? 90 - side * spread : -90 + side * spread) * Math.PI / 180;
+        const v = fromToast ? 6 + Math.random() * 8 : 9 + Math.random() * 9;
+        parts.push({ x: x0 + (Math.random() - .5) * 10, y: y0 + (fromToast ? (Math.random() - .5) * r.height * .6 : 0),
+          vx: Math.cos(a) * v, vy: Math.sin(a) * v * 1.35, w: 6 + Math.random() * 6, h: 4 + Math.random() * 6,
+          r: Math.random() * 6, vr: (Math.random() - .5) * 0.4, c: colors[(Math.random() * colors.length) | 0] });
+      }
+    });
+  };
+  let tries = 0;
   const start = performance.now();
   const frame = (now) => {
     const t = now - start;
+    if (!parts.length && (document.querySelector('.mcu-toast') || ++tries > 3)) launch();
     ctx.clearRect(0, 0, W, H);
     parts.forEach(p => {
       p.vy += 0.32; p.vx *= 0.99; p.vy *= 0.99;
@@ -94,9 +129,7 @@ function toastPlacement(touch) {
     });
     return { bottom: (window.innerHeight - edge + 10) + 'px' };
   }
-  const drawer = document.querySelector('.drawer.open');
-  const right = drawer ? drawer.getBoundingClientRect().width : 0;
-  return { bottom: '24px', left: ((window.innerWidth - right) / 2) + 'px' };
+  return { bottom: '24px', left: (celebrationArea().width / 2) + 'px' };
 }
 
 function StatusToast({ touch }) {

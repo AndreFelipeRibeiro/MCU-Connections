@@ -31,6 +31,21 @@ function isReleased(title, today) {
   return /^\d{4}-\d{2}-\d{2}$/.test(title.release) && title.release <= (today || todayISO());
 }
 
+// Whether the Seen button is offered: from 7 days before a day-precision
+// release date (early screenings and premieres), and always once released.
+// A month-only date never opens it. Worked out from today's date on every
+// render, so it switches on by itself. Progress and Up next still wait for
+// the release day (isReleased).
+const MARK_SEEN_LEAD_DAYS = 7;
+function canMarkSeen(title, today) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(title.release)) return false;
+  const [y, m, d] = title.release.split('-').map(Number);
+  const open = new Date(Date.UTC(y, m - 1, d - MARK_SEEN_LEAD_DAYS));
+  const pad = (n) => String(n).padStart(2, '0');
+  const opensOn = `${open.getUTCFullYear()}-${pad(open.getUTCMonth() + 1)}-${pad(open.getUTCDate())}`;
+  return opensOn <= (today || todayISO());
+}
+
 // Taps on the seen/watchlist buttons, for the celebration toast and confetti
 // (celebrate.jsx). Only user actions are announced, never sync or merges.
 const statusListeners = new Set();
@@ -795,6 +810,10 @@ function TitleStatusActions({ title, variant, className }) {
   const busy = pendingOf(title.id);
   const error = errorOf(title.id);
   const inline = variant === 'inline';
+  // Not out yet (and not within a week of release): no Seen button, only the
+  // Watchlist one. A title already marked seen keeps it, so it can be
+  // unmarked. Overlays keep the empty slot so rows and cards don't shift.
+  const offerSeen = seen || canMarkSeen(title);
 
   // The desktop Card starts a drag on mousedown and then decides "was that a
   // click?" by comparing mousedown/click coordinates. Stopping only the click
@@ -826,7 +845,8 @@ function TitleStatusActions({ title, variant, className }) {
   return (
     <div className={cls} onMouseDown={swallow} onClick={swallow} onTouchStart={swallow}
          title={error ? window.MCU_I18N.tr('status.notSaved', { error }) : undefined}>
-      <button
+      {!offerSeen && !inline && <span className="tsa-btn seen tsa-gap" aria-hidden="true"/>}
+      {offerSeen && <button
         type="button"
         className={`tsa-btn seen${seen ? ' on' : ''}${pop === 'seen' ? ' pop' : ''}`}
         onAnimationEnd={(e) => { if (e.animationName === 'tsa-ring') setPop(null); }}
@@ -840,7 +860,7 @@ function TitleStatusActions({ title, variant, className }) {
       >
         <CheckIcon/>
         {inline && <span className="tsa-lab">{window.MCU_I18N.tr(seen ? 'status.seen' : 'status.markSeen')}</span>}
-      </button>
+      </button>}
       <button
         type="button"
         className={`tsa-btn watch${listed ? ' on' : ''}${pop === 'watch' ? ' pop' : ''}`}
@@ -888,6 +908,7 @@ Object.assign(window, {
   CheckIcon,
   BookmarkIcon,
   MCU_isReleased: (title) => isReleased(title),
+  MCU_canMarkSeen: (title) => canMarkSeen(title),
   MCU_bulkTargets: bulkTargets,
   MCU_nextUp: nextUp,
   onBulkConfirm,

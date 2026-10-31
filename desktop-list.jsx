@@ -50,8 +50,11 @@ function dlGroups(titles, sort) {
 // the title, the checkbox to the checkbox and Seen to Seen, even when one row
 // carries an extra badge another doesn't.
 const ROW_FOCUSABLE = 'input, button, a[href], [tabindex]:not([tabindex="-1"])';
+// A column can itself be the control (the Guides table's title button), so
+// it counts as well as anything inside it.
 function rowControls(cell) {
-  return [...cell.querySelectorAll(ROW_FOCUSABLE)].filter(el => !el.disabled && el.getClientRects().length > 0);
+  const own = cell.matches && cell.matches(ROW_FOCUSABLE) ? [cell] : [];
+  return own.concat([...cell.querySelectorAll(ROW_FOCUSABLE)]).filter(el => !el.disabled && el.getClientRects().length > 0);
 }
 function sameControlIn(fromEl, toRow) {
   const from = fromEl && fromEl.closest && fromEl.closest('[data-row-id]');
@@ -297,6 +300,12 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
   // ahead of the app's handler, which re-registers as its state changes.
   const selRef = React.useRef(0);
   selRef.current = selected.size;
+  // Back to home (the logo) clears the selection too.
+  React.useEffect(() => {
+    const onHome = () => { setSelected(new Set()); anchorRef.current = null; };
+    window.addEventListener('mcu:home', onHome);
+    return () => window.removeEventListener('mcu:home', onHome);
+  }, []);
   React.useEffect(() => {
     const onKey = (e) => {
       if (e.key !== 'Escape' || e.defaultPrevented || !selRef.current) return;

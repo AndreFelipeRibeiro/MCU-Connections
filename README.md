@@ -7,8 +7,9 @@ tracking, Google sign-in and cloud sync across devices.
 - [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/)
 - [Production](https://mcu-connections.vercel.app/) — V3, published from `main`.
   See the changelog for approved maintenance changes and deployment checks.
-- Catalog maintenance continues on `version/3.0`; [audit and sources](docs/CATALOG-AUDIT.md),
-  [phase roadmap](V3-TASKS.md). The Notion V3 Tasks database holds the live queue.
+- Work continues on `version/3.0`; [catalog audit and sources](docs/CATALOG-AUDIT.md).
+  The Notion V3 Tasks board is the roadmap and the live queue (the original
+  [phase checklist](V3-TASKS.md) is kept as history).
   Future changes still require review and approval before committing/pushing
   and a separate approval before merging to main. Email/password Phase 6 is deferred.
 
@@ -18,6 +19,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 ## Features
 
 - Spatial connection canvas with pan, zoom, draggable cards and cast highlighting.
+  On phones the zoom control stays hidden and shows only while you zoom.
   Release/Chrono open closer and centred on the titles in view; closing a title's
   details glides the camera back to where you were.
 - Desktop navigation is grouped like the mobile header. The top row has the
@@ -85,6 +87,11 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   desktop List as a strip above the table, desktop Spatial as a row in the All
   titles meter and phone Spatial as a chip. When everything out is seen it
   says you're caught up and names the next arrival.
+- Phone Spatial opens on your Up next title once you've marked anything
+  seen: each order (and Recenter) centres it at a readable zoom above the
+  chip, at one card size in every order. A first visit, or one with everything
+  seen, opens on the start of the order instead; a Seen, Unseen or Watchlist
+  filter frames its matches.
 - Where to watch: a section of the details, closed until you open it (the
   cast folds the same way), lists the services offering a released title in
   your country (stream and free with their logos, rent or buy on one line),
@@ -102,12 +109,35 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   guide works like a pinned character: the List and Grid show its stops in
   order with the next one marked, Spatial dims the rest and draws the route
   between its numbered cards (an arrow on an event guide's destination), the
-  stepper walks the stops, Up next suggests the next stop, Escape or × closes
+  stepper walks the stops and then an event guide's destination, Up next
+  suggests the next stop, seen stops shrink to compact rows (a small poster
+  and the title, Seen and Watchlist) in their place, Escape or × closes
   it (closing is how to see every title again: a guide shows only its own),
-  and `?guide=` shares it. Search suggests guides by name, a character
+  any unseen stop can be skipped from the List, the Grid, the details or a
+  Spatial card (it stays listed, minimized, with Unskip, but
+  leaves the progress count, the next stop and the stepper; remembered per
+  guide on the device; marking it seen brings it back),
+  the controls it doesn't use are dimmed with a tooltip and kept for when it
+  closes (Filters, type and collection always; the layout tabs and Order
+  outside Spatial), Spatial lays out every stop whatever the filters; on
+  desktop one module carries the guide (in the List a card above the stops:
+  the guide and its blurb, the progress segments, the next stop with Seen
+  and Open, Include optional, Mark N more seen, the stepper and ×; in
+  Spatial one row floating over the canvas), green once complete; on
+  phones the top bar shortens and the sort tabs slide away while it is open,
+  one dock at the bottom carries the guide, its next stop (with Seen), its
+  progress and the stepper (the List keeps its last card clear of it), and
+  Spatial opens on the next stop,
+  and `?guide=` shares it. The guide you are following reopens when you come
+  back to the home page (until you close or finish it). Returning visitors
+  are offered one guide, once per guide on each device: one leading to a
+  release in the next 60 days (Avengers: Doomsday now), with a countdown,
+  or else The Infinity Saga essentials. Search suggests guides by name, a character
   with a guide offers "See the curated path", and a title's details list the
-  guides it belongs to ("Part of"). Finishing a guide's essential stops bursts
-  green confetti once per guide (none with reduced motion). Every title also
+  guides it belongs to ("Part of", a collapsible section: open, but closed
+  while a guide is open; each case remembers its own choice for the visit). Finishing a guide's essential stops bursts
+  green confetti each time it becomes complete, skipped stops included (none
+  with reduced motion). Every title also
   carries a continuity marker (main, alternate reality or anthology).
 - "What have you seen?": a poster grid of every released title, by phase in
   release order, to mark many as seen in one go. The first-visit welcome
@@ -173,9 +203,19 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   connection brings its two titles side by side (Escape or a background click
   restores the layout); links between titles in the same row arc below it.
   Hovering a character in the drawer lights only that character's lines.
+- When a title's details close, the view lands on that title: Spatial centres
+  its card at a readable zoom if it opened from elsewhere (Up next, search, a
+  guide, a link), or returns to where you were if you clicked it on the
+  canvas; the List and Grid scroll its row into view with a brief highlight.
+  A pinned character or a guide keeps its own stepping; Back to home wins.
 - Escape closes the desktop details unless the search box, a menu or the pair
   view claims it. Details opened from the keyboard take focus and give it back
   when they close.
+- The logo (desktop toolbar and phone app bar) is a link home: it clears the
+  search, filters, collection tab, pinned character, guide, details and any
+  open menu, sorts by Release (earliest first), re-frames Spatial or scrolls
+  the List to the top, and brings Up next back. The view stays as chosen.
+  Back returns to where you were; Cmd/Ctrl-click opens a new tab.
 - In desktop Spatial, Tab reaches each card (then its Seen and Watchlist
   buttons) and Enter opens it; a card tabbed to off-screen glides into view.
 - In the desktop List, ↑ ↓ move between rows keeping the column (checkbox,
@@ -193,6 +233,10 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   toast with Undo; completing every released title in a phase (or the whole MCU)
   adds confetti. Seen and Watchlist show a count badge (hidden at zero) that
   animates as it changes. Motion is skipped with reduced motion.
+- A title not out yet has no Seen button until 7 days before its release day
+  (for early screenings), and none at all while only the month is known; the
+  Watchlist button is always there. Progress and Up next still count it only
+  from release day. A title marked seen earlier keeps its button.
 - Progress: in By Phase order each phase has a header with a segmented meter
   (one tick per released title), the count (5/6), a check disc once complete
   and "+N" for titles not yet released. Every other order shows one All titles
@@ -453,15 +497,15 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `watch-data.js` | The where-to-watch snapshot (written by `tools/refresh-watch.js`; do not edit by hand) |
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
 | `guides.js` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
-| `guides-ui.jsx` | Guides: the menu, desktop banner and List, phone views and pill, the meter, "Part of" in the details |
+| `guides-ui.jsx` | Guides: the menu, desktop module and List, phone views and dock, the meter, "Part of" in the details |
 | `picker.jsx` | "What have you seen?": the poster-grid picker opened from the welcome, the account menu/sheet and the Seen empty state |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
 | `search-suggest.jsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
 | `poster.jsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
-| `connections.jsx` | Standalone connection layer retained for reference; not wired into the app |
+| `connections.jsx` | An early standalone connection layer, kept for reference only: `index.html` doesn't load it (the Spatial lines are drawn in `app.jsx`) |
 | `styles.css` / `styles-mobile.css` | Desktop/touch layout, status treatments, focus and dialogs |
 | `schema.sql` | Watch-state table, constraints, trigger, grants and ownership RLS |
-| `V3-SPEC.md` / `V3-TASKS.md` | Architecture/decisions and phased delivery checklist |
+| `V3-SPEC.md` / `V3-TASKS.md` / `KICKOFF-PROMPT.md` | The original V3 plan (2026-10-24), kept as history with dated notes where it no longer holds; current guidance is this README, AGENTS.md and docs/ |
 | `KICKOFF-PROMPT.md` | Original kickoff and current continuation/approval rules |
 | `qa/` | Development-only headless checks (Playwright, axe-core); not deployed. See qa/README.md |
 | `docs/HANDOFF.md` | Current handoff: state, architecture, quirks, open threads |
@@ -476,9 +520,12 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 
 ## Manual verification
 
-There is no test runner. The checklist below summarizes spec §10; rerun the
-relevant items after changes and record actual evidence in the
-[verification log](docs/V3-VERIFICATION.md). Results below are from 2026-10-24.
+Automated checks live in [`qa/`](qa/README.md): a targeted check per ticket,
+and the full run (`bash qa/regress.sh`) plus the accessibility scan once per
+batch. Each batch's evidence is recorded on its Notion tickets and in the
+[CHANGELOG](CHANGELOG.md). The table below is the last full manual pass
+(2026-10-24, the original spec's §10 checklist); real-device checks, such as
+an iPhone, are still manual and noted as limits when they weren't done.
 
 | Check | Result and evidence |
 |---|---|
