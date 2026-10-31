@@ -4,12 +4,15 @@ An interactive explorer for the Marvel Cinematic Universe: films and series on
 a spatial map, connected by shared actors and characters. V3 adds seen/watchlist
 tracking, Google sign-in and cloud sync across devices.
 
+- [V4 preview](https://mcu-connections-git-version-40-afr-bfcd.vercel.app/) — V4 in progress, published from `version/4.0`.
 - [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/)
 - [Production](https://mcu-connections.vercel.app/) — V3, published from `main`.
   See the changelog for approved maintenance changes and deployment checks.
-- Work continues on `version/3.0`; [catalog audit and sources](docs/CATALOG-AUDIT.md).
-  The Notion V3 Tasks board is the roadmap and the live queue (the original
-  [phase checklist](V3-TASKS.md) is kept as history).
+- Work continues on `version/4.0`; [catalog audit and sources](docs/CATALOG-AUDIT.md).
+  The Notion V4 Tasks board is the roadmap and the live queue, and
+  [docs/V4-KICKOFF.md](docs/V4-KICKOFF.md) is the V4 brief (V3 Tasks and the
+  original [phase checklist](V3-TASKS.md) are kept as history). V3 fixes, if
+  any, are made on `version/3.0` and merged forward.
   Future changes still require review and approval before committing/pushing
   and a separate approval before merging to main. Email/password Phase 6 is deferred.
 
@@ -396,6 +399,7 @@ In Supabase → Authentication → URL Configuration, set the **Site URL** to
 |---|---|---|
 | Production | `https://mcu-connections.vercel.app` | `https://mcu-connections.vercel.app/` |
 | V3 preview | `https://mcu-connections-git-version-30-afr-bfcd.vercel.app` | `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/` |
+| V4 preview | `https://mcu-connections-git-version-40-afr-bfcd.vercel.app` | `https://mcu-connections-git-version-40-afr-bfcd.vercel.app/` |
 | Local default | `http://localhost:8123` | `http://localhost:8123/` |
 | Local verification | `http://localhost:8126` | `http://localhost:8126/` |
 
@@ -460,10 +464,11 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 
 ## Deploying and releasing
 
-- Commit locally, then push `version/3.0` to update the Vercel preview. A commit
-  alone does not upload anything. The Vercel Git integration deploys that branch
-  separately from the production branch.
-- To rebuild with changed Vercel settings, select the latest **version/3.0**
+- Commit locally, then push `version/4.0` to update the V4 Vercel preview (or
+  `version/3.0` for the V3 one). A commit alone does not upload anything. The
+  Vercel Git integration deploys each branch separately from the production
+  branch.
+- To rebuild with changed Vercel settings, select the latest **version/4.0**
   deployment and Redeploy into **Preview / Pre-Production**. Confirm the source
   branch and commit in the modal. Redeploy rebuilds source; it does not merge Git.
 - Vercel's deployment protection is separate from MCU Google sign-in. Public
@@ -472,7 +477,8 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 - **Wait for fresh user confirmation before merging maintenance into main.** That merge
   can trigger the production deployment. After approval and deployment, verify
   production Google sign-in, reload, sync and sign-out at the production URL.
-- Continue the user's bug/improvement work on `version/3.0` before Phase 6.
+- `main` still serves V3. V4 reaches production only as a planned, explicitly
+  approved release; take V4 work from the Notion V4 Tasks board.
   Email/password work needs its own plan and explicit confirmation.
 
 ## Project structure
@@ -593,7 +599,7 @@ log as evidence, not as a live list of pending setup tasks.
 Created and maintained by [Andre Ribeiro](https://github.com/AndreFelipeRibeiro),
 with development, planning, documentation and verification assistance from
 **Anthropic Claude** and **OpenAI ChatGPT/Codex**. Earlier commits include Claude
-co-author credits. Codex and Claude now share the `version/3.0` working tree;
+co-author credits. Codex and Claude now share the `version/4.0` working tree;
 assisted commits carry a Codex or Claude co-author trailer while retaining the
 maintainer as the primary author.
 

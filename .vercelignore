@@ -2,3 +2,5 @@
 qa/
 # Maintainer tools (tools/refresh-watch.js) are not part of the site either.
 tools/
+# Agent tool settings (Figma MCP) are not part of the site.
+.mcp.json

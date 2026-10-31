@@ -12,6 +12,37 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V4 maintenance — V4 workspace setup
+
+Recorded: 2026-10-31 10:59 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+`main` still serves V3 and this change is not part of a production release.
+
+- Opens V4 on branch `version/4.0`, worktree `MCU-V4`, deployed as the preview
+  `https://mcu-connections-git-version-40-afr-bfcd.vercel.app/`.
+- `AGENTS.md` retargeted to V4: `version/4.0` as staging, Notion **V4 Tasks**
+  as the backlog (with the **Design** type and the **Figma** and **V3 ticket**
+  fields), batches restarting at Batch 1, the `V4` CHANGELOG prefix, and a new
+  **Figma** section making the Figma file the source of truth for the V4 design
+  while accessibility, keyboard, contrast and localisation rules still win over
+  a frame. The no-build rule stays in force on `version/4.0` until the build
+  step has its own approved plan.
+- `docs/V4-KICKOFF.md` added: the V4 brief, the first-session checklist, the
+  six phases, the Figma round trip and the open decisions.
+- `.mcp.json` registers the remote Figma MCP server for this folder; it holds
+  no credentials, and `.vercelignore` keeps it out of the deployed site.
+- `README.md` carries the V4 preview link and its sign-in redirect row, and its
+  roadmap, deploy and credit lines now point at `version/4.0`.
+- Verified: `git status` clean against `origin/version/4.0` before and after;
+  the five setup files read in full; the Notion V4 Tasks board checked (nothing
+  in Approved, the kickoff ticket claimed); the V4 preview loaded in a browser
+  on 2026-10-31 (desktop, signed out, no console errors); `qa/smoke.js` run
+  against the preview after this push.
+- Limits: documentation and agent configuration only — no app code, so no
+  regression run. The Figma MCP is registered but not yet authenticated, so no
+  frame has been read. Google sign-in, sync and sign-out on the V4 preview are
+  untested; `docs/HANDOFF.md` and `docs/decisions.md` still describe V3 and are
+  retargeted by their own ticket.
+
 ## V3 feature — guides, phone Spatial and celebrations (Batch 10)
 
 Recorded: 2026-10-30 23:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main
