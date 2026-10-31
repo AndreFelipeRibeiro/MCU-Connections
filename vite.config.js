@@ -9,6 +9,8 @@
 import { readFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath, URL } from 'node:url';
 
 // The files index.html still loads as classic scripts, in its own order, plus
 // the root-path assets below. Vite leaves the <script> tags alone (it reports
@@ -83,7 +85,22 @@ const checkLegacy = () => ({
 });
 
 export default {
-  plugins: [react(), checkLegacy(), copyLegacy()],
+  plugins: [react(), tailwindcss(), checkLegacy(), copyLegacy()],
+  resolve: {
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        // The app. Still the V3 loading path; see LEGACY above.
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        // The V4 design-system preview, a page of its own that the app never
+        // loads and which never loads the app (docs/V4-PLAN.md §9, and the
+        // Notion ticket "Design system preview page").
+        design: fileURLToPath(new URL('./design.html', import.meta.url)),
+      },
+    },
+  },
   // Google sign-in only works from origins the OAuth client allows. 8126 is
   // the one registered for local work (README, "App redirects"), so the dev
   // server must take that port or stop rather than quietly pick another.

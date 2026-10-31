@@ -6,7 +6,10 @@
     "jsx": "react-jsx",
     "checkJs": false,
     "allowJs": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "exclude": ["node_modules", "dist", "qa"]
 }

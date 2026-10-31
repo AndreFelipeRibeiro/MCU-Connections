@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MCU Connections — V4 design system</title>
+<meta name="robots" content="noindex"/>
+<meta name="description" content="Preview of the V4 design system: shadcn/ui on Base UI, Vega style, in light and dark."/>
+<!-- Set the theme before first paint so the page never flashes the wrong one. -->
+<script>
+  try {
+    var saved = localStorage.getItem('mcu.design.theme');
+    var dark = saved ? saved === 'dark'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (dark) document.documentElement.classList.add('dark');
+  } catch (e) {}
+</script>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="/src/design/main.jsx"></script>
+</body>
+</html>

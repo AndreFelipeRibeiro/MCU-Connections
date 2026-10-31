@@ -283,15 +283,46 @@ Three consequences, from the smallest to the largest:
    those names do not exist, and those checks fail for a reason that has
    nothing to do with the app being wrong.
 
-   The fix should be deliberate rather than incidental: the app keeps publishing
-   exactly that set of names from one module, as a documented test surface, with
-   a comment saying it exists for `qa/` and not for the app to read back. The
-   data is already in the bundle and already public, so nothing is exposed that
-   was not before. The alternative — rewriting 17 checks to drive only the UI —
-   is better engineering and much more work, and doing it inside the migration
-   would mean changing the tests and the loading model at the same time, which
-   destroys the evidence that behaviour is identical. Recommendation: keep the
-   surface for Phase 2, and consider narrowing it afterwards.
+   **Decided 2026-10-31.** The app keeps publishing exactly that set of names
+   from one module, unconditionally, as a documented test surface, with a
+   comment saying it exists for `qa/` and not for the app to read back. Not
+   dev-only: a surface stripped from production builds would mean the checks
+   no longer exercise the artifact that ships. Nothing is exposed that was not
+   already there — the catalog is in the bundle in full and the i18n runtime
+   already runs in the page. Rewriting those checks to drive only the UI is
+   better engineering and much more work, and doing it inside the migration
+   would change the tests and the loading model at once, destroying the
+   evidence that behaviour is identical. Narrow it after Phase 2 if it still
+   looks worthwhile.
+
+   A closer reading on 2026-10-31 found that `window.MCU_SEED_TITLES` is **not**
+   an app-side hook: `qa/shots-progress.js` sets and reads it entirely within
+   its own injected script, and that tool is not in the regress run. Every
+   other use of these names is a read.
+
+4. **Three checks read `data.js` from disk and execute it in Node.**
+   `test-pickperson`, `test-nextup` and `test-refocus` load
+   `path.join(SITE, 'data.js')` and run it through `new Function` or
+   `vm.runInNewContext` to build their expectations from the same source the
+   app loads. Once `data.js` is an ES module, neither can execute it, and once
+   it is bundled it is not in `dist` at all. **Decided 2026-10-31:** those
+   three import the module from the *source tree* instead, which Node 20 can
+   do directly. That is a few lines each and is more correct than today, since
+   their expectations should come from the source rather than from whatever
+   happens to be in the build.
+
+5. **One regress check replaces a source file over the network.**
+   `test-watch` serves a fixture by intercepting `**/watch-data.js`
+   (`qa/test-watch.js:112`). Bundle that file and the request never happens:
+   the fixture silently does not apply and the check fails, or worse passes
+   while testing the real data. **Decided 2026-10-31:** `watch-data` stays
+   separately fetchable at a **stable, unhashed** chunk name, which also
+   answers §10 question 1 — it is loaded on demand, the initial bundle shrinks,
+   and the interception keeps working. The stable name has to be configured
+   deliberately in the Rollup output options; the default hashed name would
+   break the check quietly again. (`test-boot` also intercepts source and CDN
+   files, but it is already being rewritten under point 2 and is not in the
+   regress run.)
 
 Also: `qa/checks.json` maps changed files to checks. Its `files` keys gain the
 `src/` prefix in the same commit that moves the files, and the `data-ready="1"`
@@ -422,6 +453,14 @@ So:
    system starts typed.
 8. Then Phase 3 onwards, per the kickoff.
 
+**One approved exception to "Phases 2 and 3 do not overlap"** (2026-10-31):
+the design system is set up on its own Vite entry, `design.html`, which the
+app never loads and which never loads the app. Andre wanted to see and react
+to the new look without waiting for the migration. The rule exists to keep
+migration risk and design churn out of the same batch, and a separate entry
+mixes neither: `index.html`, the app's bundle and its behaviour are untouched.
+The components built there become the real ones in Phase 4.
+
 Phases 2 and 3 do not overlap. Migration risk and design churn must not share a
 batch — that is the whole reason the build goes first.
 
@@ -429,9 +468,14 @@ batch — that is the whole reason the build goes first.
 
 1. **`watch-data.js` lazy loading** (§3.4): worth the behaviour change for a
    smaller initial bundle, or keep everything in the main bundle for now?
+   *Answered 2026-10-31:* loaded on demand, at a stable unhashed chunk name.
+   The decision was forced by §5.5 — `test-watch` replaces that file over the
+   network — and the smaller initial bundle comes with it.
 2. **The QA globals surface** (§5.3): keep publishing those names as a
    documented test surface, or budget the work to rewrite 17 checks to drive
    only the UI?
+   *Answered 2026-10-31:* keep the surface, unconditionally, and narrow it
+   after Phase 2 if it still looks worthwhile.
 3. **Supabase config** (§3.4): keep the committed public values as they are, or
    move to `VITE_` environment variables so preview and production can point at
    different projects?

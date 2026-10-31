@@ -334,7 +334,8 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
 - Setup is Phase 3 work (V4-PLAN.md §9). Until that ticket starts, do not
   install Tailwind, shadcn or Base UI.
 - Install and add components with the shadcn CLI pinned to an exact version
-  (`npx shadcn@<version> init --base base --preset base-vega`); commit
+  (`npx shadcn@<version> init --base base --preset vega` — the CLI's preset is
+  `vega`, and `--base base` makes the style it records `base-vega`); commit
   `components.json`. Components live in `src/components/ui/` and are our code:
   restyle and fix them there instead of wrapping them to override styles.
 - Tokens: shadcn's CSS variables (`--background`, `--foreground`, `--primary`,

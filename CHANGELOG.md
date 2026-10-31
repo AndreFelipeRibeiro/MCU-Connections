@@ -12,6 +12,48 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V4 design — design-system preview page
+
+Recorded: 2026-10-31 13:44 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+`main` still serves V3 and this change is not part of a production release.
+
+- Sets up the V4 design system on its own Vite entry, `design.html`, reachable
+  at `/design.html` on the V4 preview. The app never loads it and it never
+  loads the app: `index.html` is untouched, and the app still loads React
+  18.3.1 from the CDN and compiles its `.jsx` in the browser.
+- An approved exception to "Phases 2 and 3 do not overlap" (docs/V4-PLAN.md
+  §9), so the new look can be reacted to before the module conversion makes it
+  possible to apply it to the app. The rule guards against migration risk and
+  design churn sharing a batch; a separate entry mixes neither.
+- Tailwind 4.3.3 and shadcn 4.23.0 with Base UI 1.9.0, set up with
+  `npx shadcn@4.23.0 init --base base --preset vega`: Vega style, Neutral base
+  colour, default radius, Inter, lucide icons. `components.json` is committed
+  and the components live in `src/components/ui` as our own code.
+- `src/index.css` is the token file docs/V4-PLAN.md §6 describes: shadcn's
+  variables with a light `:root` and a `.dark` block. The phase colours join
+  them as `--phase-1` … `--phase-6`; the dark values are V3's, and the light
+  ones are darkened so they hold WCAG AA on a light background.
+- The preview shows the surface tokens, the phase colours, the controls, and
+  the Spatial card, details drawer and phone sheet rebuilt on the new
+  components. Those three are static compositions: the Escape ladder, the
+  modeless drawer and the sheet's history entry are Phase 4 work.
+- npm React and ReactDOM move to 19.3.1. Nothing imported the npm copy yet, so
+  this costs nothing today where after the conversion it would be a migration;
+  it also avoids adding `forwardRef` to every copied component, since shadcn's
+  components expect React 19.
+- Verified: the app is untouched — its built page still carries 13
+  `text/babel` tags and the same stylesheet fingerprint as before this change,
+  and `qa/smoke.js` is clean against the built site. The preview page was
+  looked at in a browser in both themes at desktop and phone widths; the phase
+  swatches, the tokens and the three surfaces render, and nothing scrolls
+  sideways on a phone. `npm audit` reports no vulnerabilities.
+- Corrects AGENTS.md: the shadcn CLI's preset is `vega`, not `base-vega`;
+  `--base base` is what makes the recorded style `base-vega`.
+- Limits: no contrast measurement yet, so the light phase colours are
+  calculated rather than verified with axe-core; no Portuguese pass, since the
+  page has no translated strings; the components are not wired to the app's
+  interaction rules; and the regression was not re-run, as no app file changed.
+
 ## V4 design — component base decided: shadcn/ui on Base UI, Vega style
 
 Recorded: 2026-10-31 13:17 EDT (-0400). Pushed to `version/4.0` (V4
