@@ -14,7 +14,7 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V4 maintenance — the docs stop describing V3
 
-Recorded: PLACEHOLDER. Pushed to `version/4.0` (V4 staging);
+Recorded: 2026-10-31 17:25 EDT (-0400). Pushed to `version/4.0` (V4 staging);
 `main` still serves V3 and this change is not part of a production release.
 
 The V4 setup commit retargeted AGENTS.md and README.md but left the two files
