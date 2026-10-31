@@ -26,7 +26,10 @@ qa/node_modules/
 qa/package-lock.json
 qa/vendor/
 qa/shots/
-# Pre-compiled app scripts cached by qa/precompile.js for the checks.
+# Left by qa/precompile.js, which cached Babel-compiled scripts for the checks
+# until the app became a bundle and that file became qa/serve-site.js. Nothing
+# writes here any more; the entry stays so an old directory does not show up as
+# untracked. Safe to delete locally.
 qa/.cache/
 # A check run from the repository root (as qa/README.md says to) resolves its
 # screenshot path to ./shots/ rather than qa/shots/.

@@ -58,8 +58,12 @@ retain cached objects, pull-request references and old deployments; other people
 clones cannot be erased by rewriting this repository. Obtain explicit approval
 before doing that work, and agree which refs to rewrite.
 
-The current documentation changes stay on version/3.0 until a separately approved
-merge. Publishing this report does not mean the historical exposure is resolved.
+The documentation changes of the day stayed on `version/3.0` until a separately
+approved merge. Publishing this report does not mean the historical exposure is
+resolved — **as of 2026-10-31 it is not**: no history rewrite has been
+authorised or performed, and the branch table below is as fetched on the review
+date. Development has since moved to `version/4.0`, which inherits the same
+history and the same unresolved finding.
 
 ### Proposed cleanup sequence (not authorized or performed)
 

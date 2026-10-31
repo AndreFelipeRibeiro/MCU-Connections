@@ -4,14 +4,30 @@ Written 2026-10-28 when development moved from a Claude chat session to Claude
 Code. Codex continues to contribute; [AGENTS.md](../AGENTS.md) is the shared
 rulebook and [decisions.md](decisions.md) the running decision log. This file is
 the current handoff. `V3-SPEC.md`, `V3-TASKS.md` and `KICKOFF-PROMPT.md` are
-the original V3 plan, kept as history (each says so at the top). Updated
-2026-10-30 after Batch 9.
+the original V3 plan, kept as history (each says so at the top).
+
+**Updated 2026-10-31, when V4 opened.** V3 is finished and live; this checkout
+is V4. Read [V4-KICKOFF.md](V4-KICKOFF.md) for what V4 is and the order of
+work, and [V4-PLAN.md](V4-PLAN.md) for the build migration and its findings.
+Everything below describes the app as it now stands; the batch history is kept
+because it is how most of the behaviour got here.
 
 ## Where things stand
 
-- Production (`main`) and staging (`version/3.0`) are at the same commit, the
-  merge of Batch 9 (`0bc6e5a`, 2026-10-30; `git log -1 main` names it).
-  Batch 10 is in progress in the working tree (Notion shows its tickets).
+- **V3 is released.** Batch 10 merged to production on 2026-10-31
+  (`a44891a`), and `main`, `version/3.0` and `version/4.0` all started from
+  that commit. `main` still serves V3 at https://mcu-connections.vercel.app/.
+- **V4 is open**, on branch `version/4.0` in the `MCU-V4` worktree, deploying
+  to https://mcu-connections-git-version-40-afr-bfcd.vercel.app/ on every
+  push. Its backlog is the Notion **V4 Tasks** board; **V3 Tasks** is kept as
+  history. V4 reaches `main` only as a planned, explicitly approved release.
+- **What V4 has landed so far** (Batch 1, on staging, awaiting review): the
+  Vite build step and the move of the whole app into one bundle, the
+  TypeScript conversion, a QA harness that builds and tests the real artifact,
+  and a standalone design-system preview page. Next is the design system
+  itself, then the re-skin.
+- V3 fixes, if any, are made on `version/3.0` in the `MCU-V3` worktree and
+  merged forward with the user's approval.
 - Batches 7–9 shipped on 2026-10-29 and 2026-10-30 (details in CHANGELOG.md):
   - **Batch 7:** release status (Released, Coming with a date, Expected by
     month) and a Released-only filter; the desktop List's All titles header
@@ -50,45 +66,62 @@ the original V3 plan, kept as history (each says so at the top). Updated
 
 ## Architecture in short
 
-A static single-page app with no build step. `index.html` loads `boot.js`
-(startup screen), the locale files and `i18n.js`, then React 18, ReactDOM,
-Babel standalone and supabase-js from unpkg (pinned, SRI). Then come the plain
-data files and finally the `.jsx` files, which Babel compiles in the browser on
-every visit. Modules talk through `window.*`.
+A single-page app built with Vite. `index.html` loads `boot.js` (startup
+screen), the locale files and `i18n.js` as plain classic scripts — the startup
+screen has to speak the visitor's language before anything else arrives — then
+supabase-js from unpkg (pinned, SRI, the one library still on a CDN), then the
+app as **one module bundle** entered at `src/main.ts`, then `watch-data.js`.
 
-- **Data:** `data.js` holds the catalog (64 titles, 84 characters, permanent ids,
-  variant links, synopses per language); `media-data.js` holds TMDB poster and
-  portrait paths.
+V3 had no build step and compiled its `.jsx` in the browser with Babel on every
+visit; V4 replaced that, which took time to the first title from about 1,500 ms
+to about 130 ms on desktop. The source is TypeScript at full `strict`
+(`npm run typecheck`), though ten of the thirteen V3 app files are not yet
+typed and say so in a header.
+
+**The files still talk through `window.*`.** The bundle changed how the app is
+delivered, not how its pieces are shared: each file publishes its components on
+`window` and its readers read them from there. That is deliberate — it is also
+the surface 15 QA checks read — and it is typed in `src/types/globals.d.ts`.
+Replacing it with real imports is a later ticket.
+
+- **Data:** `src/data/data.ts` holds the catalog (64 titles, 89 characters,
+  permanent ids, variant links, synopses per language); `src/data/media-data.ts`
+  holds TMDB poster and portrait paths. Their shapes are typed in
+  `src/types/catalog.ts`, checked against the data itself.
 - **Views:**
   - Desktop has Spatial (a pannable, zoomable canvas of cards with connection
     lines; selecting a title arranges related titles in rings) and List.
   - Phones have List, Grid and Spatial, with bottom sort tabs and sheets.
-  - `app.jsx` owns state, layout and the desktop canvas; `mobile.jsx` owns the
-    phone UI.
+  - `src/app/app.tsx` owns state, layout and the desktop canvas;
+    `src/app/mobile.tsx` owns the phone UI.
 - **Tracking:** Seen and Watchlist are stored per device for guests, and in
-  Supabase for Google-signed-in users (`tracking.jsx`, `supabase-client.js`,
-  `schema.sql`). Preferences (view, sort, order, folded runs) are per device in
+  Supabase for Google-signed-in users (`src/app/tracking.tsx`,
+  `src/supabase-client.ts`, `schema.sql`). Preferences (view, sort, order, folded runs) are per device in
   localStorage.
 - **Language:** English (base) and Brazilian Portuguese. Every UI string is a
   locale key, and search matches names in every language through
   `MCU_I18N.fold()`.
-- **Deploy:** Vercel's Git integration publishes `version/3.0` as the preview
-  and `main` as production.
+- **Deploy:** Vercel's Git integration builds and publishes `version/4.0` and
+  `version/3.0` as previews and `main` as production. Build settings live in a
+  committed `vercel.json`, never in the dashboard, because dashboard settings
+  apply to every branch and would break `main`'s static deploy.
 
 ## Key decisions (why things are the way they are)
 
 The dated log is [decisions.md](decisions.md). The ones that shape day-to-day
 work:
 
-- **No build step in V3; a build step in V4.** V3 stays a static site that
-  anyone can run with a one-line Python server; we switched to React's
-  production builds instead of adding a bundler. V4 will move to a standard
-  build (React with Vite or similar, built by Vercel). That brings
-  design-system tooling, Figma round trips, modules and a faster startup, as
-  one planned migration rather than piecemeal changes.
+- **V3 had no build step; V4 has one.** V3 stayed a static site anyone could
+  run with a one-line Python server. V4 moved to Vite, built by Vercel, which
+  is what unlocks design-system tooling, Figma round trips, modules and a far
+  faster startup. It landed as one planned migration whose only claim was
+  "behaviour identical", certified by the regression — see V4-PLAN.md §5 for
+  what that cost and what it taught.
 - **QA lives in the repo, development-only.** `qa/` holds the headless checks
-  with their own `package.json`. It is the one place npm is allowed in V3;
-  nothing in the app loads from it and Vercel does not deploy it.
+  with their own `package.json`; nothing in the app loads from it and Vercel
+  does not deploy it. Since the app became a bundle the runner builds the site
+  once and points every check at that build, so the checks exercise the real
+  artifact.
 - **Staging first, batches, explicit approval for main.** The user tries
   batches on the preview (often on a phone) before approving a merge.
 - **One commit per ticket, real times in the CHANGELOG, recap after approval.**
@@ -103,15 +136,16 @@ work:
 
 ## Known quirks, gotchas and fragile areas
 
-- **Startup cost.** Babel compiles about 10 JSX files in the browser on every
-  visit: around a second on a laptop, much more on mid-range phones. The startup
-  screen hides the blank page but not the wait.
-- **Caching while developing.** After editing `.jsx`, hard-refresh
-  (Cmd+Shift+R). A plain refresh can run a stale copy, and it looks like a fix
-  didn't work.
-- **Sign-in only works on allowed origins:** production, the preview,
-  `localhost:8126` (and 8123 for browsing).
-- **`app.jsx` is large (about 2,500 lines)**, and the Spatial camera is the most
+- **The source tree cannot be opened in a browser any more.** `python3 -m
+  http.server` on the repository root serves an `index.html` whose only script
+  is an unbuilt module; the startup screen correctly reports a failed start.
+  Use `npm run dev` (port 8126, strict) or `npm run build && npm run preview`.
+  No hard-refresh dance any more: Vite reloads on save.
+- **Sign-in only works on allowed origins:** production, the two previews and
+  `localhost:8126`. The dev and preview servers are both pinned to that port
+  and stop rather than quietly moving, because moving would silently break
+  sign-in.
+- **`app.tsx` is large (about 3,300 lines)**, and the Spatial camera is the most
   fragile part. That covers glides (`glideTo` / `stopGlide`), the
   return-to-previous-view memory on deselect, the ring layout, the pair view and
   drag versus click detection on cards. Change it carefully and test pan, zoom,
@@ -124,7 +158,7 @@ work:
 - **Spatial keyboard button.** Each card's first child is an invisible
   `.card-open` button with `pointer-events: none`. Clicks still go to the card;
   keyboard activation calls the same handler.
-- **Phone sheet history** (`sheetHistory` in `mobile.jsx`). Each sheet owns one
+- **Phone sheet history** (`sheetHistory` in `mobile.tsx`). Each sheet owns one
   history entry; a sheet handing off to another (Account → About) reuses it.
   Opening two sheets at once would confuse it.
 - **Sticky headers must stay out of the reorder animation.** The phase
@@ -137,10 +171,10 @@ work:
   that much room above the first row; when the two disagreed the first pill was
   cut off at the top or slid under the count pill. Change them together.
 - **Progress follows one rule, shaped in one place.** `viewProgress` in
-  `app.jsx` hands every view either per-phase tallies (By Phase only) or the
+  `app.tsx` hands every view either per-phase tallies (By Phase only) or the
   whole-catalogue tally (every other order); the views draw whichever they get.
 - **Bulk marking goes through the per-title writer queue** (user decision,
-  2026-10-28): `requestBulk` in `tracking.jsx` commits once and writes the
+  2026-10-28): `requestBulk` in `tracking.tsx` commits once and writes the
   guest copy once, then feeds each title to its own queue when signed in, so
   failures roll back per title. `bulkTargets` is the one rule for which titles
   an action changes, used for both the counts shown and the action itself.
@@ -156,13 +190,20 @@ work:
 - **Supabase free tier** pauses idle projects; restore from the dashboard (no
   keep-alive by policy).
 - **Notion.** Agents cannot reorder board cards; only the user sets priority.
-- **The local worktree can look missing.** `MCU-V3` is a linked worktree of the
-  `MCU Connections` checkout, and sandboxed shells may list it as prunable. It
-  is not; never prune it.
-- **The headless camera regression check is flaky.** Its "wheel cancels the
-  glide" step fails about 1 run in 4 on any version. The desktop wheel handler
-  also logs "Unable to preventDefault inside passive event listener"; worth a
-  small ticket.
+- **The local worktrees can look missing.** `MCU-V3` and `MCU-V4` are linked
+  worktrees of the `MCU Connections` checkout, and sandboxed shells may list
+  them as prunable. They are not; never prune them.
+- **`test-camera`'s flakiness is fixed** (the glide steps wait for the
+  transition instead of guessing at 60 ms). Its one console warning, "Unable
+  to preventDefault inside passive event listener", is React attaching wheel
+  listeners passively at the root and is allowed by name.
+- **A check that drifts from the app can look like an app bug.** Two did:
+  `test-skip` read the phone's guide markup after Batch 10 moved the desktop
+  guide to its own card, and `test-back` expected Forward not to reopen a
+  sheet after the address gained the open title. Both were carried as
+  suspected app bugs for days. When a check fails in a way that makes no
+  sense, check its selectors against the DOM and `git log` the feature before
+  believing it.
 - **Catalog upkeep.** Unreleased titles (Avengers: Doomsday, Friendly
   Neighborhood Spider-Man S2, Daredevil: Born Again S3, Avengers: Secret Wars)
   need ratings and story years when they come out. Several series have thin
@@ -172,17 +213,21 @@ work:
 
 `qa/` holds the headless Playwright checks used throughout V3, curated
 (qa/README.md lists them):
-- the regression run (`bash qa/regress.sh`, which includes the axe-core
-  accessibility scan in both languages; about 5–6 minutes, 4 checks at a time;
-  qa/README.md gives the current count), once per batch before staging;
+- the regression run (`bash qa/regress.sh`: 43 check runs plus the axe-core
+  accessibility scan in both languages, about 7 minutes, 4 at a time), once
+  per batch before staging. It builds the site first and serves every check
+  that build;
 - `bash qa/quick.sh <check>` per ticket (the checks for the files changed);
 - `node qa/smoke.js` against the deployed site after each push and merge;
 - a startup timing check;
 - one targeted check per recent fix, run per ticket before review.
 
-Set up once per machine with `bash qa/setup.sh` (Node 18+). They run headless
-Chromium against the repository root with the pinned libraries served
-locally. They do not replace a look in a real browser and on a real phone.
+Set up once per machine with `bash qa/setup.sh` (Node 18+), plus
+`npm install` at the root for the build. They run headless Chromium against
+the built site. They do not replace a look in a real browser and on a real
+phone — and no headless check covers the iOS memory rule, so Spatial zoomed
+out on a real iPhone is still the one thing that has to be looked at by
+hand.
 
 ## Open threads and what's next
 
@@ -215,10 +260,9 @@ locally. They do not replace a look in a real browser and on a real phone.
 - **Deferred:**
   - Phase 6 email/password accounts (needs a custom domain, a plan and
     approval).
-  - Light mode and the V4 look and feel.
-  - V4 tooling: the move to a build step (Notion "V4 - Tooling and build
-    step"). Plan it together with the V4 design pass so tokens and components
-    come from the design system.
+  - ~~V4 tooling: the move to a build step~~ — done 2026-10-31, with the
+    TypeScript conversion after it. The remaining V4 work (the design system,
+    the re-skin, Dark/Light mode) is on the Notion **V4 Tasks** board.
   - Ideas in the Deferred column (as of 2026-10-30): a first-landing
     walkthrough, contextual guidance for Spatial and character browsing,
     spoiler-aware browsing, an installable app and offline catalog, Spanish,
@@ -226,10 +270,14 @@ locally. They do not replace a look in a real browser and on a real phone.
     sync across devices. (Shareable URLs, Up next, watch guides, where to
     watch and the first-visit "What have you seen?" picker have shipped; the
     guide promotion is in Batch 10.)
-- **Design pass.** The user is a designer and wants a Figma round trip: take the
-  running app into Figma, refine the art direction and design system, then bring
-  it back to code for V4 on the new build setup. The tokens and standards in
-  AGENTS.md are the current baseline to start from.
+- **Design pass.** The user is a designer and wants a Figma round trip: take
+  the running app into Figma, refine the art direction and design system, then
+  bring it back to code. The build setup it needs now exists. The component
+  base was chosen on 2026-10-31 — shadcn/ui on Base UI, Vega style, light and
+  dark from day one — and a standalone preview page (`design.html`) already
+  shows it. AGENTS.md "Design system (V4)" has the rules; where a Figma frame
+  and the accessibility, keyboard, contrast or localisation rules disagree,
+  the rules win and the difference goes on the ticket.
 - **Real devices.** Most verification was headless Chromium. An iPhone (Safari)
   and Android pass before larger releases is still worthwhile.
 - **Review and plan.** A 2026-10-27 review of usability, bugs, speed,

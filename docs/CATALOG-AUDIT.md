@@ -1,6 +1,10 @@
 # V3 catalog audit — 2026-10-24
 
-Branch: `version/3.0`, continuing from released V3 commit `1f79b74`.
+Branch at the time: `version/3.0`, continuing from released V3 commit
+`1f79b74`. *(This is a dated V3 report, kept as history. Development has since
+moved to `version/4.0`; the catalog itself now lives at `src/data/data.ts`.
+The sources and findings below still stand — only the paths and the branch
+have moved.)*
 The user classified this as V3 maintenance, not a new major release.
 The catalog is static JavaScript in `data.js`; this audit does not change the
 Supabase database, collections, title ids, auth or application architecture.

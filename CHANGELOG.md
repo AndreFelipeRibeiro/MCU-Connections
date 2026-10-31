@@ -12,6 +12,58 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V4 maintenance — the docs stop describing V3
+
+Recorded: PLACEHOLDER. Pushed to `version/4.0` (V4 staging);
+`main` still serves V3 and this change is not part of a production release.
+
+The V4 setup commit retargeted AGENTS.md and README.md but left the two files
+AGENTS.md sends a new agent to read *first* describing V3, so they actively
+misled. Documentation only; no application code.
+
+- **docs/HANDOFF.md** now opens by saying V3 is released and this checkout is
+  V4, and points at V4-KICKOFF.md and V4-PLAN.md. "Where things stand" is
+  rewritten: Batch 10 merged to production on 2026-10-31, V4 is open on
+  `version/4.0` in the `MCU-V4` worktree with its own preview, and Batch 1 is
+  on staging. The architecture section described a static site compiling JSX
+  in the browser — it now describes the Vite build, the single bundle, the
+  classic scripts that stay outside it and why, TypeScript at `strict`, and
+  the fact that the files still share through `window`. The quirks section
+  loses the Babel startup cost and the hard-refresh advice (neither is true
+  any more), gains the fact that the source tree can no longer be opened in a
+  browser, and records that `test-camera`'s flakiness is fixed. The batch
+  history is kept: it is how most of the behaviour got here.
+- **A new quirk worth having written down:** a check that has drifted from the
+  app looks exactly like an app bug. Two were carried as suspected bugs for
+  days. When a check fails in a way that makes no sense, compare its selectors
+  against the DOM and `git log` the feature before believing it.
+- **docs/decisions.md** gains the three V4 setup decisions that were never
+  recorded: the `version/4.0` branch and `MCU-V4` worktree layout, Notion
+  **V4 Tasks** as the backlog with V3 Tasks kept as history, and the Figma
+  pipeline — including the rule that where a frame and the accessibility,
+  keyboard, contrast or localisation rules disagree, the rules win.
+- **docs/CATALOG-AUDIT.md** and **docs/PRIVACY-REVIEW.md** named
+  `version/3.0` in the present tense. Both are dated reports, so they are
+  marked as such rather than rewritten. The privacy review additionally now
+  states plainly that **as of 2026-10-31 the historical exposure is still
+  unresolved** — no history rewrite has been authorised or performed, and
+  `version/4.0` inherits the same history.
+- **.gitignore** described `qa/.cache/` as written by `qa/precompile.js`,
+  which no longer exists. The entry stays so an old directory does not show as
+  untracked; the comment now says so.
+
+Verification:
+
+- `npm run typecheck` green; `npm run build` ok.
+- `bash qa/quick.sh` maps the changed files to no checks, as expected for a
+  documentation change.
+
+Limits:
+
+- No application code changed, so there is nothing to see in a browser.
+- The privacy finding is recorded, not fixed; it still needs the user's
+  explicit approval before any history rewrite.
+
 ## V4 maintenance — TypeScript, at full strict
 
 Recorded: 2026-10-31 17:19 EDT (-0400). Pushed to `version/4.0` (V4 staging);
