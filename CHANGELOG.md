@@ -12,6 +12,47 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V4 maintenance — the data layer moves into the bundle (Phase 2, steps 2–3)
+
+Recorded: 2026-10-31 14:09 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+`main` still serves V3 and this change is not part of a production release.
+
+- `data.js`, `guides.js`, `media-data.js`, `config.js` and `supabase-client.js`
+  move to `src/` and are bundled by Vite. `index.html` loads one module script
+  in their place; the twelve `.jsx` files are untouched and still compile in
+  the browser.
+- They are imported for their side effects and still publish the same `window`
+  names. Changing the delivery and the sharing mechanism at once would be two
+  changes in one commit, and the regression could not say which caused a
+  failure. Exports come later, per file, as each reader converts. Those same
+  names are the documented test surface that 15 checks read (plan §5.4).
+- `watch-data.js` deliberately stays a separate file: `test-watch` replaces it
+  over the network to serve a fixture, so it keeps its own URL (plan §5.6).
+  `boot.js`, the locales and `i18n.js` also stay out for now — `boot.js` must
+  run in the head before anything else, and the startup screen's timing needs
+  its own look.
+- `test-pickperson`, `test-nextup` and `test-refocus` read `data.js` from the
+  source tree instead of the served site. They execute it in Node to build
+  their expectations, and expectations should come from the source rather than
+  from whatever is in the build.
+- **`qa/precompile.js` now emits `defer`** on the scripts it rewrites. It turns
+  each `text/babel` tag into a plain classic script; in the real page Babel
+  runs those after `DOMContentLoaded`, which is after any module script, but as
+  plain classic scripts they ran during parsing — before the bundle. The first
+  run after this change failed 43 of 44 checks with nothing wrong in the app.
+  `defer` puts them in the same ordered queue as the module and restores the
+  real order. Recorded in the plan as §5.2.
+- The build guard now ignores module scripts, which are Vite's to bundle.
+- Verified: full regression against the build, exit 0, both accessibility scans
+  clean, and 42 of 44 checks identical to a working-tree baseline run. The two
+  that differ are the known pre-existing pair (`test-skip`, `test-camera`),
+  unchanged from that baseline. All fourteen `window` names confirmed present
+  in the built page with no page errors; `qa/smoke.js` clean.
+- Limits: twelve `.jsx` files are still compiled in the browser, so the
+  conversion is maybe a third done by file count and much less by line count —
+  `app.jsx` and `mobile.jsx` are untouched. No real-device check. The startup
+  screen's timing has not been re-examined.
+
 ## V4 design — design-system preview page
 
 Recorded: 2026-10-31 13:44 EDT (-0400). Pushed to `version/4.0` (V4 staging);

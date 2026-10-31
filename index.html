@@ -53,12 +53,12 @@
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2.112.2/dist/umd/supabase.js" integrity="sha384-OUpie84zd1LdwNlK9uJJQRwab0BLqo3eKYKFh7hSVL58FSk7wPp2l0kfUMIIoaQd" crossorigin="anonymous"></script>
 
-<script src="data.js"></script>
-<script src="guides.js"></script>
-<script src="media-data.js"></script>
+<!-- The data layer is bundled (src/main.js). It still publishes the same
+     window names, because the .jsx files below are still compiled by Babel in
+     the page and read them from there. A module script is deferred, so this
+     runs after the libraries above and before Babel transforms anything. -->
+<script type="module" src="/src/main.js"></script>
 <script src="watch-data.js"></script>
-<script src="config.js"></script>
-<script src="supabase-client.js"></script>
 <script type="text/babel" src="poster.jsx"></script>
 <script type="text/babel" src="tracking.jsx"></script>
 <script type="text/babel" src="celebrate.jsx"></script>

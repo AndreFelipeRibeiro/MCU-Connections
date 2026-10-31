@@ -21,12 +21,10 @@ const LEGACY = [
   'locales/en.js',
   'locales/pt-BR.js',
   'i18n.js',
-  'data.js',
-  'guides.js',
-  'media-data.js',
+  // Stays a separate file on purpose: test-watch replaces it over the
+  // network to serve a fixture (qa/test-watch.js), so it must keep its own
+  // URL. docs/V4-PLAN.md §5.5.
   'watch-data.js',
-  'config.js',
-  'supabase-client.js',
   'poster.jsx',
   'tracking.jsx',
   'celebrate.jsx',
@@ -72,7 +70,11 @@ const checkLegacy = () => ({
   apply: 'build',
   buildStart() {
     const html = readFileSync('index.html', 'utf8');
-    const referenced = [...html.matchAll(/<script[^>]*\ssrc="(?!http)([^"]+)"/g)].map(m => m[1]);
+    // Module scripts are Vite's to bundle; only the classic ones need copying.
+    const tags = html.match(/<script[^>]*\ssrc="(?!http)[^"]+"[^>]*>/g) || [];
+    const referenced = tags
+      .filter(t => !/type="module"/.test(t))
+      .map(t => t.match(/\ssrc="([^"]+)"/)[1]);
     const missing = referenced.filter(f => !LEGACY.includes(f));
     if (missing.length) {
       this.error(

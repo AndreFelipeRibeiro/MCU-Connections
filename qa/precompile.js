@@ -46,8 +46,15 @@ function compiled(file) {
 }
 
 // The page as served: Babel script tags become plain scripts, same order.
+//
+// `defer` matters. In the real page Babel fetches and runs these after
+// DOMContentLoaded, which is after any module script. Rewritten to plain
+// classic scripts they would instead run during parsing, i.e. BEFORE the
+// bundle, and the app would read globals the bundle has not set yet. Deferred
+// scripts and module scripts share one queue in document order, so `defer`
+// keeps the real order: bundle first, then these.
 function rewriteIndex(html) {
-  return html.replace(/<script type="text\/babel" src="([^"]+\.jsx)"><\/script>/g, '<script src="$1"></script>');
+  return html.replace(/<script type="text\/babel" src="([^"]+\.jsx)"><\/script>/g, '<script defer src="$1"></script>');
 }
 
 const TYPES = {

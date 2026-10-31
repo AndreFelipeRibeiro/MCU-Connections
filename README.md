@@ -488,10 +488,10 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `index.html` | Entry point; startup screen markup, pinned/SRI CDN scripts and application script order |
 | `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render |
 | `favicon.png`, `apple-touch-icon.png`, `og-image.jpg` | Tab icon, home-screen icon and link-preview image (from the brand mark) |
-| `data.js` | Static titles/characters, ratings, phases, stable ids and variant links |
-| `media-data.js` | TMDB poster and actor-portrait paths |
-| `config.js` | Public Supabase project URL and publishable key |
-| `supabase-client.js` | Shared client as `window.mcuSupabase`, or graceful unavailability |
+| `src/data/data.js` | Static titles/characters, ratings, phases, stable ids and variant links |
+| `src/data/media-data.js` | TMDB poster and actor-portrait paths |
+| `src/config.js` | Public Supabase project URL and publishable key |
+| `src/supabase-client.js` | Shared client as `window.mcuSupabase`, or graceful unavailability |
 | `tracking.jsx` | Guest/account state, merge, request deadlines, queues, progress, status actions |
 | `account.jsx` | Google auth/session state, account UI, sign-out and degraded-mode recovery |
 | `about.jsx` | About dialog (desktop) and sheet (phones) with credits; shared dialog shell |
@@ -500,9 +500,10 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
 | `upnext.jsx` | Up next: the suggestion card, List strip, Spatial meter row and phone chip (the rule is `MCU_nextUp` in `tracking.jsx`) |
 | `watch.jsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
+| `src/main.js` | V4 bundle entry: imports the data layer above, which still publishes the same `window` names while the `.jsx` files are compiled in the browser |
 | `watch-data.js` | The where-to-watch snapshot (written by `tools/refresh-watch.js`; do not edit by hand) |
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
-| `guides.js` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
+| `src/data/guides.js` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
 | `guides-ui.jsx` | Guides: the menu, desktop module and List, phone views and dock, the meter, "Part of" in the details |
 | `picker.jsx` | "What have you seen?": the poster-grid picker opened from the welcome, the account menu/sheet and the Seen empty state |
 | `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |

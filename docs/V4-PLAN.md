@@ -269,13 +269,26 @@ Three consequences, from the smallest to the largest:
    the globals-surface decision) is unchanged. (`vite preview` is the
    alternative; the `SITE` route is preferred because it keeps each check
    isolated on its own port, which is what makes the parallel run work.)
-2. **`test-boot` and `perf2` lose their subject.** Both deliberately bypass
+2. **`precompile.js` must preserve script *order*, not just content.** It
+   rewrites each `<script type="text/babel" src="x.jsx">` into a plain
+   classic script. In the real page Babel fetches and runs those after
+   `DOMContentLoaded`, which is after any module script; rewritten as plain
+   classic scripts they run *during parsing*, before the bundle. The moment
+   any app code moved into the bundle, every check failed at once because
+   `app.jsx` read globals the bundle had not set yet — 43 of 44, with nothing
+   wrong in the app. Fixed on 2026-10-31 by emitting `defer`, which puts those
+   scripts in the same ordered queue as the module and restores the real
+   order. The general lesson: the harness's fidelity to production is now
+   load-bearing, and each conversion slice should be checked against a
+   working-tree baseline run rather than against an absolute pass.
+
+3. **`test-boot` and `perf2` lose their subject.** Both deliberately bypass
    `precompile.js` to exercise the real in-browser Babel path that production
    used. After the migration there is no such path. `test-boot` should be
    rewritten to check the startup screen and a failed-start on the built site;
    `perf2` should be re-pointed at the bundle, and its numbers re-baselined
    rather than compared to V3's.
-3. **17 of the 42 checks read the app's globals from inside the page** —
+4. **17 of the 42 checks read the app's globals from inside the page** —
    `window.TITLES` (37 uses), `window.MCU_I18N` (21), `window.MCU_isReleased`
    (13), `window.MCU_GUIDE`, `window.WATCH`, `window.CHARACTERS`,
    `window.GUIDES`, `window.MEDIA`, `window.MCU_credit`, and
@@ -300,7 +313,7 @@ Three consequences, from the smallest to the largest:
    its own injected script, and that tool is not in the regress run. Every
    other use of these names is a read.
 
-4. **Three checks read `data.js` from disk and execute it in Node.**
+5. **Three checks read `data.js` from disk and execute it in Node.**
    `test-pickperson`, `test-nextup` and `test-refocus` load
    `path.join(SITE, 'data.js')` and run it through `new Function` or
    `vm.runInNewContext` to build their expectations from the same source the
@@ -311,7 +324,7 @@ Three consequences, from the smallest to the largest:
    their expectations should come from the source rather than from whatever
    happens to be in the build.
 
-5. **One regress check replaces a source file over the network.**
+6. **One regress check replaces a source file over the network.**
    `test-watch` serves a fixture by intercepting `**/watch-data.js`
    (`qa/test-watch.js:112`). Bundle that file and the request never happens:
    the fixture silently does not apply and the check fails, or worse passes
@@ -374,7 +387,7 @@ In rough order of how much they would cost to find late.
   bundler changes nothing here by itself, but a design system that adds
   transforms, shadows or blurs to cards can reintroduce it, and only a real
   device shows it. Check on hardware at the end of Phase 2 and again in Phase 4.
-- **The QA globals surface** (§5.3). The single most likely cause of a Phase 2
+- **The QA globals surface** (§5.4). The single most likely cause of a Phase 2
   that looks broken while the app is fine.
 - **Escape, focus and the one-layer rule.** The ladder closes exactly one layer
   per press, and the details and the pinned subject deliberately share **one**
@@ -471,7 +484,7 @@ batch — that is the whole reason the build goes first.
    *Answered 2026-10-31:* loaded on demand, at a stable unhashed chunk name.
    The decision was forced by §5.5 — `test-watch` replaces that file over the
    network — and the smaller initial bundle comes with it.
-2. **The QA globals surface** (§5.3): keep publishing those names as a
+2. **The QA globals surface** (§5.4): keep publishing those names as a
    documented test surface, or budget the work to rewrite 17 checks to drive
    only the UI?
    *Answered 2026-10-31:* keep the surface, unconditionally, and narrow it
