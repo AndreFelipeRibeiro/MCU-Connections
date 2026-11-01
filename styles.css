@@ -2359,3 +2359,23 @@ body { background: var(--v3-bg); }
 .cb-step button, .cb-close, .cb-guide { @apply rounded-md border-border bg-background text-foreground shadow-xs dark:border-input dark:bg-input/30; }
 .cb-step button:hover, .cb-close:hover, .cb-guide:hover { @apply bg-muted dark:bg-input/50; }
 .cb-step button:focus-visible, .cb-close:focus-visible, .cb-mode button:focus-visible, .cb-guide:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+
+/* ===========================================================================
+   RE-SKIN, FIRST PASS — startup screen
+   (Notion V4 Tasks, "Phase 4 — Startup screen")
+
+   boot.js paints before the bundle, so this can only use what is already
+   there: the tokens, which the built page links in <head> ahead of this file
+   (on the dev server they arrive with the bundle, so the screen shows
+   unthemed for that moment). The spinner takes the muted border with a
+   foreground arc, the message muted text, Reload the outline button.
+   =========================================================================== */
+.boot-spinner { @apply border-muted border-t-foreground; }
+.boot-msg { @apply text-sm text-muted-foreground; }
+.boot-reload { @apply h-9 min-h-9 rounded-md border-border bg-background text-sm font-medium text-foreground shadow-xs dark:border-input dark:bg-input/30; }
+.boot-reload:hover { @apply bg-muted dark:bg-input/50; }
+.boot-reload:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+
+/* Spatial, found here: the keyboard focus ring on a card follows the card's
+   new corner (rounded-xl) instead of V3's 10px. */
+.card-open { border-radius: calc(var(--radius) * 1.4); }
