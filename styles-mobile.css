@@ -658,3 +658,57 @@
 .m-theme-row .theme-toggle { height: 40px; }
 .m-theme-row .theme-toggle button { width: 44px; }
 .m-fpill:focus-visible, .m-gbtn:focus-visible, .m-acct:focus-visible { @apply outline-none border-ring ring-[3px] ring-ring/50; }
+
+/* ===========================================================================
+   RE-SKIN, FIRST PASS — phone List, Grid, Spatial and sheets
+   (Notion V4 Tasks, "Phase 4 — Phone List, Grid, Spatial and sheets")
+
+   List rows and Grid cards are shadcn's Card; group and filter labels are
+   muted sans in place of mono capitals; the bottom sort tabs are a themed bar.
+   Sheets take shadcn's Sheet from the bottom (popover surface, rounded top,
+   the overlay the dialogs use) and keep their behaviour: each still traps
+   focus and owns a history entry. Filter chips are the toggle, Apply the
+   default button. Spatial's focus card and zoom pill are a Card and an
+   outline badge, the pinned character's bar a floating card.
+   =========================================================================== */
+.m-card, .m-lrow { @apply rounded-xl border-border bg-card text-card-foreground shadow-sm; }
+.m-card:active, .m-lrow:active { @apply border-ring; }
+.m-ctitle, .m-ltitle { @apply font-medium tracking-tight; }
+.m-lmeta { @apply font-sans text-xs; }
+.m-glabel, .m-flab { @apply font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground; }
+.m-card-open:focus-visible, .m-lrow-open:focus-visible, .m-fp-open:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+
+/* Bottom sort tabs. */
+.m-tabs { @apply border-border bg-background/95; }
+.m-tab { @apply text-xs font-medium text-muted-foreground; }
+.m-tab.on, .m-tab.on .ti { @apply text-foreground; }
+
+/* Sheets. */
+.m-scrim { @apply bg-black/10 backdrop-blur-xs; }
+.m-sheet { @apply rounded-t-xl border-border bg-popover text-popover-foreground shadow-lg; }
+.m-grab::after { @apply bg-muted-foreground/30; }
+.m-sh-title { @apply text-lg font-semibold tracking-tight; }
+.m-sh-clear { @apply rounded-md text-sm font-medium text-foreground; }
+.m-sheet-x { @apply rounded-md border-transparent bg-transparent text-muted-foreground; }
+.m-sheet-x:active { @apply bg-muted text-foreground; }
+.m-chip { @apply min-h-10 rounded-md border-border bg-background text-sm font-medium text-muted-foreground shadow-xs dark:border-input dark:bg-input/30; }
+.m-chip.on { @apply bg-muted text-foreground dark:bg-input/50; }
+.m-apply { @apply min-h-10 rounded-md bg-primary text-sm font-medium text-primary-foreground; }
+.m-apply.ghost { @apply border-border bg-background text-foreground shadow-xs dark:border-input dark:bg-input/30; }
+
+/* Spatial on the phone. */
+.m-zpill { @apply rounded-full border-border bg-background font-sans text-xs font-medium text-foreground; }
+.m-focuspop { @apply rounded-xl border-border bg-card text-card-foreground shadow-lg; }
+.m-fp-title { @apply font-medium tracking-tight; }
+.m-fp-cta { @apply font-sans text-xs font-medium text-foreground; }
+.cp-bar { @apply border-border bg-popover text-popover-foreground shadow-lg; }
+.cp-name { @apply text-sm font-medium; }
+
+/* Group dividers ("All titles", phases): sentence-case headings, as on the
+   desktop List. The phase and type labels are no longer upper-cased in code
+   (mobile.tsx mPhaseLabel, mTypeLabel), so they read the same way. */
+.m-phase-divider { @apply font-sans text-sm font-semibold normal-case tracking-tight; }
+/* The details sheet's eyebrow, title and facts, matching the drawer's. */
+.m-eyebrow { @apply font-sans text-xs font-medium tracking-normal; }
+.m-dtitle { @apply font-semibold tracking-tight; }
+.td-head.td-sheet .td-fact dt { @apply font-sans text-xs font-medium tracking-normal; }

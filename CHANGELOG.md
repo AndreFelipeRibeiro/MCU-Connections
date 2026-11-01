@@ -13,6 +13,17 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — phone List, Grid, Spatial and sheets
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Phase 4 — Phone List, Grid, Spatial and sheets". The phone
+views and bottom sheets in Vega's look: cards, sheet surfaces, tab bar,
+sentence-case phase and type labels (the code no longer upper-cases them).
+
+- Sheets keep their focus trap and history entry.
+
 ## V4 design — dialogs (About, Account, "What have you seen?")
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);

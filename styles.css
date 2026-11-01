@@ -2082,7 +2082,9 @@ body { background: var(--v3-bg); }
 .pop-clear { @apply text-sm text-muted-foreground underline-offset-4 hover:text-foreground; }
 
 /* The theme control: three icon triggers in a tab list. */
-.theme-toggle button { justify-content: center; width: 32px; padding: 0; }
+/* 28px, not shadcn's 32px: at 1280px in Portuguese, where search joins the top
+   row, the wider group pushed that row 12px past the window (qa/test-fit). */
+.theme-toggle button { justify-content: center; width: 28px; padding: 0; }
 .theme-toggle button svg { @apply size-4; }
 
 /* ===========================================================================

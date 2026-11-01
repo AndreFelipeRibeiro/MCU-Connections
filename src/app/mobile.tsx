@@ -17,8 +17,8 @@ window.MPHASE_COLORS = MPHASE_COLORS; // upnext.jsx
 // `t` used for titles throughout this file.
 const MI18N = window.MCU_I18N;
 const mtr = (key: string, vars?: Record<string, unknown>) => MI18N.tr(key, vars);
-const mPhaseLabel = (n) => MI18N.upper(mtr('phase.label', { n }));
-const mTypeLabel = (type) => MI18N.upper(mtr(type === 'film' ? 'type.film.one' : 'type.series.one'));
+const mPhaseLabel = (n) => mtr('phase.label', { n });
+const mTypeLabel = (type) => mtr(type === 'film' ? 'type.film.one' : 'type.series.one');
 // [value, icon]; labels come from sort.short.* and view.* in the active language.
 const SORT_TABS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 const VIEW_MODES = [['list','☰'],['grid','▦'],['spatial','◈']];
