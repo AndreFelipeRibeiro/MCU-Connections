@@ -9,6 +9,10 @@ const http = require('http');
 
 const S = __dirname;
 const SITE = (process.env.SITE ? path.join(S, process.env.SITE) : path.join(S, '..'));
+// data.js moved into the bundle (src/data/data.js) in Phase 2, so it is no
+// longer a file in the served site. Expectations come from the source tree,
+// which is where they belong: they describe the catalog, not the build.
+const { loadCatalog } = require('./load-catalog');
 const V = path.join(S, 'vendor');
 const VENDOR = {
   'react@18.3.1/umd/react.development.js': 'x-react-18.3.1/package/umd/react.development.js',
@@ -54,9 +58,8 @@ const settle = page => require('./ready').appReady(page);
 const go = async page => { await page.goto(URL); await settle(page); };
 const reload = async page => { await page.reload(); await settle(page); };
 
-// Expectations come from data.js, the same source the app loads.
-const data = {};
-new Function('window', fs.readFileSync(path.join(SITE, 'data.js'), 'utf8'))(data);
+// Expectations come from the catalog source, the same one the app loads.
+const data = loadCatalog();
 const { TITLES, CHARACTERS } = data;
 const exact = {};
 TITLES.forEach(t => t.cast.forEach(c => { (exact[c] = exact[c] || new Set()).add(t.id); }));

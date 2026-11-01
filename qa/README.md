@@ -10,9 +10,13 @@ folder (`.vercelignore`), and installed packages stay out of Git
     bash qa/setup.sh
 
 Installs Playwright and axe-core into `qa/node_modules`, downloads Chromium,
-and fetches the pinned React, ReactDOM, Babel standalone and supabase-js
-packages into `qa/vendor`. The checks serve those packages in place of unpkg,
-so they test exactly the versions `index.html` loads and need no network.
+and fetches the pinned supabase-js package into `qa/vendor` (React, ReactDOM
+and Babel are vendored too, from when the app loaded them from unpkg; only
+supabase-js is still fetched that way). The checks serve it in place of unpkg,
+so they test exactly the version `index.html` loads and need no network.
+
+The app is built before each run, so `npm install` in the repository root is a
+prerequisite as well.
 
 ## Running
 
@@ -20,18 +24,25 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression: 41 check scripts in 42 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English and Portuguese, 4 at a time; about 5–6 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
+| `bash qa/regress.sh` | Full regression: 46 check scripts in 47 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English, Portuguese and English in the dark theme, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
 | `bash qa/quick.sh [checks…]` | The per-ticket run: the checks `qa/checks.json` lists for the files changed in the working tree, plus the checks named (the ticket's own), side by side. A typical ticket takes 1–3 minutes. |
-| `SITE_URL=<address> node qa/smoke.js` | One-minute smoke check against a deployed site (real CDN libraries and in-browser Babel): loads, titles appear, Spatial and List open, details open and close, the phone List opens a sheet, no console errors. Run it against staging after each push and production after each merge. |
-| `node qa/a11y-scan.js` | axe-core scan of 16 screens (desktop Spatial, details, List in Release and in By Phase, account menu, an open guide in the List and in Spatial, the Guides popover, the "What have you seen?" dialog, the guide promotion; phone List, details, Spatial, an open guide, the picker sheet, the guide promotion). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). |
+| `SITE_URL=<address> node qa/smoke.js` | One-minute smoke check against a deployed site, exactly as a visitor gets it: loads, titles appear, Spatial and List open, details open and close, the phone List opens a sheet, no console errors. Run it against staging after each push and production after each merge. |
+| `node qa/a11y-scan.js` | axe-core scan of 16 screens (desktop Spatial, details, List in Release and in By Phase, account menu, an open guide in the List and in Spatial, the Guides popover, the "What have you seen?" dialog, the guide promotion; phone List, details, Spatial, an open guide, the picker sheet, the guide promotion). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). Text whose background axe cannot resolve comes back *incomplete*, not as a violation, so this scan passes it; `test-contrast.js` is what measures those. |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
-| `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. |
+| `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. Needs `SITE` or a built `dist/`. |
+| `node qa/test-boot.js` | The startup screen under a blocked, corrupt or hanging bundle. Not in the full run; `npm run build` first. Its `bundle-tampered` case reports one console error on purpose — that error *is* the scenario. |
 
-Each check starts its own static server, serving the repository root, on the
-port in `PORT` (each check keeps its old fixed port as the default, so a check
-run on its own works as before). `regress.sh` and `quick.sh` give every check
-its own port so they can run side by side. To compare two versions, set `SITE`
-to another folder, relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js`.
+Each check starts its own static server on the port in `PORT` (each check
+keeps its old fixed port as the default, so a check run on its own works as
+before). `regress.sh` and `quick.sh` give every check its own port so they can
+run side by side.
+
+What that server hands out is the **built** site, not the source tree: since
+the app became a bundle the source tree cannot be opened in a browser at all.
+`run.js` builds `dist/` once at the start of a run; to point the checks
+somewhere else — another version, to compare — set `SITE` to that folder,
+relative to `qa/`, and build it yourself first:
+`SITE=../../old-copy/dist node qa/test-panel.js`.
 
 ## What makes the runs fast (2026-10-30)
 
@@ -39,13 +50,22 @@ to another folder, relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js
   and prints them in the list's order, so the report reads the same however
   many run at once. The timing-sensitive checks ("serial" in `checks.json`:
   camera, inertia, animation, wide touch) run afterwards, alone.
-- **Pre-compiled scripts:** `run.js` loads `qa/precompile.js` into every check
-  (`NODE_OPTIONS=--require`). It serves the app's `.jsx` files compiled with the
-  same pinned Babel and the same settings Babel standalone uses in the page,
-  cached in `qa/.cache` (ignored by Git), and serves `index.html` with those
-  script tags as plain scripts in the same order. A check run directly with
-  `node` still compiles in the page, and `test-boot` and `perf2` are never run
-  through it, so production's way of loading stays covered.
+- **One built site for every check:** `run.js` loads `qa/serve-site.js` into
+  every check (`NODE_OPTIONS=--require`), which serves the whole site from one
+  tree whatever the check's own handler would have done. 14 of the regress
+  checks predate `SITE` and hard-code the repository root; this is what makes
+  them honour it. Until 2026-10-31 this file also compiled the `.jsx` files
+  with the pinned Babel, because the page did that itself at startup; the
+  bundle replaced all of that, and building once is now both faster and a
+  closer match to what ships — every check exercises the real artifact, which
+  is why `test-boot` and `perf2` no longer need to opt out of it.
+- **One catalog loader:** `test-nextup`, `test-pickperson` and `test-refocus`
+  build their expectations from the catalog source rather than a copy that can
+  drift. Since the TypeScript conversion `src/data/data.ts` carries
+  annotations Node cannot execute, so they share `qa/load-catalog.js`, which
+  transpiles it with the repository's own pinned TypeScript and runs it
+  against a `window` stub. (`test-refocus` reads it as text instead: it wants
+  the literals in the order they are written.)
 - **A ready signal:** the app sets `data-ready="1"` on `<html>` once its first
   render is on screen and the collection has loaded. `qa/ready.js`
   (`appReady(page)`) waits for it plus a short margin (700ms, `QA_READY_MARGIN`)
@@ -210,7 +230,43 @@ to another folder, relative to `qa/`: `SITE=../../old-copy node qa/test-panel.js
   fold away, the view menu sits beside search), the sort tabs slide away, the
   dock shows the next stop with Seen instead of the meter and Up next card,
   the next stop is framed at a readable size, and the zoom control rests
-  hidden until a double-tap; closing brings it all back; Portuguese hint).
+  hidden until a double-tap; closing brings it all back; Portuguese hint),
+  `test-contrast` (the contrast calculation AGENTS.md asks for beside axe:
+  the declared text pairs and the phase tokens in `src/index.css` in both
+  themes, read through the real theme mechanism; every piece of text on
+  `design.html` in both themes; and the app's own text that axe leaves
+  *incomplete* — text over a pseudo element, a gradient or an image, which
+  `a11y-scan.js` cannot judge and therefore passes. Those are measured against
+  the background actually painted behind them: the text is made transparent,
+  the page is photographed and the commonest colour in each text box is its
+  background. Exactly the nodes axe reports are measured (it used to match
+  by text, so one unresolved "T" measured every "T" on the page), and text
+  that is part of a picture (`role="img"`) or marked `aria-hidden` is skipped,
+  as WCAG 1.4.3 exempts it. The app and the band labels are measured in both
+  themes, since the app follows the system. The six Spatial band labels are
+  reached one at a time with `?phase=N`, because only phase 1's is on screen
+  at the opening camera.
+  Accepted shortfalls live in `KNOWN` in the check, each with the ratio it was
+  accepted at and why; a worse ratio fails, and one that starts passing is
+  reported so the entry can go), `test-v4scope` (the seam between V3 and the
+  design system: Tailwind's reset stays out of V3, so `<html>` keeps
+  `line-height: normal` and V3's icons their baseline alignment, and works
+  inside a `.v4` probe; shadcn's `--border` and `--accent` never take V3's old
+  values, each `--v3-*` token resolves to its design-system counterpart, and
+  `color-scheme` follows the theme; the theme class follows the system from
+  the pre-paint script, an override survives a reload, and clearing it follows
+  the system again. Proven against the build before the change and a build
+  with the reset global again, both of which it fails), `test-retap` (on a
+  phone, tapping the sort tab that is already selected brings the List and
+  the Grid back to the top, at once under reduced motion, without changing
+  the sort, its direction or the address; a different tab still re-sorts.
+  Fails on the build before the change), `test-logo` (the placeholder logo:
+  the desktop toolbar, the Welcome dialog, the phone app bar and the startup
+  screen all draw the mark from the one SVG file, painted with `--brand` in
+  light and dark at 32, 32, 28 and 48px; the startup screen shows it with the
+  bundle blocked; the header reads "Red Thread" in English and Portuguese, as
+  do the page title and the home-screen name.
+  Fails on the build before the change).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.
@@ -252,9 +308,10 @@ one.
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
 - `test-camera` used to fail at "sort change while selected", and separately to
   report a false "wheel cancels the glide" about one run in four. Both were the
-  check, not the app, and both are fixed. A full run should now report **44 check runs clean** (42 check runs and two scans);
-  treat any `test-camera` failure as real, and compare against a clean copy with
-  `SITE=` if in doubt.
+  check, not the app, and both are fixed. A full run is 49 runs (46 check
+  runs and three scans: English, Portuguese, and English in the dark theme) and all of them should be clean: as of 2026-10-31
+  there are no known failures. Treat any `test-camera` failure as real, and
+  compare against a clean copy with `SITE=` if in doubt.
   - `page.mouse.click` moves the cursor and presses in the same tick. Hovering a
     card re-lays the canvas out, so the press could land after the cards had
     shifted and select nothing, leaving `.drawer-close` with no target. Card
@@ -265,6 +322,31 @@ one.
     a run of `"failed"` is worth looking at.
   - The glide steps guessed at 60ms and 80ms. They now wait for the transition
     to appear and to clear, which is what the "1 in 4" was.
+
+- `test-skip` **used to fail, and it was the check, not the app** (fixed
+  2026-10-31). Batch 10 replaced the desktop guide's meter row with one taller
+  card (`GuideModule`), which draws progress as `.gm-count` / `.gm-notes` and
+  puts the bulk action in its own footer. The check still read only the phone
+  markup (`.g-meter .pgh-count` and friends), found nothing on desktop, and
+  reported `count null`, `meter: null / null` and `bulk action reads "null"`
+  as though the guide were broken. It now reads both layouts. Every expected
+  value in it is unchanged — they simply had nothing to compare against
+  before, so on desktop most of this check had not really run since Batch 10.
+- `test-back` **used to time out, also the check** (fixed 2026-10-31). It was
+  written on 2026-10-28, and the next day the address gained the open title,
+  so going Forward restores `?title=…` and the details reopen. The check still
+  expected nothing to reopen, left the sheet covering the page, and every
+  later click timed out against it. It is now in the regress set, because the
+  phone's "Back closes the sheet" rule is an AGENTS.md invariant and nothing
+  else covered it — which is how this went unnoticed for three days.
+- **The runner used to be able to miss a failure** (fixed 2026-10-31). Its
+  verdict pattern read an `"errors": [...]` field only as far as the first `]`,
+  wherever that bracket came from. `test-skip`'s own messages contain the text
+  `{"skipped":[]`, so the value it saw ended in `":[]"` and passed the "is it
+  empty" test: the run printed "44 check runs clean" with a real failure in it.
+  `run.js` now finds the end of the array by scanning, ignoring brackets inside
+  strings. A run recorded before that date may have a softer verdict than it
+  appears to.
 
 ## Assertions have to be named "errors" to count
 

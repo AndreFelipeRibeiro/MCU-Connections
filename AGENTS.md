@@ -10,80 +10,118 @@ original V3 plan, kept as history: each opens with a note saying so, and lines
 that no longer hold carry dated *Superseded* notes. The README describes the
 app as it is now.
 
+This checkout is **V4** (branch `version/4.0`, worktree `MCU-V4`). Read
+[docs/V4-KICKOFF.md](docs/V4-KICKOFF.md) before V4 work: it sets out the V4
+plan, the environment and the Figma workflow.
+
 ## Start of every session
 
 1. `git status` in the worktree. If there are uncommitted changes you did not
    make in this session, stop and ask the user. Never edit, stash, reset,
    discard or commit another agent's pending work.
-2. `git fetch origin`; if `version/3.0` moved, fast-forward only
+2. `git fetch origin`; if `version/4.0` moved, fast-forward only
    (`git pull --ff-only`) on a clean tree.
-3. Open the Notion **V3 Tasks** board. Ship anything already in **Approved**
+3. Open the Notion **V4 Tasks** board. Ship anything already in **Approved**
    first (the user cleared it; commit, push, then complete it), then take the
    right ticket and claim it (see Backlog workflow) before writing code.
 
 ## Stack and layout
 
-- Static site, no build: React 18.3.1 and ReactDOM (production UMD builds),
-  Babel standalone 7.29.0 (compiles the `.jsx` files in the browser) and
-  supabase-js 2.112.2, all from unpkg with pinned versions, `crossorigin` and SRI
-  hashes. Supabase (Postgres + Google OAuth) stores signed-in collections.
-  Vercel serves the repository as static files.
-- **Rule for V3: the app has no build step.** No npm, package.json, bundler,
-  router or ES modules in the app; files share APIs through `window.*`. Do not
-  migrate piecemeal (no partial bundling or precompiling).
+- **V4 has a build step.** Vite 8.3.5 with `@vitejs/plugin-react` 6.1.2 builds
+  the app; React and ReactDOM 18.3.1 come from npm, exactly pinned, and Vercel
+  runs the build (`vercel.json`). Supabase (Postgres + Google OAuth) stores
+  signed-in collections; supabase-js 2.112.2 is still the one script loaded
+  from unpkg, with `crossorigin` and an SRI hash. V3's no-build rule is gone,
+  along with in-browser Babel and the CDN React — see docs/V4-PLAN.md and the
+  2026-10-31 rows in docs/decisions.md.
+- **Every dependency is pinned exactly** in `package.json` (no `^`, no `~`), so
+  a build is reproducible. Keep it that way: the shadcn CLI loosens pins when
+  it adds a component, so re-pin after running it.
+- **TypeScript, at full `strict`.** `npm run typecheck` must be green before
+  you hand work over. The conversion is partial on purpose: the data layer, the
+  shared `window` surface, the shadcn components and the design preview are
+  typed, and the V3 app files not yet done carry a `// @ts-nocheck` header
+  saying how many errors each still has. **Never add `any` or a new
+  `@ts-nocheck` to reach green** — type the thing, or leave the existing header
+  in place and say so. Deleting one of those headers, and the errors behind it,
+  is a welcome change on its own.
+- **Where the types live:** `src/types/catalog.ts` holds the shapes the catalog
+  publishes (`Title`, `Character`, `Guide`, `Media`, `WatchData`, the Up next
+  result), and `src/types/globals.d.ts` types the whole shared `window`
+  surface. That file takes component signatures straight from the modules with
+  `typeof import(...)` rather than restating them, so a changed prop is an
+  error at every use site. Add to those two rather than re-describing a shape
+  locally.
 - **Exception: `qa/`** is development-only tooling with its own `package.json`
   (Playwright, axe-core). Nothing in the app may load from `qa/`; Vercel does not
   deploy it (`.vercelignore`) and its installs stay out of Git (`.gitignore`).
-- **V4 moves to a build step** (React with a standard bundler such as Vite,
-  built by Vercel) to unlock design-system tooling, Figma round trips, faster
-  startup and modules. That migration is a planned V4 project with its own plan
-  and approval, not something to start during V3 work (docs/decisions.md).
-- Load order lives in `index.html`: `boot.js`, locales + `i18n.js`, CDN
-  libraries, `data.js`, `guides.js`, `media-data.js`, `watch-data.js`, `config.js`,
-  `supabase-client.js`, then the `.jsx` files with `app.jsx` last (`guides-ui.jsx`
-  after `watch.jsx`, then `picker.jsx`). Keep that order.
-- Main files: `app.jsx` (app shell, desktop Spatial canvas, toolbar, details
-  drawer, state), `mobile.jsx` (phone views, sheets, `Highlight`, `Portrait`
-  users), `desktop-list.jsx` (desktop List), `connections.jsx` (an early line layer,
-  kept for reference and not loaded; the lines are drawn in `app.jsx`),
-  `poster.jsx` (`PosterArt`, `Portrait`, image fallbacks), `search-suggest.jsx`,
-  `tracking.jsx` (Seen/Watchlist + sync, the Up next rule), `upnext.jsx`
-  (the Up next card, strip, meter row and chip), `watch.jsx` (Where to watch
+- The app is one bundle, entered at `src/main.ts`, which imports the data layer
+  and then every view in the order `index.html` used to load them, `app.tsx`
+  last because it mounts the app. Keep that order.
+- **The files still talk to each other through `window.*`.** The bundle changed
+  how the app is delivered, not how its pieces are shared: each file keeps
+  publishing its components on `window` and its readers keep picking them up
+  from there. That is deliberate — it is also the surface 15 QA checks read
+  (docs/V4-PLAN.md §5.3). Replacing it with real imports is a later ticket, not
+  something to do in passing.
+- `index.html` still loads four things as plain classic scripts, each for its
+  own reason, listed in `LEGACY` in `vite.config.js`: `boot.js` and
+  `locales/*.js` + `i18n.js` (the startup screen has to speak the visitor's
+  language before the bundle arrives) and `watch-data.js` (a QA check replaces
+  it over the network, so it must keep its own URL).
+- Main files, all under `src/app/` unless said otherwise: `app.tsx` (app shell,
+  desktop Spatial canvas, toolbar, details drawer, state), `mobile.tsx` (phone
+  views, sheets, `Highlight`, `Portrait` users), `desktop-list.tsx` (desktop
+  List), `poster.tsx` (`PosterArt`, `Portrait`, image fallbacks), `search-suggest.tsx`,
+  `tracking.tsx` (Seen/Watchlist + sync, the Up next rule), `upnext.tsx`
+  (the Up next card, strip, meter row and chip), `watch.tsx` (Where to watch
   in the details, the region picker), `guides.js` (curated guides and the
-  continuity marker; content needs the user's approval) + `guides-ui.jsx`
-  (the guide menu, views, banner, pill and "Part of"), `picker.jsx` ("What
-  have you seen?", the poster-grid picker), `account.jsx`, `about.jsx`
-  (`ModalDialog`), `celebrate.jsx` (counters, confetti, sign-in reminder),
-  `boot.js` (startup screen), `i18n.js` + `locales/*.js`, `data.js` (catalog;
-  permanent title ids), `media-data.js` (TMDB paths), `config.js` (public
-  Supabase URL + publishable key), `schema.sql`, `styles.css`,
-  `styles-mobile.css`. The README's "Project structure" table is the full list.
+  continuity marker; content needs the user's approval) + `guides-ui.tsx`
+  (the guide menu, views, banner, pill and "Part of"), `picker.tsx` ("What
+  have you seen?", the poster-grid picker), `account.tsx`, `about.tsx`
+  (`ModalDialog`), `celebrate.tsx` (counters, confetti, sign-in reminder),
+  `theme-toggle.tsx` (the Light / Dark / Auto control: desktop toolbar, phone
+  account sheet), `boot.js` (startup screen, at the root), `i18n.js` + `locales/*.js` (root),
+  `src/data/data.ts` (catalog; permanent title ids), `src/data/guides.ts`,
+  `src/data/media-data.ts` (TMDB paths), `src/config.ts` (public Supabase URL +
+  publishable key), `src/main.ts` (the bundle entry), `schema.sql`,
+  `styles.css`, `styles-mobile.css`. The README's "Project structure" table is the full list.
 - Docs: `README.md` (features, setup, deploy), `CHANGELOG.md`, `docs/` (handoff,
   decisions, catalog audit and sources, privacy review, V3 verification log).
 
 ## Commands
 
-- Install: nothing to install.
-- Run locally, from the repository root: `python3 -m http.server 8123`, then
-  open `http://localhost:8123/`. Google sign-in works only from origins the
-  OAuth client allows: use port **8126** (`python3 -m http.server 8126`) to test
-  sign-in locally. Other ports browse fine but cannot sign in.
-- Build: none. Pushing a branch is the deploy.
-- Hard-refresh (Cmd+Shift+R) after changing `.jsx` files: Babel fetches them
-  and browsers can serve a cached copy on a plain refresh.
+- Install: `npm install` (Node 18+). `qa/` installs separately, once per
+  machine, with `bash qa/setup.sh`.
+- Run locally: `npm run dev`, then open `http://localhost:8126/`. The port is
+  fixed and strict (`vite.config.js`) because Google sign-in only works from
+  origins the OAuth client allows, and 8126 is the one registered; if the port
+  is taken the dev server stops rather than quietly moving. No hard-refresh
+  dance any more — Vite reloads on save.
+- Type check: `npm run typecheck` (`tsc --noEmit`), green today and expected
+  to stay green.
+- Build: `npm run build` into `dist/`, `npm run preview` to serve that build.
+  Vercel runs the same build on every push, so pushing a branch is still the
+  deploy.
+- The app cannot be opened from the source tree any more (`python3 -m
+  http.server` on the repository root serves an `index.html` whose only script
+  is an unbuilt module). Use `npm run dev`, or `npm run preview` for the real
+  built output.
 - QA checks (`qa/`, details in qa/README.md): once per machine
-  `bash qa/setup.sh` (needs Node 18+). Checks run side by side (4 at a time)
-  with the app's scripts pre-compiled and wait for the app's ready signal, so
-  a full run takes minutes (user decisions, 2026-10-29 and 2026-10-30):
+  `bash qa/setup.sh` (needs Node 18+). The runner builds the site once and
+  serves every check that build, 4 at a time, each waiting for the app's ready
+  signal, so a full run takes minutes (user decisions, 2026-10-29 and
+  2026-10-30):
   - **Per ticket, before handing it over for review:** `bash qa/quick.sh
     <the ticket's own check>`. It also runs every check that `qa/checks.json`
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (41 check scripts in 42 runs plus the accessibility scan in English and
-    Portuguese, about 5–6 minutes; it exits non-zero and marks failures with
+    (46 check scripts in 47 runs plus the accessibility scan in English,
+    Portuguese and English in the dark theme, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code.
+    output, not just the exit code. A good run is **50 check runs clean**
+    with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
     against the deployed site, once Vercel reports the deploy.
@@ -96,10 +134,19 @@ app as it is now.
 
 ## Branches, deploys and approvals
 
-- `version/3.0` is **staging**: every push deploys the Vercel preview
-  `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/`.
-- `main` is **production**: `https://mcu-connections.vercel.app/`.
-- Both deploy automatically through Vercel's Git integration; there is no
+- `version/4.0` is **V4 staging**, checked out in the `MCU-V4` worktree. Every
+  push deploys the Vercel preview
+  `https://mcu-connections-git-version-40-afr-bfcd.vercel.app/` (first
+  deployed 2026-10-31).
+- `version/3.0` is **V3 staging** (worktree `MCU-V3`, preview
+  `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/`). V3 fixes, if
+  any, are made there under that branch's own AGENTS.md and then merged
+  forward into `version/4.0` with the user's approval.
+- `main` is **production**: `https://mcu-connections.vercel.app/`. It serves
+  V4 since the first V4 release (2026-11-01, Andre's approval). Each later
+  batch reaches `main` only with the user's explicit approval for that merge;
+  V3 is history on `version/3.0`.
+- All three deploy automatically through Vercel's Git integration; there is no
   Vercel CLI step. Check a deploy with the commit status on GitHub.
 - Keep iterations local and uncommitted until the user approves committing and
   pushing **that** revision, either in chat or by setting the ticket's Status to
@@ -113,8 +160,9 @@ app as it is now.
   approve.
 - Do not run `git reset --hard`, `git checkout -- .`, `git clean`, `git stash`,
   rebases, force pushes or `git worktree prune` without explicit approval.
-  `MCU-V3` is a linked worktree of the `MCU Connections` checkout; it can look
-  missing or "prunable" from a sandboxed shell. It is not.
+  `MCU-V3` and `MCU-V4` are linked worktrees of the `MCU Connections`
+  checkout; they can look missing or "prunable" from a sandboxed shell. They
+  are not.
 
 ## Commits and CHANGELOG.md
 
@@ -126,24 +174,30 @@ app as it is now.
   or `Co-authored-by: Codex <codex@openai.com>`. Keep existing credits; never
   claim tools or checks that were not used.
 - Every committed change gets a CHANGELOG.md entry at the top:
-  `## V3 fix|improvement|feature|maintenance — <short title>`, then
+  `## V4 fix|improvement|feature|design|maintenance — <short title>` (older
+  entries keep their `V3` prefix), then
   `Recorded: YYYY-MM-DD HH:MM EDT (-0400).` and its staging/production status,
   then bullets for the change, the verification actually performed, and the
   limits. Times are real: take them from git
-  (`TZ=America/New_York git log -1 --date=format-local:'%Y-%m-%d %H:%M %Z' --format=%cd`),
-  never estimated or written ahead. When a batch reaches `main`, update those
+  (`TZ=America/New_York git log -1 --date=iso-local --format=%cd`), never
+  estimated or written ahead. The zone and offset come from git as well:
+  from the first Sunday of November to the second Sunday of March the entry
+  reads `EST (-0500)`, and on the changeover night the hour from 1:00 to 2:00
+  happens twice, so only the offset says which one it was. When a batch reaches `main`, update those
   entries' status line in a small follow-up commit before merging.
 - Keep README.md current when behaviour, setup, release status or workflow
   changes.
 - Before pushing, check staged content and commit metadata (no personal emails,
   home paths or secrets), and verify the pushed tree matches what you tested.
 
-## Backlog workflow (Notion V3 Tasks)
+## Backlog workflow (Notion V4 Tasks)
 
-The backlog is the Notion database **V3 Tasks**, under the **MCU - V3** page
-(`https://app.notion.com/p/8726effdacf44b09abdf60efbe340e0e`; data source
-`collection://b0fc6e5a-f43d-4f05-bd99-1b278aaf86a6`). The old checklist in
-`V3-TASKS.md` is a read-only archive.
+The backlog is the Notion database **V4 Tasks**, under the **MCU - V4** page
+(`https://app.notion.com/p/f8e1ebb392a6450d8ef883458e12bd76`; data source
+`collection://629a6bf8-a98d-47b1-b64d-9bad9d29a2b8`). **V3 Tasks** (under
+**MCU - V3**) is V3's history and holds any V3 maintenance tickets. Open V4,
+V5 and unversioned tickets were copied from it on 2026-10-31; each copy links
+its original in **V3 ticket**.
 
 - **Priority = the order of the Backlog column in the "All tasks" board view**,
   top first. Take the top unclaimed ticket unless the user names others. Do not
@@ -153,25 +207,24 @@ The backlog is the Notion database **V3 Tasks**, under the **MCU - V3** page
   tickets above it are the next ones to do.
 - Fields: **Status** (Backlog, In progress, Awaiting review, Approved, Blocked,
   Deferred, Completed), **Assigned to** (Codex, Claude, Andre), **Type** (Bug,
-  Improvement, Feature, Workflow, Maintenance), **Version** (V3, V4), **Batch**
-  (Pre-batch, Batch 1…n), **Source**, **Latest commit**, **Completed on**
-  (date-time), **Completion order** (number).
+  Improvement, Feature, Design, Workflow, Maintenance), **Version** (V4, V5),
+  **Batch** (Batch 1…n), **Source**, **Figma** (frame links), **V3 ticket**
+  (the original record, for tickets ported from V3), **Latest commit**,
+  **Completed on** (date-time), **Completion order** (number, starting at 1).
 - **Version** and **Batch** say where a ticket belongs in the shipping history.
-  Set both when you claim a ticket: Version is V3 for V3 work, and Batch is the
+  Set both when you claim a ticket: Version is V4 for V4 work, and Batch is the
   batch it is being worked in. They are what the calendar recap's title line is
   built from, so a ticket with no batch has no recap to belong to.
-  - **Pre-batch** is V3 work completed before the batch workflow began on
-    2026-10-27; it is history, not a batch to add to.
-  - Batch boundaries follow the **Completion order** clusters: tickets closed
-    together in one approval share a batch. Batch 2 is orders 44–48, batch 4 is
-    54–61, batch 5 is 62–66, which fixes the numbering for everything around
-    them.
-  - Deferred tickets are left without a Version unless they say which one they
-    are for (the two "V4 -" tickets are V4). Guessing a version for an idea
-    nobody has scheduled is worse than leaving it blank.
+  - V4 batches start again at **Batch 1**. Add the next Batch option when a
+    new batch starts. Tickets closed together in one approval share a batch.
+  - V5 tickets and unversioned ideas ported from V3 stay **Deferred**. Leave a
+    ticket without a Version unless it says which one it is for; guessing a
+    version for an idea nobody has scheduled is worse than leaving it blank.
 - Read the whole ticket page, **including any screenshots or images**: fetch
   the page with its file URLs and look at each image before deciding what the
-  ticket means. New requests from the user in chat become tickets first.
+  ticket means. If the **Figma** field holds links, read those frames with the
+  Figma MCP as well (see "Figma" below). New requests from the user in chat
+  become tickets first.
 - Claim: set Assigned to = your agent and Status = In progress, then re-read the
   record to confirm no one else holds it. Work on one ticket at a time; claim
   the next only when the current one is handed off.
@@ -181,7 +234,7 @@ The backlog is the Notion database **V3 Tasks**, under the **MCU - V3** page
   the ticket stays Awaiting review until the user approves it.
 - **Approved** is the user's own flag, set by them and nobody else. It means
   they have approved *that ticket's current revision* and you may commit and
-  push it to `version/3.0` without asking again. Never set it yourself, and
+  push it to `version/4.0` without asking again. Never set it yourself, and
   never read it as approval for anything beyond that ticket.
   - It does **not** authorise a merge to `main`. That still needs the user's
     explicit approval for that merge (see "Branches, deploys and approvals").
@@ -211,7 +264,7 @@ exists to avoid.
 
 Title line, then one bullet per ticket:
 
-> **MCU V3 – Backlog batch <n> (<a few keywords>)**
+> **MCU V4 – Backlog batch <n> (<a few keywords>)**
 >
 > - **Fixed:** search now matches with or without accents ("Capitao" finds "Capitão").
 > - **Improved:** clicking empty canvas on desktop closes the selected title and its details.
@@ -234,23 +287,42 @@ only create it when the user says yes.
 
 ## Design, accessibility and interaction standards
 
-- Dark theme tokens (`styles.css :root`): `--bg #0a0c14`, `--bg-2 #11141f`,
-  `--surface #161a26`, `--surface-2 #1c2030`, `--border #232838`,
-  `--border-strong #2e344a`, `--text #e6e8f0`, `--text-dim #9ea4b8`,
-  `--text-muted #8389a1`, `--accent #4a8de8`. Phase colours are
-  `PHASE_COLORS` in `app.jsx`. Use the tokens; do not add near-duplicate greys.
-- Type: Inter for UI, JetBrains Mono for labels, numbers and badges, Bebas Neue
-  for display. Brand mark: the conic-gradient square (`.brand-mark`).
+These are the V3 standards and still describe the app. The V4 design system
+(shadcn/ui, Vega style; see "Design system (V4)") replaces the visual tokens
+and type below as it lands (Figma first, then code); the accessibility,
+keyboard, focus, Escape, phone-history, reduced-motion and Spatial performance
+rules carry over unchanged.
+
+- V3's colour tokens (`styles.css :root`) are prefixed `--v3-` so they
+  cannot collide with the design system's (shadcn defines `--border` and
+  `--accent` too), and since the first re-skin pass each is *defined from* a
+  design-system token (`--v3-surface: var(--card)` and so on), so V3's rules
+  follow the theme. Write new rules with the design system's tokens directly,
+  never a raw colour. `PHASE_COLORS` in `app.tsx` (and `MPHASE_COLORS`) hold
+  `var(--phase-N)`; code that paints on a canvas resolves them first.
+- Text on the dark overlays that sit on posters uses `--on-image` (fixed light
+  values): the overlay stays dark in both themes because it sits on an image.
+- Type: the design system's Inter (`--font-sans`, served with the bundle) and
+  the system monospace (`--font-mono`) for labels, numbers and badges
+  (Andre's decision, 2026-11-01). Bebas Neue appears only in the generated
+  poster art. Logo mark: one SVG file, `src/assets/logo-mark.svg`, drawn
+  everywhere as a CSS mask painted with `--brand` (`.logo-mark` in
+  `styles.css`); `node tools/make-icons.js` redraws `favicon.png` and
+  `apple-touch-icon.png` from it. Today it is the Red Thread placeholder.
 - Contrast: informative text meets WCAG AA (4.5:1 for normal text) against its
-  real background; check with axe-core and a contrast calculation. Making text
-  bigger is not a contrast fix. RT tag `#cc2a0a`, IMDb tag `#f5c518`.
+  real background. Both halves of that run: `qa/a11y-scan.js` (axe) and
+  `qa/test-contrast.js` (the calculation). They do not overlap — axe returns
+  text whose background it cannot resolve as *incomplete* and the scan passes
+  it, so the second check measures those against the pixels actually painted.
+  Making text bigger is not a contrast fix. RT tag `#cc2a0a`, IMDb tag
+  `#f5c518`.
 - Structure: one `<h1>` (the app name), toolbar and app bar are the banner, the
   canvas/List/phone main area is `main`; columns and icon-only controls have
   accessible names (visually hidden text uses `.story-sr`).
 - Focus and keyboard:
   - Focus rings use `:focus-visible`.
   - Scripts move focus only after keyboard input (the `lastInput` tracker in
-    `app.jsx`), so mouse and touch users never see a ring they didn't cause.
+    `app.tsx`), so mouse and touch users never see a ring they didn't cause.
   - Escape closes the nearest layer first: search suggestions, then menus and
     popovers, then dialogs and phone sheets, then the pair view, then the
     desktop List's bulk selection, then the details, then the pinned character
@@ -274,11 +346,113 @@ only create it when the user says yes.
 - Search uses one normalisation, `MCU_I18N.fold()` (case and accents), for
   filtering, suggestions and highlights.
 
+## Figma (V4)
+
+V4's new look is designed in Figma and brought into code through the Figma MCP
+server (remote, `https://mcp.figma.com/mcp`). `.mcp.json` in the repository
+root registers it for Claude Code in this folder; each person authenticates
+once (`/mcp`, then figma, then Authenticate). Codex adds it with
+`codex mcp add figma --url https://mcp.figma.com/mcp`.
+
+- Figma is the source of truth for the V4 design: variables (colour, type,
+  spacing, radius, motion) and components. Code mirrors the variables as
+  design tokens in one place, with the same names; components use tokens,
+  never raw values copied from a frame.
+- Work from links, not descriptions: a design ticket's **Figma** field links
+  the frame(s). Read the frame with the MCP (design context, variables, a
+  screenshot) before coding, and compare the result against the frame in a
+  real browser at desktop and phone sizes, in English and Portuguese.
+- When a frame and the rules here disagree (accessibility, keyboard, contrast,
+  localisation), the rules win: flag the difference on the ticket instead of
+  silently copying the frame.
+- **Phase 4's first pass has no frames** (Andre's decision, 2026-11-01): it
+  applies shadcn/ui's Vega defaults to each surface as they stand, so the look
+  can be seen and reacted to before any art direction. The rules above apply to
+  the customising pass that follows, once frames exist.
+- Do not write to the user's Figma files (create or change frames, variables
+  or components) unless the ticket or the user asks for it.
+- Never put Figma access tokens or other credentials in the repository,
+  Notion or chat; the MCP signs in through the browser.
+
+## Design system (V4)
+
+- Decided 2026-10-31 (docs/decisions.md; Notion ticket "Design system:
+  shadcn/ui on Base UI, Vega style (dark + light)"): V4's component base is
+  shadcn/ui on Base UI, starting from shadcn's Vega style with the Neutral base
+  colour and theme, default radius, Inter and lucide icons (shadcn preset
+  `base-vega`). Light and dark themes from day one.
+- Start from the library defaults; V4's art direction arrives later through
+  Figma variables. Do not carry V3's colours (`--v3-bg`, `--v3-accent`, …) in
+  as a starting point.
+- Setup landed on 2026-10-31: Tailwind CSS v4.3.3, shadcn on Base UI 1.9.0,
+  `components.json`, the token stylesheet `src/index.css`, eight components in
+  `src/components/ui/` and the preview page `design.html`. Wired into the app
+  on 2026-11-01 (Notion "Phase 4 — wire the design system into the app"):
+  `src/main.ts` loads `src/index.css` and starts the theme, with no visible
+  change, because V3's stylesheets still paint every surface. Putting the
+  components into the app is Phase 4, one ticket per surface.
+- **The first re-skin pass (2026-11-01) restyled V3's markup**, it did not
+  rewrite it: each surface's look is a "RE-SKIN, FIRST PASS — <surface>"
+  section at the end of `styles.css` or `styles-mobile.css`, which gives V3's
+  classes shadcn's exact class recipes through `@apply` (both stylesheets
+  start with `@reference "./src/index.css"` for that). It sits last so it wins
+  over V3's rules of the same weight; V3's layout rules above it stay. New
+  work on a surface either edits its section or, better, swaps that surface's
+  markup for the React components in `src/components/ui/` and deletes the
+  section and the V3 rules it overrides together (docs/decisions.md).
+- **How a surface opts in** when its markup moves onto the components:
+  - Tailwind's preflight reset is scoped to `.v4` (`src/preflight-v4.css`,
+    generated from Tailwind's own; its header says why). A converted surface
+    puts class `v4` on its root, and a component that portals out of a
+    surface carries `v4` on its portaled root itself (`dialog.tsx`,
+    `tooltip.tsx`; add it to any new one that portals).
+  - Tailwind generates classes only from the files listed with `@source` in
+    `src/index.css`. Add the surface's file there in the ticket that converts
+    it; until then its class names are V3's and must not become utilities.
+  - V3's stylesheets are unlayered, so they beat every Tailwind class on an
+    element they match, whatever the order. Retire a surface's V3 rules in the
+    ticket that converts it.
+  - `qa/test-v4scope.js` holds this seam: the reset stays out of V3 and works
+    inside `.v4`, the two token sets don't collide, and the theme is wired.
+  - When no V3 surface is left: delete `src/preflight-v4.css`, import
+    `"tailwindcss"` whole, and drop the `v4` classes and the `--v3-` tokens.
+- Install and add components with the shadcn CLI pinned to an exact version
+  (`npx shadcn@<version> init --base base --preset vega` — the CLI's preset is
+  `vega`, and `--base base` makes the style it records `base-vega`); commit
+  `components.json`. Components live in `src/components/ui/` and are our code:
+  restyle and fix them there instead of wrapping them to override styles.
+- Tokens: shadcn's CSS variables (`--background`, `--foreground`, `--primary`,
+  `--border`, `--ring`, `--radius`, …) in one stylesheet with a light `:root`
+  block and a `.dark` block are the token file V4-PLAN.md §6 describes; names
+  match the Figma variables. Phase colours become tokens there (`--phase-1`
+  … `--phase-6`, both themes), and so do collection status (`--status-seen`,
+  `--status-seen-text`, `--status-watch`) and `--on-color`, the ink for text on
+  a phase or status fill, which turns light in the light theme because those
+  fills turn dark.
+- Theme: class `dark` on `<html>`, following `prefers-color-scheme` until the
+  user overrides it. The mechanism is `src/theme.ts` (`window.MCU_THEME`,
+  `useTheme()`, the override in `localStorage` under `mcu.theme`, cleared to
+  go back to following the system); every page gets the class before first
+  paint from a copy of the rule that Vite injects into its `<head>`
+  (`THEME_PREPAINT` in `vite.config.js`). What the user clicks to override it
+  is the Dark/Light ticket. The app starts it in `src/main.ts`, but the class
+  reaches a surface only once that surface is on the tokens: V3's stylesheets
+  are dark whatever class `<html>` carries.
+- Both themes meet WCAG AA, and `qa/test-contrast.js` is what says so. Where a
+  shortfall is accepted it goes in that check's `KNOWN` with the ratio it was
+  accepted at and why, not into a comment nobody runs.
+- The interaction rules in "Design, accessibility and interaction standards"
+  win over library defaults: Base UI dialogs and popovers join the one Escape
+  ladder, the desktop drawer stays modeless, phone sheets trap focus and own a
+  history entry, focus rings appear only after keyboard input, and nothing
+  inside the Spatial canvas uses `backdrop-filter` (keep Vega's default solid
+  menus).
+
 ## Language
 
 User-facing text is translated: never hard-code UI strings in components. Add a
 key to `locales/en.js` (the complete base), translate it in every other
-`locales/*.js`, and read it with `tr()` (app.jsx), `mtr()` (mobile.jsx) or
+`locales/*.js`, and read it with `tr()` (app.tsx), `mtr()` (mobile.tsx) or
 `window.MCU_I18N.tr()`. Show titles and character names through
 `MCU_I18N.titleName()` / `charName()`; search keeps matching every language's
 names. New catalog titles need an official local title and a short,
@@ -292,8 +466,9 @@ them from the Spatial layout).
 - **Phase 6, email/password accounts:** Deferred. It waits on a custom domain
   (for reliable transactional email) and on its own plan and explicit
   approval. Do not add forms, recovery handlers or SMTP settings before then.
-- Also deferred: Light mode, the V4 look and feel, and the V4 move to a build
-  step (Notion: "V4 - App Look and feel", "V4 - Tooling and build step").
+- The build step, the new look and feel and Dark/Light mode are V4 Backlog
+  tickets (Notion V4 Tasks). V5 tickets and unversioned ideas stay Deferred
+  there until the user moves them.
 - Other open decisions are listed in docs/HANDOFF.md.
 - Supabase free tier: accept pauses; no keep-alive automation.
 
@@ -312,7 +487,7 @@ them from the Spatial layout).
 
 ## Working with another agent
 
-Claude and Codex take turns in the same `version/3.0` worktree. Uncommitted
-changes are the hand-off point; the Notion claim says who holds which ticket.
-When asked to review the other agent's work, read only (`git diff`) and report.
-Edit only if the user asks.
+Claude and Codex take turns in the same `version/4.0` worktree (`MCU-V4`).
+Uncommitted changes are the hand-off point; the Notion claim says who holds
+which ticket. When asked to review the other agent's work, read only
+(`git diff`) and report. Edit only if the user asks.

@@ -3,12 +3,18 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MCU Connections — Explorer</title>
+<title>Red Thread — Marvel movies, series and character connections</title>
+<!-- The name iOS offers for a home-screen icon; without it, it offers the
+     whole title above. -->
+<meta name="apple-mobile-web-app-title" content="Red Thread"/>
 <!-- Tab, home-screen and link-preview identity. Crawlers do not run scripts,
      so the description is the English default; the app itself follows the
      visitor's language. The preview image is served by production (main). -->
 <meta name="description" content="See how every Marvel Cinematic Universe film and series connects through shared characters, and track what you have watched."/>
-<meta name="theme-color" content="#0a0c14"/>
+<!-- The browser's own chrome, per system scheme: the design system's
+     --background in each theme. -->
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"/>
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)"/>
 <link rel="icon" type="image/png" sizes="64x64" href="favicon.png"/>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"/>
 <meta property="og:type" content="website"/>
@@ -26,7 +32,10 @@
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+<!-- Only the generated poster art's display face comes from Google Fonts:
+     the UI's Inter is the design system's, served with the bundle, and
+     numbers use the system monospace. -->
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css"/>
 <link rel="stylesheet" href="styles-mobile.css"/>
 <script src="boot.js"></script>
@@ -34,7 +43,7 @@
 <body>
 <div id="root">
   <div id="mcu-boot" class="boot" data-state="loading" role="status" aria-live="polite">
-    <div class="boot-mark" aria-hidden="true"></div>
+    <div class="boot-mark logo-mark" aria-hidden="true"></div>
     <div class="boot-spinner" aria-hidden="true"></div>
     <p class="boot-msg"></p>
     <button class="boot-reload" type="button" hidden></button>
@@ -42,35 +51,18 @@
 </div>
 
 <!-- Languages first (small, local): the startup screen speaks the visitor's
-     language while the libraries below download. One catalog per file
+     language while the bundle below downloads. One catalog per file
      (English is the base), then the runtime. -->
 <script src="locales/en.js"></script>
 <script src="locales/pt-BR.js"></script>
 <script src="i18n.js"></script>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2.112.2/dist/umd/supabase.js" integrity="sha384-OUpie84zd1LdwNlK9uJJQRwab0BLqo3eKYKFh7hSVL58FSk7wPp2l0kfUMIIoaQd" crossorigin="anonymous"></script>
 
-<script src="data.js"></script>
-<script src="guides.js"></script>
-<script src="media-data.js"></script>
+<!-- The whole app is one bundle now (src/main.js): React, the data layer and
+     every view. A module script is deferred, so it runs after the libraries
+     above and after watch-data.js below, which is what the app expects. -->
+<script type="module" src="/src/main.ts"></script>
 <script src="watch-data.js"></script>
-<script src="config.js"></script>
-<script src="supabase-client.js"></script>
-<script type="text/babel" src="poster.jsx"></script>
-<script type="text/babel" src="tracking.jsx"></script>
-<script type="text/babel" src="celebrate.jsx"></script>
-<script type="text/babel" src="account.jsx"></script>
-<script type="text/babel" src="about.jsx"></script>
-<script type="text/babel" src="search-suggest.jsx"></script>
-<script type="text/babel" src="mobile.jsx"></script>
-<script type="text/babel" src="desktop-list.jsx"></script>
-<script type="text/babel" src="upnext.jsx"></script>
-<script type="text/babel" src="watch.jsx"></script>
-<script type="text/babel" src="guides-ui.jsx"></script>
-<script type="text/babel" src="picker.jsx"></script>
-<script type="text/babel" src="app.jsx"></script>
 </body>
 </html>

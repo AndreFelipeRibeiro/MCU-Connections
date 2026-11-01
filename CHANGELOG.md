@@ -12,6 +12,891 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+
+## V4 design — toolbar and phone header controls back to V3's heights
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — Toolbar and app bar (revision)". Andre found the
+re-skinned controls too short: the first pass had set them to shadcn's 36px
+(desktop) and 40px (phone). They are back to V3's heights.
+
+- **Desktop toolbar:** every control 44px again (search, Order, Filters,
+  All/Films/Series, Guides, language, account, the sort tabs, the collection
+  switch, Spatial/List), with 34px segments inside a group. The theme control
+  is as tall as its neighbours; its buttons stay 28px wide so the Portuguese
+  top row still fits at 1280px. Toolbar 129px, as in V3.
+- **Phone app bar:** search, Order, Filters and View are 44px touch targets,
+  the top row 38/40px, the bar 170px, as in V3.
+- Measured against the pre-reskin build (desktop at 2000px, phone at 390px):
+  every control matches. `test-fit`'s layout numbers in both languages are
+  identical to V3's.
+
+## V4 design — Red Thread placeholder logo, name and page title
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Placeholder new logo". A placeholder Red Thread mark replaces
+the rainbow square, and the header, home link, page title and icons say Red
+Thread. The link preview, About copy and startup error keep MCU Connections
+until the rename ticket.
+
+- **One file:** `src/assets/logo-mark.svg`, used as a CSS mask painted with a
+  new `--brand` token (light and dark), in the toolbar, phone app bar,
+  About/Welcome dialog and startup screen. The three copied conic-gradient
+  rules are gone; sizes stay 32 / 28 / 48px. It builds into the stylesheet, so
+  the startup screen needs no extra request.
+- **Icons:** `tools/make-icons.js` redraws `favicon.png` and
+  `apple-touch-icon.png` from the SVG.
+- **Name:** `app.name` / `home.link` in both locales; title "Red Thread —
+  Marvel movies, series and character connections", and
+  `apple-mobile-web-app-title` so iOS offers "Red Thread" for the home screen.
+- New check `qa/test-logo.js` (fails on the build before, 39 errors); swapping
+  a dummy shape into the SVG changed all four places. Full regression: 50 check
+  runs clean.
+
+## V4 fix — Spatial band labels pass contrast in phases 3 and 6
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Spatial band labels fail WCAG AA in phases 3 and 6 (live in
+V3)". Andre chose to lighten the two dark phase colours: phase 3 `#d04040` →
+`#e86a6a`, phase 6 `#c8384a` → `#e5677a`. They now meet AA as text on every
+dark surface, and the dark ink on their fills improves with them.
+
+- The eight phase 3 and 6 entries in `qa/test-contrast.js`'s `KNOWN` are
+  deleted; phase 4 on a card stays there (not part of this decision).
+- Full regression: 49 check runs clean.
+
+## V4 improvement — tapping the active sort tab on a phone goes back to the top
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Mobile: Press twice resets the list". On a phone, tapping the
+sort tab that is already selected scrolls the List or Grid back to the top,
+smoothly, or at once under reduced motion. Nothing else changes; a different
+tab still re-sorts.
+
+- New check `qa/test-retap.js` (fails on the build before the change).
+
+## V4 fix — contrast fixes from the full run, and an accessibility scan in dark
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — Desktop List / Guides (fixes found by the
+regression)". The full regression caught two shortfalls the re-skin had
+introduced, and showed the accessibility scan had only ever run in light.
+
+- **Rating chips** went grey over light rows: they now sit on a solid dark
+  chip. **The guide promotion's date tile** was near-white on near-white:
+  fixed.
+- **`qa/a11y-scan.js` takes `SCHEME`** and the full run scans English in dark
+  as well (46 → 49 check runs then).
+
+## V4 maintenance — the first re-skin pass, written down
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — first pass (docs)". AGENTS.md and HANDOFF.md
+describe how the first pass works and how a surface moves onto the real
+components later.
+
+- The "RE-SKIN, FIRST PASS — <surface>" sections, why they sit last, and that
+  new work either edits a section or swaps the markup for components and
+  deletes the section with the V3 rules it overrides.
+
+## V4 design — startup screen
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — Startup screen". The startup screen before the
+bundle arrives: the design system's background, foreground and spinner, in the
+visitor's theme from the first paint.
+
+- In development the screen paints before the token stylesheet arrives, so it
+  can flash unthemed there; the built site loads the tokens with the page.
+
+## V4 design — desktop Spatial
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — Desktop Spatial". Spatial cards are shadcn cards at
+exactly their old size (the layout is computed from it); band labels, the
+overall header and the zoom control float as cards.
+
+- iOS rules kept: no `will-change`, 3D transform or `backdrop-filter` on cards
+  or inside the canvas.
+
+## V4 design — guides
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — Guides". The guide menu, views, banner, pill, "Part
+of" and the phone guide dock in Vega's look. Labels are sentence case.
+
+- The promotion's poster art keeps its capitals.
+
+## V4 design — phone List, Grid, Spatial and sheets
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — Phone List, Grid, Spatial and sheets". The phone
+views and bottom sheets in Vega's look: cards, sheet surfaces, tab bar,
+sentence-case phase and type labels (the code no longer upper-cases them).
+
+- Sheets keep their focus trap and history entry.
+
+## V4 design — dialogs (About, Account, "What have you seen?")
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — Dialogs (About, Account, "What have you seen?")".
+The dialogs in Vega's dialog look: radius, border, shadow, title and
+description type, primary and outline buttons.
+
+- Focus trap, Escape order and focus return unchanged.
+
+## V4 design — desktop List
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — Desktop List". The desktop List in Vega's table
+look: header row, row hover, checkboxes, sentence-case section headings (the
+code no longer upper-cases them). Phases keep their colour.
+
+- Restyle only: same columns, keys and bulk selection.
+
+## V4 design — details drawer
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — Details drawer". The desktop details drawer in
+Vega's look: card surface, section headings, outline buttons, badges. It stays
+modeless, as the rules require.
+
+- Restyle only: same controls in the same places.
+
+## V4 design — toolbar and app bar, and the Light / Dark / Auto control
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — Toolbar and app bar; Design: Dark/Light mode".
+Desktop toolbar and phone app bar in Vega's look, and the theme control Andre
+chose.
+
+- **Theme control:** `src/app/theme-toggle.tsx`, three buttons (Light, Dark,
+  Auto) in a labelled group. In the desktop toolbar, and in the phone account
+  sheet (in the app bar it cut the name short). Auto follows the system; the
+  choice survives a reload.
+- Tab lists, Order, language, filters, search and the account pill take
+  shadcn's outline-button and input recipes.
+- Strings in English and Portuguese (`theme.*`).
+
+## V4 design — V3's palette and type onto the design-system tokens
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Notion V4 Tasks, "Phase 4 — V3's palette and type onto the design-system tokens
+(all surfaces)". The first re-skin step, under every surface ticket: V3's
+colours now come from shadcn's tokens, so the app follows the light and dark
+themes.
+
+- **V3's tokens are defined from the design system's** (`--v3-surface:
+  var(--card)` and so on), and about 350 colours written straight into
+  `styles.css` and `styles-mobile.css` were mapped onto tokens. New tokens in
+  both themes: `--status-seen`, `--status-seen-text`, `--status-watch`,
+  `--on-color` (ink on phase and status fills) and `--on-image*` (fixed light
+  text on the dark overlays over posters).
+- **Type is Vega's default**: Inter (served with the bundle) and the system
+  monospace in place of JetBrains Mono, in all 81 places. Google Fonts now
+  loads only Bebas Neue, for the generated poster art.
+- Both stylesheets start with `@reference "./src/index.css"` so the surface
+  sections can use shadcn's class recipes through `@apply`. Eight more shadcn
+  components are added to `src/components/ui/` for the surfaces to move onto
+  later; react is re-pinned exactly.
+- `PHASE_COLORS` / `MPHASE_COLORS` hold `var(--phase-N)`; the canvas and
+  confetti resolve them before painting.
+- Verified with the surface tickets: full regression (49 check runs clean at
+  the end of the pass), both themes in the in-app browser at desktop and phone
+  sizes, English and Portuguese.
+
+## V4 design — the design system wired into the app, with no visible change
+
+Recorded: 2026-11-01 01:19 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+The first Phase 4 ticket (Notion V4 Tasks, "Phase 4 — wire the design system
+into the app (before any surface)"). The app now loads Tailwind, the token file
+and the theme, so each surface ticket can start using them. Nothing on screen
+changes: V3's stylesheets still paint every surface.
+
+- **The app loads the design system.** `src/main.ts` imports `src/index.css`
+  and starts the theme. The `dark` class follows the system before first
+  paint, through a rule Vite injects into every page's `<head>`
+  (`THEME_PREPAINT` in `vite.config.js`, replacing the copy pasted into
+  `design.html`). An override set through `window.MCU_THEME` survives a
+  reload.
+- **V3's colour tokens are now `--v3-*`.** shadcn defines `--border` and
+  `--accent` too, so with both files on one page whichever loaded last would
+  have recoloured the other's. All ten tokens renamed: 653 uses, all in CSS.
+- **Tailwind's preflight reset is scoped to `.v4`** (`src/preflight-v4.css`,
+  generated from Tailwind 4.3.3's own). Loaded globally it changed 166 computed
+  properties on V3 elements: line height everywhere, icon alignment, button
+  fonts, border and outline colours. A converted surface opts in with class
+  `v4` on its root; the dialog and tooltip carry it on their portaled roots,
+  and `design.html` on `<html>`. Temporary: Tailwind is imported whole again
+  once no V3 surface is left.
+- **Tailwind generates classes only from `src/components` and
+  `src/design`.** Scanning the whole project generated 3.8 KB of utilities
+  from V3's class names.
+- **The tokens sit in the base cascade layer**, and V3's `:root` holds
+  `color-scheme: normal`, so native controls and scrollbars stay as they were.
+- **`qa/test-v4scope.js`**, a new regression check: the reset stays out of V3
+  and works inside `.v4`, the token sets don't collide, and the theme is wired.
+- Docs: AGENTS.md (the renamed V3 tokens, the first pass's exception to the
+  Figma rules, how a surface opts in, the theme wiring, the check count), four
+  decisions, two handoff quirks, README, qa/README.md, and a dated note in
+  docs/V4-KICKOFF.md recording that the first re-skin pass has no Figma frames.
+
+Verified: a pixel diff of 42 app states before and after (desktop and phone,
+light and dark system, English and Portuguese, the welcome dialog) shows no
+visible change, the largest leftover being 58 px of anti-aliasing on generated
+art that the same build also shows run to run. The computed style of every
+element, about 26,900 across 8 states, has zero differences. `design.html` is
+pixel-identical in 4 full-page shots. The new check fails the old build and a
+build with the reset made global again, and passes this one. Looked at in the
+in-app browser on the dev server, at desktop and phone size. `npm run
+typecheck` green; `bash qa/regress.sh` all 47 check runs clean in 5m 40s. The
+design system adds 48.7 KB of CSS (8.9 KB gzipped).
+
+Limits: not checked on a real iPhone or in Safari or Firefox. The `v4` marks on
+the dialog and tooltip have nothing to open them in the app yet.
+
+## V4 design — theme switching, and the contrast check the rules always asked for
+
+Recorded: 2026-10-31 20:30 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+Finishes the design-system ticket. Most of its scope arrived with the preview
+page (`07ea940`): Tailwind, shadcn on Base UI, `components.json`, the token
+stylesheet with both themes, the phase tokens, eight components and the three
+app surfaces as proof. What was left was theme switching and the acceptance
+checks.
+
+- **`src/theme.ts`** is the mechanism: class `dark` on `<html>`, following
+  `prefers-color-scheme` until the visitor overrides it. The override lives
+  under `mcu.theme` and is *removed*, not overwritten, to go back to following
+  the system. It follows the system live with no reload, survives
+  `localStorage` throwing in a private window, and follows another tab.
+  Published as `window.MCU_THEME` with a `useTheme()` hook. **The app does not
+  call it yet** — `index.html` still serves V3's stylesheets, which are dark
+  whatever class `<html>` carries. `design.html` repeats the rule inline
+  because the bundle arrives too late to paint with.
+- **`qa/test-contrast.js`** is the calculation AGENTS.md has asked for beside
+  axe since V3 and that had never been run. It measures the declared token
+  pairs and the phase colours in both themes, every piece of text on
+  `design.html` in both themes, and the app's own text that axe returns as
+  *incomplete* rather than as a violation — which `a11y-scan.js` therefore
+  passes, 107 nodes on desktop Spatial alone. Those are measured against the
+  background actually painted: the text is made transparent, the page is
+  photographed, and the commonest colour in each text box is its background.
+  338 measurements, 17 seconds, added to `qa/checks.json`.
+- **Two light-theme library defaults were below AA** and are darkened, same
+  hue and chroma: `--muted-foreground` 0.556 → 0.54 (was 4.35:1 on `--muted`
+  and `--secondary`, now 4.61) and `--destructive` 0.577 → 0.52 (was 3.97:1 on
+  the 10% tint Vega always paints it over, now 4.65). The preview's
+  destructive swatch is gone with them: Vega has no `--destructive-foreground`
+  because it never fills a surface with `--destructive`.
+- **The dark phase colours stay as V3 wrote them** — the user's call, art
+  direction left for the Phase 4 re-skin. Those five pairs and the three
+  rendered labels that follow sit in the check's `KNOWN` list with the ratio
+  each was accepted at, so a worse ratio fails and one that starts passing
+  asks to be deleted. Two are the open band-label bug, which this check
+  reproduces independently at 4.17:1 and 3.83:1.
+- Smaller: `color-scheme` per theme so the browser's own furniture follows;
+  the preview header wraps below 640px, where three buttons no longer fit
+  beside the title.
+
+Verified: `bash qa/regress.sh` on the final tree, **all 46 check runs clean**
+including both accessibility scans; `npm run typecheck` and `npm run build`
+clean; looked at in a real browser on the built site at desktop and 375px, in
+light, dark and Auto, with the system colour scheme flipped live.
+
+Limits: **non-text contrast is not covered** (WCAG 1.4.11 — borders, focus
+rings, the switch's track); it needs measuring where it renders, not at the
+token level, and is said so in the check's own header. The preview page has no
+translations; it is a development page the app never loads. Nothing here
+changes the running app.
+
+## V4 maintenance — the docs stop describing V3
+
+Recorded: 2026-10-31 17:25 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+The V4 setup commit retargeted AGENTS.md and README.md but left the two files
+AGENTS.md sends a new agent to read *first* describing V3, so they actively
+misled. Documentation only; no application code.
+
+- **docs/HANDOFF.md** now opens by saying V3 is released and this checkout is
+  V4, and points at V4-KICKOFF.md and V4-PLAN.md. "Where things stand" is
+  rewritten: Batch 10 merged to production on 2026-10-31, V4 is open on
+  `version/4.0` in the `MCU-V4` worktree with its own preview, and Batch 1 is
+  on staging. The architecture section described a static site compiling JSX
+  in the browser — it now describes the Vite build, the single bundle, the
+  classic scripts that stay outside it and why, TypeScript at `strict`, and
+  the fact that the files still share through `window`. The quirks section
+  loses the Babel startup cost and the hard-refresh advice (neither is true
+  any more), gains the fact that the source tree can no longer be opened in a
+  browser, and records that `test-camera`'s flakiness is fixed. The batch
+  history is kept: it is how most of the behaviour got here.
+- **A new quirk worth having written down:** a check that has drifted from the
+  app looks exactly like an app bug. Two were carried as suspected bugs for
+  days. When a check fails in a way that makes no sense, compare its selectors
+  against the DOM and `git log` the feature before believing it.
+- **docs/decisions.md** gains the three V4 setup decisions that were never
+  recorded: the `version/4.0` branch and `MCU-V4` worktree layout, Notion
+  **V4 Tasks** as the backlog with V3 Tasks kept as history, and the Figma
+  pipeline — including the rule that where a frame and the accessibility,
+  keyboard, contrast or localisation rules disagree, the rules win.
+- **docs/CATALOG-AUDIT.md** and **docs/PRIVACY-REVIEW.md** named
+  `version/3.0` in the present tense. Both are dated reports, so they are
+  marked as such rather than rewritten. The privacy review additionally now
+  states plainly that **as of 2026-10-31 the historical exposure is still
+  unresolved** — no history rewrite has been authorised or performed, and
+  `version/4.0` inherits the same history.
+- **.gitignore** described `qa/.cache/` as written by `qa/precompile.js`,
+  which no longer exists. The entry stays so an old directory does not show as
+  untracked; the comment now says so.
+
+Verification:
+
+- `npm run typecheck` green; `npm run build` ok.
+- `bash qa/quick.sh` maps the changed files to no checks, as expected for a
+  documentation change.
+
+Limits:
+
+- No application code changed, so there is nothing to see in a browser.
+- The privacy finding is recorded, not fixed; it still needs the user's
+  explicit approval before any history rewrite.
+
+## V4 maintenance — TypeScript, at full strict
+
+Recorded: 2026-10-31 17:19 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+The source is renamed to `.ts`/`.tsx`, `jsconfig.json` becomes a `tsconfig.json`
+at full `strict`, and `npm run typecheck` is a script. No behaviour change: the
+built bundle is the same size and the full regression is unchanged.
+
+- **The strictness setting was measured, not guessed.** 2,679 errors at full
+  `strict`, 1,284 with `noImplicitAny` off, 632 with null checks off too, and
+  **626 even with `strict` off entirely** — no setting reaches green, so
+  loosening would only have hidden work while looking tidier. The setting
+  therefore stays at its strongest, and the files not yet converted carry a
+  `// @ts-nocheck` header naming how many errors each still has. Nothing is
+  annotated `any` to reach green; the check is green from this commit, and
+  deleting one of those headers is a self-contained piece of work.
+- **The catalog shapes are written from the data, not the comments around
+  it.** `src/types/catalog.ts` holds `Title`, `Character`, `Guide`, `Media`,
+  `WatchData` and the Up next result. Annotating `TITLES` as `Title[]` and
+  `CHARACTERS` as `Record<string, Character>` checks those types against all
+  64 titles and 89 characters, which is what makes them worth having.
+- **The shared surface is typed from the implementations.**
+  `src/types/globals.d.ts` covers all 132 names, taking component signatures
+  with `typeof import(...)` rather than restating them, so a changed prop is
+  an error at every use site instead of a second copy that drifts within a
+  week. 103 names gained an `export` beside their existing `window`
+  publication to make that possible; the publication stays, because every
+  reader and 15 QA checks still use it.
+- **Writing those declarations and then checking them caught six that were
+  wrong**: `MCU_CONFIG`'s real keys, `MCU_SUPABASE_STATUS` being an object and
+  not a string, `mediaURL`'s arity, `MCU_creditRoster`'s signature, four i18n
+  functions (`storyLabel` takes a story string, `release` returns an object,
+  `budget` takes a number, `languages` returns different keys), and two
+  missing kinds in the Up next result union. None was a runtime bug; all were
+  places where the documentation in my head disagreed with the code.
+- **Fully typed under `strict`:** the data layer, the Supabase client, all
+  eight shadcn components, the design preview, and `poster`, `upnext` and
+  `about`. The other ten V3 app files are marked, and the four largest hold
+  75% of what is left.
+- **The shadcn components are regenerated by the CLI as TypeScript** rather
+  than hand-typed — they were `.jsx` only because `components.json` had
+  `"tsx": false` when there was no tsconfig to generate against. They now
+  carry upstream's own types.
+- **TypeScript is pinned to 5.9.3, not 7.0.2.** A ten-thousand-line migration
+  needs a checker whose verdicts are trustworthy more than fast, and 7.0.2 is
+  a brand-new major (the Go rewrite) — the same reasoning that kept React
+  at 18.
+- `qa/load-catalog.js` is new: three checks build their expectations from the
+  catalog source, which Node can no longer execute now that it carries
+  annotations, so they share one loader that transpiles it with the
+  repository's own pinned TypeScript. `checks.json` follows the renames.
+
+Verification:
+
+- `npm run typecheck` green at full `strict`.
+- `bash qa/regress.sh` on the final tree: **all 45 check runs clean, exit 0**,
+  both accessibility scans report no violations.
+- The design preview renders on React 18.3.1 with **no console or page
+  errors** (14 buttons, 4 switches, 3 cards, 10 badges, 4 separators). With
+  the clean type check against `@types/react@18.3.31`, that settles that
+  shadcn on Base UI does not need React 19 here; the upgrade stays its own
+  ticket.
+- `npm run build` output is the same size as before the conversion, as it
+  should be: types erase.
+
+Limits:
+
+- Ten of the thirteen V3 app files are not yet typed, `app.tsx` (693 errors)
+  and `mobile.tsx` (339) chief among them. Their headers carry the counts.
+- The files are interdependent, so the leaves cannot be finished before the
+  trunk: `picker` is blocked on `useCollection`'s shape in `tracking`.
+- No application code changed, so there is nothing new to look at in a
+  browser.
+
+## V4 maintenance — three checks that had drifted from the app
+
+Recorded: 2026-10-31 16:37 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+`test-skip`, `test-camera` and later `test-back` had been carried as
+pre-existing failures, with `test-skip` suspected of being a real bug in the
+Batch 10 guide work. **All three were the checks.** This change touches no
+application code at all.
+
+- **`test-skip` read only the phone's guide markup.** Batch 10 replaced the
+  desktop meter row with one taller card (`GuideModule`), which draws progress
+  as `.gm-count` and `.gm-notes` and puts the bulk action in its own footer,
+  while phones kept `GuideMeter` and `.g-meter`. On desktop the check found
+  nothing and reported `count null`, `meter: null / null` and `bulk action
+  reads "null"` — which reads exactly like the guide failing to count its own
+  stops. Four selectors now read both layouts, plus the Spatial Up next, which
+  with a guide open is the guide card's own next stop rather than `.un-mrow`.
+  Every expected value in the check is unchanged (`1/5`, `1/4`, `1 skipped`,
+  `Mark 3 more seen`, `cap-brave`); they had nothing to compare against
+  before, so most of this check had not really run on desktop since Batch 10.
+- **`test-back` was invalidated by a feature a day after it was written.** It
+  landed 2026-10-28; on 2026-10-29 the address gained the open title, so going
+  forward restores `?title=…` and the details reopen — the address doing its
+  job, not the sheet's history entry leaking. Step 2 still expected nothing to
+  reopen, so the sheet stayed over the page and every later click timed out
+  against it, which is why it reported a Playwright timeout instead of a
+  failed assertion. Its init script is now wrapped in try/catch as well,
+  because the check deliberately starts on a `data:` URL where `localStorage`
+  throws and those page errors were its own doing.
+- **`test-back` joins the regress set.** The phone's "each sheet owns one
+  history entry, so Back closes it" rule is an AGENTS.md invariant that
+  nothing else covers. Its absence from the full run is why this drifted
+  unnoticed for three days, and why that rule had to be verified by hand for
+  the previous commit.
+- **`test-camera` needed nothing.** It is clean individually and in the full
+  run; the flakiness the ticket described was already fixed by the earlier
+  `clickCard()` and glide-settle work. Its one known console warning is
+  unchanged and still allowed by name.
+
+Verification:
+
+- `bash qa/regress.sh` on the final tree: **all 45 check runs clean, exit 0,
+  no `!!` lines**, both accessibility scans report no violations. The first
+  fully green suite, and the first whose verdict can be trusted, since the
+  runner bug that could report a failing check as clean was fixed earlier the
+  same day.
+- The full run is now 43 check runs plus two scans (was 42 + 2), about seven
+  minutes. Counts in AGENTS.md, qa/README.md and docs/V4-PLAN.md updated, and
+  the "known failures" notes replaced with what each one actually was.
+- `test-skip`, `test-back` and `test-camera` each also run clean on their own
+  against the built site; `test-camera` was run three times to check it is not
+  flaky.
+
+Limits:
+
+- No application code changed, so there is nothing here to look at in a
+  browser.
+- `test-skip`'s desktop assertions are being exercised for the first time
+  since Batch 10. They pass, but they have less history behind them than the
+  rest of the suite.
+
+## V4 maintenance — the whole app moves into the bundle (Phase 2, steps 4–5)
+
+Recorded: 2026-10-31 16:05 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+- All thirteen `.jsx` files move to `src/app/` and are imported by
+  `src/main.js`. `index.html` loads one bundle instead of thirteen
+  `text/babel` scripts, and the React, ReactDOM and Babel CDN tags are gone
+  with them. supabase-js is the only script still fetched from unpkg.
+- **They had to convert together, not one at a time as the plan expected.**
+  React cannot be split across the two loading paths: a component from the
+  bundled copy calling a hook inside a tree rendered by the CDN UMD copy reads
+  that copy's null dispatcher and throws, so a half-converted app does not run
+  at all. Removing the CDN React is therefore part of converting at all, which
+  pulled plan step 5 into step 4. docs/V4-PLAN.md §5 point 7.
+- **A change of delivery, not of design.** Every file still publishes its
+  components on `window` and its readers still read them from there, so the
+  thirteen files together add 34 lines and remove none — an `import React`
+  line each, two more for `app.jsx`. No application logic was touched.
+  Replacing `window` with real imports stays a later ticket.
+- `tr`, `typeLabel` and `MPHASE_COLORS` are published explicitly now: other
+  files read them as bare names, which worked only while every file shared one
+  script scope. The bundle also publishes `window.React`, because `i18n.js`
+  stays a classic script — the startup screen has to speak the visitor's
+  language before the bundle arrives — and its `useI18n()` calls
+  `React.useSyncExternalStore`.
+- The source tree can no longer be opened in a browser, so `qa/run.js` builds
+  once at the start of a run and serves every check that build. That retires
+  `qa/precompile.js`: with no Babel to run and no tags to rewrite, what is left
+  is serving the site, as `qa/serve-site.js`. `test-boot`'s three CDN-shaped
+  failures become bundle-shaped ones (blocked, will not parse, never answers);
+  `boot.js` itself needed no change.
+- **Fixes a bug in the check runner that could report a failing check as
+  clean.** It read an `"errors"` field only as far as the first `]`, and
+  `test-skip`'s messages contain `{"skipped":[]`, so the value it saw ended in
+  `":[]"` and passed the "is it empty" test. The first full run after the
+  conversion printed "44 check runs clean" with a real failure in it. It now
+  finds the end of the array by scanning, ignoring brackets inside strings.
+  The two commits before this one were verified with the broken runner, so
+  their "regression exit 0" meant less than it sounded; what carried them was
+  the per-check comparison against a baseline, which compared printed output.
+- Local development changes: `npm install`, then `npm run dev` on port 8126
+  (strict, so the Google OAuth origin keeps working) instead of
+  `python3 -m http.server 8123`, which can no longer serve the app at all.
+  README, AGENTS.md and qa/README.md updated; `connections.jsx`, which was not
+  loaded, is deleted.
+- **Startup, measured on this machine with the old tree and the new one back
+  to back** (`qa/perf2.js`, median of three, time to the first title): desktop
+  1507 ms to **134 ms**; phone at 4× CPU throttle 6178 ms to **244 ms**. The
+  old numbers were dominated by downloading Babel and compiling thirteen files
+  in the page on every load.
+
+Verification:
+
+- `bash qa/regress.sh` on the final tree, re-run after the runner fix:
+  **43 of 44 runs clean**, both accessibility scans report no violations.
+- The one failure, `test-skip`, is **pre-existing and not caused by the
+  bundle**, proven rather than assumed: run against the pre-conversion tree
+  through in-page Babel it produces the same 7 errors with the same messages.
+  `test-back` fails identically on both trees too (a Playwright timeout where
+  the details sheet intercepts a click); it is not in the regress set, so no
+  full run had shown it. Both are recorded on the pre-existing-failures ticket.
+- `node qa/test-boot.js`: all five startup scenarios behave correctly, in both
+  languages.
+- Real browser (Chromium, the built output through `npm run preview`): desktop
+  Spatial with bands, connection lines and Up next; the details drawer opens
+  and Escape closes it and clears the URL; the language switch to Portuguese
+  and back; phone at 375×812 in both languages, the guide promotion sheet, a
+  details sheet, and browser Back closing that sheet — that last one by hand,
+  because `test-back` is broken. No console errors anywhere.
+- `data-ready="1"` is preserved and every `window` name the checks read is
+  present.
+
+Limits:
+
+- **No real-device check.** Everything above is desktop Chromium, the phone
+  sizes included. Spatial zoomed out on real iOS Safari is what the canvas
+  memory rules exist for and what no headless check covers.
+- Google sign-in was not exercised against the bundle.
+- `test-skip` and `test-back` are left failing, exactly as they were before.
+
+## V4 maintenance — back to React 18.3.1
+
+Recorded: 2026-10-31 14:12 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+- Reverts the move to React 19.3.1 made earlier today with the design-system
+  preview. V4 stays on **18.3.1**, the version the app loads from the CDN.
+- The reasoning for 19 was that nothing imported the npm React, so the upgrade
+  was free. That stopped being true the moment the app's own files began
+  entering the bundle: from then on they use the npm React, and converting the
+  module system and the React major together would break Phase 2's single
+  claim that behaviour is identical.
+- The original driver was shadcn's components expecting `ref` as an ordinary
+  prop. Tested: the eight copied components render on 18.3.1 with no console
+  or page errors, because Base UI supports 18 and those components do not rely
+  on it. They are our code, so `forwardRef` can be added if a later component
+  needs it.
+- A React 19 upgrade becomes its own ticket, to sit with the TypeScript step.
+- Verified: both entries build; the design preview renders on 18.3.1 with no
+  errors (14 controls, 11 phase swatches); the app is unchanged.
+
+## V4 maintenance — the data layer moves into the bundle (Phase 2, steps 2–3)
+
+Recorded: 2026-10-31 14:09 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+- `data.js`, `guides.js`, `media-data.js`, `config.js` and `supabase-client.js`
+  move to `src/` and are bundled by Vite. `index.html` loads one module script
+  in their place; the twelve `.jsx` files are untouched and still compile in
+  the browser.
+- They are imported for their side effects and still publish the same `window`
+  names. Changing the delivery and the sharing mechanism at once would be two
+  changes in one commit, and the regression could not say which caused a
+  failure. Exports come later, per file, as each reader converts. Those same
+  names are the documented test surface that 15 checks read (plan §5.4).
+- `watch-data.js` deliberately stays a separate file: `test-watch` replaces it
+  over the network to serve a fixture, so it keeps its own URL (plan §5.6).
+  `boot.js`, the locales and `i18n.js` also stay out for now — `boot.js` must
+  run in the head before anything else, and the startup screen's timing needs
+  its own look.
+- `test-pickperson`, `test-nextup` and `test-refocus` read `data.js` from the
+  source tree instead of the served site. They execute it in Node to build
+  their expectations, and expectations should come from the source rather than
+  from whatever is in the build.
+- **`qa/precompile.js` now emits `defer`** on the scripts it rewrites. It turns
+  each `text/babel` tag into a plain classic script; in the real page Babel
+  runs those after `DOMContentLoaded`, which is after any module script, but as
+  plain classic scripts they ran during parsing — before the bundle. The first
+  run after this change failed 43 of 44 checks with nothing wrong in the app.
+  `defer` puts them in the same ordered queue as the module and restores the
+  real order. Recorded in the plan as §5.2.
+- The build guard now ignores module scripts, which are Vite's to bundle.
+- Verified: full regression against the build, exit 0, both accessibility scans
+  clean, and 42 of 44 checks identical to a working-tree baseline run. The two
+  that differ are the known pre-existing pair (`test-skip`, `test-camera`),
+  unchanged from that baseline. All fourteen `window` names confirmed present
+  in the built page with no page errors; `qa/smoke.js` clean.
+- Limits: twelve `.jsx` files are still compiled in the browser, so the
+  conversion is maybe a third done by file count and much less by line count —
+  `app.jsx` and `mobile.jsx` are untouched. No real-device check. The startup
+  screen's timing has not been re-examined.
+
+## V4 design — design-system preview page
+
+Recorded: 2026-10-31 13:44 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+- Sets up the V4 design system on its own Vite entry, `design.html`, reachable
+  at `/design.html` on the V4 preview. The app never loads it and it never
+  loads the app: `index.html` is untouched, and the app still loads React
+  18.3.1 from the CDN and compiles its `.jsx` in the browser.
+- An approved exception to "Phases 2 and 3 do not overlap" (docs/V4-PLAN.md
+  §9), so the new look can be reacted to before the module conversion makes it
+  possible to apply it to the app. The rule guards against migration risk and
+  design churn sharing a batch; a separate entry mixes neither.
+- Tailwind 4.3.3 and shadcn 4.23.0 with Base UI 1.9.0, set up with
+  `npx shadcn@4.23.0 init --base base --preset vega`: Vega style, Neutral base
+  colour, default radius, Inter, lucide icons. `components.json` is committed
+  and the components live in `src/components/ui` as our own code.
+- `src/index.css` is the token file docs/V4-PLAN.md §6 describes: shadcn's
+  variables with a light `:root` and a `.dark` block. The phase colours join
+  them as `--phase-1` … `--phase-6`; the dark values are V3's, and the light
+  ones are darkened so they hold WCAG AA on a light background.
+- The preview shows the surface tokens, the phase colours, the controls, and
+  the Spatial card, details drawer and phone sheet rebuilt on the new
+  components. Those three are static compositions: the Escape ladder, the
+  modeless drawer and the sheet's history entry are Phase 4 work.
+- npm React and ReactDOM move to 19.3.1. Nothing imported the npm copy yet, so
+  this costs nothing today where after the conversion it would be a migration;
+  it also avoids adding `forwardRef` to every copied component, since shadcn's
+  components expect React 19.
+- Verified: the app is untouched — its built page still carries 13
+  `text/babel` tags and the same stylesheet fingerprint as before this change,
+  and `qa/smoke.js` is clean against the built site. The preview page was
+  looked at in a browser in both themes at desktop and phone widths; the phase
+  swatches, the tokens and the three surfaces render, and nothing scrolls
+  sideways on a phone. `npm audit` reports no vulnerabilities.
+- Corrects AGENTS.md: the shadcn CLI's preset is `vega`, not `base-vega`;
+  `--base base` is what makes the recorded style `base-vega`.
+- Limits: no contrast measurement yet, so the light phase colours are
+  calculated rather than verified with axe-core; no Portuguese pass, since the
+  page has no translated strings; the components are not wired to the app's
+  interaction rules; and the regression was not re-run, as no app file changed.
+
+## V4 design — component base decided: shadcn/ui on Base UI, Vega style
+
+Recorded: 2026-10-31 13:17 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+- Records Andre's decision of 2026-10-31: V4's component base is shadcn/ui on
+  Base UI, starting from shadcn's Vega style (preset `base-vega`: Neutral base
+  colour and theme, default radius, Inter, lucide icons), with light and dark
+  themes from day one. It starts from the library's own defaults, not V3's
+  colours; V4's art direction arrives later through Figma variables.
+- Chosen after comparing shadcn/ui and Radix Themes side by side on their
+  default themes, in both modes, against V3's Spatial card, details drawer and
+  phone sheet. Answers question 5 in `docs/V4-PLAN.md` §10.
+- `AGENTS.md` gains a **Design system (V4)** section after **Figma (V4)**: the
+  decision, the rule to start from library defaults, the CLI pinned to an exact
+  version with `components.json` committed, components owned in
+  `src/components/ui/` and restyled there rather than wrapped, shadcn's CSS
+  variables as the single token file with `:root` and `.dark` blocks (phase
+  colours among them), the `dark` class following `prefers-color-scheme`, and
+  the rule that this repository's interaction standards beat library defaults.
+  The opening line of **Design, accessibility and interaction standards** now
+  names the incoming system.
+- Setup is Phase 3 work and does not start yet: Tailwind, shadcn and Base UI
+  are not to be installed until that ticket begins, after the Phase 2
+  migration and the TypeScript conversion.
+- `docs/decisions.md` gains the 2026-10-31 row, and `docs/V4-PLAN.md` marks §6
+  **Component base** and §10 question 5 as decided.
+- Verified: documentation only, no app code and no dependency change, so no
+  checks were run.
+- Limits: nothing is installed or configured, and the open question of React
+  versions is unresolved — V4 pins React 18.3.1 while shadcn's current
+  components take `ref` as an ordinary prop, which React 18 does not forward.
+  The Notion ticket carries that question, to be settled before setup starts.
+
+## V4 maintenance — build scaffold (Phase 2, step 1)
+
+Recorded: 2026-10-31 13:06 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+- Stands up the V4 build step without converting the app. Added
+  `package.json`, `package-lock.json`, `vite.config.js`, `jsconfig.json` and
+  `vercel.json`; `.gitignore` now covers `node_modules/` and `dist/`.
+- Pinned after checking npm the day the work started: Vite 8.3.5,
+  @vitejs/plugin-react 6.1.2, React and ReactDOM 18.3.1. The plan's draft had
+  named Vite 7, which was out of date.
+- Vite takes `index.html` as its entry unchanged: it bundles the two
+  stylesheets into one fingerprinted file in the head and fingerprints the
+  icons, while every app script still loads the V3 way, compiled by Babel in
+  the browser. A `LEGACY` list in `vite.config.js` copies the 23 unconverted
+  scripts and the root-path assets into the build, and shrinks to nothing as
+  the conversion proceeds. `favicon.png`, `apple-touch-icon.png` and
+  `og-image.jpg` keep their plain root paths, because iOS and crawlers ask for
+  those directly without reading the HTML.
+- A guard plugin fails the build if `index.html` ever loads a script that is
+  neither bundled nor copied, so a missing file is a build error rather than a
+  404 that shows as a blank page.
+- Build settings live in `vercel.json` on this branch, never in the Vercel
+  dashboard: dashboard settings apply to every branch and would break `main`'s
+  static deploy.
+- The dev server runs on port 8126 with a strict port, so the Google OAuth
+  origin registered for local work keeps working and the server stops rather
+  than quietly taking another port.
+- `qa/precompile.js` now serves any file under the root when `SITE` is set, so
+  the checks can be pointed at a built site. Guarded on `SITE`: a run against
+  the working tree is unchanged. This is part of the next ticket, brought
+  forward because this one could not otherwise be verified — the plan had
+  claimed `SITE` alone was enough, and it was not. `docs/V4-PLAN.md` §5.1
+  records the mistake, and §3.1 and §9 now match what was built.
+- Verified: the full regression run three times, once against the working tree
+  and twice against the build. 41 of 44 checks clean in all three, both
+  accessibility scans clean in all three, and the second built-site run was
+  fully green (exit 0) where the working-tree baseline was not. `test-fit`
+  matches the working tree at all 24 viewports. `qa/smoke.js` clean against a
+  locally served build and against the deployed preview. Dev server confirmed
+  on 8126. `main` was then redeployed from the Vercel dashboard with the build
+  cache off: Ready in 2 seconds with no install or build step, production
+  still serving the unbuilt V3 site (plain stylesheet links, no `/assets/`
+  bundle) and its smoke check clean.
+- Limits: the app is not converted to modules, which is the next work. Three
+  checks are noisy for reasons that are not the build's — `test-skip` fails
+  identically on the working tree and the build, `test-camera` is
+  timing-sensitive and was the working-tree run's only flagged failure, and
+  `test-guides` crashed once in one built-site run but passed in the other and
+  twice more on its own; the first two have their own ticket. No real-device
+  check. The AGENTS.md no-build rule is left in force until the conversion
+  lands.
+
+## V4 maintenance — V4 plan
+
+Recorded: 2026-10-31 12:11 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+- `docs/V4-PLAN.md` added and approved by the user: the Phase 1 plan for V4.
+  Goals, non-goals and what "done" means for the release to `main`; the build
+  step (Vite 7, React 18.3.1, plain JavaScript, folder layout, how the locales
+  and data files load); Vercel build settings from a committed `vercel.json` so
+  `main`'s static deploy is untouched; how `qa/` runs against the built site;
+  the design-system and Figma token approach; the risks; and how V3 fixes merge
+  forward.
+- Records the language decision: the build step lands in plain JavaScript, and
+  the TypeScript conversion is its own ticket and batch straight after Phase 2,
+  before the design system starts. Phase 2's only claim is "behaviour
+  identical" and the regression suite certifies it, so a type migration in the
+  same commits would leave a failing check unable to say which change caused
+  it.
+- Three findings from measuring the current tree shaped the plan: every file
+  already declares its exports through a trailing `Object.assign(window, …)`,
+  so the module conversion is largely mechanical; `qa/precompile.js` already
+  resolves its document root through `process.env.SITE`, so the checks can
+  serve the built site without being rewritten; and 17 of the 42 checks read
+  the app's globals from inside the page, which is the migration's most likely
+  hidden breakage.
+- `docs/decisions.md` gains the 2026-10-31 row for the language decision.
+- Verified: documentation only, no app code. Smoke check run against the V4
+  preview after the push.
+- Limits: the plan is approved, the work in it is not started. Five questions
+  in §10 are still open — `watch-data.js` lazy loading, the QA globals surface,
+  Supabase config, the V3 support window and the component base. The no-build
+  rule in AGENTS.md stays in force until the ticket that lands the build step
+  rewrites that section.
+
+## V4 maintenance — V4 workspace setup
+
+Recorded: 2026-10-31 10:59 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
+
+- Opens V4 on branch `version/4.0`, worktree `MCU-V4`, deployed as the preview
+  `https://mcu-connections-git-version-40-afr-bfcd.vercel.app/`.
+- `AGENTS.md` retargeted to V4: `version/4.0` as staging, Notion **V4 Tasks**
+  as the backlog (with the **Design** type and the **Figma** and **V3 ticket**
+  fields), batches restarting at Batch 1, the `V4` CHANGELOG prefix, and a new
+  **Figma** section making the Figma file the source of truth for the V4 design
+  while accessibility, keyboard, contrast and localisation rules still win over
+  a frame. The no-build rule stays in force on `version/4.0` until the build
+  step has its own approved plan.
+- `docs/V4-KICKOFF.md` added: the V4 brief, the first-session checklist, the
+  six phases, the Figma round trip and the open decisions.
+- `.mcp.json` registers the remote Figma MCP server for this folder; it holds
+  no credentials, and `.vercelignore` keeps it out of the deployed site.
+- `README.md` carries the V4 preview link and its sign-in redirect row, and its
+  roadmap, deploy and credit lines now point at `version/4.0`.
+- Verified: `git status` clean against `origin/version/4.0` before and after;
+  the five setup files read in full; the Notion V4 Tasks board checked (nothing
+  in Approved, the kickoff ticket claimed); the V4 preview loaded in a browser
+  on 2026-10-31 (desktop, signed out, no console errors); `qa/smoke.js` run
+  against the preview after this push.
+- Limits: documentation and agent configuration only — no app code, so no
+  regression run. The Figma MCP is registered but not yet authenticated, so no
+  frame has been read. Google sign-in, sync and sign-out on the V4 preview are
+  untested; `docs/HANDOFF.md` and `docs/decisions.md` still describe V3 and are
+  retargeted by their own ticket.
+
 ## V3 feature — guides, phone Spatial and celebrations (Batch 10)
 
 Recorded: 2026-10-30 23:54 EDT (-0400). Pushed to `version/3.0` (staging); merged to main

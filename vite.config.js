@@ -1,0 +1,114 @@
+// V4 build step. See docs/V4-PLAN.md Â§3 (the build) and Â§9 (the order).
+//
+// Steps 1 to 3 are done: Vite owns index.html, the stylesheets and the icons,
+// and the app itself is one bundle (src/main.js) with no in-browser Babel.
+// What is left in LEGACY is not waiting to be converted â each entry has its
+// own reason to keep a plain URL, given beside it.
+import { readFileSync, mkdirSync, copyFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath, URL } from 'node:url';
+
+// The files index.html still loads as classic scripts, in its own order, plus
+// the root-path assets below. Vite leaves the <script> tags alone (it reports
+// that it "can't bundle" them), so without this copy the built site would ask
+// for each one and get a 404.
+const LEGACY = [
+  'boot.js',
+  'locales/en.js',
+  'locales/pt-BR.js',
+  'i18n.js',
+  // Stays a separate file on purpose: test-watch replaces it over the
+  // network to serve a fixture (qa/test-watch.js), so it must keep its own
+  // URL. docs/V4-PLAN.md Â§5.5.
+  'watch-data.js',
+  // Vite fingerprints the icons and rewrites the tags that point at them, but
+  // clients ask for these paths directly without reading the HTML (iOS asks
+  // for /apple-touch-icon.png; crawlers follow the absolute og:image URL), so
+  // the plain root paths have to keep working too.
+  'favicon.png',
+  'apple-touch-icon.png',
+  'og-image.jpg',
+  // Served today and linked from the README's setup notes.
+  'schema.sql',
+];
+
+const copyLegacy = () => ({
+  name: 'mcu-copy-legacy',
+  apply: 'build',
+  writeBundle(options) {
+    const out = options.dir;
+    for (const file of LEGACY) {
+      const to = join(out, file);
+      mkdirSync(dirname(to), { recursive: true });
+      copyFileSync(file, to);
+    }
+  },
+});
+
+// A file index.html loads as a classic script but LEGACY does not copy is a
+// 404 the browser reports as a blank page, so fail the build loudly rather
+// than shipping a site with a hole in it.
+const checkLegacy = () => ({
+  name: 'mcu-check-legacy',
+  apply: 'build',
+  buildStart() {
+    const html = readFileSync('index.html', 'utf8');
+    // Module scripts are Vite's to bundle; only the classic ones need copying.
+    const tags = html.match(/<script[^>]*\ssrc="(?!http)[^"]+"[^>]*>/g) || [];
+    const referenced = tags
+      .filter(t => !/type="module"/.test(t))
+      .map(t => t.match(/\ssrc="([^"]+)"/)[1]);
+    const missing = referenced.filter(f => !LEGACY.includes(f));
+    if (missing.length) {
+      this.error(
+        'index.html loads scripts that are neither bundled nor copied: ' +
+        missing.join(', ') + '. Add them to LEGACY in vite.config.js, or ' +
+        'convert them to modules (docs/V4-PLAN.md Â§3.3).'
+      );
+    }
+  },
+});
+
+// The theme has to be right before the first paint, and src/theme.ts arrives
+// with the bundle, too late to paint with. So every page gets this rule inline
+// in its <head> (anywhere there is still before the first paint), on the dev
+// server and in the build alike. It is the one deliberate copy of
+// src/theme.ts: the key and the rule must match STORAGE_KEY and getTheme()
+// there, or a page paints one theme and then swaps.
+const THEME_PREPAINT = `try {
+  var saved = localStorage.getItem('mcu.theme');
+  var dark = saved === 'dark' || saved === 'light' ? saved === 'dark'
+    : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (dark) document.documentElement.classList.add('dark');
+} catch (e) {}`;
+
+const themePrepaint = () => ({
+  name: 'mcu-theme-prepaint',
+  transformIndexHtml: () => [{ tag: 'script', children: THEME_PREPAINT, injectTo: 'head' }],
+});
+
+export default {
+  plugins: [react(), tailwindcss(), themePrepaint(), checkLegacy(), copyLegacy()],
+  resolve: {
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        // The app. Still the V3 loading path; see LEGACY above.
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        // The V4 design-system preview, a page of its own that the app never
+        // loads and which never loads the app (docs/V4-PLAN.md Â§9, and the
+        // Notion ticket "Design system preview page").
+        design: fileURLToPath(new URL('./design.html', import.meta.url)),
+      },
+    },
+  },
+  // Google sign-in only works from origins the OAuth client allows. 8126 is
+  // the one registered for local work (README, "App redirects"), so the dev
+  // server must take that port or stop rather than quietly pick another.
+  server: { port: 8126, strictPort: true },
+  preview: { port: 8126, strictPort: true },
+};

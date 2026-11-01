@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Red Thread placeholder mark (Notion V4 Tasks, "Placeholder new logo"):
+       two nodes joined by a thread. Only the shape lives here. The app uses
+       this file as a CSS mask and paints it with the brand colour token
+       (styles.css, .logo-mark), so the final logo replaces this one file. -->
+  <circle cx="7.5" cy="24.5" r="4.5"/>
+  <circle cx="24.5" cy="7.5" r="4.5"/>
+  <path d="M7.5 24.5C3 13 29 19 24.5 7.5" fill="none" stroke="#000" stroke-width="3.25" stroke-linecap="round"/>
+</svg>

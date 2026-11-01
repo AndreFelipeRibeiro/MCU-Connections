@@ -6,7 +6,7 @@ window.MCU_LOCALES = window.MCU_LOCALES || {};
 window.MCU_LOCALES.en = {
   meta: { name: 'English', short: 'EN', htmlLang: 'en', match: ['en'] },
   strings: {
-    'app.name': 'MCU Connections',
+    'app.name': 'Red Thread',
     'lang.label': 'Language',
     'lang.aria': 'Language: {name}',
 
@@ -46,12 +46,17 @@ window.MCU_LOCALES.en = {
     'order.rating.ascShort': 'Lowest',
     'order.rating.descShort': 'Highest',
 
+    'theme.label': 'Theme',
+    'theme.light': 'Light',
+    'theme.dark': 'Dark',
+    'theme.system': 'Auto',
+
     'view.label': 'View',
     'view.aria': 'View: {label}',
     'view.list': 'List',
     'view.grid': 'Grid',
     'view.spatial': 'Spatial',
-    'home.link': 'MCU Connections, home',
+    'home.link': 'Red Thread, home',
     'home.announce': 'Back to the start',
     'list.stepPos': '{title}, {n} of {total}',
     'list.col.title': 'Title',

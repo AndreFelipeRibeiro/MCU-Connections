@@ -4,12 +4,15 @@ An interactive explorer for the Marvel Cinematic Universe: films and series on
 a spatial map, connected by shared actors and characters. V3 adds seen/watchlist
 tracking, Google sign-in and cloud sync across devices.
 
+- [V4 preview](https://mcu-connections-git-version-40-afr-bfcd.vercel.app/) — V4 in progress, published from `version/4.0`.
 - [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/)
 - [Production](https://mcu-connections.vercel.app/) — V3, published from `main`.
   See the changelog for approved maintenance changes and deployment checks.
-- Work continues on `version/3.0`; [catalog audit and sources](docs/CATALOG-AUDIT.md).
-  The Notion V3 Tasks board is the roadmap and the live queue (the original
-  [phase checklist](V3-TASKS.md) is kept as history).
+- Work continues on `version/4.0`; [catalog audit and sources](docs/CATALOG-AUDIT.md).
+  The Notion V4 Tasks board is the roadmap and the live queue, and
+  [docs/V4-KICKOFF.md](docs/V4-KICKOFF.md) is the V4 brief (V3 Tasks and the
+  original [phase checklist](V3-TASKS.md) are kept as history). V3 fixes, if
+  any, are made on `version/3.0` and merged forward.
   Future changes still require review and approval before committing/pushing
   and a separate approval before merging to main. Email/password Phase 6 is deferred.
 
@@ -76,7 +79,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   year, title, release date and story timeframe; then IMDb and RT scores
   ("Ratings after release" for a title not out yet), the budget ("Not
   published" when unknown), Seen and Watchlist, the synopsis and the cast.
-  Both surfaces render one shared body (`TitleDetailsBody` in `mobile.jsx`).
+  Both surfaces render one shared body (`TitleDetailsBody` in `mobile.tsx`).
 - Up next suggests what to watch now: the first released title you haven't
   marked seen, earliest first in release order (story order on Chronological),
   or the first of the list itself on A–Z, IMDb and RT. It has Mark seen,
@@ -310,33 +313,45 @@ Connections chain on the prime, so *Loki* → *Quantumania* → *Loki Season 2* 
 
 ## Running it locally
 
-The app needs no package installation, npm, bundler, router or application
-server (V3 rule; V4 plans a build step, see docs/decisions.md). The optional QA
-checks in `qa/` are the one development-only exception (below).
-The entry point is `index.html`. React and ReactDOM (production builds), Babel
-standalone and supabase-js load from pinned CDN scripts with SRI; JSX compiles in the browser. Files share
-exports through `window.*`, not ES modules.
+V4 builds with [Vite](https://vite.dev/); React and ReactDOM 18.3.1 come from
+npm, exactly pinned. (V3 had no build step at all — see docs/decisions.md and
+docs/V4-PLAN.md for why that changed.) The entry point is `index.html`, which
+loads one bundle, `src/main.ts`. supabase-js is the one script still fetched
+from a CDN, pinned and with an SRI hash. Inside the bundle the app's files
+share their components through `window.*` rather than imports; that is
+deliberate for now and docs/V4-PLAN.md §5 explains it.
 
 `boot.js` loads first and shows a startup screen inside `#root` (brand, spinner,
-"Loading…") until React's first render replaces it. A script that cannot load
-or an error before that render turns it into a short explanation with a Reload
-button; a slow start says so after 25 seconds. The locale files and `i18n.js`
-load before the CDN scripts so that screen is translated.
+"Loading…") until React's first render replaces it. A bundle that cannot load,
+or will not parse, or an error before that render turns it into a short
+explanation with a Reload button; a slow start says so after 25 seconds. The
+locale files and `i18n.js` stay plain classic scripts, loaded before the
+bundle, so that screen is translated.
 
-From the repository directory, run a static server:
+Install once, then run the dev server:
 
 ```bash
-python3 -m http.server 8123
+npm install
 ```
 
-Open [http://localhost:8123/](http://localhost:8123/). The direct
-`http://localhost:8123/index.html` address works too, but Google sign-in requires
-that exact page URL to be in Supabase's redirect allowlist. Do not use `file://`
-for OAuth. The verification sessions used port 8126; any different port must
-also be configured in Google/Supabase before testing sign-in.
+```bash
+npm run dev
+```
 
-The catalog does not require Supabase to render. A cold page load still needs
-access to the CDN libraries; this is not a bundled offline app or service worker.
+Open [http://localhost:8126/](http://localhost:8126/). The port is fixed and
+strict: Google sign-in only works from origins the OAuth client allows, 8126 is
+the one registered, and the dev server stops rather than quietly moving to
+another port. Do not use `file://` for OAuth. Any different port must also be
+configured in Google/Supabase before testing sign-in.
+
+To check the real built output rather than the dev server:
+
+```bash
+npm run build && npm run preview
+```
+
+The catalog does not require Supabase to render. This is not an offline app or
+a service worker.
 
 ### Automated checks (optional)
 
@@ -396,8 +411,8 @@ In Supabase → Authentication → URL Configuration, set the **Site URL** to
 |---|---|---|
 | Production | `https://mcu-connections.vercel.app` | `https://mcu-connections.vercel.app/` |
 | V3 preview | `https://mcu-connections-git-version-30-afr-bfcd.vercel.app` | `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/` |
-| Local default | `http://localhost:8123` | `http://localhost:8123/` |
-| Local verification | `http://localhost:8126` | `http://localhost:8126/` |
+| V4 preview | `https://mcu-connections-git-version-40-afr-bfcd.vercel.app` | `https://mcu-connections-git-version-40-afr-bfcd.vercel.app/` |
+| Local (`npm run dev` and `npm run preview`, both fixed to this port) | `http://localhost:8126` | `http://localhost:8126/` |
 
 Add the corresponding `/index.html` URL separately if entering the app that way.
 The app supplies `redirectTo = origin + pathname`, so sign-in returns to the
@@ -460,10 +475,11 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 
 ## Deploying and releasing
 
-- Commit locally, then push `version/3.0` to update the Vercel preview. A commit
-  alone does not upload anything. The Vercel Git integration deploys that branch
-  separately from the production branch.
-- To rebuild with changed Vercel settings, select the latest **version/3.0**
+- Commit locally, then push `version/4.0` to update the V4 Vercel preview (or
+  `version/3.0` for the V3 one). A commit alone does not upload anything. The
+  Vercel Git integration deploys each branch separately from the production
+  branch.
+- To rebuild with changed Vercel settings, select the latest **version/4.0**
   deployment and Redeploy into **Preview / Pre-Production**. Confirm the source
   branch and commit in the modal. Redeploy rebuilds source; it does not merge Git.
 - Vercel's deployment protection is separate from MCU Google sign-in. Public
@@ -472,38 +488,52 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 - **Wait for fresh user confirmation before merging maintenance into main.** That merge
   can trigger the production deployment. After approval and deployment, verify
   production Google sign-in, reload, sync and sign-out at the production URL.
-- Continue the user's bug/improvement work on `version/3.0` before Phase 6.
+- `main` serves V4 since the first V4 release (2026-11-01). Each later batch
+  reaches production only with explicit approval for that merge; take V4 work
+  from the Notion V4 Tasks board.
   Email/password work needs its own plan and explicit confirmation.
 
 ## Project structure
 
 | File | Purpose |
 |---|---|
-| `index.html` | Entry point; startup screen markup, pinned/SRI CDN scripts and application script order |
-| `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render |
-| `favicon.png`, `apple-touch-icon.png`, `og-image.jpg` | Tab icon, home-screen icon and link-preview image (from the brand mark) |
-| `data.js` | Static titles/characters, ratings, phases, stable ids and variant links |
-| `media-data.js` | TMDB poster and actor-portrait paths |
-| `config.js` | Public Supabase project URL and publishable key |
-| `supabase-client.js` | Shared client as `window.mcuSupabase`, or graceful unavailability |
-| `tracking.jsx` | Guest/account state, merge, request deadlines, queues, progress, status actions |
-| `account.jsx` | Google auth/session state, account UI, sign-out and degraded-mode recovery |
-| `about.jsx` | About dialog (desktop) and sheet (phones) with credits; shared dialog shell |
-| `celebrate.jsx` | Status toast with Undo, milestone confetti and the guest sign-in reminder |
-| `app.jsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
-| `mobile.jsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
-| `upnext.jsx` | Up next: the suggestion card, List strip, Spatial meter row and phone chip (the rule is `MCU_nextUp` in `tracking.jsx`) |
-| `watch.jsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
+| `index.html` | Entry point; startup screen markup, the locale scripts, the pinned/SRI supabase-js script and the app bundle |
+| `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render; a classic script so it runs before the bundle |
+| `favicon.png`, `apple-touch-icon.png`, `og-image.jpg` | Tab icon and home-screen icon (drawn from the logo mark by `tools/make-icons.js`) and link-preview image |
+| `src/data/data.ts` | Static titles/characters, ratings, phases, stable ids and variant links |
+| `src/data/media-data.ts` | TMDB poster and actor-portrait paths |
+| `src/config.ts` | Public Supabase project URL and publishable key |
+| `src/supabase-client.ts` | Shared client as `window.mcuSupabase`, or graceful unavailability |
+| `src/app/tracking.tsx` | Guest/account state, merge, request deadlines, queues, progress, status actions |
+| `src/app/account.tsx` | Google auth/session state, account UI, sign-out and degraded-mode recovery |
+| `src/app/about.tsx` | About dialog (desktop) and sheet (phones) with credits; shared dialog shell |
+| `src/app/celebrate.tsx` | Status toast with Undo, milestone confetti and the guest sign-in reminder |
+| `src/app/app.tsx` | Desktop canvas, toolbar, cast drawer and shared root/mobile integration |
+| `src/app/mobile.tsx` | Touch Grid/List/Spatial, filters, details and accessible sheets |
+| `src/app/upnext.tsx` | Up next: the suggestion card, List strip, Spatial meter row and phone chip (the rule is `MCU_nextUp` in `tracking.tsx`) |
+| `src/app/watch.tsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
+| `src/main.ts` | V4 bundle entry: imports the data layer and then every view below, in the order `index.html` used to load them. The files still share their components through `window`, so the bundle changed how the app is delivered, not how its pieces fit together |
 | `watch-data.js` | The where-to-watch snapshot (written by `tools/refresh-watch.js`; do not edit by hand) |
+| `src/assets/logo-mark.svg` | The logo mark (the Red Thread placeholder), the one file every place that shows the logo draws from |
+| `tools/make-icons.js` | Maintainer script: redraws `favicon.png` and `apple-touch-icon.png` from the logo mark (uses the Playwright that `qa/` installs; not deployed) |
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
-| `guides.js` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
-| `guides-ui.jsx` | Guides: the menu, desktop module and List, phone views and dock, the meter, "Part of" in the details |
-| `picker.jsx` | "What have you seen?": the poster-grid picker opened from the welcome, the account menu/sheet and the Seen empty state |
-| `desktop-list.jsx` | Desktop List view: grouped rows, sortable column headers, status actions |
-| `search-suggest.jsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
-| `poster.jsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
-| `connections.jsx` | An early standalone connection layer, kept for reference only: `index.html` doesn't load it (the Spatial lines are drawn in `app.jsx`) |
+| `src/data/guides.ts` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
+| `src/app/guides-ui.tsx` | Guides: the menu, desktop module and List, phone views and dock, the meter, "Part of" in the details |
+| `src/app/picker.tsx` | "What have you seen?": the poster-grid picker opened from the welcome, the account menu/sheet and the Seen empty state |
+| `src/app/desktop-list.tsx` | Desktop List view: grouped rows, sortable column headers, status actions |
+| `src/app/search-suggest.tsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
+| `src/app/poster.tsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
 | `styles.css` / `styles-mobile.css` | Desktop/touch layout, status treatments, focus and dialogs |
+| `src/index.css` | The V4 design tokens: shadcn's CSS variables with a light `:root` block and a `.dark` block, the phase colours as `--phase-1`…`--phase-6` in both, and the Tailwind entry, with the reset scoped to `.v4` and classes generated only from the files listed with `@source`. The app and `design.html` both load it |
+| `src/preflight-v4.css` | Tailwind's preflight reset, scoped to `.v4` while V3 and the design system share the page. Generated, and temporary |
+| `src/components/ui/` | The shadcn components on Base UI (Vega style), added with the pinned CLI and ours to edit |
+| `src/theme.ts` | The theme mechanism: `dark` on `<html>`, following the system until the visitor overrides it (`window.MCU_THEME`, `useTheme()`) |
+| `src/app/theme-toggle.tsx` | The Light / Dark / Auto control, in the desktop toolbar and the phone account sheet |
+| `design.html` / `src/design/` | The V4 design-system preview, a page of its own that the app never loads and that never loads the app |
+| `src/types/catalog.ts` | The catalog's shapes (`Title`, `Character`, `Guide`, `Media`, `WatchData`), written from the data itself |
+| `src/types/globals.d.ts` | The shared `window` surface, typed from the modules themselves rather than restated |
+| `tsconfig.json` | TypeScript at full `strict`; `npm run typecheck` |
+| `vite.config.js` / `vercel.json` / `package.json` | The V4 build: entries, the `@` alias, the dev port, the files that stay plain URLs, and the build Vercel runs |
 | `schema.sql` | Watch-state table, constraints, trigger, grants and ownership RLS |
 | `V3-SPEC.md` / `V3-TASKS.md` / `KICKOFF-PROMPT.md` | The original V3 plan (2026-10-24), kept as history with dated notes where it no longer holds; current guidance is this README, AGENTS.md and docs/ |
 | `KICKOFF-PROMPT.md` | Original kickoff and current continuation/approval rules |
@@ -593,13 +623,13 @@ log as evidence, not as a live list of pending setup tasks.
 Created and maintained by [Andre Ribeiro](https://github.com/AndreFelipeRibeiro),
 with development, planning, documentation and verification assistance from
 **Anthropic Claude** and **OpenAI ChatGPT/Codex**. Earlier commits include Claude
-co-author credits. Codex and Claude now share the `version/3.0` working tree;
+co-author credits. Codex and Claude now share the `version/4.0` working tree;
 assisted commits carry a Codex or Claude co-author trailer while retaining the
 maintainer as the primary author.
 
 | Area | Tools, services and sources used |
 |---|---|
-| Application | React, ReactDOM, Babel standalone; browser HTML, CSS and JavaScript |
+| Application | React and ReactDOM, built with Vite; browser HTML, CSS and JavaScript |
 | Source control and hosting | Git, GitHub and Vercel |
 | Accounts and cloud data | Supabase Auth/Postgres and Google OAuth |
 | Catalog and images | TMDB poster/portrait paths; where-to-watch data from JustWatch via TMDB; IMDb user ratings; Rotten Tomatoes critics scores; Marvel and Wikipedia references, with specific catalog evidence in the audit |

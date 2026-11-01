@@ -5,7 +5,7 @@ window.MCU_LOCALES = window.MCU_LOCALES || {};
 window.MCU_LOCALES['pt-BR'] = {
   meta: { name: 'Português (Brasil)', short: 'PT', htmlLang: 'pt-BR', match: ['pt'] },
   strings: {
-    'app.name': 'MCU Connections',
+    'app.name': 'Red Thread',
     'lang.label': 'Idioma',
     'lang.aria': 'Idioma: {name}',
 
@@ -45,12 +45,17 @@ window.MCU_LOCALES['pt-BR'] = {
     'order.rating.ascShort': 'Menor',
     'order.rating.descShort': 'Maior',
 
+    'theme.label': 'Tema',
+    'theme.light': 'Claro',
+    'theme.dark': 'Escuro',
+    'theme.system': 'Automático',
+
     'view.label': 'Visualização',
     'view.aria': 'Visualização: {label}',
     'view.list': 'Lista',
     'view.grid': 'Grade',
     'view.spatial': 'Espacial',
-    'home.link': 'MCU Connections, início',
+    'home.link': 'Red Thread, início',
     'home.announce': 'De volta ao início',
     'list.stepPos': '{title}, {n} de {total}',
     'list.col.title': 'Título',
