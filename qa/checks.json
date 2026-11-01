@@ -9,7 +9,7 @@
     "test-recastname", "test-bannerhold", "test-progress", "test-release", "test-urlstate", "test-bulk",
     "test-details", "test-nextup", "test-watch", "test-guides", "test-picker", "test-listkeys", "test-promo",
     "test-home", "test-unreleased", "test-partof", "test-refocus", "test-skip", "test-guidemode",
-    "test-contrast", "test-v4scope",
+    "test-contrast", "test-v4scope", "test-retap",
     { "check": "a11y-scan", "env": { "LOC": "en-US" }, "exitOnly": true },
     { "check": "a11y-scan", "env": { "LOC": "pt-BR" }, "exitOnly": true },
     { "check": "a11y-scan", "env": { "LOC": "en-US", "SCHEME": "dark" }, "exitOnly": true }
@@ -17,7 +17,7 @@
   "serial": ["test-camera", "test-inertia", "test-anim", "test-widetouch"],
   "files": {
     "src/app/app.tsx": ["test-back", "test-guidemode", "test-panel", "test-esc", "test-escpin", "test-urlstate", "test-home", "test-refocus", "test-listkeys", "test-layers", "test-camera"],
-    "src/app/mobile.tsx": ["test-back", "test-guidemode", "test-v2", "test-panel", "test-details", "test-mviewport", "test-align2", "test-progress"],
+    "src/app/mobile.tsx": ["test-retap", "test-back", "test-guidemode", "test-v2", "test-panel", "test-details", "test-mviewport", "test-align2", "test-progress"],
     "src/app/desktop-list.tsx": ["test-dlist", "test-bulk", "test-listkeys", "test-progress"],
     "src/data/guides.ts": ["test-guides", "test-promo", "test-partof", "test-skip"],
     "src/app/guides-ui.tsx": ["test-guidemode", "test-guides", "test-promo", "test-partof", "test-details", "test-skip"],

@@ -13,6 +13,18 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 improvement — tapping the active sort tab on a phone goes back to the top
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Mobile: Press twice resets the list". On a phone, tapping the
+sort tab that is already selected scrolls the List or Grid back to the top,
+smoothly, or at once under reduced motion. Nothing else changes; a different
+tab still re-sorts.
+
+- New check `qa/test-retap.js` (fails on the build before the change).
+
 ## V4 fix — contrast fixes from the full run, and an accessibility scan in dark
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);

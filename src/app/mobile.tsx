@@ -209,6 +209,18 @@ function ViewMenu({ viewMode, setViewMode }) {
 
 // While a guide is open the bar slides down out of view (the guide has its own
 // order) and comes back when it closes; hidden, it is out of the tab order.
+// Tapping the sort tab that is already selected takes the List or Grid back to
+// the top, the tab-bar habit from iOS (Notion V4 Tasks, "Mobile: Press twice
+// resets the list"). It only scrolls: sort, order, filters and search stay, the
+// direction does not flip and nothing re-sorts, so no flip animation plays.
+// Spatial has no scroll area, so a second tap there does nothing.
+function scrollListToTop() {
+  const area = document.querySelector('.m-main .m-scrollarea');
+  if (!area || area.scrollTop === 0) return;
+  const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  area.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
+}
+
 function SortTabs({ sort, setSort, away = false }) {
   const ref = React.useRef(null);
   React.useEffect(() => { if (ref.current) { if (away) ref.current.setAttribute('inert', ''); else ref.current.removeAttribute('inert'); } }, [away]);
@@ -216,7 +228,7 @@ function SortTabs({ sort, setSort, away = false }) {
     <div className={`m-sort-footer${away ? ' away' : ''}`} ref={ref} aria-hidden={away || undefined}>
     <nav className="m-tabs" aria-label={mtr('sort.navAria')}>
       {SORT_TABS.map(([v,ic])=>(
-        <button key={v} className={`m-tab${sort===v?' on':''}`} onClick={()=>setSort(v)} aria-pressed={sort===v}>
+        <button key={v} className={`m-tab${sort===v?' on':''}`} onClick={()=>(sort===v ? scrollListToTop() : setSort(v))} aria-pressed={sort===v}>
           <span className="ti">{ic}</span>{mtr('sort.short.' + v)}
         </button>
       ))}
