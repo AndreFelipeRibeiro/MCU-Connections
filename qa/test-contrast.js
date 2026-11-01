@@ -77,23 +77,13 @@ const TOKEN_PAIRS = [
 // measured when it was accepted. A worse ratio still fails, and one that now
 // passes is reported so the entry can go: an allowlist nobody prunes stops
 // being a record of decisions and becomes a place failures hide.
-const PHASE_DEFERRED = 'the dark phase tokens keep V3\'s own values; adjusting them is art '
+// Phases 3 and 6 were lightened on 2026-11-01 (Notion, "Spatial band labels
+// fail WCAG AA in phases 3 and 6"); phase 4 on a card was not part of that.
+const PHASE_DEFERRED = 'the dark phase-4 token keeps V3\'s own value; adjusting it is art '
   + 'direction, left for the Phase 4 re-skin by the user\'s decision of 2026-10-31';
-const BAND_BUG = 'live in V3 and ticketed: Notion V4 Tasks, "Spatial band labels fail WCAG AA '
-  + 'in phases 3 and 6". styles.css .band-label.phase paints 13px semibold text in the phase colour';
 const KNOWN = [
-  { where: 'tokens dark', what: 'phase-3 on background', fg: 'rgb(208,64,64)', ratio: 4.23, why: PHASE_DEFERRED },
-  { where: 'tokens dark', what: 'phase-3 on card', fg: 'rgb(208,64,64)', ratio: 3.83, why: PHASE_DEFERRED },
   { where: 'tokens dark', what: 'phase-4 on card', fg: 'rgb(160,92,208)', ratio: 4.21, why: PHASE_DEFERRED },
-  { where: 'tokens dark', what: 'phase-6 on background', fg: 'rgb(200,56,74)', ratio: 3.88, why: PHASE_DEFERRED },
-  { where: 'tokens dark', what: 'phase-6 on card', fg: 'rgb(200,56,74)', ratio: 3.52, why: PHASE_DEFERRED },
-  // V3's own dark ink on V3's red phase badges, measured since the first
-  // re-skin pass put the ink on a token. Same cause as the rows above.
-  { where: 'tokens dark', what: 'on-color on phase-3', fg: 'rgb(10,10,10)', ratio: 4.23, why: PHASE_DEFERRED },
-  { where: 'tokens dark', what: 'on-color on phase-6', fg: 'rgb(10,10,10)', ratio: 3.88, why: PHASE_DEFERRED },
   { where: 'preview dark', what: 'div.font-mono.text-[10px].uppercase', text: 'Phase 4', fg: 'rgb(160,92,208)', ratio: 4.21, why: PHASE_DEFERRED },
-  { where: 'app dark spatial band', what: 'div.band-label.phase.plain', text: 'Phase 3', fg: 'rgb(208,64,64)', ratio: 4.17, why: BAND_BUG },
-  { where: 'app dark spatial band', what: 'div.band-label.phase.plain', text: 'Phase 6', fg: 'rgb(200,56,74)', ratio: 3.83, why: BAND_BUG },
 ];
 
 const REQUIRED = (size, weight) => ((size >= 24 || (size >= 18.66 && weight >= 700)) ? 3 : 4.5);

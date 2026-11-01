@@ -13,6 +13,20 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 fix — Spatial band labels pass contrast in phases 3 and 6
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Spatial band labels fail WCAG AA in phases 3 and 6 (live in
+V3)". Andre chose to lighten the two dark phase colours: phase 3 `#d04040` →
+`#e86a6a`, phase 6 `#c8384a` → `#e5677a`. They now meet AA as text on every
+dark surface, and the dark ink on their fills improves with them.
+
+- The eight phase 3 and 6 entries in `qa/test-contrast.js`'s `KNOWN` are
+  deleted; phase 4 on a card stays there (not part of this decision).
+- Full regression: 49 check runs clean.
+
 ## V4 improvement — tapping the active sort tab on a phone goes back to the top
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);

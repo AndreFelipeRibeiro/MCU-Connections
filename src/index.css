@@ -140,13 +140,15 @@
 
   .dark {
       color-scheme: dark;
-      /* V3's phase colours, authored for the dark canvas. */
+      /* V3's phase colours, authored for the dark canvas. Phases 3 and 6 are
+         lighter than V3's (#d04040, #c8384a) so their text meets AA on every
+         dark surface (Andre's decision, 2026-11-01). */
       --phase-1: #d4a05a;
       --phase-2: #4a8de8;
-      --phase-3: #d04040;
+      --phase-3: #e86a6a;
       --phase-4: #a05cd0;
       --phase-5: #5fa856;
-      --phase-6: #c8384a;
+      --phase-6: #e5677a;
       /* V3's own status colours, and its dark ink on colour fills. */
       --status-seen: #5fa856;
       --status-seen-text: #8fcf86;

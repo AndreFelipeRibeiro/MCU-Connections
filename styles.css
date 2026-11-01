@@ -2331,9 +2331,9 @@ body { background: var(--v3-bg); }
    card or anything inside the canvas. Badges on posters keep their capitals,
    which come from the code (and which test-camera reads), but take a badge's
    shape. The band labels, the overall header and the zoom control float as
-   cards. The band labels keep the phase colour as their text: the contrast
-   bug in phases 3 and 6 is Andre's decision (Notion, "Spatial band labels
-   fail WCAG AA…"), not part of this pass.
+   cards. The band labels keep the phase colour as their text; phases 3 and
+   6 pass AA because their dark tokens were lightened (src/index.css; Notion,
+   "Spatial band labels fail WCAG AA…").
    =========================================================================== */
 .card { @apply rounded-xl border-border bg-card text-card-foreground shadow-sm; }
 .card-title { @apply font-semibold tracking-tight; }
