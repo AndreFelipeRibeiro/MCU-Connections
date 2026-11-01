@@ -116,10 +116,10 @@ plan, the environment and the Figma workflow.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (43 check scripts in 44 runs plus the accessibility scan in English and
+    (44 check scripts in 45 runs plus the accessibility scan in English and
     Portuguese, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **46 check runs clean**
+    output, not just the exit code. A good run is **47 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
@@ -288,11 +288,15 @@ and type below as it lands (Figma first, then code); the accessibility,
 keyboard, focus, Escape, phone-history, reduced-motion and Spatial performance
 rules carry over unchanged.
 
-- Dark theme tokens (`styles.css :root`): `--bg #0a0c14`, `--bg-2 #11141f`,
-  `--surface #161a26`, `--surface-2 #1c2030`, `--border #232838`,
-  `--border-strong #2e344a`, `--text #e6e8f0`, `--text-dim #9ea4b8`,
-  `--text-muted #8389a1`, `--accent #4a8de8`. Phase colours are
-  `PHASE_COLORS` in `app.tsx`. Use the tokens; do not add near-duplicate greys.
+- V3's dark theme tokens (`styles.css :root`), prefixed `--v3-` since
+  2026-11-01 so they cannot collide with the design system's (shadcn defines
+  `--border` and `--accent` too): `--v3-bg #0a0c14`, `--v3-bg-2 #11141f`,
+  `--v3-surface #161a26`, `--v3-surface-2 #1c2030`, `--v3-border #232838`,
+  `--v3-border-strong #2e344a`, `--v3-text #e6e8f0`, `--v3-text-dim #9ea4b8`,
+  `--v3-text-muted #8389a1`, `--v3-accent #4a8de8`. Phase colours are
+  `PHASE_COLORS` in `app.tsx`. V3's rules use these and new work uses the
+  design system's; neither borrows the other's names. Do not add near-duplicate
+  greys.
 - Type: Inter for UI, JetBrains Mono for labels, numbers and badges, Bebas Neue
   for display. Brand mark: the conic-gradient square (`.brand-mark`).
 - Contrast: informative text meets WCAG AA (4.5:1 for normal text) against its
@@ -351,6 +355,10 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
 - When a frame and the rules here disagree (accessibility, keyboard, contrast,
   localisation), the rules win: flag the difference on the ticket instead of
   silently copying the frame.
+- **Phase 4's first pass has no frames** (Andre's decision, 2026-11-01): it
+  applies shadcn/ui's Vega defaults to each surface as they stand, so the look
+  can be seen and reacted to before any art direction. The rules above apply to
+  the customising pass that follows, once frames exist.
 - Do not write to the user's Figma files (create or change frames, variables
   or components) unless the ticket or the user asks for it.
 - Never put Figma access tokens or other credentials in the repository,
@@ -364,13 +372,34 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   colour and theme, default radius, Inter and lucide icons (shadcn preset
   `base-vega`). Light and dark themes from day one.
 - Start from the library defaults; V4's art direction arrives later through
-  Figma variables. Do not carry V3's colours (`--bg`, `--accent`, …) in as a
-  starting point.
+  Figma variables. Do not carry V3's colours (`--v3-bg`, `--v3-accent`, …) in
+  as a starting point.
 - Setup landed on 2026-10-31: Tailwind CSS v4.3.3, shadcn on Base UI 1.9.0,
   `components.json`, the token stylesheet `src/index.css`, eight components in
-  `src/components/ui/` and the preview page `design.html`. None of it reaches
-  the app yet — `index.html` still serves V3's stylesheets, and putting the
+  `src/components/ui/` and the preview page `design.html`. Wired into the app
+  on 2026-11-01 (Notion "Phase 4 — wire the design system into the app"):
+  `src/main.ts` loads `src/index.css` and starts the theme, with no visible
+  change, because V3's stylesheets still paint every surface. Putting the
   components into the app is Phase 4, one ticket per surface.
+- **How a surface opts in** while V3 and the design system share the page:
+  - Tailwind's preflight reset is scoped to `.v4` (`src/preflight-v4.css`,
+    generated from Tailwind's own; its header says why). A converted surface
+    puts class `v4` on its root, and a component that portals out of a
+    surface carries `v4` on its portaled root itself (`dialog.tsx`,
+    `tooltip.tsx`; add it to any new one that portals).
+  - Tailwind generates classes only from the files listed with `@source` in
+    `src/index.css`. Add the surface's file there in the ticket that converts
+    it; until then its class names are V3's and must not become utilities.
+  - V3's stylesheets are unlayered, so they beat every Tailwind class on an
+    element they match, whatever the order. Retire a surface's V3 rules in the
+    ticket that converts it.
+  - `color-scheme: normal` in V3's `:root` keeps native controls and
+    scrollbars as they were; the first surface ticket that converts a native
+    control deletes it.
+  - `qa/test-v4scope.js` holds this seam: the reset stays out of V3 and works
+    inside `.v4`, the two token sets don't collide, and the theme is wired.
+  - When no V3 surface is left: delete `src/preflight-v4.css`, import
+    `"tailwindcss"` whole, and drop the `v4` classes and the `--v3-` tokens.
 - Install and add components with the shadcn CLI pinned to an exact version
   (`npx shadcn@<version> init --base base --preset vega` — the CLI's preset is
   `vega`, and `--base base` makes the style it records `base-vega`); commit
@@ -384,10 +413,12 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
 - Theme: class `dark` on `<html>`, following `prefers-color-scheme` until the
   user overrides it. The mechanism is `src/theme.ts` (`window.MCU_THEME`,
   `useTheme()`, the override in `localStorage` under `mcu.theme`, cleared to
-  go back to following the system); a page sets the class before first paint
-  with a copy of the rule inlined in its HTML. What the user clicks to
-  override it is the Dark/Light ticket. The app does not call it yet: it still
-  serves V3's stylesheets, which are dark whatever class `<html>` carries.
+  go back to following the system); every page gets the class before first
+  paint from a copy of the rule that Vite injects into its `<head>`
+  (`THEME_PREPAINT` in `vite.config.js`). What the user clicks to override it
+  is the Dark/Light ticket. The app starts it in `src/main.ts`, but the class
+  reaches a surface only once that surface is on the tokens: V3's stylesheets
+  are dark whatever class `<html>` carries.
 - Both themes meet WCAG AA, and `qa/test-contrast.js` is what says so. Where a
   shortfall is accepted it goes in that check's `KNOWN` with the ratio it was
   accepted at and why, not into a comment nobody runs.

@@ -19,6 +19,16 @@
 import React from 'react';
 window.React = React;
 
+// The design system: Tailwind, the token file and the theme. Nothing in the app
+// reads them yet — V3's stylesheets still paint every surface, and win over
+// everything in this file because they are unlayered — so loading them changes
+// nothing visible. Each Phase 4 surface ticket starts using them.
+import './index.css';
+import { startTheme } from './theme';
+// The pre-paint script already set the class; this keeps it following the
+// system, or the visitor's override, from here on.
+startTheme();
+
 // Order matters and matches the order index.html used:
 import './config';          // window.MCU_CONFIG, read by supabase-client
 import './supabase-client'; // window.mcuSupabase, window.MCU_SUPABASE_STATUS

@@ -3,11 +3,10 @@
 // system (V4)"). This file is only the machinery; the override's interface is
 // its own ticket ("Dark/Light mode") and nothing here draws a control.
 //
-// The app does not use it yet. index.html still serves V3's stylesheets, which
-// are dark whatever class <html> carries, so switching there would announce a
-// preference the app cannot honour. It joins when Phase 4 re-skins a surface
-// onto the tokens in src/index.css; today the design preview is the only page
-// those tokens reach.
+// The app and the design preview both start it. In the app the class changes
+// nothing visible yet: V3's stylesheets still paint every surface and are dark
+// whatever class <html> carries. Each Phase 4 ticket that moves a surface onto
+// the tokens in src/index.css makes the theme reach that surface.
 import { useSyncExternalStore } from 'react';
 
 export type Theme = 'light' | 'dark';
@@ -15,8 +14,9 @@ export type Theme = 'light' | 'dark';
 // visitor starts with and what clearing the override returns to.
 export type ThemeChoice = Theme | 'system';
 
-// Shared with the pre-paint script inlined in design.html. Change one and the
-// other has to change with it, or the page paints one theme and then swaps.
+// Shared with the pre-paint script every page gets from vite.config.js
+// (THEME_PREPAINT). Change one and the other has to change with it, or the
+// page paints one theme and then swaps.
 export const STORAGE_KEY = 'mcu.theme';
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 

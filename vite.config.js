@@ -1,8 +1,8 @@
-// V4 build step. See docs/V4-PLAN.md §3 (the build) and §9 (the order).
+// V4 build step. See docs/V4-PLAN.md Â§3 (the build) and Â§9 (the order).
 //
 // Steps 1 to 3 are done: Vite owns index.html, the stylesheets and the icons,
 // and the app itself is one bundle (src/main.js) with no in-browser Babel.
-// What is left in LEGACY is not waiting to be converted — each entry has its
+// What is left in LEGACY is not waiting to be converted â each entry has its
 // own reason to keep a plain URL, given beside it.
 import { readFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -21,7 +21,7 @@ const LEGACY = [
   'i18n.js',
   // Stays a separate file on purpose: test-watch replaces it over the
   // network to serve a fixture (qa/test-watch.js), so it must keep its own
-  // URL. docs/V4-PLAN.md §5.5.
+  // URL. docs/V4-PLAN.md Â§5.5.
   'watch-data.js',
   // Vite fingerprints the icons and rewrites the tags that point at them, but
   // clients ask for these paths directly without reading the HTML (iOS asks
@@ -65,14 +65,32 @@ const checkLegacy = () => ({
       this.error(
         'index.html loads scripts that are neither bundled nor copied: ' +
         missing.join(', ') + '. Add them to LEGACY in vite.config.js, or ' +
-        'convert them to modules (docs/V4-PLAN.md §3.3).'
+        'convert them to modules (docs/V4-PLAN.md Â§3.3).'
       );
     }
   },
 });
 
+// The theme has to be right before the first paint, and src/theme.ts arrives
+// with the bundle, too late to paint with. So every page gets this rule inline
+// in its <head> (anywhere there is still before the first paint), on the dev
+// server and in the build alike. It is the one deliberate copy of
+// src/theme.ts: the key and the rule must match STORAGE_KEY and getTheme()
+// there, or a page paints one theme and then swaps.
+const THEME_PREPAINT = `try {
+  var saved = localStorage.getItem('mcu.theme');
+  var dark = saved === 'dark' || saved === 'light' ? saved === 'dark'
+    : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (dark) document.documentElement.classList.add('dark');
+} catch (e) {}`;
+
+const themePrepaint = () => ({
+  name: 'mcu-theme-prepaint',
+  transformIndexHtml: () => [{ tag: 'script', children: THEME_PREPAINT, injectTo: 'head' }],
+});
+
 export default {
-  plugins: [react(), tailwindcss(), checkLegacy(), copyLegacy()],
+  plugins: [react(), tailwindcss(), themePrepaint(), checkLegacy(), copyLegacy()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
@@ -82,7 +100,7 @@ export default {
         // The app. Still the V3 loading path; see LEGACY above.
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         // The V4 design-system preview, a page of its own that the app never
-        // loads and which never loads the app (docs/V4-PLAN.md §9, and the
+        // loads and which never loads the app (docs/V4-PLAN.md Â§9, and the
         // Notion ticket "Design system preview page").
         design: fileURLToPath(new URL('./design.html', import.meta.url)),
       },

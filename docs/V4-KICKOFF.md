@@ -126,6 +126,10 @@ sheets, dialogs (About, Account, "What have you seen?"), guides, startup
 screen. Compare each against its frame at desktop and phone sizes, in English
 and Portuguese, and keep the WCAG AA contrast checks.
 
+*Changed 2026-11-01, Andre's decision:* the first pass has no Figma frames. It
+applies shadcn/ui's Vega defaults to each surface as they stand, and the
+customising pass that follows works from frames as above (docs/decisions.md).
+
 ### Phase 5 — Dark/Light mode and Settings
 
 Build on the token system: both themes from the same variables, respecting

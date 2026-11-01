@@ -44,7 +44,8 @@ function TooltipContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
-        className="isolate z-50"
+        // v4: portaled to <body>, outside any surface (src/preflight-v4.css)
+        className="v4 isolate z-50"
       >
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"

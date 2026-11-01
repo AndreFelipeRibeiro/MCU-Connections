@@ -12,6 +12,59 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+
+## V4 design — the design system wired into the app, with no visible change
+
+Recorded: 2026-11-01 01:19 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+`main` still serves V3 and this change is not part of a production release.
+
+The first Phase 4 ticket (Notion V4 Tasks, "Phase 4 — wire the design system
+into the app (before any surface)"). The app now loads Tailwind, the token file
+and the theme, so each surface ticket can start using them. Nothing on screen
+changes: V3's stylesheets still paint every surface.
+
+- **The app loads the design system.** `src/main.ts` imports `src/index.css`
+  and starts the theme. The `dark` class follows the system before first
+  paint, through a rule Vite injects into every page's `<head>`
+  (`THEME_PREPAINT` in `vite.config.js`, replacing the copy pasted into
+  `design.html`). An override set through `window.MCU_THEME` survives a
+  reload.
+- **V3's colour tokens are now `--v3-*`.** shadcn defines `--border` and
+  `--accent` too, so with both files on one page whichever loaded last would
+  have recoloured the other's. All ten tokens renamed: 653 uses, all in CSS.
+- **Tailwind's preflight reset is scoped to `.v4`** (`src/preflight-v4.css`,
+  generated from Tailwind 4.3.3's own). Loaded globally it changed 166 computed
+  properties on V3 elements: line height everywhere, icon alignment, button
+  fonts, border and outline colours. A converted surface opts in with class
+  `v4` on its root; the dialog and tooltip carry it on their portaled roots,
+  and `design.html` on `<html>`. Temporary: Tailwind is imported whole again
+  once no V3 surface is left.
+- **Tailwind generates classes only from `src/components` and
+  `src/design`.** Scanning the whole project generated 3.8 KB of utilities
+  from V3's class names.
+- **The tokens sit in the base cascade layer**, and V3's `:root` holds
+  `color-scheme: normal`, so native controls and scrollbars stay as they were.
+- **`qa/test-v4scope.js`**, a new regression check: the reset stays out of V3
+  and works inside `.v4`, the token sets don't collide, and the theme is wired.
+- Docs: AGENTS.md (the renamed V3 tokens, the first pass's exception to the
+  Figma rules, how a surface opts in, the theme wiring, the check count), four
+  decisions, two handoff quirks, README, qa/README.md, and a dated note in
+  docs/V4-KICKOFF.md recording that the first re-skin pass has no Figma frames.
+
+Verified: a pixel diff of 42 app states before and after (desktop and phone,
+light and dark system, English and Portuguese, the welcome dialog) shows no
+visible change, the largest leftover being 58 px of anti-aliasing on generated
+art that the same build also shows run to run. The computed style of every
+element, about 26,900 across 8 states, has zero differences. `design.html` is
+pixel-identical in 4 full-page shots. The new check fails the old build and a
+build with the reset made global again, and passes this one. Looked at in the
+in-app browser on the dev server, at desktop and phone size. `npm run
+typecheck` green; `bash qa/regress.sh` all 47 check runs clean in 5m 40s. The
+design system adds 48.7 KB of CSS (8.9 KB gzipped).
+
+Limits: not checked on a real iPhone or in Safari or Firefox. The `v4` marks on
+the dialog and tooltip have nothing to open them in the app yet.
+
 ## V4 design — theme switching, and the contrast check the rules always asked for
 
 Recorded: 2026-10-31 20:30 EDT (-0400). Pushed to `version/4.0` (V4 staging);

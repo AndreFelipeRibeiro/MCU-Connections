@@ -144,10 +144,21 @@ work:
   photographing the page. A clean accessibility scan has never meant the text
   on the page is readable; it means axe found nothing it was sure about.
 - **The theme mechanism is written twice on purpose.** `src/theme.ts` owns it,
-  but it arrives with the bundle, which is too late to paint with, so each
-  page repeats the rule in an inline script in its `<head>` (`design.html`
-  today). Change the storage key or the rule in one and the page paints one
-  theme and then swaps to the other.
+  but it arrives with the bundle, which is too late to paint with, so every
+  page gets the rule as an inline script Vite injects into its `<head>`
+  (`THEME_PREPAINT` in `vite.config.js`). Change the storage key or the rule
+  in one and the page paints one theme and then swaps to the other.
+- **The design system is opt-in, surface by surface.** Tailwind's reset only
+  applies inside `.v4` (`src/preflight-v4.css`), and Tailwind only generates
+  classes from the files listed with `@source` in `src/index.css`. A
+  converted surface without the `v4` class, or whose file is not listed,
+  renders on V3's browser defaults or without its classes, which looks like
+  the components are broken when they are not. Portaled components (dialogs,
+  tooltips) carry `v4` themselves. `qa/test-v4scope.js` guards the seam.
+- **V3's stylesheets win every tie, and some that aren't ties.** They are
+  unlayered, and Tailwind's output is in cascade layers, so a V3 rule beats a
+  Tailwind class on the same element whatever the order or specificity. A
+  converted element that keeps a V3 class keeps V3's look.
 
 - **The source tree cannot be opened in a browser any more.** `python3 -m
   http.server` on the repository root serves an `index.html` whose only script
@@ -226,7 +237,7 @@ work:
 
 `qa/` holds the headless Playwright checks used throughout V3, curated
 (qa/README.md lists them):
-- the regression run (`bash qa/regress.sh`: 44 check runs plus the axe-core
+- the regression run (`bash qa/regress.sh`: 45 check runs plus the axe-core
   accessibility scan in both languages, about 7 minutes, 4 at a time), once
   per batch before staging. It builds the site first and serves every check
   that build;
