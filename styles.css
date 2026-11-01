@@ -2205,3 +2205,63 @@ body { background: var(--v3-bg); }
 .dl-phase-divider { @apply font-sans text-sm font-semibold normal-case tracking-tight; }
 .dl-glabel .pgh-label { letter-spacing: normal; }
 .pgh-count { @apply text-xs; }
+
+/* ===========================================================================
+   RE-SKIN, FIRST PASS — dialogs
+   (Notion V4 Tasks, "Phase 4 — Dialogs (About, Account, 'What have you seen?')")
+
+   The dialog shell every desktop dialog shares (About and the welcome, the
+   guide promotion, the sign-in reminder, "What have you seen?" and its
+   confirmation) takes shadcn's Dialog: its overlay, a popover surface with a
+   ring, the ghost close button. Calls to action are the default and outline
+   buttons; the account panel's stats, links and actions follow. Focus
+   trapping, Escape and focus return are unchanged: they live in the
+   components, not here.
+   =========================================================================== */
+.about-scrim, .pk-ask-wrap { @apply bg-black/10 backdrop-blur-xs; }
+.about-dialog, .pk-ask { @apply rounded-xl border-transparent bg-popover text-popover-foreground shadow-lg ring-1 ring-foreground/10; }
+.about-x { @apply size-8 rounded-md border-transparent bg-transparent text-muted-foreground; }
+.about-x:hover { @apply bg-muted text-foreground; }
+.about-x:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+.about { @apply text-popover-foreground; }
+.about-title, .pk-title { @apply text-lg font-semibold tracking-tight; }
+.pk-ask-t { @apply text-base font-semibold; }
+.about-tag, .about-lead, .pk-sub, .pk-ask-d { @apply text-sm text-muted-foreground; }
+.about-h, .pk-pl { @apply font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground; }
+.about-ways li { @apply rounded-lg border-border bg-card; }
+.about-ic { @apply rounded-md border-transparent bg-muted text-foreground; }
+.about-ways b { @apply text-sm font-medium; }
+.about-ways li span span { @apply text-sm text-muted-foreground; }
+.about-credits p { @apply text-xs text-muted-foreground; }
+
+/* Buttons. */
+.about-cta, .picker-go { @apply h-10 min-h-10 rounded-md border-transparent bg-primary text-sm font-medium text-primary-foreground shadow-none; }
+.about-cta:hover, .picker-go:hover { @apply bg-primary/80; }
+.nudge-later, .pk-pa { @apply rounded-md border-border bg-background text-sm font-medium text-foreground shadow-xs dark:border-input dark:bg-input/30; }
+.nudge-later { @apply h-10 min-h-10; }
+.pk-pa { @apply h-8 min-h-8; }
+.nudge-later:hover, .pk-pa:hover { @apply bg-muted text-foreground dark:bg-input/50; }
+.pk-pa.clr, .pk-keep { @apply border-transparent bg-transparent text-muted-foreground shadow-none; }
+.pk-pa.clr:hover, .pk-keep:hover { @apply bg-muted text-foreground; }
+.about-cta:focus-visible, .picker-go:focus-visible, .nudge-later:focus-visible, .pk-pa:focus-visible, .pk-keep:focus-visible {
+  @apply outline-none ring-[3px] ring-ring/50;
+}
+
+/* "What have you seen?": the note is a muted alert, the footer a dialog footer. */
+.pk-note { @apply rounded-lg border-border bg-muted/50 text-sm; }
+.pk-foot { @apply border-border bg-popover; }
+.pk-count { @apply text-sm text-muted-foreground; }
+.pk-count b { @apply text-foreground; }
+
+/* The account panel (desktop popover and phone sheet). */
+.acct-name { @apply text-sm font-medium; }
+.acct-email, .acct-note { @apply text-xs text-muted-foreground; }
+.acct-stat { @apply rounded-lg border-transparent bg-muted; }
+.acct-stat span { @apply text-xs; }
+.acct-links button { @apply h-8 rounded-md border-border bg-background px-2.5 text-sm font-medium text-foreground shadow-xs dark:border-input dark:bg-input/30; }
+.acct-links button:hover { @apply bg-muted dark:bg-input/50; }
+.acct-action { @apply h-9 min-h-9 rounded-md border-border bg-background text-sm font-medium text-foreground shadow-xs dark:border-input dark:bg-input/30; }
+.acct-action:hover { @apply bg-muted dark:bg-input/50; }
+.acct-action.primary { @apply border-transparent bg-primary text-primary-foreground shadow-none; }
+.acct-action.primary:hover { @apply bg-primary/80; }
+.acct-error { @apply rounded-lg; }
