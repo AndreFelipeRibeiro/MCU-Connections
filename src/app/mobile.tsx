@@ -10,7 +10,8 @@ import type { Title } from '../types/catalog';
 
 const { useState: mUseState } = React;
 
-const MPHASE_COLORS: Record<number, string> = { 1:'#d4a05a', 2:'#4a8de8', 3:'#d04040', 4:'#a05cd0', 5:'#5fa856', 6:'#c8384a' };
+// The phase tokens, as in app.tsx's PHASE_COLORS.
+const MPHASE_COLORS: Record<number, string> = { 1:'var(--phase-1)', 2:'var(--phase-2)', 3:'var(--phase-3)', 4:'var(--phase-4)', 5:'var(--phase-5)', 6:'var(--phase-6)' };
 window.MPHASE_COLORS = MPHASE_COLORS; // upnext.jsx
 // Text comes from the i18n runtime (i18n.js); `mtr` avoids clashing with the
 // `t` used for titles throughout this file.
@@ -311,7 +312,7 @@ function ProgressHeader({ label, color, seen, released, upcoming, band, width, a
   // a phase keeps its phase colour.
   const style = {};
   if (color) style['--pm'] = color;
-  else if (released > 0 && seen >= released) style['--pm'] = '#5fa856';
+  else if (released > 0 && seen >= released) style['--pm'] = 'var(--status-seen)';
   if (width) style['--pgw'] = width + 'px';
   const styleOrNull = Object.keys(style).length ? style : null;
   // Nothing released in this group yet: a bar would be a lie, so just the label.
@@ -1309,7 +1310,7 @@ function FilterSheet({ phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, b
         <div className="m-chips">
           {['all','1','2','3','4','5','6'].map(p=>(
             <button key={p} className={`m-chip ph${phaseFilter===p?' on':''}`} onClick={()=>setPhaseFilter(p)}
-              style={p!=='all' && phaseFilter===p ? {background:MPHASE_COLORS[p], borderColor:MPHASE_COLORS[p], color:'#0a0c14'} : null}>
+              style={p!=='all' && phaseFilter===p ? {background:MPHASE_COLORS[p], borderColor:MPHASE_COLORS[p], color:'var(--on-color)'} : null}>
               {p==='all'?mtr('filters.all'):p}
             </button>
           ))}

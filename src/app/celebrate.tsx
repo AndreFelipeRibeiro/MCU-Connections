@@ -80,7 +80,11 @@ function burstConfetti(palette) {
   const ctx = canvas.getContext('2d');
   if (!ctx) { canvas.remove(); return; }
   ctx.scale(dpr, dpr);
-  const colors = palette && palette.length ? palette : Object.values(window.PHASE_COLORS || {}).concat(['#5fa856', '#d4a05a', '#ffffff']);
+  // The phase colours are CSS tokens now (var(--phase-1)…), and a canvas
+  // cannot read var(): resolve each one against the page before painting.
+  const root = getComputedStyle(document.documentElement);
+  const resolve = (c) => { const m = /^var\((--[\w-]+)\)$/.exec(c); return m ? root.getPropertyValue(m[1]).trim() || '#888' : c; };
+  const colors = (palette && palette.length ? palette : Object.values(window.PHASE_COLORS || {}).concat(['#5fa856', '#d4a05a', '#ffffff'])).map(resolve);
   const parts = [];
   // Called once the toast has rendered (it usually has by the first frame).
   const launch = () => {

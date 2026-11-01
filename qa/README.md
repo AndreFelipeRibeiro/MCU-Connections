@@ -239,15 +239,21 @@ relative to `qa/`, and build it yourself first:
   `a11y-scan.js` cannot judge and therefore passes. Those are measured against
   the background actually painted behind them: the text is made transparent,
   the page is photographed and the commonest colour in each text box is its
-  background. The six Spatial band labels are reached one at a time with
-  `?phase=N`, because only phase 1's is on screen at the opening camera.
+  background. Exactly the nodes axe reports are measured (it used to match
+  by text, so one unresolved "T" measured every "T" on the page), and text
+  that is part of a picture (`role="img"`) or marked `aria-hidden` is skipped,
+  as WCAG 1.4.3 exempts it. The app and the band labels are measured in both
+  themes, since the app follows the system. The six Spatial band labels are
+  reached one at a time with `?phase=N`, because only phase 1's is on screen
+  at the opening camera.
   Accepted shortfalls live in `KNOWN` in the check, each with the ratio it was
   accepted at and why; a worse ratio fails, and one that starts passing is
   reported so the entry can go), `test-v4scope` (the seam between V3 and the
   design system: Tailwind's reset stays out of V3, so `<html>` keeps
   `line-height: normal` and V3's icons their baseline alignment, and works
-  inside a `.v4` probe; V3's `--v3-*` tokens and shadcn's `--border` and
-  `--accent` keep their own values; the theme class follows the system from
+  inside a `.v4` probe; shadcn's `--border` and `--accent` never take V3's old
+  values, each `--v3-*` token resolves to its design-system counterpart, and
+  `color-scheme` follows the theme; the theme class follows the system from
   the pre-paint script, an override survives a reload, and clearing it follows
   the system again. Proven against the build before the change and a build
   with the reset global again, both of which it fails).

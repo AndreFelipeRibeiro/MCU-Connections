@@ -13,6 +13,35 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — V3's palette and type onto the design-system tokens
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Phase 4 — V3's palette and type onto the design-system tokens
+(all surfaces)". The first re-skin step, under every surface ticket: V3's
+colours now come from shadcn's tokens, so the app follows the light and dark
+themes.
+
+- **V3's tokens are defined from the design system's** (`--v3-surface:
+  var(--card)` and so on), and about 350 colours written straight into
+  `styles.css` and `styles-mobile.css` were mapped onto tokens. New tokens in
+  both themes: `--status-seen`, `--status-seen-text`, `--status-watch`,
+  `--on-color` (ink on phase and status fills) and `--on-image*` (fixed light
+  text on the dark overlays over posters).
+- **Type is Vega's default**: Inter (served with the bundle) and the system
+  monospace in place of JetBrains Mono, in all 81 places. Google Fonts now
+  loads only Bebas Neue, for the generated poster art.
+- Both stylesheets start with `@reference "./src/index.css"` so the surface
+  sections can use shadcn's class recipes through `@apply`. Eight more shadcn
+  components are added to `src/components/ui/` for the surfaces to move onto
+  later; react is re-pinned exactly.
+- `PHASE_COLORS` / `MPHASE_COLORS` hold `var(--phase-N)`; the canvas and
+  confetti resolve them before painting.
+- Verified with the surface tickets: full regression (49 check runs clean at
+  the end of the pass), both themes in the in-app browser at desktop and phone
+  sizes, English and Portuguese.
+
 ## V4 design — the design system wired into the app, with no visible change
 
 Recorded: 2026-11-01 01:19 EST (-0500). Pushed to `version/4.0` (V4 staging);

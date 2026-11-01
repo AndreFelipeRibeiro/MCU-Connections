@@ -64,6 +64,13 @@ const TOKEN_PAIRS = [
   // Vega paints --destructive as text, never as a surface, so these are the
   // backgrounds it lands on.
   ['destructive', 'background'], ['destructive', 'card'],
+  // Collection status as text, and the ink set on status and phase fills
+  // (badges, the filter's phase buttons, the Seen and Watchlist buttons).
+  ['status-seen-text', 'background'], ['status-seen-text', 'card'],
+  ['status-watch', 'background'], ['status-watch', 'card'],
+  ['on-color', 'status-seen'], ['on-color', 'status-watch'],
+  ['on-color', 'phase-1'], ['on-color', 'phase-2'], ['on-color', 'phase-3'],
+  ['on-color', 'phase-4'], ['on-color', 'phase-5'], ['on-color', 'phase-6'],
 ];
 
 // Shortfalls that have been looked at and accepted, each with the ratio
@@ -80,9 +87,13 @@ const KNOWN = [
   { where: 'tokens dark', what: 'phase-4 on card', fg: 'rgb(160,92,208)', ratio: 4.21, why: PHASE_DEFERRED },
   { where: 'tokens dark', what: 'phase-6 on background', fg: 'rgb(200,56,74)', ratio: 3.88, why: PHASE_DEFERRED },
   { where: 'tokens dark', what: 'phase-6 on card', fg: 'rgb(200,56,74)', ratio: 3.52, why: PHASE_DEFERRED },
+  // V3's own dark ink on V3's red phase badges, measured since the first
+  // re-skin pass put the ink on a token. Same cause as the rows above.
+  { where: 'tokens dark', what: 'on-color on phase-3', fg: 'rgb(10,10,10)', ratio: 4.23, why: PHASE_DEFERRED },
+  { where: 'tokens dark', what: 'on-color on phase-6', fg: 'rgb(10,10,10)', ratio: 3.88, why: PHASE_DEFERRED },
   { where: 'preview dark', what: 'div.font-mono.text-[10px].uppercase', text: 'Phase 4', fg: 'rgb(160,92,208)', ratio: 4.21, why: PHASE_DEFERRED },
-  { where: 'app spatial band', what: 'div.band-label.phase.plain', text: 'Phase 3', fg: 'rgb(208,64,64)', ratio: 4.17, why: BAND_BUG },
-  { where: 'app spatial band', what: 'div.band-label.phase.plain', text: 'Phase 6', fg: 'rgb(200,56,74)', ratio: 3.83, why: BAND_BUG },
+  { where: 'app dark spatial band', what: 'div.band-label.phase.plain', text: 'Phase 3', fg: 'rgb(208,64,64)', ratio: 4.17, why: BAND_BUG },
+  { where: 'app dark spatial band', what: 'div.band-label.phase.plain', text: 'Phase 6', fg: 'rgb(200,56,74)', ratio: 3.83, why: BAND_BUG },
 ];
 
 const REQUIRED = (size, weight) => ((size >= 24 || (size >= 18.66 && weight >= 700)) ? 3 : 4.5);
@@ -121,6 +132,11 @@ const COLLECT = `window.__collect = () => {
   for (const el of document.body.querySelectorAll('*')) {
     const own = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
     if (!own) continue;
+    // Text that is part of a picture (role="img", such as the generated poster
+    // art) or marked as decoration has no contrast requirement: WCAG 1.4.3
+    // exempts both. SVG text also paints with fill, not color, so it could not
+    // be measured this way anyway.
+    if (el.closest('[role="img"], [aria-hidden="true"]')) continue;
     const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) continue;
     const r = el.getBoundingClientRect();
@@ -134,6 +150,7 @@ const COLLECT = `window.__collect = () => {
       x: r.left + window.scrollX, y: r.top + window.scrollY, w: r.width, h: r.height,
       color: window.__rgb([cs.color]),
       size: parseFloat(cs.fontSize), weight: +cs.fontWeight || 400,
+      axe: el.dataset.qaAxe === '1',
     });
   }
   return out;
@@ -328,31 +345,32 @@ const keyOf = (f) => [f.where, f.what, f.text, f.fg].filter(Boolean).join(' :: '
     ['desktop list', { viewport: { width: 1440, height: 900 } }, { version: 1, viewMode: 'list', desktopView: 'list', sort: 'phase' }],
     ['phone list', { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true }, { version: 1, viewMode: 'list', desktopView: 'list', sort: 'release' }],
   ];
-  for (const [label, opts, prefs] of views) {
-    const { ctx, page } = await context(opts, NOWELCOME + SEED + "localStorage.setItem('mcu.prefs.v1', '" + JSON.stringify(prefs) + "');");
+  // Both themes: the app follows the system since the first re-skin pass, and
+  // a browser left at its default only ever shows the light one.
+  for (const scheme of ['dark', 'light']) for (const [view, opts, prefs] of views) {
+    const label = scheme + ' ' + view;
+    const { ctx, page } = await context({ ...opts, colorScheme: scheme }, NOWELCOME + SEED + "localStorage.setItem('mcu.prefs.v1', '" + JSON.stringify(prefs) + "');");
     await page.goto(URL_BASE);
     await require('./ready').appReady(page, 1200);
     await page.addScriptTag({ content: AXE });
     // Only the nodes axe gave up on: its violations are qa/a11y-scan.js's job,
-    // and this is the gap that scan structurally cannot see.
-    const unresolved = await page.evaluate(async () => {
+    // and this is the gap that scan structurally cannot see. Each one is
+    // marked and exactly those are measured. (This used to match by text, so
+    // one unresolved "T" measured every "T" on the page, including letters
+    // inside the generated poster art.)
+    const { unresolved, marked } = await page.evaluate(async () => {
       const res = await axe.run(document, { resultTypes: ['violations', 'incomplete'], runOnly: ['color-contrast'] });
       const nodes = (res.incomplete || []).flatMap(v => v.nodes);
-      return nodes.map(n => n.target.join(' '));
+      let marked = 0;
+      for (const n of nodes) {
+        const e = document.querySelector(n.target.join(' '));
+        if (e && [...e.childNodes].some(c => c.nodeType === 3 && c.textContent.trim())) { e.dataset.qaAxe = '1'; marked++; }
+      }
+      return { unresolved: nodes.length, marked };
     });
-    const wanted = new Set();
-    for (const t of unresolved) {
-      const el = await page.evaluate((sel) => {
-        const e = document.querySelector(sel);
-        if (!e) return null;
-        const own = [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
-        return own ? (e.textContent.trim().replace(/\s+/g, ' ').slice(0, 40)) : null;
-      }, t).catch(() => null);
-      if (el !== null) wanted.add(el);
-    }
-    notes.push({ view: label, axeIncomplete: unresolved.length, measurable: wanted.size });
-    if (wanted.size) {
-      const r = await measureRendered(page, 'app ' + label, (it) => wanted.has(it.text));
+    notes.push({ view: label, axeIncomplete: unresolved, measurable: marked });
+    if (marked) {
+      const r = await measureRendered(page, 'app ' + label, (it) => it.axe);
       found.push(...r.rows);
       if (r.unmeasured) notes.push({ view: label, unmeasured: r.unmeasured });
     }
@@ -363,16 +381,16 @@ const keyOf = (f) => [f.where, f.what, f.text, f.fg].filter(Boolean).join(' :: '
   // to that phase, which brings its label to the opening camera; otherwise
   // only phase 1's is ever on screen, and phases 2 to 6 are the ones that have
   // been failing since V3.
-  for (let n = 1; n <= 6; n++) {
+  for (const scheme of ['dark', 'light']) for (let n = 1; n <= 6; n++) {
     const { ctx, page } = await context(
-      { viewport: { width: 1440, height: 900 } },
+      { viewport: { width: 1440, height: 900 }, colorScheme: scheme },
       NOWELCOME + SEED + "localStorage.setItem('mcu.prefs.v1', '" + JSON.stringify({ version: 1, viewMode: 'list', desktopView: 'spatial', sort: 'release' }) + "');",
     );
     await page.goto(URL_BASE + '?phase=' + n);
     await require('./ready').appReady(page, 1200);
-    const r = await measureRendered(page, 'app spatial band', (it) => it.sel.includes('band-label'));
+    const r = await measureRendered(page, 'app ' + scheme + ' spatial band', (it) => it.sel.includes('band-label'));
     found.push(...r.rows);
-    if (!r.rows.length) errors.push('phase ' + n + ': no band label measured');
+    if (!r.rows.length) errors.push(scheme + ' phase ' + n + ': no band label measured');
     await ctx.close();
   }
 

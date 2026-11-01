@@ -8,7 +8,10 @@
      so the description is the English default; the app itself follows the
      visitor's language. The preview image is served by production (main). -->
 <meta name="description" content="See how every Marvel Cinematic Universe film and series connects through shared characters, and track what you have watched."/>
-<meta name="theme-color" content="#0a0c14"/>
+<!-- The browser's own chrome, per system scheme: the design system's
+     --background in each theme. -->
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"/>
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)"/>
 <link rel="icon" type="image/png" sizes="64x64" href="favicon.png"/>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"/>
 <meta property="og:type" content="website"/>
@@ -26,7 +29,10 @@
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+<!-- Only the generated poster art's display face comes from Google Fonts:
+     the UI's Inter is the design system's, served with the bundle, and
+     numbers use the system monospace. -->
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css"/>
 <link rel="stylesheet" href="styles-mobile.css"/>
 <script src="boot.js"></script>

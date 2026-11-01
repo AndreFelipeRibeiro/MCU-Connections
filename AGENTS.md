@@ -291,17 +291,19 @@ and type below as it lands (Figma first, then code); the accessibility,
 keyboard, focus, Escape, phone-history, reduced-motion and Spatial performance
 rules carry over unchanged.
 
-- V3's dark theme tokens (`styles.css :root`), prefixed `--v3-` since
-  2026-11-01 so they cannot collide with the design system's (shadcn defines
-  `--border` and `--accent` too): `--v3-bg #0a0c14`, `--v3-bg-2 #11141f`,
-  `--v3-surface #161a26`, `--v3-surface-2 #1c2030`, `--v3-border #232838`,
-  `--v3-border-strong #2e344a`, `--v3-text #e6e8f0`, `--v3-text-dim #9ea4b8`,
-  `--v3-text-muted #8389a1`, `--v3-accent #4a8de8`. Phase colours are
-  `PHASE_COLORS` in `app.tsx`. V3's rules use these and new work uses the
-  design system's; neither borrows the other's names. Do not add near-duplicate
-  greys.
-- Type: Inter for UI, JetBrains Mono for labels, numbers and badges, Bebas Neue
-  for display. Brand mark: the conic-gradient square (`.brand-mark`).
+- V3's colour tokens (`styles.css :root`) are prefixed `--v3-` so they
+  cannot collide with the design system's (shadcn defines `--border` and
+  `--accent` too), and since the first re-skin pass each is *defined from* a
+  design-system token (`--v3-surface: var(--card)` and so on), so V3's rules
+  follow the theme. Write new rules with the design system's tokens directly,
+  never a raw colour. `PHASE_COLORS` in `app.tsx` (and `MPHASE_COLORS`) hold
+  `var(--phase-N)`; code that paints on a canvas resolves them first.
+- Text on the dark overlays that sit on posters uses `--on-image` (fixed light
+  values): the overlay stays dark in both themes because it sits on an image.
+- Type: the design system's Inter (`--font-sans`, served with the bundle) and
+  the system monospace (`--font-mono`) for labels, numbers and badges
+  (Andre's decision, 2026-11-01). Bebas Neue appears only in the generated
+  poster art. Brand mark: the conic-gradient square (`.brand-mark`).
 - Contrast: informative text meets WCAG AA (4.5:1 for normal text) against its
   real background. Both halves of that run: `qa/a11y-scan.js` (axe) and
   `qa/test-contrast.js` (the calculation). They do not overlap — axe returns
@@ -396,9 +398,6 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   - V3's stylesheets are unlayered, so they beat every Tailwind class on an
     element they match, whatever the order. Retire a surface's V3 rules in the
     ticket that converts it.
-  - `color-scheme: normal` in V3's `:root` keeps native controls and
-    scrollbars as they were; the first surface ticket that converts a native
-    control deletes it.
   - `qa/test-v4scope.js` holds this seam: the reset stays out of V3 and works
     inside `.v4`, the two token sets don't collide, and the theme is wired.
   - When no V3 surface is left: delete `src/preflight-v4.css`, import
@@ -412,7 +411,10 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   `--border`, `--ring`, `--radius`, …) in one stylesheet with a light `:root`
   block and a `.dark` block are the token file V4-PLAN.md §6 describes; names
   match the Figma variables. Phase colours become tokens there (`--phase-1`
-  … `--phase-6`, both themes).
+  … `--phase-6`, both themes), and so do collection status (`--status-seen`,
+  `--status-seen-text`, `--status-watch`) and `--on-color`, the ink for text on
+  a phase or status fill, which turns light in the light theme because those
+  fills turn dark.
 - Theme: class `dark` on `<html>`, following `prefers-color-scheme` until the
   user overrides it. The mechanism is `src/theme.ts` (`window.MCU_THEME`,
   `useTheme()`, the override in `localStorage` under `mcu.theme`, cleared to

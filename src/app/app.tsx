@@ -12,13 +12,16 @@ import ReactDOM from 'react-dom/client';
 
 const { useState, useEffect, useMemo, useRef, useLayoutEffect, useCallback } = React;
 
+// The phase tokens in src/index.css, which hold a value for each theme. Every
+// use is a CSS value; code that paints on a canvas resolves them first
+// (celebrate.tsx).
 const PHASE_COLORS = {
-  1: '#d4a05a',
-  2: '#4a8de8',
-  3: '#d04040',
-  4: '#a05cd0',
-  5: '#5fa856',
-  6: '#c8384a',
+  1: 'var(--phase-1)',
+  2: 'var(--phase-2)',
+  3: 'var(--phase-3)',
+  4: 'var(--phase-4)',
+  5: 'var(--phase-5)',
+  6: 'var(--phase-6)',
 };
 window.PHASE_COLORS = PHASE_COLORS; // desktop-list.jsx
 // Text goes through the i18n runtime (i18n.js); `tr` avoids clashing with the
@@ -342,7 +345,7 @@ function Card({ title, pos, onClick, onHover, onDragStart, onFocusCard, focusabl
                 enough for buttons. */}
             {showActions && guideSkip && guideSkip.state === 'can' && <window.GuideSkipControl guide={guide} info={guideSkip} className="card-skipctl" onDone={onGuideSkip}/>}
           </span>
-          <span className="badge phase-badge" style={{background: phaseColor, color:'#0a0c14'}}>{phaseLabel(title.phase)}</span>
+          <span className="badge phase-badge" style={{background: phaseColor, color:'var(--on-color)'}}>{phaseLabel(title.phase)}</span>
         </div>
         {/* A skipped stop: a "Skipped" tag and Unskip, centred on the poster,
             in place of Seen and Watchlist. */}
@@ -546,7 +549,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onPickTitle, onPickPer
                   <div className="segmented">
                     {['all','1','2','3','4','5','6'].map(p=>(
                       <button key={p} className={phaseFilter===p?'on':''} onClick={()=>setPhaseFilter(p)}
-                        style={p!=='all' && phaseFilter===p ? {background:PHASE_COLORS[p],color:'#0a0c14',borderColor:PHASE_COLORS[p]} : {}}
+                        style={p!=='all' && phaseFilter===p ? {background:PHASE_COLORS[p],color:'var(--on-color)',borderColor:PHASE_COLORS[p]} : {}}
                       >{p==='all'?tr('filters.all'):p}</button>
                     ))}
                   </div>
@@ -632,7 +635,7 @@ let labelMeasure = null;
 function labelPillWidth(text) {
   try {
     if (!labelMeasure) labelMeasure = document.createElement('canvas').getContext('2d');
-    labelMeasure.font = '500 11px Inter, sans-serif';
+    labelMeasure.font = "500 11px 'Inter Variable', sans-serif";
     return Math.ceil(labelMeasure.measureText(text).width) + 32;
   } catch (e) {
     return Math.ceil(text.length * 6.6) + 32;
@@ -659,7 +662,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     return (
       <svg className="connection-layer guide-route" style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', overflow:'visible'}} aria-hidden="true">
         {segs.map(([a, b, dashed], i) => (
-          <path key={i} d={d(a, b)} fill="none" stroke="#4a8de8" strokeWidth={dashed ? 2.5 : 4} strokeLinecap="round"
+          <path key={i} d={d(a, b)} fill="none" style={{ stroke: 'var(--primary)' }} strokeWidth={dashed ? 2.5 : 4} strokeLinecap="round"
             strokeDasharray={dashed ? '10 9' : undefined} opacity={dashed ? 0.7 : 0.9}/>
         ))}
       </svg>
@@ -867,9 +870,9 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     <g key={'lbl_' + l.key} style={{pointerEvents:'none'}}>
       <rect x={l.x - l.w/2} y={l.y - l.h/2 + 2} width={l.w} height={l.h} rx={l.h/2} fill="#000" opacity="0.45"/>
       <rect x={l.x - l.w/2} y={l.y - l.h/2} width={l.w} height={l.h} rx={l.h/2}
-        fill="#0a0c14" stroke={l.color} strokeWidth="1.2" opacity="0.97"/>
+        style={{ fill: 'var(--background)' }} stroke={l.color} strokeWidth="1.2" opacity="0.97"/>
       <circle cx={l.x - l.w/2 + 11} cy={l.y} r={3.5} fill={l.color}/>
-      <text x={l.x - l.w/2 + 20} y={l.y + 3.6} fontSize="11" fontFamily="Inter, sans-serif" fontWeight="500" fill="#e6e8f0">{l.text}</text>
+      <text x={l.x - l.w/2 + 20} y={l.y + 3.6} fontSize="11" fontFamily="'Inter Variable', sans-serif" fontWeight="500" style={{ fill: 'var(--foreground)' }}>{l.text}</text>
     </g>
   ));
 

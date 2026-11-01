@@ -6,9 +6,11 @@
 //      computed properties on V3 elements. Outside .v4 the page must keep the
 //      browser defaults V3 was written against.
 //   2. The reset works inside .v4, which is how every surface ticket opts in.
-//   3. The two token sets don't collide. V3's colour tokens are --v3-*, so
-//      shadcn's --border and --accent keep their own values and V3's keep
-//      theirs.
+//   3. The two token sets don't collide, and V3's follow the design system's.
+//      V3's colour tokens are --v3-*, so shadcn's --border and --accent keep
+//      their own values; since the first re-skin pass each --v3-* token is
+//      defined from its design-system counterpart, so V3's rules follow the
+//      theme, and so do native controls (color-scheme).
 //   4. The theme is wired: the class follows the system before the bundle
 //      arrives, an override survives a reload, and clearing it goes back to
 //      following the system.
@@ -34,9 +36,9 @@ const server = http.createServer((req, res) => {
 });
 const URL_BASE = 'http://127.0.0.1:' + QA_PORT + '/';
 const NOWELCOME = "try { localStorage.setItem('mcu.welcome.v1', 'test'); localStorage.setItem('mcu.signInNudge.v1', '2'); } catch (e) {}";
-// V3's own value, from styles.css. If shadcn's --border ever reads this, or
-// V3's reads shadcn's, the rename has been undone somewhere.
-const V3_BORDER = '#232838';
+// V3's old hardcoded values. If shadcn's tokens ever read these, the rename
+// has been undone somewhere.
+const V3_BORDER = '#232838', V3_ACCENT = '#4a8de8';
 
 async function open(browser, opts, errors, label) {
   const ctx = await browser.newContext(opts);
@@ -56,7 +58,6 @@ const SNAPSHOT = () => {
   // V3 icons the reset would move: V3 makes them block itself but leaves their
   // vertical-align at the browser's baseline, which the reset sets to middle.
   const svgs = [...document.querySelectorAll('svg.lang-globe, svg.sort-order-flip, svg.sort-order-chevron')].filter(outside);
-  const btn = [...document.querySelectorAll('button')].find(b => outside(b) && !b.getAttribute('style'));
   const probe = document.createElement('div');
   probe.className = 'v4';
   probe.innerHTML = '<button type="button">probe</button><svg width="10" height="10"></svg><ul><li>x</li></ul>';
@@ -69,8 +70,10 @@ const SNAPSHOT = () => {
     htmlLineHeight: cs.lineHeight,
     htmlColorScheme: cs.colorScheme,
     v3Svgs: svgs.map(el => el.getAttribute('class') + ':' + getComputedStyle(el).verticalAlign),
-    v3ButtonFont: btn ? getComputedStyle(btn).fontFamily : null,
     v3Border: cs.getPropertyValue('--v3-border').trim(),
+    v3Accent: cs.getPropertyValue('--v3-accent').trim(),
+    v3Text: cs.getPropertyValue('--v3-text').trim(),
+    primary: cs.getPropertyValue('--primary').trim(),
     border: cs.getPropertyValue('--border').trim(),
     accent: cs.getPropertyValue('--accent').trim(),
     foreground: cs.getPropertyValue('--foreground').trim(),
@@ -116,10 +119,9 @@ const SNAPSHOT = () => {
 
     // 1. V3 keeps the browser's defaults.
     if (s.htmlLineHeight !== 'normal') errors.push(tag + ': <html> line-height is ' + s.htmlLineHeight + ', not normal — the reset reached V3');
-    if (s.htmlColorScheme !== 'normal') errors.push(tag + ': <html> color-scheme is ' + s.htmlColorScheme + ', not normal');
+    if (s.htmlColorScheme !== scheme) errors.push(tag + ': <html> color-scheme is ' + s.htmlColorScheme + ', not ' + scheme + ' — native controls do not follow the theme');
     if (!s.v3Svgs.length) errors.push(tag + ': none of the V3 icons this check reads is on the page');
     for (const v of s.v3Svgs) if (!v.endsWith(':baseline')) errors.push(tag + ': V3 icon vertical-align ' + v + ', not baseline');
-    if (s.v3ButtonFont && /Inter Variable/.test(s.v3ButtonFont)) errors.push(tag + ': a V3 button took the design system font');
     // 2. Inside .v4 the reset applies.
     const lh = parseFloat(s.probeLineHeight) / parseFloat(s.probeFontSize);
     if (Math.abs(lh - 1.5) > 0.01) errors.push(tag + ': .v4 line-height ratio is ' + lh.toFixed(2) + ', not 1.5');
@@ -128,9 +130,11 @@ const SNAPSHOT = () => {
     if (s.probeList !== 'none') errors.push(tag + ': a .v4 list keeps its bullets');
     if (s.probeColor !== s.foregroundResolved) errors.push(tag + ': a .v4 root inherits ' + s.probeColor + ' instead of --foreground ' + s.foregroundResolved);
     // 3. No collision.
-    if (s.v3Border.toLowerCase() !== V3_BORDER) errors.push(tag + ': --v3-border is ' + s.v3Border + ', not ' + V3_BORDER);
     if (!s.border || s.border.toLowerCase() === V3_BORDER) errors.push(tag + ': --border is ' + (s.border || 'missing') + ' — V3\'s value, or none');
-    if (!s.accent || s.accent.toLowerCase() === '#4a8de8') errors.push(tag + ': --accent is ' + (s.accent || 'missing') + ' — V3\'s value, or none');
+    if (!s.accent || s.accent.toLowerCase() === V3_ACCENT) errors.push(tag + ': --accent is ' + (s.accent || 'missing') + ' — V3\'s value, or none');
+    if (s.v3Border !== s.border) errors.push(tag + ': --v3-border is ' + s.v3Border + ', not the design system\'s --border ' + s.border);
+    if (s.v3Accent !== s.primary) errors.push(tag + ': --v3-accent is ' + s.v3Accent + ', not --primary ' + s.primary);
+    if (s.v3Text !== s.foreground) errors.push(tag + ': --v3-text is ' + s.v3Text + ', not --foreground ' + s.foreground);
     // 4. The theme follows the system, with no override stored.
     if (s.dark !== (scheme === 'dark')) errors.push(tag + ': <html> dark class is ' + s.dark + ' under a ' + scheme + ' system');
     if (s.choice !== 'system' || s.stored !== null) errors.push(tag + ': starts with choice ' + s.choice + ' / stored ' + s.stored + ', not system / none');

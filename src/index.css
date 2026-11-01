@@ -89,6 +89,13 @@
       --phase-4: oklch(0.49 0.20 305);
       --phase-5: oklch(0.50 0.13 147);
       --phase-6: oklch(0.50 0.21 10);
+      /* Collection status, and the ink for text set on a phase or status fill.
+         The light values reuse the darkened phase hues, which hold WCAG AA on
+         white; --on-color turns light because those fills turn dark. */
+      --status-seen: oklch(0.50 0.13 147);
+      --status-seen-text: oklch(0.45 0.13 147);
+      --status-watch: oklch(0.55 0.10 75);
+      --on-color: oklch(0.985 0 0);
       --background: oklch(1 0 0);
       --foreground: oklch(0.145 0 0);
       --card: oklch(1 0 0);
@@ -140,6 +147,11 @@
       --phase-4: #a05cd0;
       --phase-5: #5fa856;
       --phase-6: #c8384a;
+      /* V3's own status colours, and its dark ink on colour fills. */
+      --status-seen: #5fa856;
+      --status-seen-text: #8fcf86;
+      --status-watch: #d4a05a;
+      --on-color: oklch(0.145 0 0);
       --background: oklch(0.145 0 0);
       --foreground: oklch(0.985 0 0);
       --card: oklch(0.205 0 0);

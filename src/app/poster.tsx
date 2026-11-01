@@ -52,7 +52,7 @@ function PosterArt({ title }: { title: Title }) {
   const [failed, onError] = useImageFallback(url);
   if (url && !failed) {
     return (
-      <div className="poster-image-wrap" style={{width:'100%', height:'100%', position:'relative', background:'#0a0c14'}}>
+      <div className="poster-image-wrap" style={{width:'100%', height:'100%', position:'relative', background:'var(--muted)'}}>
         <img src={url} alt={window.MCU_I18N.titleName(title)} loading="lazy" onError={onError} style={{width:'100%', height:'100%', objectFit:'cover', display:'block'}}/>
       </div>
     );
@@ -145,7 +145,10 @@ function GeneratedPoster({ title }: { title: Title }) {
   }
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" width="100%" height="100%">
+    // An image like the poster it stands in for, named the same way as that
+    // poster's alt text; its letters are artwork, not text to read out.
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" width="100%" height="100%"
+      role="img" aria-label={window.MCU_I18N.titleName(title)}>
       <defs>
         <linearGradient id={`${gid}_bg`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={dark}/>
@@ -159,9 +162,9 @@ function GeneratedPoster({ title }: { title: Title }) {
       <rect x="0" y="0" width={W} height={H} fill={`url(#${gid}_bg)`}/>
       {art}
       {/* big initial */}
-      <text x={W/2} y={H*0.78} textAnchor="middle" fontFamily="'Bebas Neue', Impact, sans-serif" fontSize="120" fill={light} opacity="0.18" letterSpacing="-4">{initial}</text>
+      <text x={W/2} y={H*0.78} textAnchor="middle" fontFamily="'Bebas Neue', Impact, sans-serif" fontSize="120" fill={light} opacity="0.18" letterSpacing="-4" aria-hidden="true">{initial}</text>
       {/* phase roman numeral */}
-      <text x={W - 10} y={H - 12} textAnchor="end" fontFamily="'JetBrains Mono', monospace" fontSize="10" fill={light} opacity="0.55" letterSpacing="2">PHASE {phaseRoman}</text>
+      <text x={W - 10} y={H - 12} textAnchor="end" fontFamily="ui-monospace, monospace" fontSize="10" fill={light} opacity="0.55" letterSpacing="2" aria-hidden="true">PHASE {phaseRoman}</text>
       <rect x="0" y="0" width={W} height={H} fill="none" stroke={light} strokeOpacity="0.08" strokeWidth="1"/>
     </svg>
   );
