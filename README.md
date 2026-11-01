@@ -498,7 +498,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 |---|---|
 | `index.html` | Entry point; startup screen markup, the locale scripts, the pinned/SRI supabase-js script and the app bundle |
 | `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render; a classic script so it runs before the bundle |
-| `favicon.png`, `apple-touch-icon.png`, `og-image.jpg` | Tab icon, home-screen icon and link-preview image (from the brand mark) |
+| `favicon.png`, `apple-touch-icon.png`, `og-image.jpg` | Tab icon and home-screen icon (drawn from the logo mark by `tools/make-icons.js`) and link-preview image |
 | `src/data/data.ts` | Static titles/characters, ratings, phases, stable ids and variant links |
 | `src/data/media-data.ts` | TMDB poster and actor-portrait paths |
 | `src/config.ts` | Public Supabase project URL and publishable key |
@@ -513,6 +513,8 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/app/watch.tsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
 | `src/main.ts` | V4 bundle entry: imports the data layer and then every view below, in the order `index.html` used to load them. The files still share their components through `window`, so the bundle changed how the app is delivered, not how its pieces fit together |
 | `watch-data.js` | The where-to-watch snapshot (written by `tools/refresh-watch.js`; do not edit by hand) |
+| `src/assets/logo-mark.svg` | The logo mark (the Red Thread placeholder), the one file every place that shows the logo draws from |
+| `tools/make-icons.js` | Maintainer script: redraws `favicon.png` and `apple-touch-icon.png` from the logo mark (uses the Playwright that `qa/` installs; not deployed) |
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
 | `src/data/guides.ts` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |
 | `src/app/guides-ui.tsx` | Guides: the menu, desktop module and List, phone views and dock, the meter, "Part of" in the details |

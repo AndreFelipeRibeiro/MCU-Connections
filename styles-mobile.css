@@ -22,8 +22,7 @@
 .m-appbar-top .lang-menu .sort-order-trigger { height: 38px; padding: 0 9px; gap: 5px; font-size: 12px; }
 .m-brandrow { display: flex; align-items: center; gap: 10px; min-width: 0; color: inherit; text-decoration: none; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
 .m-brandrow:focus-visible { outline: 2px solid var(--v3-accent); outline-offset: 3px; }
-.m-mark { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 7px; position: relative; background: conic-gradient(from 45deg,#d4a05a,#4a8de8,#d04040,#a05cd0,#5fa856,#d4a05a); }
-.m-mark::after { content: ''; position: absolute; inset: 5px; border-radius: 3px; background: var(--v3-bg); }
+.m-mark { width: 28px; height: 28px; flex: 0 0 28px; }
 .m-btitle { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.15; white-space: nowrap; }
 .m-btitle { overflow: hidden; text-overflow: ellipsis; }
 /* Context summary (ContextSummary in app.jsx): one line at the top of List and

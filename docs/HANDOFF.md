@@ -155,6 +155,17 @@ work:
   Portuguese passed it "clean" and was found only by comparing its numbers
   against the build before. Compare those numbers when changing the toolbar,
   until the check gates on them.
+- **The app is half renamed, on purpose.** Since the placeholder logo
+  ticket the header, the home link's accessible name, the page title, the
+  home-screen name and the icons say Red Thread, while the link preview
+  (`og:` tags and `og-image.jpg`), the About copy and the startup error still
+  say MCU Connections. Those belong to the rename ticket
+  ("Rename the app to Red Thread"), so a mixed About dialog on staging is
+  expected, not a bug.
+- **The logo is a mask, not an image.** `src/assets/logo-mark.svg` carries
+  only the shape; its own colours are ignored, and `--brand` paints it. A
+  final logo with more than one colour will need a different build (an
+  `<img>` per theme, or inline SVG) rather than a drop-in swap.
 - **Each surface's look is a section at the end of the stylesheets.** The
   first re-skin pass restyled V3's markup through `@apply` in "RE-SKIN, FIRST
   PASS — <surface>" sections, placed last so they win ties. A rule earlier in

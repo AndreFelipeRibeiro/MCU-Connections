@@ -113,7 +113,7 @@ const STATE = () => {
     // The link itself.
     const link = await page.evaluate(() => { const a = document.querySelector('.toolbar a.brand'); return a && { href: a.getAttribute('href'), name: a.getAttribute('aria-label'), h1: !!a.querySelector('h1') }; });
     out.link = link;
-    expect(link && link.href === '/' && link.name === 'MCU Connections, home' && link.h1, `desktop logo is not a home link: ${JSON.stringify(link)}`);
+    expect(link && link.href === '/' && link.name === 'Red Thread, home' && link.h1, `desktop logo is not a home link: ${JSON.stringify(link)}`);
     const before = await page.evaluate(STATE);
     out.deskBefore = before;
     await page.locator('.toolbar a.brand').click(); await page.waitForTimeout(800);
@@ -197,7 +197,7 @@ const STATE = () => {
     await page.locator('.coll-switch button').nth(3).tap(); await page.waitForTimeout(500);
     await page.evaluate(() => { const a = document.querySelector('.m-scrollarea'); if (a) a.scrollTop = 200; });
     const link = await page.evaluate(() => { const a = document.querySelector('a.m-brandrow'); return a && { href: a.getAttribute('href'), name: a.getAttribute('aria-label') }; });
-    expect(link && link.href === '/' && link.name === 'MCU Connections, home', `phone logo is not a home link: ${JSON.stringify(link)}`);
+    expect(link && link.href === '/' && link.name === 'Red Thread, home', `phone logo is not a home link: ${JSON.stringify(link)}`);
     await page.locator('a.m-brandrow').tap(); await page.waitForTimeout(900);
     const s = await page.evaluate(STATE);
     out['phone_' + view] = s;
@@ -216,7 +216,7 @@ const STATE = () => {
     const name = await page.locator('.toolbar a.brand').getAttribute('aria-label');
     await page.locator('.toolbar a.brand').click(); await page.waitForTimeout(800);
     const s = await page.evaluate(STATE);
-    expect(name === 'MCU Connections, início', `pt-BR link name "${name}"`);
+    expect(name === 'Red Thread, início', `pt-BR link name "${name}"`);
     expect(s.live.includes('De volta ao início'), `pt-BR announcement ${JSON.stringify(s.live)}`);
     errors.push(...e);
     await ctx.close();

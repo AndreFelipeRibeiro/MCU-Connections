@@ -523,7 +523,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onPickTitle, onPickPer
       <div className="tb-row tb-top-row">
         {/* The logo is a link home: it resets the app in place (onHome). */}
         <a className="brand" href="/" onClick={onHome} aria-label={tr('home.link')} title={tr('home.link')}>
-          <span className="brand-mark" aria-hidden="true"/>
+          <span className="brand-mark logo-mark" aria-hidden="true"/>
           <h1 className="brand-title">{tr('app.name')}</h1>
         </a>
         <div className="tb-filter-row">

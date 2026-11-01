@@ -24,7 +24,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression: 45 check scripts in 46 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English, Portuguese and English in the dark theme, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
+| `bash qa/regress.sh` | Full regression: 46 check scripts in 47 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English, Portuguese and English in the dark theme, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
 | `bash qa/quick.sh [checks…]` | The per-ticket run: the checks `qa/checks.json` lists for the files changed in the working tree, plus the checks named (the ticket's own), side by side. A typical ticket takes 1–3 minutes. |
 | `SITE_URL=<address> node qa/smoke.js` | One-minute smoke check against a deployed site, exactly as a visitor gets it: loads, titles appear, Spatial and List open, details open and close, the phone List opens a sheet, no console errors. Run it against staging after each push and production after each merge. |
 | `node qa/a11y-scan.js` | axe-core scan of 16 screens (desktop Spatial, details, List in Release and in By Phase, account menu, an open guide in the List and in Spatial, the Guides popover, the "What have you seen?" dialog, the guide promotion; phone List, details, Spatial, an open guide, the picker sheet, the guide promotion). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). Text whose background axe cannot resolve comes back *incomplete*, not as a violation, so this scan passes it; `test-contrast.js` is what measures those. |
@@ -260,6 +260,12 @@ relative to `qa/`, and build it yourself first:
   phone, tapping the sort tab that is already selected brings the List and
   the Grid back to the top, at once under reduced motion, without changing
   the sort, its direction or the address; a different tab still re-sorts.
+  Fails on the build before the change), `test-logo` (the placeholder logo:
+  the desktop toolbar, the Welcome dialog, the phone app bar and the startup
+  screen all draw the mark from the one SVG file, painted with `--brand` in
+  light and dark at 32, 32, 28 and 48px; the startup screen shows it with the
+  bundle blocked; the header reads "Red Thread" in English and Portuguese, as
+  do the page title and the home-screen name.
   Fails on the build before the change).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.

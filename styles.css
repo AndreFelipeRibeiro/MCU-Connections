@@ -118,14 +118,18 @@ body { background: var(--v3-bg); }
 .brand:hover .brand-title { color: var(--foreground); }
 .brand:hover .brand-mark { filter: brightness(1.15); }
 .brand:focus-visible { outline: 2px solid var(--v3-accent); outline-offset: 4px; }
-.brand-mark {
-  display: block; flex: 0 0 32px;
-  width: 32px; height: 32px; border-radius: 6px;
-  background: conic-gradient(from 45deg, #d4a05a, #4a8de8, #d04040, #a05cd0, #5fa856, #d4a05a);
-  position: relative;
-}
-.brand-mark::after {
-  content: ''; position: absolute; inset: 6px; border-radius: 3px; background: var(--v3-bg);
+.brand-mark { flex: 0 0 32px; width: 32px; height: 32px; }
+/* The logo mark, everywhere it appears (toolbar, phone app bar, About,
+   startup screen): one SVG file used as a mask, painted with the --brand
+   token so it follows the theme. Swapping the logo means replacing
+   src/assets/logo-mark.svg and nothing else. The fallback colour covers the
+   startup screen in development, where the token stylesheet arrives with the
+   bundle; in the built site it loads with the page. */
+.logo-mark {
+  display: block;
+  background-color: var(--brand, #cc2827);
+  -webkit-mask: url('./src/assets/logo-mark.svg') center / contain no-repeat;
+  mask: url('./src/assets/logo-mark.svg') center / contain no-repeat;
 }
 .brand-title { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.2px; }
 
@@ -1146,8 +1150,7 @@ body { background: var(--v3-bg); }
 
 /* Startup screen (index.html, boot.js): replaced by the app's first render. */
 .boot { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; box-sizing: border-box; text-align: center; }
-.boot-mark { width: 48px; height: 48px; border-radius: 10px; position: relative; background: conic-gradient(from 45deg, #d4a05a, #4a8de8, #d04040, #a05cd0, #5fa856, #d4a05a); }
-.boot-mark::after { content: ''; position: absolute; inset: 9px; border-radius: 5px; background: var(--v3-bg); }
+.boot-mark { width: 48px; height: 48px; }
 .boot-spinner { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--v3-border-strong); border-top-color: var(--v3-text-dim); animation: boot-spin 0.9s linear infinite; }
 .boot[data-state="failed"] .boot-spinner { display: none; }
 .boot-msg { margin: 0; max-width: 320px; min-height: 1.4em; font-size: 14px; line-height: 1.45; color: var(--v3-text-dim); }

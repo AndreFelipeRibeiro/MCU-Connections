@@ -117,10 +117,10 @@ plan, the environment and the Figma workflow.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (45 check scripts in 46 runs plus the accessibility scan in English,
+    (46 check scripts in 47 runs plus the accessibility scan in English,
     Portuguese and English in the dark theme, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **49 check runs clean**
+    output, not just the exit code. A good run is **50 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
@@ -304,7 +304,10 @@ rules carry over unchanged.
 - Type: the design system's Inter (`--font-sans`, served with the bundle) and
   the system monospace (`--font-mono`) for labels, numbers and badges
   (Andre's decision, 2026-11-01). Bebas Neue appears only in the generated
-  poster art. Brand mark: the conic-gradient square (`.brand-mark`).
+  poster art. Logo mark: one SVG file, `src/assets/logo-mark.svg`, drawn
+  everywhere as a CSS mask painted with `--brand` (`.logo-mark` in
+  `styles.css`); `node tools/make-icons.js` redraws `favicon.png` and
+  `apple-touch-icon.png` from it. Today it is the Red Thread placeholder.
 - Contrast: informative text meets WCAG AA (4.5:1 for normal text) against its
   real background. Both halves of that run: `qa/a11y-scan.js` (axe) and
   `qa/test-contrast.js` (the calculation). They do not overlap — axe returns

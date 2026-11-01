@@ -13,6 +13,30 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — Red Thread placeholder logo, name and page title
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Placeholder new logo". A placeholder Red Thread mark replaces
+the rainbow square, and the header, home link, page title and icons say Red
+Thread. The link preview, About copy and startup error keep MCU Connections
+until the rename ticket.
+
+- **One file:** `src/assets/logo-mark.svg`, used as a CSS mask painted with a
+  new `--brand` token (light and dark), in the toolbar, phone app bar,
+  About/Welcome dialog and startup screen. The three copied conic-gradient
+  rules are gone; sizes stay 32 / 28 / 48px. It builds into the stylesheet, so
+  the startup screen needs no extra request.
+- **Icons:** `tools/make-icons.js` redraws `favicon.png` and
+  `apple-touch-icon.png` from the SVG.
+- **Name:** `app.name` / `home.link` in both locales; title "Red Thread —
+  Marvel movies, series and character connections", and
+  `apple-mobile-web-app-title` so iOS offers "Red Thread" for the home screen.
+- New check `qa/test-logo.js` (fails on the build before, 39 errors); swapping
+  a dummy shape into the SVG changed all four places. Full regression: 50 check
+  runs clean.
+
 ## V4 fix — Spatial band labels pass contrast in phases 3 and 6
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);

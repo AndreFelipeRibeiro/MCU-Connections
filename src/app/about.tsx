@@ -63,7 +63,7 @@ function AboutContent({ titleId, welcome, onClose, onPick }: {
   return (
     <div className="about">
       <div className="about-head">
-        <div className="brand-mark" aria-hidden="true"/>
+        <div className="brand-mark logo-mark" aria-hidden="true"/>
         <div>
           <h2 id={titleId} className="about-title">{tr(welcome ? 'about.welcomeTitle' : 'about.title')}</h2>
           <div className="about-tag">{tr('about.tagline')}</div>

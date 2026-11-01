@@ -96,6 +96,8 @@
       --status-seen-text: oklch(0.45 0.13 147);
       --status-watch: oklch(0.55 0.10 75);
       --on-color: oklch(0.985 0 0);
+      /* The logo mark's colour (styles.css .logo-mark). */
+      --brand: oklch(0.55 0.2 27);
       --background: oklch(1 0 0);
       --foreground: oklch(0.145 0 0);
       --card: oklch(1 0 0);
@@ -154,6 +156,7 @@
       --status-seen-text: #8fcf86;
       --status-watch: #d4a05a;
       --on-color: oklch(0.145 0 0);
+      --brand: oklch(0.68 0.17 23);
       --background: oklch(0.145 0 0);
       --foreground: oklch(0.985 0 0);
       --card: oklch(0.205 0 0);
