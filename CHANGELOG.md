@@ -12,6 +12,62 @@ Each commit link opens its full message and exact diff. Early commits sometimes
 landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
+## V4 design — theme switching, and the contrast check the rules always asked for
+
+Recorded: 2026-10-31 20:30 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+`main` still serves V3 and this change is not part of a production release.
+
+Finishes the design-system ticket. Most of its scope arrived with the preview
+page (`07ea940`): Tailwind, shadcn on Base UI, `components.json`, the token
+stylesheet with both themes, the phase tokens, eight components and the three
+app surfaces as proof. What was left was theme switching and the acceptance
+checks.
+
+- **`src/theme.ts`** is the mechanism: class `dark` on `<html>`, following
+  `prefers-color-scheme` until the visitor overrides it. The override lives
+  under `mcu.theme` and is *removed*, not overwritten, to go back to following
+  the system. It follows the system live with no reload, survives
+  `localStorage` throwing in a private window, and follows another tab.
+  Published as `window.MCU_THEME` with a `useTheme()` hook. **The app does not
+  call it yet** — `index.html` still serves V3's stylesheets, which are dark
+  whatever class `<html>` carries. `design.html` repeats the rule inline
+  because the bundle arrives too late to paint with.
+- **`qa/test-contrast.js`** is the calculation AGENTS.md has asked for beside
+  axe since V3 and that had never been run. It measures the declared token
+  pairs and the phase colours in both themes, every piece of text on
+  `design.html` in both themes, and the app's own text that axe returns as
+  *incomplete* rather than as a violation — which `a11y-scan.js` therefore
+  passes, 107 nodes on desktop Spatial alone. Those are measured against the
+  background actually painted: the text is made transparent, the page is
+  photographed, and the commonest colour in each text box is its background.
+  338 measurements, 17 seconds, added to `qa/checks.json`.
+- **Two light-theme library defaults were below AA** and are darkened, same
+  hue and chroma: `--muted-foreground` 0.556 → 0.54 (was 4.35:1 on `--muted`
+  and `--secondary`, now 4.61) and `--destructive` 0.577 → 0.52 (was 3.97:1 on
+  the 10% tint Vega always paints it over, now 4.65). The preview's
+  destructive swatch is gone with them: Vega has no `--destructive-foreground`
+  because it never fills a surface with `--destructive`.
+- **The dark phase colours stay as V3 wrote them** — the user's call, art
+  direction left for the Phase 4 re-skin. Those five pairs and the three
+  rendered labels that follow sit in the check's `KNOWN` list with the ratio
+  each was accepted at, so a worse ratio fails and one that starts passing
+  asks to be deleted. Two are the open band-label bug, which this check
+  reproduces independently at 4.17:1 and 3.83:1.
+- Smaller: `color-scheme` per theme so the browser's own furniture follows;
+  the preview header wraps below 640px, where three buttons no longer fit
+  beside the title.
+
+Verified: `bash qa/regress.sh` on the final tree, **all 46 check runs clean**
+including both accessibility scans; `npm run typecheck` and `npm run build`
+clean; looked at in a real browser on the built site at desktop and 375px, in
+light, dark and Auto, with the system colour scheme flipped live.
+
+Limits: **non-text contrast is not covered** (WCAG 1.4.11 — borders, focus
+rings, the switch's track); it needs measuring where it renders, not at the
+token level, and is said so in the check's own header. The preview page has no
+translations; it is a development page the app never loads. Nothing here
+changes the running app.
+
 ## V4 maintenance — the docs stop describing V3
 
 Recorded: 2026-10-31 17:25 EDT (-0400). Pushed to `version/4.0` (V4 staging);
