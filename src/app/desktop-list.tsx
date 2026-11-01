@@ -27,7 +27,7 @@ function dlGroups(titles, sort) {
     let key = 'all', label = null, extra = {};
     if (sort === 'release') { key = 'y' + t.year; label = String(t.year); }
     else if (sort === 'chrono') { key = 's' + (t.story || '-'); label = t.story ? I.storyLabel(t.story) : I.tr('story.tba'); extra = { story: true }; }
-    else if (sort === 'phase') { key = 'p' + t.phase; label = I.upper(I.tr('phase.label', { n: t.phase })); extra = { color: window.PHASE_COLORS[t.phase], phase: t.phase }; }
+    else if (sort === 'phase') { key = 'p' + t.phase; label = I.tr('phase.label', { n: t.phase }); extra = { color: window.PHASE_COLORS[t.phase], phase: t.phase }; }
     const last = groups[groups.length - 1];
     if (last && last.key === key) last.items.push(t);
     else groups.push({ key, id: key + '#' + groups.length, label, ...extra, items: [t] });
@@ -360,12 +360,12 @@ function DesktopList({ titles, sort, sortDir, setSort, setSortDir, search, searc
     const group = I.tr('phase.label', { n: phase });
     return (
       <window.ProgressHeader color={window.PHASE_COLORS[phase]} {...progress.byPhase[phase]}
-        label={<DlPhaseCheck ids={ids} selected={selected} onToggle={togglePhase} group={group} label={I.upper(group)}/>}
+        label={<DlPhaseCheck ids={ids} selected={selected} onToggle={togglePhase} group={group} label={group}/>}
         action={<window.BulkHeaderAction ids={ids} group={group}/>}/>
     );
   };
   const leadMeter = progress && progress.all
-    ? <window.ProgressHeader label={I.upper(I.tr('progress.all'))} {...progress.all}
+    ? <window.ProgressHeader label={I.tr('progress.all')} {...progress.all}
         action={<window.BulkHeaderAction ids={shownIds} group={I.tr('progress.all')}/>}/>
     : leadPhase ? phaseMeter(leadPhase) : null;
   return (

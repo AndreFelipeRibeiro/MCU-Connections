@@ -2144,3 +2144,64 @@ body { background: var(--v3-bg); }
 .td-acc-btn { @apply rounded-md text-sm font-medium text-foreground; }
 .td-acc-btn:hover .td-acc-label { @apply text-foreground underline underline-offset-4; }
 .td-acc-btn:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+
+/* ===========================================================================
+   RE-SKIN, FIRST PASS — desktop List, Up next and the context chips
+   (Notion V4 Tasks, "Phase 4 — Desktop List")
+
+   The List takes shadcn's table: muted sentence-case heads, a row border and
+   the row hover; the checkbox takes the Checkbox recipe; the bulk bar is a
+   floating card with outline and ghost buttons (Mark seen keeps the status
+   green). The Up next card at the top of the List and Spatial is shadcn's
+   Card, and the chips above the List are outline badges.
+   =========================================================================== */
+.dl-table { @apply text-sm text-muted-foreground; }
+.dl-head { @apply border-border bg-background; }
+.dl-h button { @apply rounded-md font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground; }
+.dl-h button:hover { @apply bg-muted text-foreground; }
+.dl-h.on button, .dl-h.on .dl-arrow { @apply text-foreground; }
+.dl-h button:focus-visible, .dl-open:focus-visible { @apply rounded-sm outline-none ring-[3px] ring-ring/50; }
+.dl-glabel { @apply font-sans text-sm font-semibold tracking-tight text-foreground; }
+.dl-row[role="row"]:not(.dl-head) { @apply border-border; }
+.dl-row:not(.dl-head):hover { @apply bg-muted/50; }
+.dl-row.on { @apply bg-muted; box-shadow: inset 3px 0 0 var(--primary); }
+.dl-open { @apply text-sm font-medium text-foreground; }
+.dl-face.matched { box-shadow: 0 0 0 2px var(--ring); }
+
+/* Checkbox. */
+.dl-check { @apply size-4 rounded-[4px] border border-input shadow-xs dark:bg-input/30; }
+.dl-check:hover { @apply border-ring; }
+.dl-check::before { background: var(--primary-foreground); }
+.dl-check:checked, .dl-check:indeterminate { @apply border-primary bg-primary; }
+.dl-check:focus-visible { @apply outline-none border-ring ring-[3px] ring-ring/50; }
+
+/* Bulk bar: a floating card. */
+.bulk-bar { @apply rounded-xl border-border bg-popover text-popover-foreground shadow-lg; }
+.bulk-count { @apply font-sans text-sm text-muted-foreground; }
+.bulk-btn { @apply h-8 rounded-md border-border bg-background text-sm font-medium text-foreground shadow-xs dark:border-input dark:bg-input/30; }
+.bulk-btn:hover:not(:disabled) { @apply bg-muted dark:bg-input/50; }
+.bulk-btn.primary { @apply shadow-none; }
+.bulk-btn.ghost { @apply border-transparent bg-transparent text-muted-foreground shadow-none; }
+.bulk-btn.ghost:hover:not(:disabled) { @apply bg-muted text-foreground; }
+.bulk-btn:focus-visible, .bulk-more-pop button:focus-visible { @apply outline-none border-ring ring-[3px] ring-ring/50; }
+
+/* Up next: shadcn's Card, with a label instead of mono capitals. */
+.un-card { @apply rounded-xl border-border bg-card text-card-foreground shadow-sm; }
+.un-strip { @apply border-border; }
+.un-tag, .un-strip-label { @apply font-sans text-xs font-medium normal-case tracking-normal text-foreground; }
+.un-tag span, .un-strip-label span { @apply text-muted-foreground; }
+.un-title { @apply font-semibold tracking-tight; }
+.un-open:focus-visible, .un-hide:focus-visible, .un-btn:focus-visible, .un-arrival:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+
+/* The context chips above the List and Spatial: outline badges. */
+.ctx-count, .ctx-chip { @apply h-7 rounded-full border-border bg-background font-sans text-xs font-medium text-foreground; }
+.ctx-chip:hover { @apply bg-muted; }
+.ctx-chip:focus-visible, .ctx-clear:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+
+/* The head row and the phase dividers: sentence case, as shadcn's table heads
+   and section headings. (The List used to upper-case its group labels in
+   code, which the stylesheet could not undo; desktop-list.tsx no longer does.) */
+.dl-head { @apply font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground; }
+.dl-phase-divider { @apply font-sans text-sm font-semibold normal-case tracking-tight; }
+.dl-glabel .pgh-label { letter-spacing: normal; }
+.pgh-count { @apply text-xs; }

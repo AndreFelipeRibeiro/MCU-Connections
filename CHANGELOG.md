@@ -13,6 +13,17 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — desktop List
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Phase 4 — Desktop List". The desktop List in Vega's table
+look: header row, row hover, checkboxes, sentence-case section headings (the
+code no longer upper-cases them). Phases keep their colour.
+
+- Restyle only: same columns, keys and bulk selection.
+
 ## V4 design — details drawer
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
