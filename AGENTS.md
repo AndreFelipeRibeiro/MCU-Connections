@@ -387,7 +387,16 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   `src/main.ts` loads `src/index.css` and starts the theme, with no visible
   change, because V3's stylesheets still paint every surface. Putting the
   components into the app is Phase 4, one ticket per surface.
-- **How a surface opts in** while V3 and the design system share the page:
+- **The first re-skin pass (2026-11-01) restyled V3's markup**, it did not
+  rewrite it: each surface's look is a "RE-SKIN, FIRST PASS — <surface>"
+  section at the end of `styles.css` or `styles-mobile.css`, which gives V3's
+  classes shadcn's exact class recipes through `@apply` (both stylesheets
+  start with `@reference "./src/index.css"` for that). It sits last so it wins
+  over V3's rules of the same weight; V3's layout rules above it stay. New
+  work on a surface either edits its section or, better, swaps that surface's
+  markup for the React components in `src/components/ui/` and deletes the
+  section and the V3 rules it overrides together (docs/decisions.md).
+- **How a surface opts in** when its markup moves onto the components:
   - Tailwind's preflight reset is scoped to `.v4` (`src/preflight-v4.css`,
     generated from Tailwind's own; its header says why). A converted surface
     puts class `v4` on its root, and a component that portals out of a

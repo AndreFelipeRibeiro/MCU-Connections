@@ -13,6 +13,19 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 maintenance — the first re-skin pass, written down
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Phase 4 — first pass (docs)". AGENTS.md and HANDOFF.md
+describe how the first pass works and how a surface moves onto the real
+components later.
+
+- The "RE-SKIN, FIRST PASS — <surface>" sections, why they sit last, and that
+  new work either edits a section or swaps the markup for components and
+  deletes the section with the V3 rules it overrides.
+
 ## V4 design — startup screen
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);

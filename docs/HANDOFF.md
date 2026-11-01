@@ -148,6 +148,17 @@ work:
   page gets the rule as an inline script Vite injects into its `<head>`
   (`THEME_PREPAINT` in `vite.config.js`). Change the storage key or the rule
   in one and the page paints one theme and then swaps to the other.
+- **`test-fit` reports layout but does not fail on it.** Its `errors` field
+  counts console errors only; the toolbar measurements it prints (offscreen
+  controls, row overflow, overlaps, horizontal scroll, clipped labels) never
+  fail the run. During the first re-skin pass a 12px overflow at 1280px in
+  Portuguese passed it "clean" and was found only by comparing its numbers
+  against the build before. Compare those numbers when changing the toolbar,
+  until the check gates on them.
+- **Each surface's look is a section at the end of the stylesheets.** The
+  first re-skin pass restyled V3's markup through `@apply` in "RE-SKIN, FIRST
+  PASS — <surface>" sections, placed last so they win ties. A rule earlier in
+  the file that seems to do nothing is probably overridden there.
 - **The design system is opt-in, surface by surface.** Tailwind's reset only
   applies inside `.v4` (`src/preflight-v4.css`), and Tailwind only generates
   classes from the files listed with `@source` in `src/index.css`. A
