@@ -2319,3 +2319,43 @@ body { background: var(--v3-bg); }
    promotion's poster art keeps its capitals: it is artwork). */
 .g-group-h, .g-table .g-headrow, .gm-meter, .gm-ntag { @apply font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground; }
 .g-otag { @apply rounded-full border-solid font-sans text-xs font-medium normal-case tracking-normal; }
+
+/* ===========================================================================
+   RE-SKIN, FIRST PASS — desktop Spatial
+   (Notion V4 Tasks, "Phase 4 — Desktop Spatial")
+
+   Cards are shadcn's Card (radius, border, a small shadow) at exactly their
+   old size: the layout is computed in JavaScript from the card's dimensions,
+   so nothing here touches width, height, padding or the poster's ratio. The
+   iOS rules hold: no will-change, no 3D transform and no backdrop-filter on a
+   card or anything inside the canvas. Badges on posters keep their capitals,
+   which come from the code (and which test-camera reads), but take a badge's
+   shape. The band labels, the overall header and the zoom control float as
+   cards. The band labels keep the phase colour as their text: the contrast
+   bug in phases 3 and 6 is Andre's decision (Notion, "Spatial band labels
+   fail WCAG AA…"), not part of this pass.
+   =========================================================================== */
+.card { @apply rounded-xl border-border bg-card text-card-foreground shadow-sm; }
+.card-title { @apply font-semibold tracking-tight; }
+.badge { @apply rounded-md font-sans text-[10px] font-semibold tracking-wide; }
+.band-label, .spatial-overall {
+  @apply rounded-xl border-border bg-background/95 font-sans text-sm font-semibold normal-case tracking-tight shadow-sm;
+}
+.spatial-overall { @apply text-foreground; }
+
+/* Zoom: an outline button group, its value in the monospace. */
+.zoom-ctl { @apply rounded-md border-border bg-background shadow-xs dark:border-input dark:bg-input/30; backdrop-filter: none; }
+.zoom-btn { @apply text-muted-foreground; }
+.zoom-btn:hover:not(:disabled) { @apply bg-muted text-foreground; }
+.zoom-val { @apply border-border; }
+.zoom-btn:focus-visible, .zoom-val:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+
+/* The connection tooltip: a popover. */
+.line-tooltip { @apply rounded-md border-transparent bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10; }
+
+/* The pinned character's banner under the toolbar, and its controls. */
+.char-banner { @apply border-border bg-muted/50; }
+.cb-who b { @apply font-medium; }
+.cb-step button, .cb-close, .cb-guide { @apply rounded-md border-border bg-background text-foreground shadow-xs dark:border-input dark:bg-input/30; }
+.cb-step button:hover, .cb-close:hover, .cb-guide:hover { @apply bg-muted dark:bg-input/50; }
+.cb-step button:focus-visible, .cb-close:focus-visible, .cb-mode button:focus-visible, .cb-guide:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }

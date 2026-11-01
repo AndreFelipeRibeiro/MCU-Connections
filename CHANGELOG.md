@@ -13,6 +13,18 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — desktop Spatial
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Phase 4 — Desktop Spatial". Spatial cards are shadcn cards at
+exactly their old size (the layout is computed from it); band labels, the
+overall header and the zoom control float as cards.
+
+- iOS rules kept: no `will-change`, 3D transform or `backdrop-filter` on cards
+  or inside the canvas.
+
 ## V4 design — guides
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
