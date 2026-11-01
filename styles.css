@@ -2036,10 +2036,11 @@ body { background: var(--v3-bg); }
    the input's. Last in the file so it wins over V3's rules of the same weight;
    the layout above (rows, gaps, wrapping, breakpoints) stays V3's. When the
    toolbar's markup moves onto the React components, this section and the V3
-   declarations it overrides go together.
+   declarations it overrides go together. Heights stay V3's 44px (34px
+   segments inside a group) rather than shadcn's 36px: Andre found the smaller
+   controls too short (2026-11-01).
    =========================================================================== */
 .toolbar { @apply bg-background/95; }
-.tb-row > .segmented, .tb-row .control-group > .segmented, .tb-row .filters-pill, .tb-row .search-wrap { height: 36px; }
 .brand-title { @apply text-base font-semibold tracking-tight; }
 .brand:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
 
@@ -2063,7 +2064,6 @@ body { background: var(--v3-bg); }
 .filters-pill:focus-visible, .sort-order-trigger:focus-visible, .acct-pill:focus-visible, .sort-order-pop button:focus-visible {
   @apply outline-none border-ring ring-[3px] ring-ring/50;
 }
-.sort-order-trigger, .acct-pill { height: 36px; }
 .g-btn.on { @apply border-foreground/30 bg-muted text-foreground; }
 .fcount { @apply inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 font-sans text-xs font-medium text-primary-foreground; }
 
@@ -2084,9 +2084,11 @@ body { background: var(--v3-bg); }
 .ss-item.on { @apply bg-accent text-accent-foreground; }
 .pop-clear { @apply text-sm text-muted-foreground underline-offset-4 hover:text-foreground; }
 
-/* The theme control: three icon triggers in a tab list. */
-/* 28px, not shadcn's 32px: at 1280px in Portuguese, where search joins the top
-   row, the wider group pushed that row 12px past the window (qa/test-fit). */
+/* The theme control: three icon triggers in a tab list, as tall as the
+   toolbar's other groups. 28px wide, not shadcn's 32px: at 1280px in
+   Portuguese, where search joins the top row, the wider group pushed that row
+   12px past the window (qa/test-fit). */
+.theme-toggle { height: 44px; }
 .theme-toggle button { justify-content: center; width: 28px; padding: 0; }
 .theme-toggle button svg { @apply size-4; }
 

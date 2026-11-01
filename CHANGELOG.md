@@ -13,6 +13,26 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — toolbar and phone header controls back to V3's heights
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Phase 4 — Toolbar and app bar (revision)". Andre found the
+re-skinned controls too short: the first pass had set them to shadcn's 36px
+(desktop) and 40px (phone). They are back to V3's heights.
+
+- **Desktop toolbar:** every control 44px again (search, Order, Filters,
+  All/Films/Series, Guides, language, account, the sort tabs, the collection
+  switch, Spatial/List), with 34px segments inside a group. The theme control
+  is as tall as its neighbours; its buttons stay 28px wide so the Portuguese
+  top row still fits at 1280px. Toolbar 129px, as in V3.
+- **Phone app bar:** search, Order, Filters and View are 44px touch targets,
+  the top row 38/40px, the bar 170px, as in V3.
+- Measured against the pre-reskin build (desktop at 2000px, phone at 390px):
+  every control matches. `test-fit`'s layout numbers in both languages are
+  identical to V3's.
+
 ## V4 design — Red Thread placeholder logo, name and page title
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);

@@ -632,13 +632,15 @@
 
    The phone's half of the toolbar section in styles.css, which already
    restyles the controls the two share (tab lists, Order and language, the
-   collection switch, popovers). Controls are shadcn's large size, 40px, the
-   nearest of its sizes to the 44px touch targets V3 used.
+   collection switch, popovers). Controls keep V3's heights rather than a
+   shadcn size (Andre, 2026-11-01): 44px touch targets for the search, Order,
+   Filters and View row controls, and V3's 38/40px in the top row beside the
+   name, where 44px would crowd it.
    =========================================================================== */
 /* V3's 15px, not text-base: at 375px the 16px name overflows by a fraction and ellipsises. */
 .m-btitle { @apply text-[15px] font-semibold tracking-tight; }
 .m-brandrow:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
-.m-searchbar { @apply min-h-10 rounded-md border-input bg-transparent shadow-xs dark:bg-input/30; }
+.m-searchbar { @apply min-h-11 rounded-md border-input bg-transparent shadow-xs dark:bg-input/30; }
 .m-searchbar:focus-within { @apply border-ring ring-[3px] ring-ring/50; }
 .m-searchbar input { @apply text-foreground; }
 .m-searchbar input::placeholder { @apply text-muted-foreground; }
@@ -646,11 +648,14 @@
 .m-fpill, .m-gbtn, .m-acct {
   @apply rounded-md border border-border bg-background text-foreground shadow-xs dark:border-input dark:bg-input/30;
 }
-.m-fpill { flex-basis: 40px; width: 40px; min-height: 40px; }
-.m-fslot { max-width: 40px; }
+.m-fpill { flex-basis: 44px; width: 44px; min-height: 44px; }
+.m-fslot { max-width: 44px; }
 .m-fpill.act { @apply bg-muted text-foreground dark:bg-input/50; }
 .m-fcount { @apply bg-primary font-sans text-primary-foreground; }
-.m-appbar-top .lang-menu .sort-order-trigger { height: 40px; }
+.m-appbar-top .lang-menu .sort-order-trigger { height: 38px; }
+/* The desktop toolbar section sets Order and View to 36px; on the phone they
+   stay 44px touch targets. */
+.m-searchrow .sort-order-trigger, .m-row3 .view-menu .sort-order-trigger { height: 44px; }
 /* The theme control in the account sheet. */
 .m-theme-row { @apply mt-4 flex items-center justify-between gap-3 border-t border-border pt-4; }
 .m-theme-label { @apply text-sm font-medium text-foreground; }
