@@ -2267,3 +2267,55 @@ body { background: var(--v3-bg); }
 .acct-action.primary { @apply border-transparent bg-primary text-primary-foreground shadow-none; }
 .acct-action.primary:hover { @apply bg-primary/80; }
 .acct-error { @apply rounded-lg; }
+
+/* ===========================================================================
+   RE-SKIN, FIRST PASS — guides
+   (Notion V4 Tasks, "Phase 4 — Guides")
+
+   The guide menu's rows take the menu item; the guide's head, its stops and
+   cards, the Spatial module and the "Part of" rows take shadcn's Card, with
+   the next stop picked out by a ring rather than V3's blue glow; the
+   "show optional stops" toggle takes the Switch; Open, Skip and Undo are the
+   default, outline and ghost buttons; mono capitals become muted labels.
+   The guides' content (src/data/guides.ts) is untouched.
+   =========================================================================== */
+.g-pop-title, .g-sheet-title { @apply font-semibold tracking-tight; }
+.g-menu-sub, .g-blurb, .g-ready, .g-optcheck { @apply text-sm text-muted-foreground; }
+.g-row, .g-partof-row { @apply rounded-md; }
+.g-row:hover, .g-row.on, .g-partof-row:hover { @apply bg-accent text-accent-foreground; }
+.g-row:focus-visible, .g-partof-row:focus-visible, .g-open:focus-visible, .g-switch:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+.g-row-name, .g-title { @apply text-sm font-medium; }
+.g-row-sub, .g-optrow small { @apply text-xs text-muted-foreground; }
+.g-ev { @apply rounded-full border-border px-1.5 font-sans text-xs font-medium normal-case tracking-normal text-foreground; }
+
+/* Small labels. */
+.g-kind, .gm-kind, .g-meta, .g-partof-title, .g-opt-count, .g-meter .pgh-label {
+  @apply font-sans text-xs font-medium normal-case tracking-normal;
+}
+.g-meta, .g-opt-count, .g-meter .pgh-label { @apply text-muted-foreground; }
+
+/* Cards: the guide's head, its stops and cards, the Spatial module, Part of. */
+.g-head, .g-stop, .g-card, .g-module, .g-partof-row { @apply rounded-xl border-border bg-card text-card-foreground shadow-sm; }
+.g-partof { @apply border-border; }
+.g-stop.next, .g-card.next { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 25%, transparent); }
+.g-stop.current { box-shadow: 0 0 0 2px var(--ring); }
+.g-stop.dest { @apply bg-transparent shadow-none; }
+
+/* The optional-stops toggle: shadcn's Switch. */
+.g-switch { @apply border-transparent bg-input; }
+.g-switch i { @apply bg-background shadow-sm dark:bg-foreground; }
+.g-switch.on { @apply border-transparent bg-primary; }
+.g-switch.on i { @apply bg-background dark:bg-primary-foreground; }
+
+/* Buttons. */
+.g-unskip, .g-dskip-btn { @apply rounded-md border-solid border-border bg-background text-sm font-medium text-foreground shadow-xs dark:border-input dark:bg-input/30; }
+.g-unskip:hover, .g-dskip-btn:hover { @apply bg-muted dark:bg-input/50; }
+.g-skip { @apply rounded-md border-transparent bg-transparent text-muted-foreground; }
+.g-skip:hover { @apply bg-muted text-foreground; }
+.g-skip:focus-visible, .g-unskip:focus-visible, .g-dskip-btn:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+/* The guides' remaining labels: menu group headings, the "optional" tag, the
+   stop table's head row, the module's meter and "Next" tag. guides-ui.tsx no
+   longer upper-cases the guide's name, dates and stop meta in code (the
+   promotion's poster art keeps its capitals: it is artwork). */
+.g-group-h, .g-table .g-headrow, .gm-meter, .gm-ntag { @apply font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground; }
+.g-otag { @apply rounded-full border-solid font-sans text-xs font-medium normal-case tracking-normal; }

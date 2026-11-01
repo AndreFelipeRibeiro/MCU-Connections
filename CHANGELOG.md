@@ -13,6 +13,16 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — guides
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Phase 4 — Guides". The guide menu, views, banner, pill, "Part
+of" and the phone guide dock in Vega's look. Labels are sentence case.
+
+- The promotion's poster art keeps its capitals.
+
 ## V4 design — phone List, Grid, Spatial and sheets
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);

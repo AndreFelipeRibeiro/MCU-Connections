@@ -223,7 +223,7 @@ function GuideMenu({ onPick, currentId }) {
                   aria-current={currentId === g.id ? 'true' : undefined}>
                   <GuideArt guide={g} size={40}/>
                   <span className="g-row-text">
-                    <span className="g-row-name">{MCU_GUIDE.name(g)}{date && <span className="g-ev">{GI18N.upper(date)}</span>}</span>
+                    <span className="g-row-name">{MCU_GUIDE.name(g)}{date && <span className="g-ev">{date}</span>}</span>
                     <span className="g-row-sub">{who ? `${who} · ` : ''}{MCU_GUIDE.size(g)}</span>
                   </span>
                   <GuideMenuProgress guide={g}/>
@@ -251,7 +251,7 @@ function GuideMeter({ guide, includeOptional, className = '', bulk = false }) {
   const skipped = p.ess.skipped + (includeOptional ? p.opt.skipped : 0);
   return (
     <div className={`g-meter ${className}${p.complete ? ' done' : ''}`}>
-      <window.ProgressHeader label={GI18N.upper(MCU_GUIDE.short(guide))} seen={p.ess.seen} released={p.ess.released} upcoming={p.ess.upcoming} action={action}/>
+      <window.ProgressHeader label={MCU_GUIDE.short(guide)} seen={p.ess.seen} released={p.ess.released} upcoming={p.ess.upcoming} action={action}/>
       {includeOptional && p.opt.total > 0 && (
         <span className="g-opt-count">{gtr('guide.optCount', { seen: p.opt.seen, n: p.opt.released })}</span>
       )}
@@ -385,7 +385,7 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
         <div className="gm-where">
           <div className="gm-meter" role="img" aria-label={meterLabel}>
             <span className="gm-mtop">
-              <span className="gm-mlabel">{complete ? (done || gtr('guide.complete')).replace(/\.$/, '') : GI18N.upper(MCU_GUIDE.short(guide))}</span>
+              <span className="gm-mlabel">{complete ? (done || gtr('guide.complete')).replace(/\.$/, '') : MCU_GUIDE.short(guide)}</span>
               {complete
                 ? <span className="gm-check" aria-hidden="true"><window.CheckIcon/></span>
                 : <span className="gm-count">{p.ess.seen}/{p.ess.released}</span>}
@@ -633,7 +633,7 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, layout
   const target = guide.target && MCU_GUIDE.title(guide.target);
   const date = MCU_GUIDE.targetDate(guide);
   const done = gloc(guide.done);
-  const meta = (t) => [GI18N.upper(gtr(t.type === 'film' ? 'type.film.one' : 'type.series.one')), t.year, GI18N.upper(gtr('phase.label', { n: t.phase }))].join(' · ');
+  const meta = (t) => [gtr(t.type === 'film' ? 'type.film.one' : 'type.series.one'), t.year, gtr('phase.label', { n: t.phase })].join(' · ');
 
   const header = surface === 'phone' ? (
     <section className="g-head" aria-label={MCU_GUIDE.name(guide)}>
