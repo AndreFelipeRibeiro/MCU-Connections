@@ -7,7 +7,13 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import '../index.css';
+import { startTheme } from '../theme';
 import Preview from './Preview';
+
+// Apply the theme and start following the system, before the first render.
+// design.html already painted the right one from the same rule; this takes
+// over the moment the bundle arrives.
+startTheme();
 
 // The element is in design.html; a missing one is a build mistake, not a
 // runtime case to handle.

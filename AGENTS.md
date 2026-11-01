@@ -116,10 +116,10 @@ plan, the environment and the Figma workflow.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (42 check scripts in 43 runs plus the accessibility scan in English and
+    (43 check scripts in 44 runs plus the accessibility scan in English and
     Portuguese, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **45 check runs clean**
+    output, not just the exit code. A good run is **46 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
@@ -296,8 +296,12 @@ rules carry over unchanged.
 - Type: Inter for UI, JetBrains Mono for labels, numbers and badges, Bebas Neue
   for display. Brand mark: the conic-gradient square (`.brand-mark`).
 - Contrast: informative text meets WCAG AA (4.5:1 for normal text) against its
-  real background; check with axe-core and a contrast calculation. Making text
-  bigger is not a contrast fix. RT tag `#cc2a0a`, IMDb tag `#f5c518`.
+  real background. Both halves of that run: `qa/a11y-scan.js` (axe) and
+  `qa/test-contrast.js` (the calculation). They do not overlap — axe returns
+  text whose background it cannot resolve as *incomplete* and the scan passes
+  it, so the second check measures those against the pixels actually painted.
+  Making text bigger is not a contrast fix. RT tag `#cc2a0a`, IMDb tag
+  `#f5c518`.
 - Structure: one `<h1>` (the app name), toolbar and app bar are the banner, the
   canvas/List/phone main area is `main`; columns and icon-only controls have
   accessible names (visually hidden text uses `.story-sr`).
@@ -362,8 +366,11 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
 - Start from the library defaults; V4's art direction arrives later through
   Figma variables. Do not carry V3's colours (`--bg`, `--accent`, …) in as a
   starting point.
-- Setup is Phase 3 work (V4-PLAN.md §9). Until that ticket starts, do not
-  install Tailwind, shadcn or Base UI.
+- Setup landed on 2026-10-31: Tailwind CSS v4.3.3, shadcn on Base UI 1.9.0,
+  `components.json`, the token stylesheet `src/index.css`, eight components in
+  `src/components/ui/` and the preview page `design.html`. None of it reaches
+  the app yet — `index.html` still serves V3's stylesheets, and putting the
+  components into the app is Phase 4, one ticket per surface.
 - Install and add components with the shadcn CLI pinned to an exact version
   (`npx shadcn@<version> init --base base --preset vega` — the CLI's preset is
   `vega`, and `--base base` makes the style it records `base-vega`); commit
@@ -375,7 +382,15 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   match the Figma variables. Phase colours become tokens there (`--phase-1`
   … `--phase-6`, both themes).
 - Theme: class `dark` on `<html>`, following `prefers-color-scheme` until the
-  user overrides it. Both themes meet WCAG AA.
+  user overrides it. The mechanism is `src/theme.ts` (`window.MCU_THEME`,
+  `useTheme()`, the override in `localStorage` under `mcu.theme`, cleared to
+  go back to following the system); a page sets the class before first paint
+  with a copy of the rule inlined in its HTML. What the user clicks to
+  override it is the Dark/Light ticket. The app does not call it yet: it still
+  serves V3's stylesheets, which are dark whatever class `<html>` carries.
+- Both themes meet WCAG AA, and `qa/test-contrast.js` is what says so. Where a
+  shortfall is accepted it goes in that check's `KNOWN` with the ratio it was
+  accepted at and why, not into a comment nobody runs.
 - The interaction rules in "Design, accessibility and interaction standards"
   win over library defaults: Base UI dialogs and popovers join the one Escape
   ladder, the desktop drawer stays modeless, phone sheets trap focus and own a

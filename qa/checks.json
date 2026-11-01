@@ -9,6 +9,7 @@
     "test-recastname", "test-bannerhold", "test-progress", "test-release", "test-urlstate", "test-bulk",
     "test-details", "test-nextup", "test-watch", "test-guides", "test-picker", "test-listkeys", "test-promo",
     "test-home", "test-unreleased", "test-partof", "test-refocus", "test-skip", "test-guidemode",
+    "test-contrast",
     { "check": "a11y-scan", "env": { "LOC": "en-US" }, "exitOnly": true },
     { "check": "a11y-scan", "env": { "LOC": "pt-BR" }, "exitOnly": true }
   ],
@@ -31,13 +32,18 @@
     "src/app/poster.tsx": ["test-portrait", "test-recastname"],
     "i18n.js": ["test-i18n"],
     "locales/": ["test-i18n", { "check": "test-fit", "env": { "LOC": "pt-BR", "MODE": "watch" } }],
-    "styles.css": [{ "check": "test-fit", "env": { "LOC": "en-US", "MODE": "all" } }, "test-layers", "test-align2"],
+    "styles.css": [{ "check": "test-fit", "env": { "LOC": "en-US", "MODE": "all" } }, "test-layers", "test-align2", "test-contrast"],
     "styles-mobile.css": ["test-mviewport", "test-align2", { "check": "test-fit", "env": { "LOC": "pt-BR", "MODE": "watch" } }],
     "src/data/data.ts": ["test-release", "test-variant", "test-recastname", "test-progress", "test-dlist"],
     "src/data/media-data.ts": ["test-portrait", "test-recastname"],
     "index.html": ["test-i18n", "test-v2"],
     "src/main.ts": ["test-home", "test-i18n"],
     "vite.config.js": ["test-home", "test-i18n"],
-    "boot.js": ["test-v2"]
+    "boot.js": ["test-v2"],
+    "src/index.css": ["test-contrast"],
+    "src/theme.ts": ["test-contrast"],
+    "src/design/": ["test-contrast"],
+    "src/components/ui/": ["test-contrast"],
+    "design.html": ["test-contrast"]
   }
 }

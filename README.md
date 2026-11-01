@@ -521,6 +521,10 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/app/search-suggest.tsx` | Search box with guide/actor/character/title suggestions, shared by desktop and mobile |
 | `src/app/poster.tsx` | TMDB posters or generated abstract fallback (also when an image fails); cast portraits with initials fallback |
 | `styles.css` / `styles-mobile.css` | Desktop/touch layout, status treatments, focus and dialogs |
+| `src/index.css` | The V4 design tokens: shadcn's CSS variables with a light `:root` block and a `.dark` block, the phase colours as `--phase-1`…`--phase-6` in both, and the Tailwind entry. The app does not load it yet |
+| `src/components/ui/` | The shadcn components on Base UI (Vega style), added with the pinned CLI and ours to edit |
+| `src/theme.ts` | The theme mechanism: `dark` on `<html>`, following the system until the visitor overrides it (`window.MCU_THEME`, `useTheme()`) |
+| `design.html` / `src/design/` | The V4 design-system preview, a page of its own that the app never loads and that never loads the app |
 | `src/types/catalog.ts` | The catalog's shapes (`Title`, `Character`, `Guide`, `Media`, `WatchData`), written from the data itself |
 | `src/types/globals.d.ts` | The shared `window` surface, typed from the modules themselves rather than restated |
 | `tsconfig.json` | TypeScript at full `strict`; `npm run typecheck` |

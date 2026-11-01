@@ -27,6 +27,7 @@ type Watch = typeof import('../app/watch');
 type GuidesUI = typeof import('../app/guides-ui');
 type Picker = typeof import('../app/picker');
 type App = typeof import('../app/app');
+type ThemeModule = typeof import('../theme');
 
 /** The i18n runtime (i18n.js), a classic script so the startup screen can
  *  speak the visitor's language before the bundle arrives. */
@@ -95,6 +96,12 @@ declare global {
     /** The where-to-watch snapshot. watch-data.js stays a separate classic
      *  script because a QA check replaces it over the network. */
     WATCH: WatchData;
+
+    /** The theme mechanism (src/theme.ts), published like the rest of the
+     *  shared surface so the eventual Dark/Light control and the QA checks
+     *  drive it rather than toggling the class behind its back. */
+    MCU_THEME: Pick<ThemeModule,
+      'getChoice' | 'getTheme' | 'setChoice' | 'systemTheme' | 'applyTheme' | 'startTheme' | 'STORAGE_KEY'>;
 
     // ---- Classic scripts outside the bundle --------------------------------
     MCU_I18N: I18nRuntime;

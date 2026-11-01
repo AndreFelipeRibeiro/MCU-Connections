@@ -6,11 +6,14 @@
 <title>MCU Connections — V4 design system</title>
 <meta name="robots" content="noindex"/>
 <meta name="description" content="Preview of the V4 design system: shadcn/ui on Base UI, Vega style, in light and dark."/>
-<!-- Set the theme before first paint so the page never flashes the wrong one. -->
+<!-- Set the theme before first paint so the page never flashes the wrong one.
+     This is the one place the rule is duplicated: src/theme.ts owns the
+     mechanism, but it arrives with the bundle, which is too late to paint
+     with. Key and rule must match STORAGE_KEY and getTheme() there. -->
 <script>
   try {
-    var saved = localStorage.getItem('mcu.design.theme');
-    var dark = saved ? saved === 'dark'
+    var saved = localStorage.getItem('mcu.theme');
+    var dark = saved === 'dark' || saved === 'light' ? saved === 'dark'
       : window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (dark) document.documentElement.classList.add('dark');
   } catch (e) {}

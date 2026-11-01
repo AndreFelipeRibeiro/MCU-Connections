@@ -6,8 +6,8 @@
 // ticket asks for. They are static compositions, not wired interactions: the
 // Escape ladder, the modeless drawer and the phone sheet's history entry are
 // Phase 4 work, and faking them here would prove nothing.
-import { useEffect, useState } from 'react';
-import { Moon, Sun, Check, Plus, Star, Clapperboard } from 'lucide-react';
+import { Moon, Sun, Monitor, Check, Plus, Star, Clapperboard } from 'lucide-react';
+import { useTheme, type ThemeChoice } from '@/theme';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -18,24 +18,47 @@ import {
 
 const PHASES = [1, 2, 3, 4, 5, 6];
 
+// Surfaces the design system actually paints text on. There is deliberately
+// no destructive row: Vega has no --destructive-foreground, because it never
+// fills a surface with --destructive — it uses it as text over a 10% tint of
+// itself, which the Controls section below shows. Pairing it with a token
+// that does not exist made the swatch inherit near-black text on red, at
+// 2.5:1 (qa/test-contrast.js).
 const SURFACE_TOKENS = [
   ['background', 'foreground'], ['card', 'card-foreground'],
   ['popover', 'popover-foreground'], ['primary', 'primary-foreground'],
   ['secondary', 'secondary-foreground'], ['muted', 'muted-foreground'],
-  ['accent', 'accent-foreground'], ['destructive', 'destructive-foreground'],
+  ['accent', 'accent-foreground'],
 ];
 
-function useTheme() {
-  const [dark, setDark] = useState(
-    () => document.documentElement.classList.contains('dark'),
+// Three buttons rather than a switch, because the mechanism has three states
+// and "Auto" is the one every visitor starts in. This is the preview's own
+// control for looking at both themes; what the app offers is the Dark/Light
+// ticket's call.
+const CHOICES: Array<[ThemeChoice, string, typeof Sun]> = [
+  ['light', 'Light', Sun],
+  ['dark', 'Dark', Moon],
+  ['system', 'Auto', Monitor],
+];
+
+function ThemeControl() {
+  const [choice, , setChoice] = useTheme();
+  return (
+    <div className="flex items-center gap-1" role="group" aria-label="Theme">
+      {CHOICES.map(([value, label, Icon]) => (
+        <Button
+          key={value}
+          variant={choice === value ? 'secondary' : 'ghost'}
+          size="sm"
+          onClick={() => setChoice(value)}
+          aria-pressed={choice === value}
+        >
+          <Icon aria-hidden="true" />
+          {label}
+        </Button>
+      ))}
+    </div>
   );
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark);
-    try { localStorage.setItem('mcu.design.theme', dark ? 'dark' : 'light'); } catch (e) {}
-  }, [dark]);
-  // `as const` so callers get [boolean, (v: boolean) => void] rather than a
-  // union array, which would make setDark not callable.
-  return [dark, setDark] as const;
 }
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
@@ -151,12 +174,14 @@ function PhoneSheet() {
 }
 
 export default function Preview() {
-  const [dark, setDark] = useTheme();
   return (
     <div className="min-h-dvh bg-background text-foreground">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-          <div>
+        {/* Wraps rather than squeezes: at 375px the title and the three theme
+            buttons do not fit on one line, and a four-line heading beside a
+            crowded control is worse than two rows. */}
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
+          <div className="min-w-0 basis-full sm:basis-auto">
             <h1 className="text-base font-semibold tracking-tight">
               MCU Connections — V4 design system
             </h1>
@@ -164,15 +189,7 @@ export default function Preview() {
               shadcn/ui on Base UI · Vega · Neutral
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setDark(!dark)}
-            aria-pressed={dark}
-          >
-            {dark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
-            {dark ? 'Light' : 'Dark'}
-          </Button>
+          <ThemeControl />
         </div>
       </header>
 

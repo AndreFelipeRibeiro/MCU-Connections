@@ -24,10 +24,10 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression: 42 check scripts in 43 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English and Portuguese, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
+| `bash qa/regress.sh` | Full regression: 43 check scripts in 44 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English and Portuguese, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
 | `bash qa/quick.sh [checks…]` | The per-ticket run: the checks `qa/checks.json` lists for the files changed in the working tree, plus the checks named (the ticket's own), side by side. A typical ticket takes 1–3 minutes. |
 | `SITE_URL=<address> node qa/smoke.js` | One-minute smoke check against a deployed site, exactly as a visitor gets it: loads, titles appear, Spatial and List open, details open and close, the phone List opens a sheet, no console errors. Run it against staging after each push and production after each merge. |
-| `node qa/a11y-scan.js` | axe-core scan of 16 screens (desktop Spatial, details, List in Release and in By Phase, account menu, an open guide in the List and in Spatial, the Guides popover, the "What have you seen?" dialog, the guide promotion; phone List, details, Spatial, an open guide, the picker sheet, the guide promotion). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). |
+| `node qa/a11y-scan.js` | axe-core scan of 16 screens (desktop Spatial, details, List in Release and in By Phase, account menu, an open guide in the List and in Spatial, the Guides popover, the "What have you seen?" dialog, the guide promotion; phone List, details, Spatial, an open guide, the picker sheet, the guide promotion). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). Text whose background axe cannot resolve comes back *incomplete*, not as a violation, so this scan passes it; `test-contrast.js` is what measures those. |
 | `X=1 node qa/<check>.js` | One check; most print JSON with their findings. |
 | `node qa/perf2.js` | Time to first title, desktop and a 4×-slowed phone. Needs `SITE` or a built `dist/`. |
 | `node qa/test-boot.js` | The startup screen under a blocked, corrupt or hanging bundle. Not in the full run; `npm run build` first. Its `bundle-tampered` case reports one console error on purpose — that error *is* the scenario. |
@@ -230,7 +230,20 @@ relative to `qa/`, and build it yourself first:
   fold away, the view menu sits beside search), the sort tabs slide away, the
   dock shows the next stop with Seen instead of the meter and Up next card,
   the next stop is framed at a readable size, and the zoom control rests
-  hidden until a double-tap; closing brings it all back; Portuguese hint).
+  hidden until a double-tap; closing brings it all back; Portuguese hint),
+  `test-contrast` (the contrast calculation AGENTS.md asks for beside axe:
+  the declared text pairs and the phase tokens in `src/index.css` in both
+  themes, read through the real theme mechanism; every piece of text on
+  `design.html` in both themes; and the app's own text that axe leaves
+  *incomplete* — text over a pseudo element, a gradient or an image, which
+  `a11y-scan.js` cannot judge and therefore passes. Those are measured against
+  the background actually painted behind them: the text is made transparent,
+  the page is photographed and the commonest colour in each text box is its
+  background. The six Spatial band labels are reached one at a time with
+  `?phase=N`, because only phase 1's is on screen at the opening camera.
+  Accepted shortfalls live in `KNOWN` in the check, each with the ratio it was
+  accepted at and why; a worse ratio fails, and one that starts passing is
+  reported so the entry can go).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.

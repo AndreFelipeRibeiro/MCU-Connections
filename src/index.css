@@ -55,6 +55,10 @@
 }
 
 :root {
+    /* So the browser's own furniture — scrollbars, form controls, the canvas
+       behind the page — follows the theme the `dark` class sets, instead of
+       the system's idea of it. */
+    color-scheme: light;
     /* MCU phase colours as tokens (AGENTS.md, "Design system (V4)").
        Darkened from V3 so they keep WCAG AA on a light background; the
        .dark block holds V3's own values, authored for the dark canvas. */
@@ -75,10 +79,18 @@
     --secondary: oklch(0.97 0 0);
     --secondary-foreground: oklch(0.205 0 0);
     --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
+    /* Darkened from the library's 0.556, which measured 4.35:1 on --muted and
+       --secondary — the surfaces it is most often used on. 0.54 gives 4.61:1
+       there and 5.02:1 on white (qa/test-contrast.js). */
+    --muted-foreground: oklch(0.54 0 0);
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
+    /* Darkened from the library's 0.577. Vega draws the destructive button and
+       badge as `text-destructive` on `bg-destructive/10`, and on that tint the
+       default measured 3.97:1 — below AA for its 14px text. Same hue and
+       chroma, lightness down to 0.52: 4.65:1 on the tint, 5.61:1 on white
+       (qa/test-contrast.js). */
+    --destructive: oklch(0.52 0.245 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
@@ -99,6 +111,7 @@
 }
 
 .dark {
+    color-scheme: dark;
     /* V3's phase colours, authored for the dark canvas. */
     --phase-1: #d4a05a;
     --phase-2: #4a8de8;

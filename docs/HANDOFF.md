@@ -136,6 +136,19 @@ work:
 
 ## Known quirks, gotchas and fragile areas
 
+- **axe passes text it cannot judge.** When it cannot resolve what is behind
+  some text — a pseudo element, a gradient, an image — it returns the node as
+  *incomplete*, not as a violation, and `qa/a11y-scan.js` fails only on
+  violations. Over a hundred nodes come back that way on desktop Spatial
+  alone. `qa/test-contrast.js` is what measures those, by hiding the text and
+  photographing the page. A clean accessibility scan has never meant the text
+  on the page is readable; it means axe found nothing it was sure about.
+- **The theme mechanism is written twice on purpose.** `src/theme.ts` owns it,
+  but it arrives with the bundle, which is too late to paint with, so each
+  page repeats the rule in an inline script in its `<head>` (`design.html`
+  today). Change the storage key or the rule in one and the page paints one
+  theme and then swaps to the other.
+
 - **The source tree cannot be opened in a browser any more.** `python3 -m
   http.server` on the repository root serves an `index.html` whose only script
   is an unbuilt module; the startup screen correctly reports a failed start.
@@ -213,7 +226,7 @@ work:
 
 `qa/` holds the headless Playwright checks used throughout V3, curated
 (qa/README.md lists them):
-- the regression run (`bash qa/regress.sh`: 43 check runs plus the axe-core
+- the regression run (`bash qa/regress.sh`: 44 check runs plus the axe-core
   accessibility scan in both languages, about 7 minutes, 4 at a time), once
   per batch before staging. It builds the site first and serves every check
   that build;
