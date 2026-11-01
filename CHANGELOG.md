@@ -15,7 +15,7 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V4 design — the design system wired into the app, with no visible change
 
-Recorded: 2026-11-01 01:19 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+Recorded: 2026-11-01 01:19 EST (-0500). Pushed to `version/4.0` (V4 staging);
 `main` still serves V3 and this change is not part of a production release.
 
 The first Phase 4 ticket (Notion V4 Tasks, "Phase 4 — wire the design system

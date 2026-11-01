@@ -177,8 +177,11 @@ plan, the environment and the Figma workflow.
   `Recorded: YYYY-MM-DD HH:MM EDT (-0400).` and its staging/production status,
   then bullets for the change, the verification actually performed, and the
   limits. Times are real: take them from git
-  (`TZ=America/New_York git log -1 --date=format-local:'%Y-%m-%d %H:%M %Z' --format=%cd`),
-  never estimated or written ahead. When a batch reaches `main`, update those
+  (`TZ=America/New_York git log -1 --date=iso-local --format=%cd`), never
+  estimated or written ahead. The zone and offset come from git as well:
+  from the first Sunday of November to the second Sunday of March the entry
+  reads `EST (-0500)`, and on the changeover night the hour from 1:00 to 2:00
+  happens twice, so only the offset says which one it was. When a batch reaches `main`, update those
   entries' status line in a small follow-up commit before merging.
 - Keep README.md current when behaviour, setup, release status or workflow
   changes.
