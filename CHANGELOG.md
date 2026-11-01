@@ -13,6 +13,21 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 fix — contrast fixes from the full run, and an accessibility scan in dark
+
+Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Phase 4 — Desktop List / Guides (fixes found by the
+regression)". The full regression caught two shortfalls the re-skin had
+introduced, and showed the accessibility scan had only ever run in light.
+
+- **Rating chips** went grey over light rows: they now sit on a solid dark
+  chip. **The guide promotion's date tile** was near-white on near-white:
+  fixed.
+- **`qa/a11y-scan.js` takes `SCHEME`** and the full run scans English in dark
+  as well (46 → 49 check runs then).
+
 ## V4 maintenance — the first re-skin pass, written down
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);

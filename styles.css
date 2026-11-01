@@ -1795,8 +1795,8 @@ body { background: var(--v3-bg); }
 .gp-arr { flex: 0 0 auto; color: var(--v3-text-muted); font-size: 16px; margin-top: 46px; }
 .gp-st.dest .gp-p { box-shadow: none; border: 1.5px dashed color-mix(in srgb, var(--gc) 45%, #fff); box-sizing: border-box;
   background: color-mix(in srgb, var(--gc) 18%, var(--v3-bg-2)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-.gp-st.dest .gp-p b { font-family: var(--font-mono, ui-monospace, monospace); font-size: 18px; font-weight: 800; color: #f4ecec; line-height: 1.05; }
-.gp-st.dest .gp-p small { font-family: var(--font-mono, ui-monospace, monospace); font-size: 9.5px; font-weight: 700; letter-spacing: .6px; color: #e8dcdc; margin-top: 4px; padding: 0 3px; }
+.gp-st.dest .gp-p b { font-family: var(--font-mono, ui-monospace, monospace); font-size: 18px; font-weight: 800; color: var(--v3-text); line-height: 1.05; }
+.gp-st.dest .gp-p small { font-family: var(--font-mono, ui-monospace, monospace); font-size: 9.5px; font-weight: 700; letter-spacing: .6px; color: var(--v3-text-dim); margin-top: 4px; padding: 0 3px; }
 .gp-st.dest .gp-t { color: var(--v3-text); }
 .gp-st.more .gp-p { box-shadow: none; border: 1px solid var(--v3-border-strong); background: var(--v3-surface); display: flex; align-items: center; justify-content: center;
   font-family: var(--font-mono, ui-monospace, monospace); font-size: 14px; font-weight: 700; color: var(--v3-text-dim); }
@@ -2379,3 +2379,12 @@ body { background: var(--v3-bg); }
 /* Spatial, found here: the keyboard focus ring on a card follows the card's
    new corner (rounded-xl) instead of V3's 10px. */
 .card-open { border-radius: calc(var(--radius) * 1.4); }
+
+/* ===========================================================================
+   RE-SKIN, FIRST PASS — contrast fixes found by the full regression's axe scan
+   =========================================================================== */
+/* IMDb and Rotten Tomatoes ratings are brand tags: an opaque near-black chip,
+   so their yellow and red read the same on a poster, a List row or a light
+   card. A translucent chip over a light row turned grey and the red score
+   fell to 2.85:1. On #0a0c14 every rating colour here is 5.9:1 or better. */
+.card-rating { background: rgb(10, 12, 20); }

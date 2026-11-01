@@ -722,3 +722,8 @@
 .g-dock-sub { @apply text-sm text-muted-foreground; }
 .g-dock-count { @apply font-sans text-xs text-muted-foreground; }
 .g-dock-next:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+
+/* The phone's rating tags, opaque for the same reason as styles.css's
+   .card-rating; the List rows used to draw them with no chip at all, which
+   in the light theme put yellow and red text straight onto white. */
+.m-sc, .m-lrow .m-sc { background: rgb(10, 12, 20); border: 1px solid rgba(255, 255, 255, .14); padding: 3px 6px; }

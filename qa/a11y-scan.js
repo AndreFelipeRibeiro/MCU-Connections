@@ -14,7 +14,11 @@ const scan = async (page, name, out) => {
   await new Promise(r => server.listen(PORT, r));
   const browser = await chromium.launch();
   const out = {};
-  const LOCALE = process.env.LOC || 'en-US'; const D = { viewport: { width: 1440, height: 900 }, locale: LOCALE }, M = { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true, locale: LOCALE };
+  // SCHEME picks the system colour scheme. Since the first re-skin pass the
+  // app follows it, and a browser left at its default only shows the light
+  // theme, so the regression scans dark as well (qa/checks.json).
+  const LOCALE = process.env.LOC || 'en-US', SCHEME = process.env.SCHEME || 'light';
+  const D = { viewport: { width: 1440, height: 900 }, locale: LOCALE, colorScheme: SCHEME }, M = { viewport: { width: 390, height: 760 }, hasTouch: true, isMobile: true, locale: LOCALE, colorScheme: SCHEME };
   const open = async (opts, prefs, q = '') => { const x = await ctxPage(browser, opts, NOWELCOME + ART + SEED + "localStorage.setItem('mcu.prefs.v1', '" + JSON.stringify(prefs) + "');"); await x.page.goto('http://127.0.0.1:' + PORT + '/' + q); await require('./ready').appReady(x.page, 1200); return x; };
   let x = await open(D, {version:1, viewMode:'list', desktopView:'spatial', sort:'release'});
   await scan(x.page, 'desktop spatial', out);

@@ -11,7 +11,8 @@
     "test-home", "test-unreleased", "test-partof", "test-refocus", "test-skip", "test-guidemode",
     "test-contrast", "test-v4scope",
     { "check": "a11y-scan", "env": { "LOC": "en-US" }, "exitOnly": true },
-    { "check": "a11y-scan", "env": { "LOC": "pt-BR" }, "exitOnly": true }
+    { "check": "a11y-scan", "env": { "LOC": "pt-BR" }, "exitOnly": true },
+    { "check": "a11y-scan", "env": { "LOC": "en-US", "SCHEME": "dark" }, "exitOnly": true }
   ],
   "serial": ["test-camera", "test-inertia", "test-anim", "test-widetouch"],
   "files": {
