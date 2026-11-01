@@ -28,6 +28,7 @@ type GuidesUI = typeof import('../app/guides-ui');
 type Picker = typeof import('../app/picker');
 type App = typeof import('../app/app');
 type ThemeModule = typeof import('../theme');
+type ThemeToggleModule = typeof import('../app/theme-toggle');
 
 /** The i18n runtime (i18n.js), a classic script so the startup screen can
  *  speak the visitor's language before the bundle arrives. */
@@ -191,6 +192,7 @@ declare global {
     Synopsis: Mobile['Synopsis'];
     SortOrderMenu: Mobile['SortOrderMenu'];
     LanguageMenu: Mobile['LanguageMenu'];
+    ThemeToggle: ThemeToggleModule['ThemeToggle'];
     useReorderAnimation: Mobile['useReorderAnimation'];
     captureViewFlip: Mobile['captureViewFlip'];
     captureFlip: Mobile['captureFlip'];

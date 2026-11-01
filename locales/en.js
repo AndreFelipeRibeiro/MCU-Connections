@@ -46,6 +46,11 @@ window.MCU_LOCALES.en = {
     'order.rating.ascShort': 'Lowest',
     'order.rating.descShort': 'Highest',
 
+    'theme.label': 'Theme',
+    'theme.light': 'Light',
+    'theme.dark': 'Dark',
+    'theme.system': 'Auto',
+
     'view.label': 'View',
     'view.aria': 'View: {label}',
     'view.list': 'List',

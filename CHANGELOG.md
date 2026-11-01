@@ -13,6 +13,23 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — toolbar and app bar, and the Light / Dark / Auto control
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Phase 4 — Toolbar and app bar; Design: Dark/Light mode".
+Desktop toolbar and phone app bar in Vega's look, and the theme control Andre
+chose.
+
+- **Theme control:** `src/app/theme-toggle.tsx`, three buttons (Light, Dark,
+  Auto) in a labelled group. In the desktop toolbar, and in the phone account
+  sheet (in the app bar it cut the name short). Auto follows the system; the
+  choice survives a reload.
+- Tab lists, Order, language, filters, search and the account pill take
+  shadcn's outline-button and input recipes.
+- Strings in English and Portuguese (`theme.*`).
+
 ## V4 design — V3's palette and type onto the design-system tokens
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);

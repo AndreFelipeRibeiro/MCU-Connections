@@ -600,6 +600,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onPickTitle, onPickPer
         <div className="tb-end">
           <window.SyncStatus/>
           <window.GuidesButton currentId={guideId} onPick={onOpenGuide}/>
+          <window.ThemeToggle/>
           <window.LanguageMenu/>
           <window.AccountButton onPickCollection={setCollectionFilter} onAbout={onAbout}/>
         </div>

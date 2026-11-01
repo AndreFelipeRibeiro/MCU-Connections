@@ -45,6 +45,11 @@ window.MCU_LOCALES['pt-BR'] = {
     'order.rating.ascShort': 'Menor',
     'order.rating.descShort': 'Maior',
 
+    'theme.label': 'Tema',
+    'theme.light': 'Claro',
+    'theme.dark': 'Escuro',
+    'theme.system': 'Automático',
+
     'view.label': 'Visualização',
     'view.aria': 'Visualização: {label}',
     'view.list': 'Lista',

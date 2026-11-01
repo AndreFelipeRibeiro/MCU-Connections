@@ -80,7 +80,8 @@ plan, the environment and the Figma workflow.
   (the guide menu, views, banner, pill and "Part of"), `picker.tsx` ("What
   have you seen?", the poster-grid picker), `account.tsx`, `about.tsx`
   (`ModalDialog`), `celebrate.tsx` (counters, confetti, sign-in reminder),
-  `boot.js` (startup screen, at the root), `i18n.js` + `locales/*.js` (root),
+  `theme-toggle.tsx` (the Light / Dark / Auto control: desktop toolbar, phone
+  account sheet), `boot.js` (startup screen, at the root), `i18n.js` + `locales/*.js` (root),
   `src/data/data.ts` (catalog; permanent title ids), `src/data/guides.ts`,
   `src/data/media-data.ts` (TMDB paths), `src/config.ts` (public Supabase URL +
   publishable key), `src/main.ts` (the bundle entry), `schema.sql`,

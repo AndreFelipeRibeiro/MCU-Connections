@@ -2022,3 +2022,65 @@ body { background: var(--v3-bg); }
 .g-table .g-stop.compact .g-col { color: var(--v3-text-muted); font-size: 12px; }
 .g-table .g-stop.compact .tsa.overlay.g-tsa .tsa-btn { width: 28px; height: 28px; }
 .g-table .g-stop.compact .tsa.overlay.g-tsa .tsa-btn svg { width: 13px; height: 13px; }
+
+/* ===========================================================================
+   RE-SKIN, FIRST PASS — toolbar and search suggestions
+   (Notion V4 Tasks, "Phase 4 — Toolbar and app bar")
+
+   shadcn's class recipes (src/components/ui) on V3's toolbar markup: the
+   segmented groups take the tab list's look, the pills the outline button's,
+   the popovers the popover's and their rows the menu item's, the search box
+   the input's. Last in the file so it wins over V3's rules of the same weight;
+   the layout above (rows, gaps, wrapping, breakpoints) stays V3's. When the
+   toolbar's markup moves onto the React components, this section and the V3
+   declarations it overrides go together.
+   =========================================================================== */
+.toolbar { @apply bg-background/95; }
+.tb-row > .segmented, .tb-row .control-group > .segmented, .tb-row .filters-pill, .tb-row .search-wrap { height: 36px; }
+.brand-title { @apply text-base font-semibold tracking-tight; }
+.brand:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+
+/* Tab list and its triggers. */
+.segmented, .coll-switch { @apply rounded-lg border-transparent bg-muted; }
+.segmented button, .coll-switch button { @apply rounded-md border-transparent font-medium text-muted-foreground; }
+.segmented button:hover, .coll-switch button:hover { @apply text-foreground; }
+.segmented button.on, .coll-switch button.on { @apply border-transparent bg-background text-foreground shadow-sm dark:border-input dark:bg-input/30; }
+.coll-switch button.on .coll-ic { color: inherit; }
+.segmented button:focus-visible, .coll-switch button:focus-visible { @apply outline-none border-ring ring-[3px] ring-ring/50; }
+.control-group label { @apply font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground; }
+
+/* Outline buttons: Filters, Guides (also a .filters-pill), Order, language,
+   account. */
+.filters-pill, .sort-order-trigger, .acct-pill {
+  @apply rounded-md border-border bg-background font-medium text-foreground shadow-xs dark:border-input dark:bg-input/30;
+}
+.filters-pill:hover, .filters-pill.open, .sort-order-trigger:hover, .sort-order-trigger[aria-expanded="true"], .acct-pill:hover, .acct-pill.open {
+  @apply bg-muted text-foreground dark:bg-input/50;
+}
+.filters-pill:focus-visible, .sort-order-trigger:focus-visible, .acct-pill:focus-visible, .sort-order-pop button:focus-visible {
+  @apply outline-none border-ring ring-[3px] ring-ring/50;
+}
+.sort-order-trigger, .acct-pill { height: 36px; }
+.g-btn.on { @apply border-foreground/30 bg-muted text-foreground; }
+.fcount { @apply inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 font-sans text-xs font-medium text-primary-foreground; }
+
+/* Input. */
+.search-wrap { @apply rounded-md border-input bg-transparent text-muted-foreground shadow-xs dark:bg-input/30; }
+.search-wrap:focus-within { @apply border-ring ring-[3px] ring-ring/50; }
+.search-wrap input { @apply text-sm text-foreground; }
+.search-wrap input::placeholder { @apply text-muted-foreground; }
+
+/* Popovers and menu rows. */
+.filters-pop, .sort-order-pop, .acct-pop, .g-pop, .ss-pop {
+  @apply rounded-md border-transparent bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10;
+}
+.sort-order-heading, .ss-head { @apply px-2 py-1.5 font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground; }
+.sort-order-pop button { @apply rounded-sm text-sm text-popover-foreground; }
+.sort-order-pop button:hover, .sort-order-pop button[aria-pressed="true"] { @apply bg-accent text-accent-foreground; }
+.ss-item { @apply rounded-sm; }
+.ss-item.on { @apply bg-accent text-accent-foreground; }
+.pop-clear { @apply text-sm text-muted-foreground underline-offset-4 hover:text-foreground; }
+
+/* The theme control: three icon triggers in a tab list. */
+.theme-toggle button { justify-content: center; width: 32px; padding: 0; }
+.theme-toggle button svg { @apply size-4; }

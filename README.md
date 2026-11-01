@@ -525,6 +525,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/preflight-v4.css` | Tailwind's preflight reset, scoped to `.v4` while V3 and the design system share the page. Generated, and temporary |
 | `src/components/ui/` | The shadcn components on Base UI (Vega style), added with the pinned CLI and ours to edit |
 | `src/theme.ts` | The theme mechanism: `dark` on `<html>`, following the system until the visitor overrides it (`window.MCU_THEME`, `useTheme()`) |
+| `src/app/theme-toggle.tsx` | The Light / Dark / Auto control, in the desktop toolbar and the phone account sheet |
 | `design.html` / `src/design/` | The V4 design-system preview, a page of its own that the app never loads and that never loads the app |
 | `src/types/catalog.ts` | The catalog's shapes (`Title`, `Character`, `Guide`, `Media`, `WatchData`), written from the data itself |
 | `src/types/globals.d.ts` | The shared `window` surface, typed from the modules themselves rather than restated |

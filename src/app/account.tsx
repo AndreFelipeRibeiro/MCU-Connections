@@ -499,6 +499,11 @@ function AccountSheet({ onClose, onPickCollection, onAbout }) {
         <div className="m-sh-title">{window.MCU_I18N.tr('account.title')}</div>
       </div>
       <AccountPanel onPickCollection={onPickCollection} onClose={onClose} onAbout={onAbout}/>
+      {/* The theme control lives here on phones; the desktop toolbar has its own. */}
+      <div className="m-theme-row">
+        <span className="m-theme-label">{window.MCU_I18N.tr('theme.label')}</span>
+        <window.ThemeToggle/>
+      </div>
     </Sheet>
   );
 }
