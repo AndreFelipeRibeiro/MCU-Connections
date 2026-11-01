@@ -13,6 +13,17 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — details drawer
+
+Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Phase 4 — Details drawer". The desktop details drawer in
+Vega's look: card surface, section headings, outline buttons, badges. It stays
+modeless, as the rules require.
+
+- Restyle only: same controls in the same places.
+
 ## V4 design — toolbar and app bar, and the Light / Dark / Auto control
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);

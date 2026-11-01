@@ -2084,3 +2084,63 @@ body { background: var(--v3-bg); }
 /* The theme control: three icon triggers in a tab list. */
 .theme-toggle button { justify-content: center; width: 32px; padding: 0; }
 .theme-toggle button svg { @apply size-4; }
+
+/* ===========================================================================
+   RE-SKIN, FIRST PASS — details drawer
+   (Notion V4 Tasks, "Phase 4 — Details drawer")
+
+   The panel takes shadcn's Sheet (popover surface, a left border, a large
+   shadow) and stays modeless: no focus trap, whatever a Sheet does by default.
+   Its controls take the ghost icon button, the outline button, the link
+   button and the badge; its small labels become shadcn's muted text-xs in
+   place of tiny mono capitals, while numbers keep the monospace. The details
+   body is shared with the phone's sheet, so much of this reaches it too.
+   =========================================================================== */
+.drawer { @apply border-border bg-popover text-popover-foreground shadow-lg; }
+.drawer-header { @apply border-border; }
+.drawer-title { @apply text-lg font-semibold tracking-tight; }
+.drawer-title:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+.drawer-close {
+  @apply size-8 rounded-md border-transparent bg-transparent text-muted-foreground;
+}
+.drawer-close:hover { @apply bg-muted text-foreground; }
+.drawer-close:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
+
+/* Small labels. */
+.drawer-eyebrow { @apply font-sans text-xs font-medium tracking-normal; }
+.drawer-section-label, .td-fact dt, .wtw-title, .wtw-kind {
+  @apply font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground;
+}
+.td-fact dd { @apply text-sm; }
+
+/* Cast rows: a menu row's hover, no border. */
+.cast-row { @apply rounded-md border-transparent; }
+.cast-row:hover, .cast-row.active { @apply border-transparent bg-muted; }
+.char-name { @apply text-sm font-medium; }
+.actor-name { @apply text-xs; }
+
+/* Seen and Watchlist, with labels: the outline button. */
+.tsa.inline .tsa-btn {
+  @apply h-9 min-h-9 rounded-md border-border bg-background px-3 text-sm font-medium text-foreground shadow-xs dark:border-input dark:bg-input/30;
+}
+.tsa.inline .tsa-btn:hover { @apply bg-muted text-foreground dark:bg-input/50; }
+.tsa .tsa-btn:focus-visible { @apply outline-none border-ring ring-[3px] ring-ring/50; }
+
+/* Links: shadcn's link button. */
+.synopsis-more, .wtw-change, .wtw-link { @apply font-medium text-foreground underline-offset-4 hover:underline; }
+.synopsis-more:focus-visible, .wtw-change:focus-visible, .wtw-link:focus-visible { @apply rounded-sm outline-none ring-[3px] ring-ring/50; }
+.synopsis p { @apply text-sm text-muted-foreground; }
+
+/* Tags: the outline and secondary badges. */
+.release-badge { @apply rounded-full px-2 py-0.5 font-sans text-xs font-medium normal-case tracking-normal; }
+.release-badge.upcoming { @apply border-border bg-transparent text-foreground; }
+.td-pending { @apply rounded-full border-solid border-transparent bg-secondary text-xs font-medium text-secondary-foreground; }
+
+/* The region picker: a native select dressed as shadcn's input. */
+.wtw-picker select { @apply h-8 rounded-md border-input bg-transparent px-2 text-sm text-foreground shadow-xs dark:bg-input/30; }
+.wtw-picker select:focus-visible { @apply outline-none border-ring ring-[3px] ring-ring/50; }
+
+/* Accordion headers: shadcn's accordion trigger. */
+.td-acc-btn { @apply rounded-md text-sm font-medium text-foreground; }
+.td-acc-btn:hover .td-acc-label { @apply text-foreground underline underline-offset-4; }
+.td-acc-btn:focus-visible { @apply outline-none ring-[3px] ring-ring/50; }
