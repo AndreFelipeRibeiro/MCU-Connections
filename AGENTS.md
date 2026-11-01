@@ -142,9 +142,10 @@ plan, the environment and the Figma workflow.
   `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/`). V3 fixes, if
   any, are made there under that branch's own AGENTS.md and then merged
   forward into `version/4.0` with the user's approval.
-- `main` is **production** and still serves V3:
-  `https://mcu-connections.vercel.app/`. V4 reaches `main` only as a planned,
-  explicitly approved release.
+- `main` is **production**: `https://mcu-connections.vercel.app/`. It serves
+  V4 since the first V4 release (2026-11-01, Andre's approval). Each later
+  batch reaches `main` only with the user's explicit approval for that merge;
+  V3 is history on `version/3.0`.
 - All three deploy automatically through Vercel's Git integration; there is no
   Vercel CLI step. Check a deploy with the commit status on GitHub.
 - Keep iterations local and uncommitted until the user approves committing and

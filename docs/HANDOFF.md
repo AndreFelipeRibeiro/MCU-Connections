@@ -16,16 +16,23 @@ because it is how most of the behaviour got here.
 
 - **V3 is released.** Batch 10 merged to production on 2026-10-31
   (`a44891a`), and `main`, `version/3.0` and `version/4.0` all started from
-  that commit. `main` still serves V3 at https://mcu-connections.vercel.app/.
+  that commit. V3 stays on `version/3.0` as history.
+- **V4 is in production** since 2026-11-01: the first V4 release merged
+  `version/4.0` into `main` (https://mcu-connections.vercel.app/), with
+  Batch 1 (build step, TypeScript, design system) and Batch 2 (the first
+  re-skin pass, the theme control, the Red Thread placeholder logo).
 - **V4 is open**, on branch `version/4.0` in the `MCU-V4` worktree, deploying
   to https://mcu-connections-git-version-40-afr-bfcd.vercel.app/ on every
   push. Its backlog is the Notion **V4 Tasks** board; **V3 Tasks** is kept as
-  history. V4 reaches `main` only as a planned, explicitly approved release.
-- **What V4 has landed so far** (Batch 1, on staging, awaiting review): the
-  Vite build step and the move of the whole app into one bundle, the
-  TypeScript conversion, a QA harness that builds and tests the real artifact,
-  and a standalone design-system preview page. Next is the design system
-  itself, then the re-skin.
+  history. Each batch reaches `main` only with Andre's explicit approval.
+- **What V4 has landed so far** (released 2026-11-01): Batch 1 — the Vite
+  build step and the move of the whole app into one bundle, the TypeScript
+  conversion, a QA harness that builds and tests the real artifact, the
+  design system and its preview page. Batch 2 — the design system wired in,
+  the first re-skin pass on every surface (V3's markup restyled with shadcn's
+  recipes), the Light / Dark / Auto control, the phone re-tap to top, the
+  band-label contrast fix and the Red Thread placeholder logo. Next: the
+  rename, and moving each surface's markup onto the real components.
 - V3 fixes, if any, are made on `version/3.0` in the `MCU-V3` worktree and
   merged forward with the user's approval.
 - Batches 7–9 shipped on 2026-10-29 and 2026-10-30 (details in CHANGELOG.md):

@@ -16,7 +16,8 @@ separate product releases. The merge checkpoint is included explicitly.
 ## V4 design — toolbar and phone header controls back to V3's heights
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — Toolbar and app bar (revision)". Andre found the
 re-skinned controls too short: the first pass had set them to shadcn's 36px
@@ -36,7 +37,8 @@ re-skinned controls too short: the first pass had set them to shadcn's 36px
 ## V4 design — Red Thread placeholder logo, name and page title
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Placeholder new logo". A placeholder Red Thread mark replaces
 the rainbow square, and the header, home link, page title and icons say Red
@@ -60,7 +62,8 @@ until the rename ticket.
 ## V4 fix — Spatial band labels pass contrast in phases 3 and 6
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Spatial band labels fail WCAG AA in phases 3 and 6 (live in
 V3)". Andre chose to lighten the two dark phase colours: phase 3 `#d04040` →
@@ -74,7 +77,8 @@ dark surface, and the dark ink on their fills improves with them.
 ## V4 improvement — tapping the active sort tab on a phone goes back to the top
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Mobile: Press twice resets the list". On a phone, tapping the
 sort tab that is already selected scrolls the List or Grid back to the top,
@@ -86,7 +90,8 @@ tab still re-sorts.
 ## V4 fix — contrast fixes from the full run, and an accessibility scan in dark
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — Desktop List / Guides (fixes found by the
 regression)". The full regression caught two shortfalls the re-skin had
@@ -101,7 +106,8 @@ introduced, and showed the accessibility scan had only ever run in light.
 ## V4 maintenance — the first re-skin pass, written down
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — first pass (docs)". AGENTS.md and HANDOFF.md
 describe how the first pass works and how a surface moves onto the real
@@ -114,7 +120,8 @@ components later.
 ## V4 design — startup screen
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — Startup screen". The startup screen before the
 bundle arrives: the design system's background, foreground and spinner, in the
@@ -126,7 +133,8 @@ visitor's theme from the first paint.
 ## V4 design — desktop Spatial
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — Desktop Spatial". Spatial cards are shadcn cards at
 exactly their old size (the layout is computed from it); band labels, the
@@ -138,7 +146,8 @@ overall header and the zoom control float as cards.
 ## V4 design — guides
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — Guides". The guide menu, views, banner, pill, "Part
 of" and the phone guide dock in Vega's look. Labels are sentence case.
@@ -148,7 +157,8 @@ of" and the phone guide dock in Vega's look. Labels are sentence case.
 ## V4 design — phone List, Grid, Spatial and sheets
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — Phone List, Grid, Spatial and sheets". The phone
 views and bottom sheets in Vega's look: cards, sheet surfaces, tab bar,
@@ -159,7 +169,8 @@ sentence-case phase and type labels (the code no longer upper-cases them).
 ## V4 design — dialogs (About, Account, "What have you seen?")
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — Dialogs (About, Account, "What have you seen?")".
 The dialogs in Vega's dialog look: radius, border, shadow, title and
@@ -170,7 +181,8 @@ description type, primary and outline buttons.
 ## V4 design — desktop List
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — Desktop List". The desktop List in Vega's table
 look: header row, row hover, checkboxes, sentence-case section headings (the
@@ -181,7 +193,8 @@ code no longer upper-cases them). Phases keep their colour.
 ## V4 design — details drawer
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — Details drawer". The desktop details drawer in
 Vega's look: card surface, section headings, outline buttons, badges. It stays
@@ -192,7 +205,8 @@ modeless, as the rules require.
 ## V4 design — toolbar and app bar, and the Light / Dark / Auto control
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — Toolbar and app bar; Design: Dark/Light mode".
 Desktop toolbar and phone app bar in Vega's look, and the theme control Andre
@@ -209,7 +223,8 @@ chose.
 ## V4 design — V3's palette and type onto the design-system tokens
 
 Recorded: 2026-11-01 09:01 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Notion V4 Tasks, "Phase 4 — V3's palette and type onto the design-system tokens
 (all surfaces)". The first re-skin step, under every surface ticket: V3's
@@ -238,7 +253,8 @@ themes.
 ## V4 design — the design system wired into the app, with no visible change
 
 Recorded: 2026-11-01 01:19 EST (-0500). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 The first Phase 4 ticket (Notion V4 Tasks, "Phase 4 — wire the design system
 into the app (before any surface)"). The app now loads Tailwind, the token file
@@ -290,7 +306,8 @@ the dialog and tooltip have nothing to open them in the app yet.
 ## V4 design — theme switching, and the contrast check the rules always asked for
 
 Recorded: 2026-10-31 20:30 EDT (-0400). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 Finishes the design-system ticket. Most of its scope arrived with the preview
 page (`07ea940`): Tailwind, shadcn on Base UI, `components.json`, the token
@@ -346,7 +363,8 @@ changes the running app.
 ## V4 maintenance — the docs stop describing V3
 
 Recorded: 2026-10-31 17:25 EDT (-0400). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 The V4 setup commit retargeted AGENTS.md and README.md but left the two files
 AGENTS.md sends a new agent to read *first* describing V3, so they actively
@@ -398,7 +416,8 @@ Limits:
 ## V4 maintenance — TypeScript, at full strict
 
 Recorded: 2026-10-31 17:19 EDT (-0400). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 The source is renamed to `.ts`/`.tsx`, `jsconfig.json` becomes a `tsconfig.json`
 at full `strict`, and `npm run typecheck` is a script. No behaviour change: the
@@ -473,7 +492,8 @@ Limits:
 ## V4 maintenance — three checks that had drifted from the app
 
 Recorded: 2026-10-31 16:37 EDT (-0400). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 `test-skip`, `test-camera` and later `test-back` had been carried as
 pre-existing failures, with `test-skip` suspected of being a real bug in the
@@ -535,7 +555,8 @@ Limits:
 ## V4 maintenance — the whole app moves into the bundle (Phase 2, steps 4–5)
 
 Recorded: 2026-10-31 16:05 EDT (-0400). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 - All thirteen `.jsx` files move to `src/app/` and are imported by
   `src/main.js`. `index.html` loads one bundle instead of thirteen
@@ -616,7 +637,8 @@ Limits:
 ## V4 maintenance — back to React 18.3.1
 
 Recorded: 2026-10-31 14:12 EDT (-0400). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 - Reverts the move to React 19.3.1 made earlier today with the design-system
   preview. V4 stays on **18.3.1**, the version the app loads from the CDN.
@@ -637,7 +659,8 @@ Recorded: 2026-10-31 14:12 EDT (-0400). Pushed to `version/4.0` (V4 staging);
 ## V4 maintenance — the data layer moves into the bundle (Phase 2, steps 2–3)
 
 Recorded: 2026-10-31 14:09 EDT (-0400). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 - `data.js`, `guides.js`, `media-data.js`, `config.js` and `supabase-client.js`
   move to `src/` and are bundled by Vite. `index.html` loads one module script
@@ -678,7 +701,8 @@ Recorded: 2026-10-31 14:09 EDT (-0400). Pushed to `version/4.0` (V4 staging);
 ## V4 design — design-system preview page
 
 Recorded: 2026-10-31 13:44 EDT (-0400). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 - Sets up the V4 design system on its own Vite entry, `design.html`, reachable
   at `/design.html` on the V4 preview. The app never loads it and it never
@@ -719,9 +743,9 @@ Recorded: 2026-10-31 13:44 EDT (-0400). Pushed to `version/4.0` (V4 staging);
 
 ## V4 design — component base decided: shadcn/ui on Base UI, Vega style
 
-Recorded: 2026-10-31 13:17 EDT (-0400). Pushed to `version/4.0` (V4
-staging); `main` still serves V3 and this change is not part of a
-production release.
+Recorded: 2026-10-31 13:17 EDT (-0400). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 - Records Andre's decision of 2026-10-31: V4's component base is shadcn/ui on
   Base UI, starting from shadcn's Vega style (preset `base-vega`: Neutral base
@@ -755,7 +779,8 @@ production release.
 ## V4 maintenance — build scaffold (Phase 2, step 1)
 
 Recorded: 2026-10-31 13:06 EDT (-0400). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 - Stands up the V4 build step without converting the app. Added
   `package.json`, `package-lock.json`, `vite.config.js`, `jsconfig.json` and
@@ -808,7 +833,8 @@ Recorded: 2026-10-31 13:06 EDT (-0400). Pushed to `version/4.0` (V4 staging);
 ## V4 maintenance — V4 plan
 
 Recorded: 2026-10-31 12:11 EDT (-0400). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 - `docs/V4-PLAN.md` added and approved by the user: the Phase 1 plan for V4.
   Goals, non-goals and what "done" means for the release to `main`; the build
@@ -842,7 +868,8 @@ Recorded: 2026-10-31 12:11 EDT (-0400). Pushed to `version/4.0` (V4 staging);
 ## V4 maintenance — V4 workspace setup
 
 Recorded: 2026-10-31 10:59 EDT (-0400). Pushed to `version/4.0` (V4 staging);
-`main` still serves V3 and this change is not part of a production release.
+merged to `main` (production) on 2026-11-01 after Andre's approval, in the
+first V4 release.
 
 - Opens V4 on branch `version/4.0`, worktree `MCU-V4`, deployed as the preview
   `https://mcu-connections-git-version-40-afr-bfcd.vercel.app/`.

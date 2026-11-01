@@ -488,8 +488,9 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 - **Wait for fresh user confirmation before merging maintenance into main.** That merge
   can trigger the production deployment. After approval and deployment, verify
   production Google sign-in, reload, sync and sign-out at the production URL.
-- `main` still serves V3. V4 reaches production only as a planned, explicitly
-  approved release; take V4 work from the Notion V4 Tasks board.
+- `main` serves V4 since the first V4 release (2026-11-01). Each later batch
+  reaches production only with explicit approval for that merge; take V4 work
+  from the Notion V4 Tasks board.
   Email/password work needs its own plan and explicit confirmation.
 
 ## Project structure
