@@ -13,6 +13,32 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 improvement — The Avengers: Doomsday newcomers join the catalog
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Add the confirmed Doomsday newcomers to the catalog".
+Thirteen characters confirmed for Avengers: Doomsday were missing, so they drew
+no threads. Characters: 89 → 102.
+
+- John Walker (Falcon and the Winter Soldier, Thunderbolts*, What If…? season
+  3, Marvel Zombies), Joaquín Torres (Falcon and the Winter Soldier, Brave New
+  World), Namor (Wakanda Forever, Marvel Zombies), Ava Starr (Ant-Man and the
+  Wasp, Thunderbolts*, Marvel Zombies), Cassie Lang (both Ant-Man films,
+  Endgame, Quantumania), Bob Reynolds (Thunderbolts*), Charles Xavier
+  (Multiverse of Madness), Remy LeBeau (Deadpool & Wolverine).
+- Doomsday only: Hank McCoy (his other appearance is a post-credits scene),
+  Erik Lehnsherr, Kurt Wagner, Raven Darkhölme, Scott Summers.
+- Cassie Lang credits Abby Ryder Fortson in the first two Ant-Man films and
+  Emma Fuhrmann in Endgame. TMDB portraits for all 13 and both recast
+  performers.
+- Sources: `doomsdayNewcomers` in `docs/CATALOG-SOURCES.json`, and
+  `docs/CATALOG-AUDIT.md`.
+- Verified: Doomsday's details list 30 characters; every portrait address
+  returns an image; test-threads; Full Batch 5 regression on the final tree: 56
+  check runs clean. Not checked: portraits rendering in a real browser.
+
 ## V4 feature — Text size starts from the iPhone's Text Size
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);

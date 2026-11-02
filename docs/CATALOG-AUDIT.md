@@ -562,9 +562,8 @@ unreleased titles"). Sources are in `CATALOG-SOURCES.json` (`castSources`,
   teaser) and Atwell as Peggy Carter, not Captain Carter (SDCC July 2026,
   [GeekTyrant](https://geektyrant.com/news/avengers-doomsday-officially-confirms-hayley-atwell-is-returning-as-peggy-carter)).
   **Removed: Peter Parker**: Tom Holland is in no official cast list or
-  trailer. Confirmed characters the catalog lacks (U.S. Agent, Namor, Ghost,
-  Cassie Lang, Joaquín Torres, Sentry, the X-Men) are their own ticket, "Add
-  the confirmed Doomsday newcomers to the catalog".
+  trailer. The confirmed characters the catalog lacked were added the same
+  day (next section).
 - **Avengers: Secret Wars** (December 17, 2027): Marvel's page lists only
   Downey (Doom); Evans has said he is in it, and [Screen Rant](https://screenrant.com/avengers-secret-wars-cast-noah-jupe/)
   (Sep 1, 2026) reports Wright and Liu. **Removed: Sam, Vision, Peter and
@@ -582,3 +581,44 @@ unreleased titles"). Sources are in `CATALOG-SOURCES.json` (`castSources`,
   Timely → Kang; Sylvie → Loki; White Vision → Vision; Peter Parker (Raimi)
   and (Webb) → Peter): each is that character's variant on screen. No change.
 
+## Avengers: Doomsday newcomers — 2026-11-02
+
+Thirteen characters confirmed for Avengers: Doomsday ([NME's list](https://www.nme.com/news/film/all-the-actors-confirmed-for-avengers-doomsday-3855950))
+were missing from the catalog, so they drew no threads (Notion V4 Tasks, "Add
+the confirmed Doomsday newcomers to the catalog"). Each was added with every
+other catalog title they appear in, under the credit-scene rule (a mid- or
+post-credits scene alone does not count). Names follow the catalog's habit of
+civilian names. Portraits are TMDB profile images. Per-title reasoning and
+sources: `doomsdayNewcomers` in [CATALOG-SOURCES.json](CATALOG-SOURCES.json).
+Characters: 89 → 102.
+
+| Character | Performer | Titles besides Doomsday |
+|---|---|---|
+| John Walker (U.S. Agent) | Wyatt Russell | The Falcon and the Winter Soldier, Thunderbolts*, What If…? season 3, Marvel Zombies |
+| Joaquín Torres | Danny Ramirez | The Falcon and the Winter Soldier, Brave New World |
+| Namor | Tenoch Huerta Mejía | Wakanda Forever, Marvel Zombies |
+| Ava Starr (Ghost) | Hannah John-Kamen | Ant-Man and the Wasp, Thunderbolts*, Marvel Zombies |
+| Cassie Lang | Kathryn Newton | Ant-Man, Ant-Man and the Wasp, Endgame, Quantumania |
+| Bob Reynolds (Sentry) | Lewis Pullman | Thunderbolts* |
+| Charles Xavier | Patrick Stewart | Multiverse of Madness |
+| Remy LeBeau (Gambit) | Channing Tatum | Deadpool & Wolverine |
+| Hank McCoy (Beast) | Kelsey Grammer | none |
+| Erik Lehnsherr (Magneto) | Ian McKellen | none |
+| Kurt Wagner (Nightcrawler) | Alan Cumming | none |
+| Raven Darkhölme (Mystique) | Rebecca Romijn | none |
+| Scott Summers (Cyclops) | James Marsden | none |
+
+- **Cassie Lang is one character with three performers:** Abby Ryder Fortson
+  in Ant-Man and Ant-Man and the Wasp, Emma Fuhrmann in Endgame, Kathryn
+  Newton from Quantumania on. The titles carry `credits`, as Monica Rambeau's
+  recast does.
+- **Beast stays at Doomsday only.** Kelsey Grammer's other MCU appearance is
+  The Marvels' post-credits scene.
+- **Xavier is one identity.** Patrick Stewart's Xavier in Multiverse of Madness
+  is Earth-838's; same performer and name, so no variant entry.
+- **Animated appearances follow the catalog's existing practice** of listing a
+  character under its main identity: John Walker in What If…? season 3's
+  "1872" episode (voiced by Russell) and in Marvel Zombies. Namor and Ghost are
+  non-speaking zombies in Marvel Zombies, which already lists non-speaking
+  Groot and Hope.
+- What If…? season 2 has none of them.

@@ -483,7 +483,7 @@
         "https://www.imdb.com/news/ni65010779/"
       ],
       "castCheckedAt": "2026-11-02",
-      "castEvidence": "Marvel's March 2025 cast reveal (as listed by NME), Downey as Doom (SDCC 2024), Evans as Steve Rogers (December 2025 teaser) and Atwell as Peggy Carter (SDCC July 2026 Hall H) confirm all 17 listed characters. Peter Parker removed 2026-11-02 with Andre's approval: Tom Holland is in no official cast list or trailer. Confirmed newcomers not in the catalog (U.S. Agent, Namor, Ghost, Cassie Lang, Joaquín Torres, Sentry, the X-Men) are the Notion ticket \"Add the confirmed Doomsday newcomers to the catalog\"."
+      "castEvidence": "Marvel's March 2025 cast reveal (as listed by NME), Downey as Doom (SDCC 2024), Evans as Steve Rogers (December 2025 teaser) and Atwell as Peggy Carter (SDCC July 2026 Hall H) confirm all 17 listed characters. Peter Parker removed 2026-11-02 with Andre's approval: Tom Holland is in no official cast list or trailer. The confirmed newcomers (U.S. Agent, Namor, Ghost, Cassie Lang, Joaquín Torres, Sentry, and the X-Men) were added to the catalog the same day; see doomsdayNewcomers."
     },
     "daredevil-born-again-s3": {
       "imdbUrl": "https://www.imdb.com/title/tt18923754/",
@@ -829,5 +829,154 @@
       "ms-marvel": "Sparse for the same reason: Carol's only appearance is the post-credits swap.",
       "unreleased": "daredevil-born-again-s2/s3, friendly-spidey-s2 and wonder-man have provisional casts; nothing is added to a title that has not aired."
     }
+  },
+  "doomsdayNewcomers": {
+    "checkedAt": "2026-11-02",
+    "rule": "Each character confirmed for Avengers: Doomsday and missing from the catalog was added with every other catalog title they appear in. The credit-scene rule holds: a mid- or post-credits scene alone does not count. What If…? and Marvel Zombies list a character under its main identity, as the catalog already does there; Marvel Zombies' existing cast already includes non-speaking appearances (Groot, Hope).",
+    "doomsdaySource": "https://www.nme.com/news/film/all-the-actors-confirmed-for-avengers-doomsday-3855950",
+    "portraits": "TMDB person search, profile_path of the matching performer, 2026-11-02.",
+    "added": {
+      "walker": {
+        "name": "John Walker (U.S. Agent)",
+        "actor": "Wyatt Russell",
+        "titles": [
+          "falcon-winter",
+          "thunderbolts",
+          "what-if-s3",
+          "marvel-zombies",
+          "doomsday"
+        ],
+        "sources": [
+          "https://en.wikipedia.org/wiki/What_If...%3F_season_3",
+          "https://en.wikipedia.org/wiki/Marvel_Zombies_(miniseries)"
+        ],
+        "evidence": "Live action in The Falcon and the Winter Soldier and Thunderbolts*; voiced by Russell in What If…? season 3 (\"What If... 1872?\") and Marvel Zombies."
+      },
+      "torres": {
+        "name": "Joaquín Torres (Falcon)",
+        "actor": "Danny Ramirez",
+        "titles": [
+          "falcon-winter",
+          "cap-brave",
+          "doomsday"
+        ],
+        "evidence": "Main cast of The Falcon and the Winter Soldier and Captain America: Brave New World."
+      },
+      "namor": {
+        "name": "Namor",
+        "actor": "Tenoch Huerta Mejía",
+        "titles": [
+          "wakanda-forever",
+          "marvel-zombies",
+          "doomsday"
+        ],
+        "sources": [
+          "https://en.wikipedia.org/wiki/Marvel_Zombies_(miniseries)"
+        ],
+        "evidence": "Wakanda Forever's antagonist; a zombified, non-speaking Namor leads the attack on the Raft in Marvel Zombies episode 2."
+      },
+      "ghost": {
+        "name": "Ava Starr (Ghost)",
+        "actor": "Hannah John-Kamen",
+        "titles": [
+          "ant-man-wasp",
+          "thunderbolts",
+          "marvel-zombies",
+          "doomsday"
+        ],
+        "sources": [
+          "https://en.wikipedia.org/wiki/Marvel_Zombies_(miniseries)"
+        ],
+        "evidence": "Ant-Man and the Wasp and Thunderbolts*; a non-speaking zombie in Marvel Zombies."
+      },
+      "cassie": {
+        "name": "Cassie Lang",
+        "actor": "Kathryn Newton",
+        "titles": [
+          "ant-man",
+          "ant-man-wasp",
+          "endgame",
+          "quantumania",
+          "doomsday"
+        ],
+        "credits": {
+          "ant-man": "Abby Ryder Fortson",
+          "ant-man-wasp": "Abby Ryder Fortson",
+          "endgame": "Emma Fuhrmann"
+        },
+        "sources": [
+          "https://www.slashfilm.com/1300568/why-ant-man-cassie-lang-recast"
+        ],
+        "evidence": "Played by Abby Ryder Fortson in the first two Ant-Man films, Emma Fuhrmann in Endgame and Kathryn Newton from Quantumania; one character, the performer credited per title."
+      },
+      "bob": {
+        "name": "Bob Reynolds (Sentry)",
+        "actor": "Lewis Pullman",
+        "titles": [
+          "thunderbolts",
+          "doomsday"
+        ],
+        "evidence": "Thunderbolts* main cast."
+      },
+      "xavier": {
+        "name": "Charles Xavier",
+        "actor": "Patrick Stewart",
+        "titles": [
+          "multiverse-madness",
+          "doomsday"
+        ],
+        "evidence": "Stewart plays Earth-838's Xavier in the main feature of Multiverse of Madness. Same performer and name, so one identity rather than a variant."
+      },
+      "gambit": {
+        "name": "Remy LeBeau (Gambit)",
+        "actor": "Channing Tatum",
+        "titles": [
+          "deadpool-3",
+          "doomsday"
+        ],
+        "evidence": "Appears in the Void in Deadpool & Wolverine's main feature."
+      },
+      "beast": {
+        "name": "Hank McCoy (Beast)",
+        "actor": "Kelsey Grammer",
+        "titles": [
+          "doomsday"
+        ],
+        "evidence": "His only other MCU appearance is The Marvels' post-credits scene, which the credit-scene rule leaves out."
+      },
+      "magneto": {
+        "name": "Erik Lehnsherr (Magneto)",
+        "actor": "Ian McKellen",
+        "titles": [
+          "doomsday"
+        ],
+        "evidence": "No other MCU appearance."
+      },
+      "nightcrawler": {
+        "name": "Kurt Wagner (Nightcrawler)",
+        "actor": "Alan Cumming",
+        "titles": [
+          "doomsday"
+        ],
+        "evidence": "No other MCU appearance."
+      },
+      "mystique": {
+        "name": "Raven Darkhölme (Mystique)",
+        "actor": "Rebecca Romijn",
+        "titles": [
+          "doomsday"
+        ],
+        "evidence": "No other MCU appearance."
+      },
+      "cyclops": {
+        "name": "Scott Summers (Cyclops)",
+        "actor": "James Marsden",
+        "titles": [
+          "doomsday"
+        ],
+        "evidence": "No other MCU appearance."
+      }
+    },
+    "checkedNotFound": "What If…? season 2 has none of them; What If…? season 3 has only John Walker. Bob, Torres, Cassie, Gambit and the X-Men are not in Marvel Zombies."
   }
 }

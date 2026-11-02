@@ -91,7 +91,7 @@ delivered, not how its pieces are shared: each file publishes its components on
 the surface 15 QA checks read — and it is typed in `src/types/globals.d.ts`.
 Replacing it with real imports is a later ticket.
 
-- **Data:** `src/data/data.ts` holds the catalog (64 titles, 89 characters,
+- **Data:** `src/data/data.ts` holds the catalog (64 titles, 102 characters,
   permanent ids, variant links, synopses per language); `src/data/media-data.ts`
   holds TMDB poster and portrait paths. Their shapes are typed in
   `src/types/catalog.ts`, checked against the data itself.

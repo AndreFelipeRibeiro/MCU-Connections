@@ -331,7 +331,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 ## The data
 
 - **64 titles** spanning Phases 1–6, 2008–2027 (40 films, 24 series)
-- **84 characters**, connecting titles through shared character identities
+- **102 characters**, connecting titles through shared character identities
 - Posters and actor portraits sourced from TMDB (credited in About with TMDB's
   notice; TMDB also asks for its logo there, not added yet)
 - A poster or portrait that fails to load falls back to generated art or the
