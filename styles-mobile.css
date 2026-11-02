@@ -518,7 +518,7 @@
 .pk.touch .pk-ask { width: 100%; border-radius: 18px 18px 0 0; border-bottom: 0; padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
 .m-sheet .welcome-pick { bottom: calc(-24px - env(safe-area-inset-bottom, 0px)); margin: 22px -18px calc(-24px - env(safe-area-inset-bottom, 0px));
   padding: 14px 18px calc(20px + env(safe-area-inset-bottom, 0px)); }
-.m-sheet .acct-links .acct-pick { min-height: max(48px, 3rem); padding: 6px 12px; }
+.m-sheet .acct-links .acct-pick { min-height: max(52px, 3.25rem); padding: 8px 12px; }
 
 /* Guide promotion on phones (Option C, Phone C artboard): the band runs to the
    sheet's top edge under the handle and the ×; covers take one line each. */
@@ -742,3 +742,9 @@
 /* Settings' gear in the app bar: the language pill's old place, the guide
    button's size. */
 .m-appbar-top .m-settings-btn { width: max(38px, 2.375rem); height: max(38px, 2.375rem); flex: 0 0 38px; }
+
+/* Light theme: the phone's, the details' and Up next's rating pills sit on the
+   light surface too (styles.css, "LIGHT THEME POLISH"). */
+html:not(.dark) .m-sc, html:not(.dark) .m-lrow .m-sc { background: var(--card); border-color: var(--border); }
+html:not(.dark) .m-sc.imdb, html:not(.dark) .m-sc.rt { color: var(--foreground); }
+html:not(.dark) .m-sc.none { color: var(--muted-foreground); }

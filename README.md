@@ -90,7 +90,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   piece of text, and the controls around it, except the Spatial cards (zoom
   the canvas for those); controls never get smaller than the default,
   saved on the device. A larger default font size in the browser enlarges the
-  app's text too. The default size has no informative text under 12px.
+  app's text too. On an iPhone or iPad it starts from the system Text Size
+  (the two smallest steps → Small, xLarge and up → Large) until a size is
+  picked in Settings. The default size has no informative text under 12px.
 - Settings (the gear in the desktop toolbar and the phone app bar; a panel
   from the right on desktop, a sheet on phones), laid out like a phone's own
   settings app in grouped lists: theme (a Light / Dark / Auto segmented
@@ -100,6 +102,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   (reset guide progress, show the welcome again, clear everything saved in
   this browser, with a confirmation). Changes apply at once. Signed-in
   visitors' settings sync to their account; signed out, they stay on the device.
+  On desktop, D and L switch to the dark and light themes (not while typing or
+  in a menu), and opening a title closes Settings so its details show (Settings
+  slides out, then the details slide in).
 - Desktop has Spatial and List views (switch at the end of the sort row). The
   List is one row per title with sortable column headers (title, phase, release,
   in-story years, IMDb, RT) that stay in step with the sort row; a row opens the
@@ -163,9 +168,15 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Spatial opens on the next stop,
   and `?guide=` shares it. The guide you are following reopens when you come
   back to the home page (until you close or finish it). Returning visitors
-  are offered one guide, once per guide on each device: one leading to a
-  release in the next 60 days (Avengers: Doomsday now), with a countdown,
-  or else The Infinity Saga essentials. Search suggests guides by name, a character
+  are offered one guide they haven't finished, once per guide on each device:
+  one leading to a release in the next 60 days (Avengers: Doomsday now), with
+  a countdown, else The Infinity Saga essentials, else the unfinished guide
+  closest to done. Finishing the guide for a release in the next 60 days
+  earns a "caught up" moment for it (confetti, the countdown, Share) before
+  any other guide is offered; someone who has finished every guide gets it
+  too, for the next release. Once per release. The choice waits for a
+  signed-in account's titles to load.
+  Search suggests guides by name, a character
   with a guide offers "See the curated path", and a title's details list the
   guides it belongs to ("Part of", a collapsible section: open, but closed
   while a guide is open; each case remembers its own choice for the visit). Finishing a guide's essential stops bursts
@@ -320,7 +331,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
 ## The data
 
 - **64 titles** spanning Phases 1–6, 2008–2027 (40 films, 24 series)
-- **84 characters**, connecting titles through shared character identities
+- **102 characters**, connecting titles through shared character identities
 - Posters and actor portraits sourced from TMDB (credited in About with TMDB's
   notice; TMDB also asks for its logo there, not added yet)
 - A poster or portrait that fails to load falls back to generated art or the

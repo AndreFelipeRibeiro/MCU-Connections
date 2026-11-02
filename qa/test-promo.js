@@ -7,6 +7,14 @@
 // - Option C: countdown, numbered covers, the dated tile, Start or Continue;
 //   Not now, ×, Escape and phone Back close it; labels never overlap at 320,
 //   390 and desktop widths, in English and Portuguese;
+// - a finished guide is never offered: titles seen after ready (a session
+//   restoring) count, a guide finished while on screen is swapped for the
+//   next, the unfinished guide closest to finished comes after the evergreen
+//   one; finishing the guide for a release in the next 60 days earns the
+//   caught-up moment for that release even with other guides unfinished, and
+//   with every guide finished it shows too, however far off the release (or
+//   with none); once per release (countdown, confetti, Share; Escape and Back
+//   close it);
 // - the guide a person opens is reopened on the home page, forgotten when they
 //   close it or finish it, and a link in the address wins without forgetting.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
@@ -151,8 +159,22 @@ const labelsOverlap = (page) => page.evaluate(() => {
     out.secondVisit = p;
     expect(p && p.guide === 'The Infinity Saga essentials', `second visit promoted ${p && p.guide}, expected the evergreen guide`);
     await page.locator('.gp-later').click(); await page.waitForTimeout(400);
+    // Later visits offer the other unfinished guides, closest to finished
+    // first, each once, then nothing.
+    const offered = ['Catch up before Avengers: Doomsday', 'The Infinity Saga essentials'];
+    const total = await page.evaluate(() => window.GUIDES.length);
+    for (let visit = 3; visit <= total + 1; visit++) {
+      await page.reload(); await settle(page);
+      p = await promoState(page);
+      if (!p) break;
+      expect(offered.indexOf(p.guide) === -1, `visit ${visit}: offered ${p.guide} again`);
+      offered.push(p.guide);
+      await page.locator('.gp-later').click(); await page.waitForTimeout(400);
+    }
+    out.offeredInTurn = offered;
+    expect(offered.length === total, `offered ${offered.length} of ${total} guides before stopping: ${offered.join(' | ')}`);
     await page.reload(); await settle(page);
-    expect(!(await promoState(page)), 'third visit: promoted again although every candidate was shown');
+    expect(!(await promoState(page)), 'promoted again although every guide was offered');
     // Start from a fresh device: opens the guide, remembers it, reopens it.
     await seed(page, storage());
     await page.goto(URL); await settle(page);
@@ -194,10 +216,21 @@ const labelsOverlap = (page) => page.evaluate(() => {
     await seed(page, storage());
     await page.goto(URL + '?title=iron-man'); await settle(page);
     expect(!(await promoState(page)), 'promoted on a visit that started from a ?title= link');
-    await seed(page, storage({ seen: DOOM_ESS }));
+    // Doomsday's guide finished, the others not (Andre's account, 2026-11-02):
+    // the caught-up moment for Doomsday, once, then the evergreen guide.
+    await seed(page, storage({ seen: DOOM_ESS, extra: { 'mcu.celebrations.v1': 'off' } }));
     await page.goto(URL); await settle(page);
-    const p = await promoState(page);
-    expect(p && p.guide === 'The Infinity Saga essentials', `with Doomsday's guide complete, promoted ${p && p.guide}`);
+    let p = await promoState(page);
+    const ready = await page.evaluate(() => {
+      const d = document.querySelector('.gp.caught');
+      return d && { body: d.querySelector('.gp-b').textContent, share: (d.querySelector('.gp-share') || {}).getAttribute ? d.querySelector('.gp-share').getAttribute('aria-label') : null };
+    });
+    out.readyMoment = ready;
+    expect(ready && ready.body === "You've seen everything you need before Avengers: Doomsday.", `with Doomsday's guide complete: ${JSON.stringify(ready || p)}`);
+    expect(ready && ready.share === 'Share that you finished this guide', `ready moment's Share label: ${ready && ready.share}`);
+    await page.reload(); await settle(page);
+    p = await promoState(page);
+    expect(p && p.guide === 'The Infinity Saga essentials', `after the ready moment, promoted ${p && p.guide}`);
     // A completed remembered guide is forgotten rather than reopened.
     await seed(page, storage({ seen: DOOM_ESS, extra: { 'mcu.guide.v1': 'before-doomsday', 'mcu.promoted.v1': '["infinity-saga"]' } }));
     await page.goto(URL); await settle(page);
@@ -251,6 +284,115 @@ const labelsOverlap = (page) => page.evaluate(() => {
     expect(o.maxLines <= (opts === DESK ? 2 : 1), `${label}: a cover label takes ${o.maxLines} lines`);
     expect(!o.wide, `${label}: the page scrolls sideways`);
     if (lang === 'pt-BR' && p) expect(/^Começar o guia$|^Continuar/.test(p.go), `${label}: button reads "${p.go}"`);
+    errors.push(...e);
+    await ctx.close();
+  }
+
+  // ---- A finished guide is never offered (Notion V4 Tasks, "Don't promote a
+  // guide that the user has already finished") ---------------------------------
+  const guideName = (page, id) => page.evaluate((g) => window.MCU_GUIDE.name(window.MCU_GUIDE.get(g)), id);
+  const markSeen = (page, ids) => page.evaluate((list) => list.forEach(id => window.MCU_COLLECTION.setStatus(id, 'seen')), ids);
+  const QUIET = { 'mcu.celebrations.v1': 'off' };
+  // Seen titles arriving after ready but before the pick (a session restoring,
+  // a sync landing): the pick reads them when it fires, not when it started.
+  {
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, '2026-11-01');
+    await seed(page, storage({ extra: QUIET }));
+    await page.goto(URL); await require('./ready').appReady(page, 0);
+    await markSeen(page, DOOM_ESS);
+    await page.waitForTimeout(2200);
+    const p = await promoState(page);
+    out.lateArrival = p && p.guide;
+    expect(p && p.guide === "You're all caught up", `titles seen after ready: showed ${p && p.guide}, expected the caught-up moment for Doomsday`);
+    errors.push(...e);
+    await ctx.close();
+  }
+  // Finished while it is on screen (signing in, a sync): swapped for the next.
+  {
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, '2026-11-01');
+    await seed(page, storage({ extra: QUIET }));
+    await page.goto(URL); await settle(page);
+    let p = await promoState(page);
+    expect(p && p.guide === 'Catch up before Avengers: Doomsday', `swap: first promoted ${p && p.guide}`);
+    await markSeen(page, DOOM_ESS); await page.waitForTimeout(500);
+    p = await promoState(page);
+    out.swapped = p && p.guide;
+    expect(p && p.guide === "You're all caught up", `finished while shown: now ${p && p.guide}, expected the caught-up moment for Doomsday`);
+    errors.push(...e);
+    await ctx.close();
+  }
+  // Nothing coming up and the evergreen guide finished: the unfinished guide
+  // closest to finished. With the Infinity Saga's essentials seen, the
+  // Avengers guide has one left (Age of Ultron).
+  {
+    const INFINITY_ESS = ['iron-man', 'cap-first-avenger', 'avengers', 'cap-winter-soldier', 'gotg', 'civil-war', 'thor-ragnarok', 'black-panther', 'infinity-war', 'endgame'];
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, '2027-02-01');
+    await seed(page, storage({ seen: INFINITY_ESS }));
+    await page.goto(URL); await settle(page);
+    const p = await promoState(page);
+    const want = await guideName(page, 'avengers');
+    out.closest = p && p.guide;
+    expect(p && p.guide === want, `closest to finished: promoted ${p && p.guide}, expected ${want}`);
+    expect(p && p.countdown === 'Guide · picked for you', `closest to finished: band reads "${p && p.countdown}"`);
+    errors.push(...e);
+    await ctx.close();
+  }
+  // Every guide finished: the caught-up moment, once per release, with the
+  // countdown to Doomsday, confetti and Share; Escape closes it and focus
+  // returns; phones close it with Back; Portuguese.
+  for (const [label, opts, lang] of [['desk-en', DESK, 'en'], ['phone-pt', PHONE, 'pt-BR']]) {
+    const { ctx, page, errors: e } = await ctxPage(browser, opts, '2026-11-01');
+    await seed(page, storage({ lang }));
+    await page.goto(URL); await require('./ready').appReady(page, 0);
+    const all = await page.evaluate(() => [...new Set(window.GUIDES.flatMap(g => g.stops.filter(s => s.weight === 'essential').map(s => s.id)))]);
+    await seed(page, storage({ lang, seen: all }));
+    await page.goto(URL); await require('./ready').appReady(page, 0);
+    const confetti = await page.waitForSelector('.mcu-confetti', { timeout: 4000 }).then(() => true, () => false);
+    await page.waitForTimeout(800);
+    const c = await page.evaluate(() => {
+      const d = document.querySelector('.gp.caught');
+      return d ? {
+        h: d.querySelector('.gp-h').textContent, band: d.querySelector('.gp-cd').textContent,
+        done: d.querySelectorAll('.gp-n.done').length, covers: d.querySelectorAll('.gp-st:not(.dest):not(.more)').length,
+        dest: !!d.querySelector('.gp-st.dest'), share: !!d.querySelector('.gp-share'), key: localStorage.getItem('mcu.promoted.v1'),
+        body: d.querySelector('.gp-b').textContent,
+      } : null;
+    });
+    out['caughtUp_' + label] = { ...c, confetti };
+    const h = lang === 'en' ? "You're all caught up" : 'Você está em dia';
+    expect(c && c.h === h, `${label}: caught-up heading "${c && c.h}"`);
+    expect(c && /^47 /.test(c.band), `${label}: caught-up countdown "${c && c.band}"`);
+    expect(c && c.covers > 0 && c.done === c.covers && c.dest, `${label}: the featured guide is not shown complete with its destination: ${JSON.stringify(c)}`);
+    expect(c && c.share, `${label}: no Share button`);
+    expect(c && /caught-up:doomsday/.test(c.key || ''), `${label}: not remembered per release: ${c && c.key}`);
+    const body = lang === 'en' ? "You've seen everything you need before Avengers: Doomsday." : 'Você já viu tudo o que precisa antes de Vingadores: Doomsday.';
+    expect(c && c.body === body, `${label}: caught-up body "${c && c.body}"`);
+    expect(confetti, `${label}: no confetti`);
+    if (opts === DESK) {
+      await page.keyboard.press('Escape'); await page.waitForTimeout(400);
+    } else {
+      await page.goBack(); await page.waitForTimeout(600);
+    }
+    expect(!(await page.$('.gp.caught')), `${label}: ${opts === DESK ? 'Escape' : 'Back'} did not close the caught-up moment`);
+    await page.reload(); await settle(page);
+    expect(!(await page.$('.gp')), `${label}: the caught-up moment came back on the next visit`);
+    errors.push(...e);
+    await ctx.close();
+  }
+
+  // Every guide finished with no guide's release in the next 60 days: the
+  // caught-up moment still comes, naming the next release, or none.
+  for (const [date, want] of [['2026-10-01', "You've finished every guide. Get ready for Avengers: Doomsday."],
+                              ['2027-02-01', "You've finished every guide. We'll have a new one for the next release."]]) {
+    const { ctx, page, errors: e } = await ctxPage(browser, DESK, date);
+    await seed(page, storage());
+    await page.goto(URL); await require('./ready').appReady(page, 0);
+    const all = await page.evaluate(() => [...new Set(window.GUIDES.flatMap(g => g.stops.filter(s => s.weight === 'essential').map(s => s.id)))]);
+    await seed(page, storage({ seen: all, extra: { 'mcu.celebrations.v1': 'off' } }));
+    await page.goto(URL); await settle(page);
+    const body = await page.evaluate(() => { const b = document.querySelector('.gp.caught .gp-b'); return b && b.textContent; });
+    out['allDone_' + date] = body;
+    expect(body === want, `every guide finished on ${date}: "${body}"`);
     errors.push(...e);
     await ctx.close();
   }

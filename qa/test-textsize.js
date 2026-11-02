@@ -16,6 +16,14 @@
 //     1280px at the default size.
 //   - Desktop at 200% browser zoom (a 720px-wide layout) stays usable: no
 //     sideways scroll, nothing in the app bar past the edge.
+//   - On an iPhone or iPad, until a size is picked, Text size starts from the
+//     system Text Size (Notion V4 Tasks, "Text size: start from the iPhone's
+//     system Text Size"): 15px or less → Small, 16–17 → Default, 19 and up →
+//     Large, before the first paint; Settings shows it and says so; a choice
+//     (Default included) is saved and wins; a change in iOS while the app was
+//     in the background shows when it comes back; nothing happens off iOS.
+//     Headless Chromium has no Dynamic Type, so the check plays an iPhone: its
+//     user agent, and the system font's size answered by a stand-in.
 // Every failed expectation lands in `errors`, which is what regress.sh gates on.
 const QA_PORT = +process.env.PORT || 8305;
 const { chromium } = require('playwright');
@@ -137,8 +145,79 @@ const SCAN = () => {
     await page.locator('.toolbar .settings-btn').click(); await page.waitForTimeout(500);
     await page.locator('.settings-panel').getByRole('radiogroup', { name: 'Text size' }).getByRole('radio', { name: 'Default' }).click(); await page.waitForTimeout(150);
     const back = await sizes();
-    expect(back.attr === null && back.root === 16 && await page.evaluate(() => localStorage.getItem('mcu.textSize.v1')) === null, 'Default did not clear the setting ' + JSON.stringify(back));
+    expect(back.attr === null && back.root === 16 && await page.evaluate(() => localStorage.getItem('mcu.textSize.v1')) === 'default', 'Default was not saved as a choice ' + JSON.stringify(back));
     await ctx.close();
+  }
+
+  // ---- iPhone: starts from the system Text Size ------------------------------
+  {
+    const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+    // The stand-in: WebKit's -apple-system-body follows Dynamic Type; here
+    // window.__sysPx plays its size, read the way the app reads it.
+    const fakeIOS = (px) => `window.__sysPx = ${px};
+      (function () {
+        var sup = CSS.supports.bind(CSS);
+        CSS.supports = function (a, b) { return (a === 'font' && b === '-apple-system-body') || sup.apply(null, arguments); };
+        var gcs = window.getComputedStyle;
+        window.getComputedStyle = function (el, ps) {
+          if (el && el.getAttribute && el.getAttribute('data-probe') === 'system-body') return { fontSize: window.__sysPx + 'px' };
+          return gcs.call(window, el, ps);
+        };
+      })();`;
+    const IPHONE = { ...PHONE, userAgent: IPHONE_UA };
+    // The first paint: the attribute is already there when the body arrives.
+    const firstPaint = `document.addEventListener('DOMContentLoaded', function () { window.__attrAtLoad = document.documentElement.getAttribute('data-text-size'); });`;
+    const state = (page) => page.evaluate(() => ({
+      attr: document.documentElement.getAttribute('data-text-size'), atLoad: window.__attrAtLoad,
+      root: parseFloat(getComputedStyle(document.documentElement).fontSize), saved: localStorage.getItem('mcu.textSize.v1'),
+    }));
+    for (const [px, attr] of [[14, 'small'], [15, 'small'], [16, null], [17, null], [19, 'large'], [23, 'large'], [40, 'large']]) {
+      const { ctx, page } = await open(IPHONE, fakeIOS(px) + firstPaint);
+      await go(page, '');
+      const st = await state(page);
+      out['ios ' + px] = st;
+      expect(st.attr === attr && st.atLoad === attr && st.saved === null, `iOS body ${px}px: Text size ${JSON.stringify(st)}, expected ${attr || 'default'} from the first paint, nothing saved`);
+      await ctx.close();
+    }
+    // Settings shows it and says where it came from; a choice wins and stays.
+    {
+      const { ctx, page } = await open(IPHONE, fakeIOS(21));
+      await go(page, '');
+      await page.locator('.m-settings-btn').click(); await page.waitForTimeout(600);
+      const group = page.getByRole('radiogroup', { name: 'Text size' });
+      const checked = await group.getByRole('radio', { checked: true }).textContent();
+      const note = await page.getByText('Matches the Text Size set on this device until you pick one.').count();
+      out.iosSettings = { checked, note };
+      expect(checked.trim() === 'Large' && note === 1, 'iOS at xxLarge: Settings should show Large and say it follows the device ' + JSON.stringify(out.iosSettings));
+      await group.getByRole('radio', { name: 'Default', exact: true }).click(); await page.waitForTimeout(200);
+      let st = await state(page);
+      expect(st.attr === null && st.saved === 'default', 'picking Default over the iOS size ' + JSON.stringify(st));
+      expect(await page.getByText('Matches the Text Size set on this device until you pick one.').count() === 0, 'the "matches this device" note stayed after a choice');
+      await page.reload(); await ready(page);
+      st = await state(page);
+      out.iosChoice = st;
+      expect(st.attr === null && st.root === 16, 'the choice did not win over iOS after a reload ' + JSON.stringify(st));
+      await ctx.close();
+    }
+    // A change in iOS while the app was in the background.
+    {
+      const { ctx, page } = await open(IPHONE, fakeIOS(17));
+      await go(page, '');
+      await page.evaluate(() => { window.__sysPx = 21; document.dispatchEvent(new Event('visibilitychange')); });
+      await page.waitForTimeout(200);
+      const st = await state(page);
+      out.iosLater = st;
+      expect(st.attr === 'large' && st.saved === null, 'iOS Text Size changed in the background did not show ' + JSON.stringify(st));
+      await ctx.close();
+    }
+    // Off iOS the system font is never asked: an Android phone, and a desktop.
+    for (const [label, opts] of [['android', PHONE], ['desktop', DESK]]) {
+      const { ctx, page } = await open(opts, fakeIOS(23));
+      await go(page, '');
+      const st = await state(page);
+      expect(st.attr === null, `${label}: took a size from the iOS system font ${JSON.stringify(st)}`);
+      await ctx.close();
+    }
   }
 
   // ---- Phone sizes: body, bottom nav, search ---------------------------------

@@ -210,21 +210,64 @@ Object.assign(MCU_GUIDE, {
     const d = (iso) => { const [y, m, dd] = iso.split('-').map(Number); return Date.UTC(y, m - 1, dd); };
     return Math.round((d(to) - d(from)) / 86400000);
   },
-  // Which guide to promote today: one leading to a release in the next 60 days
-  // (the sooner release first), else the evergreen guide. Guides already
-  // promoted on this device or already complete are skipped.
-  promotion(statusOf, today) {
-    const shown = readIdList(PROMOTED_KEY);
-    const ok = (g) => shown.indexOf(g.id) === -1 && !MCU_GUIDE.progress(g, statusOf).complete;
-    const coming = MCU_GUIDE.all()
+  // Essential stops released and not yet seen (skipped ones don't count).
+  remaining(g, statusOf) {
+    const p = MCU_GUIDE.progress(g, statusOf);
+    return p.ess.released - p.ess.seen;
+  },
+  // Nothing left to watch today: every released essential stop seen. A guide
+  // whose stops are all still to come counts as finished for now.
+  finished(g, statusOf) { return MCU_GUIDE.remaining(g, statusOf) === 0; },
+  // A guide's place in the Guides menu (its group, then the catalog order).
+  menuOrder(g) {
+    const all = MCU_GUIDE.all();
+    const grp = GUIDE_GROUPS.indexOf(g.group || 'stories');
+    return (grp < 0 ? GUIDE_GROUPS.length : grp) * 1000 + all.indexOf(g);
+  },
+  // Guides leading to a dated release still ahead, the soonest first.
+  comingUp(today) {
+    return MCU_GUIDE.all()
       .map(g => ({ guide: g, title: MCU_GUIDE.upcomingTitle(g) }))
       .filter(x => x.title)
       .map(x => ({ ...x, days: MCU_GUIDE.daysBetween(today, x.title.release) }))
-      .filter(x => x.days >= 1 && x.days <= PROMO_LEAD_DAYS && ok(x.guide))
-      .sort((a, b) => a.days - b.days);
-    if (coming.length) return coming[0];
+      .filter(x => x.days >= 1)
+      .sort((a, b) => a.days - b.days || MCU_GUIDE.menuOrder(a.guide) - MCU_GUIDE.menuOrder(b.guide));
+  },
+  // What to promote today (Notion V4 Tasks, "Don't promote a guide that the
+  // user has already finished"), never a guide already promoted on this device
+  // or with nothing left to watch:
+  //   1. one leading to a release in the next 60 days, the sooner first;
+  //   2. else, when the guide for a release in the next 60 days is finished,
+  //      the caught-up moment for that release: the guide shown complete,
+  //      its countdown, and Share (`ready`). Finishing that one guide earns
+  //      it; the others needn't be done;
+  //   3. else the evergreen guide;
+  //   4. else any other unfinished guide, the closest to finished first
+  //      (fewest essential stops left; ties in the Guides menu's order);
+  //   5. else, when every guide is finished, the caught-up moment for the
+  //      next dated release however far off (or with no countdown, if no
+  //      release ahead has a date).
+  // A caught-up moment comes once per release per device. `key` is what
+  // markPromoted() remembers.
+  promotion(statusOf, today) {
+    const shown = readIdList(PROMOTED_KEY);
+    const ok = (g) => shown.indexOf(g.id) === -1 && !MCU_GUIDE.finished(g, statusOf);
+    const ahead = MCU_GUIDE.comingUp(today);
+    const coming = ahead.filter(x => x.days <= PROMO_LEAD_DAYS && ok(x.guide));
+    if (coming.length) return { ...coming[0], key: coming[0].guide.id };
+    const readyFor = ahead.find(x => x.days <= PROMO_LEAD_DAYS && MCU_GUIDE.finished(x.guide, statusOf)
+      && shown.indexOf('caught-up:' + x.title.id) === -1);
+    if (readyFor) return { ...readyFor, caughtUp: true, ready: true, key: 'caught-up:' + readyFor.title.id };
     const ever = MCU_GUIDE.all().find(g => g.evergreen && ok(g));
-    return ever ? { guide: ever, title: null, days: null } : null;
+    if (ever) return { guide: ever, title: null, days: null, key: ever.id };
+    const rest = MCU_GUIDE.all().filter(ok)
+      .sort((a, b) => MCU_GUIDE.remaining(a, statusOf) - MCU_GUIDE.remaining(b, statusOf) || MCU_GUIDE.menuOrder(a) - MCU_GUIDE.menuOrder(b));
+    if (rest.length) return { guide: rest[0], title: null, days: null, key: rest[0].id };
+    if (!MCU_GUIDE.all().every(g => MCU_GUIDE.finished(g, statusOf))) return null;
+    const next = ahead[0] || null;
+    const key = 'caught-up:' + (next ? next.title.id : 'all');
+    if (shown.indexOf(key) !== -1) return null;
+    return next ? { ...next, caughtUp: true, key } : { guide: null, title: null, days: null, caughtUp: true, key };
   },
 });
 
@@ -994,6 +1037,100 @@ function promoDateParts(iso, longMonth) {
 }
 
 function GuidePromo({ promo, touch, onStart, onClose }) {
+  if (promo.caughtUp) return <GuideCaughtUp promo={promo} touch={touch} onClose={onClose}/>;
+  return <GuidePromoOffer promo={promo} touch={touch} onStart={onStart} onClose={onClose}/>;
+}
+
+// The countdown band shared by the offer and the caught-up moment.
+function PromoCountdown({ target, days, touch, label }) {
+  if (!target) return <div className="gp-cd" id="gp-cd"><span className="gp-lab"><i aria-hidden="true"/>{label}</span></div>;
+  const date = promoDateParts(target.release, !touch);
+  return (
+    <div className="gp-cd" id="gp-cd">
+      <span className={`gp-big${days === 1 ? ' word' : ''}`}>{days === 1 ? gtr('guide.promoTomorrow') : days}</span>{' '}
+      <span className="gp-cdt">
+        {days !== 1 && <><b>{gtr('guide.promoDays', { n: days })}</b>{' '}</>}
+        {gtr('guide.promoUntil', { title: GI18N.titleName(target), date: date.full })}
+      </span>
+    </div>
+  );
+}
+
+// Every guide finished (Notion V4 Tasks, "Don't promote a guide that the user
+// has already finished"): the same dialog, as a celebration. Confetti (which
+// follows Settings' Celebrations and reduced motion), the guide for the next
+// dated release shown complete with its countdown, and Share: that guide's
+// card, or the progress card when no release ahead has a date.
+function GuideCaughtUp({ promo, touch, onClose }) {
+  const { statusOf, progress } = window.useCollection();
+  window.useI18n();
+  const PosterArt = window.PosterArt;
+  const g = promo.guide, target = promo.title, days = promo.days;
+  React.useEffect(() => { window.burstConfetti(); }, []);
+  const ess = g ? MCU_GUIDE.stops(g, false) : [];
+  const cap = target ? 5 : 6;
+  const shown = ess.length > cap ? ess.slice(0, cap - 1) : ess;
+  const more = ess.length - shown.length;
+  const date = target ? promoDateParts(target.release, !touch) : null;
+  const when = target ? (days === 1 ? gtr('guide.promoTomorrow') : gtr('guide.promoIn', { n: days })) : '';
+  const share = g
+    ? <window.ShareButton className="share-btn primary gp-go gp-share" text={gtr('share.button')} label={gtr(promo.ready ? 'guide.caughtUpShareReady' : 'guide.caughtUpShare')}
+        payload={() => guideSharePayload(g, statusOf)} onShare={() => { onClose(); openGuideCard(g, statusOf); }}/>
+    : <window.ShareButton className="share-btn primary gp-go gp-share" text={gtr('share.button')} label={gtr('guide.caughtUpShare')}
+        payload={() => ({ text: gtr('share.progressText', { n: progress.seenReleased, total: progress.releasedTotal }) })}
+        onShare={() => { onClose(); window.MCU_SHARE_IMAGE.progress(progress.seenReleased, progress.releasedTotal); }}/>;
+  const close = <button type="button" className="nudge-later gp-later" onClick={onClose}>{gtr('guide.caughtUpClose')}</button>;
+  const body = (
+    <div className={`gp caught${touch ? ' touch' : ''}`} style={{ '--gc': (g && g.color) || '#4a6da3' }}>
+      <div className="gp-band">
+        <PromoCountdown target={target} days={days} touch={touch} label={gtr(promo.ready ? 'guide.caughtUpLabelReady' : 'guide.caughtUpLabel')}/>
+      </div>
+      {g && (
+        <ol className="gp-strip" aria-label={gtr('guide.promoStops')}>
+          {shown.map(s => (
+            <li key={s.id} className="gp-st seen">
+              <span className="gp-p" aria-hidden="true">
+                <span className="gp-art"><PosterArt title={s.title}/></span>
+                <span className="gp-n done"><window.CheckIcon/></span>
+              </span>
+              <span className="gp-t" aria-hidden="true">{promoCoverName(s.title, touch)}</span>
+              <span className="story-sr">{gtr('guide.promoStopSeenAria', { title: GI18N.titleName(s.title), i: s.n })}</span>
+            </li>
+          ))}
+          {more > 0 && (
+            <li className="gp-st more">
+              <span className="gp-p" aria-hidden="true">+{more}</span>
+              <span className="story-sr">{gtr('guide.promoMore', { n: more })}</span>
+            </li>
+          )}
+          {target && <li className="gp-arr" aria-hidden="true">→</li>}
+          {target && (
+            <li className="gp-st dest">
+              <span className="gp-p" aria-hidden="true"><b>{GI18N.upper(date.mon)}</b><b>{date.day}</b><small>{GI18N.upper(when)}</small></span>
+              <span className="gp-t" aria-hidden="true">{promoCoverName(target, touch)}</span>
+              <span className="story-sr">{gtr('guide.promoDestAria', { title: GI18N.titleName(target), date: date.full, when })}</span>
+            </li>
+          )}
+        </ol>
+      )}
+      <div className="gp-body">
+        <h2 id="gp-title" className="gp-h">{gtr('guide.caughtUp')}</h2>
+        <p className="gp-b">{!target ? gtr('guide.caughtUpBodyNone')
+          : gtr(promo.ready ? 'guide.caughtUpBodyReady' : 'guide.caughtUpBody', { title: GI18N.titleName(target) })}</p>
+        <div className="gp-foot">
+          {g && <span className="gp-meta">{gtr('guide.complete')}</span>}
+          {!touch && close}
+          {share}
+          {touch && close}
+        </div>
+      </div>
+    </div>
+  );
+  if (touch) return <window.Sheet onClose={onClose} labelledBy="gp-title" describedBy="gp-cd" className="promo-sheet">{body}</window.Sheet>;
+  return <window.ModalDialog onClose={onClose} labelledBy="gp-title" describedBy="gp-cd" className="promo-dialog">{body}</window.ModalDialog>;
+}
+
+function GuidePromoOffer({ promo, touch, onStart, onClose }) {
   const { statusOf } = window.useCollection();
   useGuideSkips();
   window.useI18n();
@@ -1014,17 +1151,7 @@ function GuidePromo({ promo, touch, onStart, onClose }) {
   const body = (
     <div className={`gp${touch ? ' touch' : ''}`} style={{ '--gc': g.color || '#4a6da3' }}>
       <div className="gp-band">
-        {target ? (
-          <div className="gp-cd" id="gp-cd">
-            <span className={`gp-big${days === 1 ? ' word' : ''}`}>{days === 1 ? gtr('guide.promoTomorrow') : days}</span>{' '}
-            <span className="gp-cdt">
-              {days !== 1 && <><b>{gtr('guide.promoDays', { n: days })}</b>{' '}</>}
-              {gtr('guide.promoUntil', { title: GI18N.titleName(target), date: date.full })}
-            </span>
-          </div>
-        ) : (
-          <div className="gp-cd" id="gp-cd"><span className="gp-lab"><i aria-hidden="true"/>{gtr('guide.promoEvergreen')}</span></div>
-        )}
+        <PromoCountdown target={target} days={days} touch={touch} label={gtr(g.evergreen ? 'guide.promoEvergreen' : 'guide.promoPick')}/>
       </div>
       <ol className="gp-strip" aria-label={gtr('guide.promoStops')}>
         {shown.map(s => {

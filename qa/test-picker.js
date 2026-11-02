@@ -151,6 +151,14 @@ const grid = page => page.evaluate(() => ({
   ({ ctx, page, errors } = await ctxPage(browser, DESKTOP, seedJs({ [a]: 'seen', [b]: 'seen', [c]: 'watchlist' })));
   await page.goto(URL + '?view=list'); await settle(page);
   await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
+  // The button's two lines keep clear of its edges (Notion V4 Tasks, "Account
+  // menu: Mark what you've seen text sits too close to the button's edges").
+  const pad = await page.evaluate(() => {
+    const btn = document.querySelector('.acct-pick'), t = btn.querySelector('.acct-pick-text');
+    const r = btn.getBoundingClientRect(), q = t.getBoundingClientRect();
+    return { top: Math.round(q.top - r.top), bottom: Math.round(r.bottom - q.bottom) };
+  });
+  if (!(pad.top >= 6 && pad.bottom >= 6)) err(`account menu: "Mark what you've seen" text sits ${pad.top}px / ${pad.bottom}px from the button's edges`);
   await page.locator('.acct-pick').click(); await page.waitForTimeout(600);
   g = await grid(page);
   if (g.on.sort().join() !== [a, b].sort().join()) err(`later: ${g.on.join()} start ticked, expected ${a},${b}`);

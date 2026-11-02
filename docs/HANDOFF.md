@@ -91,7 +91,7 @@ delivered, not how its pieces are shared: each file publishes its components on
 the surface 15 QA checks read — and it is typed in `src/types/globals.d.ts`.
 Replacing it with real imports is a later ticket.
 
-- **Data:** `src/data/data.ts` holds the catalog (64 titles, 89 characters,
+- **Data:** `src/data/data.ts` holds the catalog (64 titles, 102 characters,
   permanent ids, variant links, synopses per language); `src/data/media-data.ts`
   holds TMDB poster and portrait paths. Their shapes are typed in
   `src/types/catalog.ts`, checked against the data itself.
@@ -165,6 +165,7 @@ work:
   (`MODE=watch`) also never took effect, because the script read only argv.
 - **Text has one scale, in rem** (`--fs-*` in `src/index.css`), and Settings'
   Text size sets `data-text-size` on `<html>` (Small 87.5%; Large 106.25% on desktop and 112.5% on phones, where body text is 14px and the bottom nav and search grow only to 106.25%).
+  Until a size is picked, an iPhone or iPad starts from the system Text Size, read through the WebKit font `-apple-system-body` (`systemTextSize()` in `src/app/settings.tsx`, with its before-paint copy in `vite.config.js`); only a choice is saved, Default included. Verified only with a simulated iPhone: a real one with its Text Size changed is still to check.
   Controls grow with it: their heights are `max(Npx, N/16 rem)` (and
   Tailwind's spacing unit `max(0.25rem, 4px)`), so they grow at Large and never
   shrink below today's size, touch targets included. Write new sizes

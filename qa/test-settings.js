@@ -5,6 +5,11 @@
 //   - Desktop: Settings takes the details drawer's place and gives it back on
 //     close. Keyboard: Enter on the gear focuses the panel's heading; Escape
 //     closes an open select first, then the panel, with focus back on the gear.
+//   - Opening a title (a card, the card already open behind it, a List row)
+//     closes Settings and shows its details: Settings slides out first, then
+//     the details slide in.
+//   - Desktop: D and L switch to dark and light (not while typing, not on the
+//     phone layout), announced to screen readers and mentioned in Settings.
 //   - Every setting takes effect at once and survives a reload: theme,
 //     language, region, motion, celebrations.
 //   - Device actions: reset guide progress, show the welcome again, clear this
@@ -139,6 +144,95 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await page.locator('.settings-panel button', { hasText: 'Show the welcome again' }).click(); await page.waitForTimeout(500);
     expect(await page.locator('.about-dialog .welcome-lang').count() === 1, 'show welcome: the welcome did not open');
     await ctx.close();
+  }
+
+  // ---- Opening a title closes Settings (Notion V4 Tasks, "Close Settings
+  // when a title is opened"): Spatial card, the card already open behind it,
+  // a List row, and a search pick -------------------------------------------
+  {
+    const { ctx, page } = await open(DESK);
+    const state = () => page.evaluate(() => ({
+      settings: !!document.querySelector('.settings-panel'),
+      drawer: document.querySelector('.drawer.open') ? (document.querySelector('.drawer.open h2, .drawer.open .td-title') || {}).textContent : null,
+    }));
+    const gear = async () => { await page.locator('.settings-btn').click(); await page.waitForTimeout(400); };
+    // A real click where the card is on screen (the canvas, not the card, takes
+    // pointer events once a card is selected).
+    const clickCard = async (id) => {
+      await page.waitForTimeout(700);
+      const b = await page.locator(`.card[data-id="${id}"]`).boundingBox();
+      await page.mouse.click(b.x + b.width / 2, b.y + b.height * 0.8); await page.waitForTimeout(1000);
+    };
+    // Every frame's left edge of Settings and of the drawer (null: not there).
+    const record = () => page.evaluate(() => {
+      window.__seq = [];
+      const f = () => {
+        const sp = document.querySelector('.settings-panel'), d = document.querySelector('.drawer');
+        window.__seq.push({ s: sp ? Math.round(sp.getBoundingClientRect().left) : null, d: d ? Math.round(d.getBoundingClientRect().left) : null });
+        if (window.__seq.length < 90) requestAnimationFrame(f);
+      };
+      requestAnimationFrame(f);
+    });
+    await page.goto(URL_BASE); await ready(page);
+    await gear();
+    await record();
+    await clickCard('incredible-hulk');
+    let st = await state();
+    out.cardClick = st;
+    expect(!st.settings && /Incredible Hulk/.test(st.drawer || ''), 'Spatial card click with Settings open: ' + JSON.stringify(st));
+    const seq = await page.evaluate(() => window.__seq);
+    const W = DESK.viewport.width, X = W - 380;
+    const settingsSlid = seq.some(f => f.s !== null && f.s > X + 2 && f.s < W - 2);
+    const overlap = seq.filter(f => f.s !== null && f.d !== null).length;
+    const drawerSlid = seq.some(f => f.s === null && f.d !== null && f.d > X + 2 && f.d < W - 2);
+    out.slide = { settingsSlid, overlap, drawerSlid, frames: seq.length };
+    expect(settingsSlid && !overlap && drawerSlid, 'Settings should slide out, then the details slide in: ' + JSON.stringify(out.slide));
+    await gear();
+    await clickCard('incredible-hulk');
+    st = await state();
+    out.sameCard = st;
+    expect(!st.settings && /Incredible Hulk/.test(st.drawer || ''), 'clicking the card already open behind Settings: ' + JSON.stringify(st));
+    await page.goto(URL_BASE + '?view=list'); await ready(page);
+    await gear();
+    await page.locator('.dl-row', { hasText: 'Iron Man 2' }).first().getByText('Iron Man 2', { exact: true }).click(); await page.waitForTimeout(1000);
+    st = await state();
+    out.listRow = st;
+    expect(!st.settings && /Iron Man 2/.test(st.drawer || ''), 'List row click with Settings open: ' + JSON.stringify(st));
+    await ctx.close();
+  }
+
+  // ---- D and L switch the theme on desktop (Notion V4 Tasks, "Desktop
+  // keyboard shortcut: D for dark mode, L for light mode") --------------------
+  {
+    const { ctx, page } = await open(DESK);
+    await page.goto(URL_BASE); await ready(page);
+    const theme = () => page.evaluate(() => ({ dark: document.documentElement.classList.contains('dark'), choice: localStorage.getItem('mcu.theme'), said: (document.querySelector('.theme-announce') || {}).textContent }));
+    await page.locator('body').click({ position: { x: 700, y: 600 } }); await page.keyboard.press('Escape');
+    await page.keyboard.press('d'); await page.waitForTimeout(200);
+    let t = await theme();
+    out.keyD = t;
+    expect(t.dark && t.choice === 'dark' && t.said === 'Dark mode', 'D did not switch to dark: ' + JSON.stringify(t));
+    await page.keyboard.press('l'); await page.waitForTimeout(200);
+    t = await theme();
+    out.keyL = t;
+    expect(!t.dark && t.choice === 'light' && t.said === 'Light mode', 'L did not switch to light: ' + JSON.stringify(t));
+    // Typing in search never switches it.
+    await page.locator('.toolbar .search-wrap input').first().click();
+    await page.keyboard.type('daredevil'); await page.waitForTimeout(200);
+    t = await theme();
+    expect(!t.dark, 'typing a d in search switched the theme');
+    await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+    // Settings mentions it.
+    await page.locator('.settings-btn').click(); await page.waitForTimeout(400);
+    expect(await page.locator('.settings-panel', { hasText: 'press D for dark or L for light' }).count() === 1, 'Settings does not mention the D / L shortcut');
+    await ctx.close();
+    // Not on the phone layout.
+    const ph = await open(PHONE);
+    await ph.page.goto(URL_BASE); await ready(ph.page);
+    const before = await ph.page.evaluate(() => document.documentElement.classList.contains('dark'));
+    await ph.page.keyboard.press(before ? 'l' : 'd'); await ph.page.waitForTimeout(200);
+    expect(await ph.page.evaluate(() => document.documentElement.classList.contains('dark')) === before, 'the phone layout switched theme on a key press');
+    await ph.ctx.close();
   }
 
   // ---- The Welcome's language choice --------------------------------------

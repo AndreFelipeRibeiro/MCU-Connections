@@ -67,14 +67,44 @@ function setMotion(next: Motion) {
 // (src/index.css). Kept on this device only (Andre: a phone and a laptop often
 // want different sizes), so it is not part of the synced snapshot below and
 // has its own listeners. vite.config.js sets it before the first paint.
+//
+// On an iPhone or iPad, until the visitor picks a size here, it starts from
+// the system Text Size (Notion V4 Tasks, "Text size: start from the iPhone's
+// system Text Size"). Safari doesn't apply that to web pages, but the WebKit
+// system font -apple-system-body follows it: 17px at the iOS default. Its
+// steps map by range onto the app's three sizes, nothing above Large:
+// 15px or less (xSmall, Small) → Small; 16–17 (Medium, the default) →
+// Default; 19 or more (xLarge up, the Accessibility sizes too) → Large.
+// Only a choice made here is saved (Default included), so a later change in
+// iOS keeps flowing through until then. Everywhere else the root stays at
+// the browser's own font size, through rem. vite.config.js holds the one
+// copy of this rule that runs before the first paint; keep the two alike.
 export type TextSize = 'small' | 'default' | 'large';
 const TEXT_SIZE_KEY = 'mcu.textSize.v1';
-const readTextSize = (): TextSize => {
+const readSavedTextSize = (): TextSize | null => {
   const v = read(TEXT_SIZE_KEY);
   // "larger" was a fourth step, dropped before release (Andre): it reads as Large.
-  return v === 'small' ? 'small' : v === 'large' || v === 'larger' ? 'large' : 'default';
+  return v === 'small' ? 'small' : v === 'large' || v === 'larger' ? 'large' : v === 'default' ? 'default' : null;
 };
-let textSize: TextSize = readTextSize();
+/** The size matching the system Text Size on an iPhone or iPad, or null
+ *  anywhere else (desktop Safari knows the font too, at macOS sizes). */
+function systemTextSize(): TextSize | null {
+  try {
+    const ua = navigator.userAgent;
+    const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    if (!ios || !(window.CSS && CSS.supports('font', '-apple-system-body'))) return null;
+    const probe = document.createElement('span');
+    probe.setAttribute('data-probe', 'system-body');
+    probe.style.cssText = 'position:absolute;visibility:hidden;font:-apple-system-body';
+    document.documentElement.appendChild(probe);
+    const px = parseFloat(getComputedStyle(probe).fontSize);
+    probe.remove();
+    return !px ? null : px <= 15 ? 'small' : px >= 19 ? 'large' : 'default';
+  } catch (e) { return null; }
+}
+let textSaved: TextSize | null = readSavedTextSize();
+let textSystem: TextSize | null = systemTextSize();
+let textSize: TextSize = textSaved || textSystem || 'default';
 const textListeners = new Set<() => void>();
 function applyTextSize() {
   const el = document.documentElement;
@@ -82,17 +112,30 @@ function applyTextSize() {
   else el.setAttribute('data-text-size', textSize);
 }
 applyTextSize();
-function setTextSize(next: TextSize) {
-  if (next === textSize) return;
+function showTextSize(next: TextSize) {
+  const changed = next !== textSize;
   textSize = next;
-  write(TEXT_SIZE_KEY, next === 'default' ? null : next);
-  applyTextSize();
+  if (changed) applyTextSize();
   textListeners.forEach((fn) => fn());
   // Layouts that measure their text (the phone collection row) fit again.
-  window.dispatchEvent(new Event('mcu:textsize'));
+  if (changed) window.dispatchEvent(new Event('mcu:textsize'));
 }
+function setTextSize(next: TextSize) {
+  textSaved = next;
+  write(TEXT_SIZE_KEY, next);
+  showTextSize(next);
+}
+// Still following iOS: a Text Size changed while the app was in the
+// background shows when it comes back.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || textSaved) return;
+  textSystem = systemTextSize();
+  if (textSystem && textSystem !== textSize) showTextSize(textSystem);
+});
 const subscribeText = (fn: () => void) => { textListeners.add(fn); return () => { textListeners.delete(fn); }; };
 const useTextSize = () => React.useSyncExternalStore(subscribeText, () => textSize);
+/** True while the size comes from the system Text Size (nothing picked here). */
+const useTextSizeFromSystem = () => React.useSyncExternalStore(subscribeText, () => !textSaved && !!textSystem);
 
 function setCelebrations(on: boolean) {
   if (on === celebrations) return;
@@ -402,12 +445,15 @@ function ActionRow({ children, onClick, tone, chevron, trailing, autoFocus }: {
   );
 }
 
-function SettingsBody({ onAbout, onShowWelcome, onClose }: {
+function SettingsBody({ onAbout, onShowWelcome, onClose, keyboard = false }: {
   onAbout: () => void; onShowWelcome: () => void; onClose: () => void;
+  /** Desktop: mention the D / L theme shortcut under Theme. */
+  keyboard?: boolean;
 }) {
   const { tr, languages } = window.useI18n();
   const prefs = usePreferences();
   const size = useTextSize();
+  const fromSystem = useTextSizeFromSystem();
   const [confirmClear, setConfirmClear] = React.useState(false);
   const [guidesReset, setGuidesReset] = React.useState(false);
   const regions = window.MCU_regionChoices();
@@ -415,7 +461,8 @@ function SettingsBody({ onAbout, onShowWelcome, onClose }: {
 
   return (
     <div className="flex flex-col gap-6 text-sm text-foreground">
-      <Section id="settings-appearance" title={tr('settings.appearance')}>
+      <Section id="settings-appearance" title={tr('settings.appearance')}
+        footnote={keyboard ? <Footnote>{tr('settings.themeShortcut')}</Footnote> : undefined}>
         <Segmented<ThemeChoice> label={tr('theme.label')} value={prefs.theme} onChange={setThemeChoice}
           options={[
             { value: 'light', label: tr('theme.light'), icon: <SunIcon aria-hidden="true"/> },
@@ -424,7 +471,8 @@ function SettingsBody({ onAbout, onShowWelcome, onClose }: {
           ]}/>
       </Section>
 
-      <Section id="settings-text-size" title={tr('settings.textSize')} footnote={<Footnote>{tr('settings.textSizeHint')}</Footnote>}>
+      <Section id="settings-text-size" title={tr('settings.textSize')}
+        footnote={<Footnote>{fromSystem ? tr('settings.textSizeSystem') + ' ' : ''}{tr('settings.textSizeHint')}</Footnote>}>
         <Segmented<TextSize> label={tr('settings.textSize')} value={size} onChange={setTextSize}
           options={[
             { value: 'small', label: tr('settings.textSmall') },
@@ -525,20 +573,38 @@ function SettingsButton({ onOpen, open, className = '' }: { onOpen: () => void; 
 /** Desktop: a panel from the right, in the details drawer's place. Modeless
  *  like the drawer; Escape closes it (after an open select closes first), and
  *  focus goes back to the gear. */
-function SettingsPanel({ onClose, onAbout, onShowWelcome }: {
+// `leaving`: closed, and sliding away; `onGone` fires once it is off screen
+// (at once when motion is cut), so the app can unmount it and bring the
+// details drawer in after it. Reopened while leaving, it slides back.
+function SettingsPanel({ onClose, onAbout, onShowWelcome, leaving = false, onGone }: {
   onClose: () => void; onAbout: () => void; onShowWelcome: () => void;
+  leaving?: boolean; onGone?: () => void;
 }) {
   const tr = window.MCU_I18N.tr;
   const headingRef = React.useRef<HTMLHeadingElement>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
   const closeRef = React.useRef(onClose);
   closeRef.current = onClose;
+  const leavingRef = React.useRef(leaving);
+  leavingRef.current = leaving;
+  const goneRef = React.useRef(onGone);
+  goneRef.current = onGone;
   const [open, setOpen] = React.useState(false);
+  React.useEffect(() => {
+    if (!leaving) return undefined;
+    const el = panelRef.current;
+    // Gone when the slide ends; a timer covers a transition that never runs
+    // (motion cut, or the panel never got to open).
+    const moving = !!el && parseFloat(getComputedStyle(el).transitionDuration) > 0.01;
+    const t = window.setTimeout(() => { if (leavingRef.current) goneRef.current?.(); }, moving ? 600 : 0);
+    return () => window.clearTimeout(t);
+  }, [leaving]);
   React.useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     const raf = requestAnimationFrame(() => setOpen(true));
     if (lastInput === 'keyboard') headingRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      if (e.key !== 'Escape' || e.defaultPrevented || leavingRef.current) return;
       // An open select closes itself first: one layer per press.
       // (Base UI keeps a closed popup mounted, marked data-closed.)
       if (document.querySelector('[data-slot="select-content"][data-open]')) return;
@@ -555,13 +621,15 @@ function SettingsPanel({ onClose, onAbout, onShowWelcome }: {
   }, []);
   return (
     // A div, not an aside: role="dialog" is not allowed on <aside> (axe).
-    <div className={`v4 settings-panel${open ? ' open' : ''}`} role="dialog" aria-modal="false" aria-labelledby="settings-title">
+    <div ref={panelRef} className={`v4 settings-panel${open && !leaving ? ' open' : ''}${leaving ? ' leaving' : ''}`} role="dialog" aria-modal="false"
+      aria-labelledby="settings-title"
+      onTransitionEnd={(e) => { if (leavingRef.current && e.target === e.currentTarget && e.propertyName === 'transform') goneRef.current?.(); }}>
       <div className="flex items-center justify-between gap-2 border-b border-border px-5 py-3">
         <h2 id="settings-title" ref={headingRef} tabIndex={-1} className="text-lg font-semibold tracking-tight outline-none">{tr('settings.title')}</h2>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}>×</Button>
       </div>
       <div className="settings-scroll px-5 py-5">
-        <SettingsBody onAbout={onAbout} onShowWelcome={onShowWelcome} onClose={onClose}/>
+        <SettingsBody onAbout={onAbout} onShowWelcome={onShowWelcome} onClose={onClose} keyboard/>
       </div>
     </div>
   );

@@ -116,9 +116,25 @@ const THEME_PREPAINT = `try {
     : window.matchMedia('(prefers-color-scheme: dark)').matches;
   if (dark) document.documentElement.classList.add('dark');
   // Text size (src/app/settings.tsx), before the first paint too, so a Large
-  // visitor never sees the page jump.
+  // visitor never sees the page jump: the saved choice, else on an iPhone or
+  // iPad the size matching the system Text Size (systemTextSize() there; keep
+  // the two alike).
   var size = localStorage.getItem('mcu.textSize.v1');
   if (size === 'larger') size = 'large';
+  if (size !== 'small' && size !== 'large' && size !== 'default') {
+    size = null;
+    var ua = navigator.userAgent;
+    if ((/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1))
+      && window.CSS && CSS.supports('font', '-apple-system-body')) {
+      var probe = document.createElement('span');
+      probe.setAttribute('data-probe', 'system-body');
+      probe.style.cssText = 'position:absolute;visibility:hidden;font:-apple-system-body';
+      document.documentElement.appendChild(probe);
+      var px = parseFloat(getComputedStyle(probe).fontSize);
+      probe.remove();
+      size = !px ? null : px <= 15 ? 'small' : px >= 19 ? 'large' : null;
+    }
+  }
   if (size === 'small' || size === 'large') document.documentElement.setAttribute('data-text-size', size);
 } catch (e) {}`;
 

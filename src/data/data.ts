@@ -32,7 +32,7 @@ const TITLES: Title[] = [
   { id: 'cap-winter-soldier', title: 'Captain America: The Winter Soldier', year: 2014, phase: 2, type: 'film', release: '2014-04-04', chronOrder: 12, story: '2014', accent: '#3a5a7a', cast: ['peggy', 'steve', 'bucky', 'natasha', 'fury', 'sam', 'hill'] },
   { id: 'gotg', title: 'Guardians of the Galaxy', year: 2014, phase: 2, type: 'film', release: '2014-08-01', chronOrder: 13, story: '2014', accent: '#7a4ea0', cast: ['quill', 'gamora', 'rocket', 'groot', 'drax', 'nebula', 'yondu'] },
   { id: 'aou', title: 'Avengers: Age of Ultron', year: 2015, phase: 2, type: 'film', release: '2015-05-01', chronOrder: 15, story: '2015', accent: '#a04040', cast: ['ultron', 'peggy', 'tony', 'steve', 'thor', 'bruce', 'natasha', 'clint', 'wanda', 'vision', 'rhodey', 'sam', 'fury', 'hill'] },
-  { id: 'ant-man', title: 'Ant-Man', year: 2015, phase: 2, type: 'film', release: '2015-07-17', chronOrder: 16, story: '2015', accent: '#c25a3a', cast: ['hope', 'hank', 'peggy', 'scott', 'sam'] },
+  { id: 'ant-man', title: 'Ant-Man', year: 2015, phase: 2, type: 'film', release: '2015-07-17', chronOrder: 16, story: '2015', accent: '#c25a3a', cast: ['hope', 'hank', 'peggy', 'scott', 'sam', 'cassie'], credits: { cassie: 'Abby Ryder Fortson' } },
 
   // Phase 3
   { id: 'civil-war', title: 'Captain America: Civil War', year: 2016, phase: 3, type: 'film', release: '2016-05-06', chronOrder: 17, story: '2016', accent: '#3a5a7a', cast: ['tchalla', 'steve', 'tony', 'bucky', 'natasha', 'sam', 'rhodey', 'wanda', 'vision', 'scott', 'peter', 'clint', 'ross'], credits: { ross: 'William Hurt' } },
@@ -42,14 +42,14 @@ const TITLES: Title[] = [
   { id: 'thor-ragnarok', title: 'Thor: Ragnarok', year: 2017, phase: 3, type: 'film', release: '2017-11-03', chronOrder: 23, story: '2017', accent: '#a05ca0', cast: ['valkyrie', 'heimdall', 'thor', 'loki', 'bruce', 'strange', 'odin'] },
   { id: 'black-panther', title: 'Black Panther', year: 2018, phase: 3, type: 'film', release: '2018-02-16', chronOrder: 19, story: '2016', accent: '#3a3a5a', cast: ['tchalla', 'shuri', 'okoye', 'mbaku', 'ramonda'] },
   { id: 'infinity-war', title: 'Avengers: Infinity War', year: 2018, phase: 3, type: 'film', release: '2018-04-27', chronOrder: 25, story: '2018', accent: '#7a4060', cast: ['wong', 'tchalla', 'shuri', 'okoye', 'quill', 'gamora', 'rocket', 'groot', 'drax', 'nebula', 'mantis', 'tony', 'steve', 'thor', 'bruce', 'natasha', 'wanda', 'vision', 'sam', 'rhodey', 'strange', 'peter', 'bucky', 'loki', 'pepper', 'mbaku', 'ross', 'heimdall'], credits: { ross: 'William Hurt' } },
-  { id: 'ant-man-wasp', title: 'Ant-Man and the Wasp', year: 2018, phase: 3, type: 'film', release: '2018-07-06', chronOrder: 24, story: '2018', accent: '#c25a3a', cast: ['hope', 'hank', 'scott'] },
+  { id: 'ant-man-wasp', title: 'Ant-Man and the Wasp', year: 2018, phase: 3, type: 'film', release: '2018-07-06', chronOrder: 24, story: '2018', accent: '#c25a3a', cast: ['hope', 'hank', 'scott', 'ghost', 'cassie'], credits: { cassie: 'Abby Ryder Fortson' } },
   { id: 'captain-marvel', title: 'Captain Marvel', year: 2019, phase: 3, type: 'film', release: '2019-03-08', chronOrder: 4, story: '1995', accent: '#a06030', cast: ['carol', 'fury', 'talos', 'monica'] , credits: { monica: 'Akira Akbar' } },
-  { id: 'endgame', title: 'Avengers: Endgame', year: 2019, phase: 3, type: 'film', release: '2019-04-26', chronOrder: 26, story: '2018–2023', storyNote: 'Opens in 2018, then jumps five years', accent: '#704040', cast: ['hope', 'tchalla', 'shuri', 'okoye', 'quill', 'gamora', 'rocket', 'groot', 'drax', 'nebula', 'mantis', 'valkyrie', 'peggy', 'tony', 'steve', 'thor', 'bruce', 'natasha', 'clint', 'rhodey', 'sam', 'wanda', 'scott', 'strange', 'peter', 'bucky', 'carol', 'pepper', 'loki', 'fury', 'happy', 'mbaku', 'wong', 'ross', 'hank', 'jane', 'hill'], credits: { ross: 'William Hurt' } },
+  { id: 'endgame', title: 'Avengers: Endgame', year: 2019, phase: 3, type: 'film', release: '2019-04-26', chronOrder: 26, story: '2018–2023', storyNote: 'Opens in 2018, then jumps five years', accent: '#704040', cast: ['hope', 'tchalla', 'shuri', 'okoye', 'quill', 'gamora', 'rocket', 'groot', 'drax', 'nebula', 'mantis', 'valkyrie', 'peggy', 'tony', 'steve', 'thor', 'bruce', 'natasha', 'clint', 'rhodey', 'sam', 'wanda', 'scott', 'strange', 'peter', 'bucky', 'carol', 'pepper', 'loki', 'fury', 'happy', 'mbaku', 'wong', 'ross', 'hank', 'jane', 'hill', 'cassie'], credits: { cassie: 'Emma Fuhrmann', ross: 'William Hurt' } },
   { id: 'far-from-home', title: 'Spider-Man: Far From Home', year: 2019, phase: 3, type: 'film', release: '2019-07-02', chronOrder: 33, story: '2024', accent: '#3a6090', cast: ['peter', 'happy', 'fury', 'hill'] },
 
   // Phase 4
   { id: 'wandavision', title: 'WandaVision', year: 2021, phase: 4, type: 'series', release: '2021-01-15', chronOrder: 27, story: '2023', accent: '#a02020', cast: ['white-vision', 'agatha', 'billy', 'wanda', 'vision', 'monica'] },
-  { id: 'falcon-winter', title: 'The Falcon and the Winter Soldier', year: 2021, phase: 4, type: 'series', release: '2021-03-19', chronOrder: 30, story: '2024', accent: '#a04040', cast: ['sam', 'bucky', 'rhodey'] },
+  { id: 'falcon-winter', title: 'The Falcon and the Winter Soldier', year: 2021, phase: 4, type: 'series', release: '2021-03-19', chronOrder: 30, story: '2024', accent: '#a04040', cast: ['sam', 'bucky', 'rhodey', 'walker', 'torres'] },
   { id: 'loki-s1', title: 'Loki', year: 2021, phase: 4, type: 'series', release: '2021-06-09', chronOrder: 31, story: 'Outside time', storyNote: 'The TVA, outside the timeline', accent: '#3a7050', cast: ['he-who-remains', 'loki', 'mobius', 'sylvie'] },
   { id: 'black-widow', title: 'Black Widow', year: 2021, phase: 4, type: 'film', release: '2021-07-09', chronOrder: 18, story: '2016', accent: '#404050', cast: ['yelena', 'alexei', 'natasha', 'ross'], credits: { ross: 'William Hurt' } },
   { id: 'what-if', title: 'What If…?', year: 2021, phase: 4, type: 'series', release: '2021-08-11', chronOrder: 32, story: 'Multiverse', storyNote: 'Alternate realities', accent: '#a06030', cast: ['captain-carter', 'yondu', 'tony', 'steve', 'thor', 'natasha', 'bruce', 'clint', 'loki', 'fury', 'rhodey', 'happy', 'bucky', 'wanda', 'vision', 'peter', 'strange', 'scott', 'carol', 'quill', 'gamora', 'groot', 'drax', 'nebula', 'tchalla', 'shuri', 'wong', 'ross', 'hope', 'jane', 'ultron'], credits: { ross: 'Mike McGill' } },
@@ -58,41 +58,41 @@ const TITLES: Title[] = [
   { id: 'hawkeye', title: 'Hawkeye', year: 2021, phase: 4, type: 'series', release: '2021-11-24', chronOrder: 37, story: '2024', accent: '#a04030', cast: ['yelena', 'fisk', 'maya', 'clint'] },
   { id: 'no-way-home', title: 'Spider-Man: No Way Home', year: 2021, phase: 4, type: 'film', release: '2021-12-17', chronOrder: 35, story: '2024', accent: '#a02020', cast: ['peter-raimi', 'peter-webb', 'wong', 'peter', 'strange', 'happy', 'matt'] },
   { id: 'ms-marvel', title: 'Ms. Marvel', year: 2022, phase: 4, type: 'series', release: '2022-06-08', chronOrder: 43, story: '2025', accent: '#a04060', cast: ['kamala'] },
-  { id: 'multiverse-madness', title: 'Doctor Strange in the Multiverse of Madness', year: 2022, phase: 4, type: 'film', release: '2022-05-06', chronOrder: 36, story: '2024', accent: '#603a80', cast: ['wong', 'captain-carter', 'strange', 'wanda'] },
+  { id: 'multiverse-madness', title: 'Doctor Strange in the Multiverse of Madness', year: 2022, phase: 4, type: 'film', release: '2022-05-06', chronOrder: 36, story: '2024', accent: '#603a80', cast: ['wong', 'captain-carter', 'strange', 'wanda', 'xavier'] },
   { id: 'thor-love', title: 'Thor: Love and Thunder', year: 2022, phase: 4, type: 'film', release: '2022-07-08', chronOrder: 44, story: '2025', accent: '#a04080', cast: ['jane', 'valkyrie', 'quill', 'thor', 'rocket', 'groot', 'drax', 'nebula', 'mantis'] },
   { id: 'moon-knight', title: 'Moon Knight', year: 2022, phase: 4, type: 'series', release: '2022-03-30', chronOrder: 40, story: '2025', accent: '#605030', cast: ['marc', 'layla', 'khonshu'] },
   { id: 'she-hulk', title: 'She-Hulk: Attorney at Law', year: 2022, phase: 4, type: 'series', release: '2022-08-18', chronOrder: 39, story: '2024–2025', accent: '#5fa856', cast: ['wong', 'bruce', 'matt'] },
-  { id: 'wakanda-forever', title: 'Black Panther: Wakanda Forever', year: 2022, phase: 4, type: 'film', release: '2022-11-11', chronOrder: 41, story: '2025', accent: '#3a3a6a', cast: ['shuri', 'okoye', 'mbaku', 'ramonda', 'riri'] },
+  { id: 'wakanda-forever', title: 'Black Panther: Wakanda Forever', year: 2022, phase: 4, type: 'film', release: '2022-11-11', chronOrder: 41, story: '2025', accent: '#3a3a6a', cast: ['shuri', 'okoye', 'mbaku', 'ramonda', 'riri', 'namor'] },
 
   // Phase 5
-  { id: 'quantumania', title: 'Ant-Man and the Wasp: Quantumania', year: 2023, phase: 5, type: 'film', release: '2023-02-17', chronOrder: 48, story: '2026', accent: '#5fa080', cast: ['hope', 'hank', 'kang', 'scott'] },
+  { id: 'quantumania', title: 'Ant-Man and the Wasp: Quantumania', year: 2023, phase: 5, type: 'film', release: '2023-02-17', chronOrder: 48, story: '2026', accent: '#5fa080', cast: ['hope', 'hank', 'kang', 'scott', 'cassie'] },
   { id: 'gotg-3', title: 'Guardians of the Galaxy Vol. 3', year: 2023, phase: 5, type: 'film', release: '2023-05-05', chronOrder: 49, story: '2026', accent: '#a06030', cast: ['quill', 'rocket', 'groot', 'drax', 'nebula', 'mantis', 'gamora'] },
   { id: 'secret-invasion', title: 'Secret Invasion', year: 2023, phase: 5, type: 'series', release: '2023-06-21', chronOrder: 50, story: 'c. 2026', accent: '#3a6050', cast: ['fury', 'rhodey', 'hill', 'talos'] },
   { id: 'loki-s2', title: 'Loki: Season 2', year: 2023, phase: 5, type: 'series', release: '2023-10-05', chronOrder: 51, story: 'Outside time', storyNote: 'The TVA, outside the timeline', accent: '#3a7050', cast: ['victor-timely', 'loki', 'mobius', 'sylvie'] },
   { id: 'marvels', title: 'The Marvels', year: 2023, phase: 5, type: 'film', release: '2023-11-10', chronOrder: 54, story: '2026', accent: '#a08030', cast: ['kamala', 'carol', 'fury', 'monica'] },
   { id: 'what-if-s2', title: 'What If…? Season 2', year: 2023, phase: 5, type: 'series', release: '2023-12-22', chronOrder: 52, story: 'Multiverse', storyNote: 'Alternate realities', accent: '#a06030', cast: ['captain-carter', 'yondu', 'happy', 'strange', 'scott', 'nebula', 'hope'] },
   { id: 'echo', title: 'Echo', year: 2024, phase: 5, type: 'series', release: '2024-01-09', chronOrder: 42, story: '2025', accent: '#a04040', cast: ['maya', 'fisk', 'matt'] },
-  { id: 'deadpool-3', title: 'Deadpool & Wolverine', year: 2024, phase: 5, type: 'film', release: '2024-07-26', chronOrder: 38, story: '2024', storyNote: 'Mostly Earth-10005 and the Void', accent: '#a02030', cast: ['deadpool', 'wolverine', 'happy'] },
+  { id: 'deadpool-3', title: 'Deadpool & Wolverine', year: 2024, phase: 5, type: 'film', release: '2024-07-26', chronOrder: 38, story: '2024', storyNote: 'Mostly Earth-10005 and the Void', accent: '#a02030', cast: ['deadpool', 'wolverine', 'happy', 'gambit'] },
   { id: 'agatha', title: 'Agatha All Along', year: 2024, phase: 5, type: 'series', release: '2024-09-18', chronOrder: 55, story: '2026', accent: '#603a80', cast: ['agatha', 'billy'] },
-  { id: 'what-if-s3', title: 'What If…? Season 3', year: 2024, phase: 5, type: 'series', release: '2024-12-22', chronOrder: 53, story: 'Multiverse', storyNote: 'Alternate realities', accent: '#a06030', cast: ['captain-carter', 'wong', 'alexei', 'shangchi', 'agatha'] },
+  { id: 'what-if-s3', title: 'What If…? Season 3', year: 2024, phase: 5, type: 'series', release: '2024-12-22', chronOrder: 53, story: 'Multiverse', storyNote: 'Alternate realities', accent: '#a06030', cast: ['captain-carter', 'wong', 'alexei', 'shangchi', 'agatha', 'walker'] },
   { id: 'friendly-spidey', title: 'Your Friendly Neighborhood Spider-Man', year: 2025, phase: 5, type: 'series', release: '2025-01-29', chronOrder: 21, story: 'c. 2016', storyNote: 'Earth-86445, outside the Sacred Timeline', accent: '#a02020', cast: ['peter', 'tony', 'strange', 'ross', 'matt'], credits: { ross: 'Travis Willingham' } },
-  { id: 'cap-brave', title: 'Captain America: Brave New World', year: 2025, phase: 5, type: 'film', release: '2025-02-14', chronOrder: 56, story: '2026–2027', accent: '#a04040', cast: ['ross', 'sam', 'bucky'] },
+  { id: 'cap-brave', title: 'Captain America: Brave New World', year: 2025, phase: 5, type: 'film', release: '2025-02-14', chronOrder: 56, story: '2026–2027', accent: '#a04040', cast: ['ross', 'sam', 'bucky', 'torres'] },
   { id: 'daredevil-born-again', title: 'Daredevil: Born Again', year: 2025, phase: 5, type: 'series', release: '2025-03-04', chronOrder: 46, story: '2025–2027', accent: '#a02020', cast: ['matt', 'fisk', 'frank'] },
-  { id: 'thunderbolts', title: 'Thunderbolts*', year: 2025, phase: 5, type: 'film', release: '2025-05-02', chronOrder: 57, story: '2027', accent: '#5a5a5a', cast: ['yelena', 'alexei', 'bucky'] },
+  { id: 'thunderbolts', title: 'Thunderbolts*', year: 2025, phase: 5, type: 'film', release: '2025-05-02', chronOrder: 57, story: '2027', accent: '#5a5a5a', cast: ['yelena', 'alexei', 'bucky', 'walker', 'ghost', 'bob'] },
   { id: 'ironheart', title: 'Ironheart', year: 2025, phase: 5, type: 'series', release: '2025-06-24', chronOrder: 45, story: '2025', accent: '#c25a3a', cast: ['riri'] },
 
   // Phase 6
   { id: 'fantastic-four', title: 'The Fantastic Four: First Steps', year: 2025, phase: 6, type: 'film', release: '2025-07-25', chronOrder: 3, story: '1964', storyNote: 'Earth-828, outside the Sacred Timeline', accent: '#3a6ab0', cast: ['reed', 'sue', 'johnny', 'ben', 'galactus', 'silver-surfer'] },
   { id: 'eyes-of-wakanda', title: 'Eyes of Wakanda', year: 2025, phase: 6, type: 'series', release: '2025-08-01', chronOrder: 1, story: '1260 BC–1896', storyNote: 'Four episodes in different past eras', accent: '#3a3a5a', cast: [] },
-  { id: 'marvel-zombies', title: 'Marvel Zombies', year: 2025, phase: 6, type: 'series', release: '2025-09-24', chronOrder: 28, story: '2023', storyNote: 'Alternate reality from What If…?', accent: '#5a7a3a', cast: ['kamala', 'shangchi', 'alexei', 'wanda', 'thor', 'peter', 'scott', 'groot', 'hope', 'yelena'] },
+  { id: 'marvel-zombies', title: 'Marvel Zombies', year: 2025, phase: 6, type: 'series', release: '2025-09-24', chronOrder: 28, story: '2023', storyNote: 'Alternate reality from What If…?', accent: '#5a7a3a', cast: ['kamala', 'shangchi', 'alexei', 'wanda', 'thor', 'peter', 'scott', 'groot', 'hope', 'yelena', 'walker', 'namor', 'ghost'] },
   { id: 'wonder-man', title: 'Wonder Man', year: 2026, phase: 6, type: 'series', release: '2026-01-27', chronOrder: 47, story: '2025–2027', accent: '#c02a4a', cast: ['simon', 'trevor'] },
   { id: 'daredevil-born-again-s2', title: 'Daredevil: Born Again Season 2', year: 2026, phase: 6, type: 'series', release: '2026-03-24', chronOrder: 58, story: '2027', accent: '#a02020', cast: ['matt', 'fisk'] },
   { id: 'brand-new-day', title: 'Spider-Man: Brand New Day', year: 2026, phase: 6, type: 'film', release: '2026-07-31', chronOrder: 59, story: '2028', accent: '#a02020', cast: ['peter', 'bruce', 'yelena', 'frank'] },
   { id: 'visionquest', title: 'VisionQuest', year: 2026, phase: 6, type: 'series', release: '2026-10-13', chronOrder: 60, story: 'c. 2028', accent: '#9b3030', cast: ['ultron', 'white-vision', 'tommy', 'paladin'] },
   { id: 'friendly-spidey-s2', title: 'Your Friendly Neighborhood Spider-Man Season 2', year: 2027, phase: 6, type: 'series', release: '2027-01-13', chronOrder: 61, accent: '#a02020', cast: ['peter'] },
-  { id: 'doomsday', title: 'Avengers: Doomsday', year: 2026, phase: 6, type: 'film', release: '2026-12-18', chronOrder: 62, accent: '#704040', cast: ['shangchi', 'mbaku', 'reed', 'sue', 'johnny', 'ben', 'doom', 'peggy', 'thor', 'loki', 'sam', 'scott', 'bucky', 'steve', 'peter', 'yelena', 'alexei', 'shuri'] },
+  { id: 'doomsday', title: 'Avengers: Doomsday', year: 2026, phase: 6, type: 'film', release: '2026-12-18', chronOrder: 62, accent: '#704040', cast: ['shangchi', 'mbaku', 'reed', 'sue', 'johnny', 'ben', 'doom', 'peggy', 'thor', 'loki', 'sam', 'scott', 'bucky', 'steve', 'yelena', 'alexei', 'shuri', 'walker', 'torres', 'namor', 'ghost', 'cassie', 'bob', 'xavier', 'magneto', 'beast', 'nightcrawler', 'mystique', 'cyclops', 'gambit'] },
   { id: 'daredevil-born-again-s3', title: 'Daredevil: Born Again Season 3', year: 2027, phase: 6, type: 'series', release: '2027-03', chronOrder: 63, accent: '#a02020', cast: ['matt', 'fisk'] },
-  { id: 'secret-wars', title: 'Avengers: Secret Wars', year: 2027, phase: 6, type: 'film', release: '2027-12-17', chronOrder: 64, accent: '#6a3a5a', cast: ['alexei', 'sam', 'vision', 'peter', 'shangchi'] },
+  { id: 'secret-wars', title: 'Avengers: Secret Wars', year: 2027, phase: 6, type: 'film', release: '2027-12-17', chronOrder: 64, accent: '#6a3a5a', cast: ['doom', 'steve', 'shangchi', 'shuri'] },
 ];
 
 // Characters with unique connection-line colors
@@ -193,6 +193,22 @@ const CHARACTERS: Record<string, Character> = {
   ajak:      { name: 'Ajak',             actor: 'Salma Hayek',         color: '#a89060', initials: 'AJ' },
   druig:     { name: 'Druig',            actor: 'Barry Keoghan',       color: '#7a9a7a', initials: 'DR' },
   makkari:   { name: 'Makkari',          actor: 'Lauren Ridloff',      color: '#a0c0c8', initials: 'MK' },
+
+  // — Avengers: Doomsday newcomers (Notion V4 Tasks, "Add the confirmed
+  // Doomsday newcomers to the catalog"; sources in docs/CATALOG-AUDIT.md) —
+  walker:    { name: 'John Walker',      actor: 'Wyatt Russell',       color: '#5a78c8', initials: 'JW' },
+  torres:    { name: 'Joaquín Torres',   actor: 'Danny Ramirez',       color: '#5ab0d8', initials: 'JT' },
+  namor:     { name: 'Namor',            actor: 'Tenoch Huerta Mejía', color: '#2f9f9a', initials: 'NM' },
+  ghost:     { name: 'Ava Starr',        actor: 'Hannah John-Kamen',   color: '#9aa6b8', initials: 'AS' },
+  cassie:    { name: 'Cassie Lang',      actor: 'Kathryn Newton',      color: '#d8906a', initials: 'CL' },
+  bob:       { name: 'Bob Reynolds',     actor: 'Lewis Pullman',       color: '#e0c070', initials: 'BR' },
+  xavier:    { name: 'Charles Xavier',   actor: 'Patrick Stewart',     color: '#8a90c0', initials: 'CX' },
+  magneto:   { name: 'Erik Lehnsherr',   actor: 'Ian McKellen',        color: '#b04a6a', initials: 'EL' },
+  beast:     { name: 'Hank McCoy',       actor: 'Kelsey Grammer',      color: '#4a62c0', initials: 'HM' },
+  nightcrawler: { name: 'Kurt Wagner',   actor: 'Alan Cumming',        color: '#6a4aa8', initials: 'KW' },
+  mystique:  { name: 'Raven Darkhölme',  actor: 'Rebecca Romijn',      color: '#3a8ab8', initials: 'RD' },
+  cyclops:   { name: 'Scott Summers',    actor: 'James Marsden',       color: '#d0a030', initials: 'SS' },
+  gambit:    { name: 'Remy LeBeau',      actor: 'Channing Tatum',      color: '#c04a8a', initials: 'RL' },
 };
 
 window.TITLES = TITLES;

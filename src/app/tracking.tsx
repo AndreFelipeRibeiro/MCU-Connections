@@ -623,6 +623,11 @@ function CollectionProvider({ children }) {
     // The saved collection is in (local, or the account's rows), even if
     // sign-in is still initializing: lists can start animating changes.
     ready: loadedScope === scope && !(mode === 'account' && remoteLoading),
+    // Ready, and sign-in has finished deciding: the states are the account's
+    // (signed in) or this device's (signed out), never a guest stand-in for an
+    // account still restoring. Decisions about the visitor's history (which
+    // guide to promote) wait for this.
+    settled: loadedScope === scope && !(mode === 'account' && remoteLoading) && authStatus !== 'initializing',
     mode,
     syncError,
     retrySync,
@@ -639,7 +644,12 @@ function CollectionProvider({ children }) {
     applyPicks,
     undoMany,
     progress,
-  }), [states, loading, mode, syncError, retrySync, loadedScope, scope, remoteLoading, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, requestBulk, applyPicks, undoMany, progress]);
+  }), [states, loading, mode, authStatus, syncError, retrySync, loadedScope, scope, remoteLoading, pending, errors, setStatus, toggleSeen, toggleWatchlist, clearAll, requestBulk, applyPicks, undoMany, progress]);
+
+  // The live collection for code outside React: the QA checks change it at
+  // chosen moments (test-promo marks titles seen while a promotion is pending
+  // or on screen) through the same setters the buttons use.
+  React.useEffect(() => { window.MCU_COLLECTION = value; }, [value]);
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>;
 }

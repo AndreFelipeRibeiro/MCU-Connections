@@ -1020,7 +1020,10 @@ function App() {
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [mediaReady, setMediaReady] = useState(!!window.MEDIA);
-  const { states: collectionStates, statusOf, ready: collectionReady } = window.useCollection();
+  const { states: collectionStates, statusOf, ready: collectionReady, settled: collectionSettled } = window.useCollection();
+  // The latest statusOf, for code that runs after a delay.
+  const statusOfRef = useRef(statusOf);
+  statusOfRef.current = statusOf;
 
   useEffect(() => { setMediaReady(true); }, []);
   const device = useDevice();
@@ -1044,6 +1047,11 @@ function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   // Settings: a panel on desktop, a sheet on phones (sheet === 'settings').
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Settings stays on screen while it slides away (settingsShown), and the
+  // details drawer waits for it, so closing Settings onto a title reads as one
+  // move: Settings out, then the details in.
+  const [settingsShown, setSettingsShown] = useState(false);
+  useEffect(() => { if (settingsOpen) setSettingsShown(true); }, [settingsOpen]);
   // First visit: the same About content as a one-time welcome (about.jsx).
   const [welcome, setWelcome] = useState(() => !!window.MCU_WELCOME);
   // "What have you seen?" (picker.jsx): from the welcome, the account menu or
@@ -2261,9 +2269,32 @@ function App() {
     }
   };
 
+  // Desktop Settings takes the details drawer's place, so a title opened while
+  // it is up would load behind it (Notion V4 Tasks, "Close Settings when a
+  // title is opened"). Clicking a title closes Settings and shows that
+  // title's details, even the one already open behind it (which a second
+  // click would otherwise close).
+  const settingsOpenRef = useRef(settingsOpen);
+  settingsOpenRef.current = settingsOpen;
+  const toggleDetails = (id) => {
+    if (settingsOpen) { setSettingsOpen(false); setDrawerId(id); return; }
+    setDrawerId(drawerId === id ? null : id);
+  };
+  // Every other way in (search, Up next, the stepper, a guide's stops): a new
+  // title in the drawer closes Settings.
+  const lastDrawerRef = useRef(drawerId);
+  useEffect(() => {
+    if (drawerId && drawerId !== lastDrawerRef.current && settingsOpenRef.current) setSettingsOpen(false);
+    lastDrawerRef.current = drawerId;
+  }, [drawerId]);
+
   const onCardTap = (id) => {
     setPair(null);
     canvasPickRef.current = id;
+    if (settingsOpen && !isTouch) {
+      setSettingsOpen(false);
+      if (drawerId === id) return;
+    }
     // With a character pinned the canvas keeps their layout: a tap makes the
     // title current (if it is theirs) and opens its details, without the
     // connections ring.
@@ -2516,11 +2547,16 @@ function App() {
   // ---- Coming back to a guide --------------------------------------------
   // A visit that starts on the home page (no title, character, guide or
   // filter in the address) reopens the guide being followed, once the
-  // collection has loaded: a guide finished meanwhile is forgotten instead.
-  // Otherwise a returning visitor may be offered one guide (GuidePromo): one
-  // leading to a release in the next 60 days, or the evergreen one, each only
-  // once per device. Never on a first visit, after a link, with a guide open,
-  // or while anything else (welcome, picker, sign-in reminder) is on screen.
+  // collection has settled: a guide finished meanwhile is forgotten instead.
+  // Otherwise a returning visitor may be offered one guide (GuidePromo; which
+  // one is MCU_GUIDE.promotion's rule), each only once per device. Never on a
+  // first visit, after a link, with a guide open, or while anything else
+  // (welcome, picker, sign-in reminder) is on screen.
+  // It waits for `settled`, not `ready`: ready can arrive with this device's
+  // titles while a signed-in session is still restoring, and every guide
+  // looked unfinished then (Notion V4 Tasks, "Don't promote a guide that the
+  // user has already finished"). The pick reads the titles again when it
+  // fires, and is re-checked while it is up.
   const urlLinked = !!(urlAtLoad.title || urlAtLoad.char || urlAtLoad.guide || urlAtLoad.phase
     || urlAtLoad.type || urlAtLoad.budget || urlAtLoad.release);
   const [promo, setPromo] = useState(null);
@@ -2528,7 +2564,7 @@ function App() {
   const guideIdNowRef = useRef(guideId);
   guideIdNowRef.current = guideId;
   useEffect(() => {
-    if (homeStartRef.current || !collectionReady) return undefined;
+    if (homeStartRef.current || !collectionSettled) return undefined;
     homeStartRef.current = true;
     if (urlLinked || guideId || !window.MCU_GUIDE) return undefined;
     const G = window.MCU_GUIDE;
@@ -2542,13 +2578,23 @@ function App() {
     setTimeout(() => {
       if (guideIdNowRef.current) return;
       if (document.querySelector('.m-sheet, .about-dialog, [aria-modal="true"], .g-pop, .mcu-confetti')) return;
-      const pick = G.promotion(statusOf, window.todayISO());
+      const pick = G.promotion(statusOfRef.current, window.todayISO());
       if (!pick) return;
-      G.markPromoted(pick.guide.id);
+      G.markPromoted(pick.key);
       setPromo(pick);
     }, 1200);
     return undefined;
-  }, [collectionReady]);
+  }, [collectionSettled]);
+  // Signing in (or a sync landing) while a guide is offered: if it turns out
+  // finished, offer the next pick instead, or close it when there is none.
+  useEffect(() => {
+    if (!promo || promo.caughtUp || !collectionSettled || !window.MCU_GUIDE) return;
+    const G = window.MCU_GUIDE;
+    if (!G.finished(promo.guide, statusOf)) return;
+    const pick = G.promotion(statusOf, window.todayISO());
+    if (pick) G.markPromoted(pick.key);
+    setPromo(pick);
+  }, [collectionStates, collectionSettled]);
   const startPromo = () => { const id = promo.guide.id; setPromo(null); openGuide(id); };
   // ---- The address ------------------------------------------------------
   // The pinned character, when it is one portrayal (a performer pin covering
@@ -2779,6 +2825,34 @@ function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  // D and L switch to the dark and light themes on desktop (Notion V4 Tasks,
+  // "Desktop keyboard shortcut: D for dark mode, L for light mode"): the same
+  // choice as Settings → Theme, so Auto stays one tap away there. Never while
+  // typing, in a menu or dialog, with a modifier held (browser shortcuts keep
+  // working), or on the phone layout. Screen readers hear the new theme.
+  const [themeAnnounce, setThemeAnnounce] = useState('');
+  const isTouchNowRef = useRef(isTouch);
+  isTouchNowRef.current = isTouch;
+  useEffect(() => {
+    let timer = null;
+    const onKey = (e) => {
+      if (isTouchNowRef.current || e.altKey || e.metaKey || e.ctrlKey || e.repeat || e.defaultPrevented) return;
+      const k = (e.key || '').toLowerCase();
+      if (k !== 'd' && k !== 'l') return;
+      const el = e.target;
+      if (el instanceof Element && el.closest('input, textarea, select, [contenteditable="true"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="combobox"]')) return;
+      if (document.querySelector('[aria-modal="true"]')) return;
+      const next = k === 'd' ? 'dark' : 'light';
+      window.MCU_THEME.setChoice(next);
+      setThemeAnnounce('');
+      clearTimeout(timer);
+      timer = setTimeout(() => setThemeAnnounce(tr(next === 'dark' ? 'theme.darkOn' : 'theme.lightOn')), 50);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('keydown', onKey); clearTimeout(timer); };
+  }, []);
+  const themeAnnouncer = <div className="story-sr theme-announce" aria-live="polite">{themeAnnounce}</div>;
 
   // Clicking a connection line opens the pair view and glides to it.
   const pickConnection = (c) => {
@@ -3293,6 +3367,7 @@ function App() {
     <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
       {upAnnouncer}
       {homeAnnouncer}
+      {themeAnnouncer}
       <Toolbar
         onHome={onHomeClick}
         onAbout={() => setAboutOpen(true)}
@@ -3318,7 +3393,7 @@ function App() {
       {desktopView === 'list' && guide
         ? <window.GuideView guide={guide} surface="desktop" includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
             module={guideModule('list')}
-            currentId={stepCurrent} openId={drawerId} onOpen={(id) => setDrawerId(drawerId === id ? null : id)} onContinue={(id) => { setStepId(id); setDrawerId(id); }}
+            currentId={stepCurrent} openId={drawerId} onOpen={toggleDetails} onContinue={(id) => { setStepId(id); setDrawerId(id); }}
             onFollow={(id) => {
               // The stop becomes the guide's current one too, so ← → carry on
               // from it and the banner announces "Stop n of N", as it does for
@@ -3330,7 +3405,7 @@ function App() {
         : desktopView === 'list'
         ? <window.DesktopList upNext={upNext} titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
-            onOpen={(id) => setDrawerId(drawerId === id ? null : id)}
+            onOpen={toggleDetails}
             onFollow={(id, n, total) => {
               keepFocusOnStep();
               setDrawerId(id);
@@ -3363,10 +3438,11 @@ function App() {
       {/* Settings takes the details drawer's place rather than stacking a
           second panel; closing it brings the drawer back. */}
       {/* The drawer that comes back must not take focus from the gear. */}
-      {settingsOpen && <window.SettingsPanel onClose={() => { if (drawerTitle) keepFocusOnStep(); setSettingsOpen(false); }}
+      {(settingsOpen || settingsShown) && <window.SettingsPanel leaving={!settingsOpen} onGone={() => setSettingsShown(false)}
+        onClose={() => { if (drawerTitle) keepFocusOnStep(); setSettingsOpen(false); }}
         onAbout={() => setAboutOpen(true)} onShowWelcome={() => setWelcome(true)}/>}
       <CastDrawer
-        title={settingsOpen ? null : drawerTitle}
+        title={settingsOpen || settingsShown ? null : drawerTitle}
         onClose={() => { setSelectedId(null); setDrawerId(null); }}
         onCharacterClick={pinCharacter}
         hoveredCharacter={hoveredCharacter}

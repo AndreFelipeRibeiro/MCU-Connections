@@ -13,6 +13,189 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 improvement — The Avengers: Doomsday newcomers join the catalog
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
+
+Notion V4 Tasks, "Add the confirmed Doomsday newcomers to the catalog".
+Thirteen characters confirmed for Avengers: Doomsday were missing, so they drew
+no threads. Characters: 89 → 102.
+
+- John Walker (Falcon and the Winter Soldier, Thunderbolts*, What If…? season
+  3, Marvel Zombies), Joaquín Torres (Falcon and the Winter Soldier, Brave New
+  World), Namor (Wakanda Forever, Marvel Zombies), Ava Starr (Ant-Man and the
+  Wasp, Thunderbolts*, Marvel Zombies), Cassie Lang (both Ant-Man films,
+  Endgame, Quantumania), Bob Reynolds (Thunderbolts*), Charles Xavier
+  (Multiverse of Madness), Remy LeBeau (Deadpool & Wolverine).
+- Doomsday only: Hank McCoy (his other appearance is a post-credits scene),
+  Erik Lehnsherr, Kurt Wagner, Raven Darkhölme, Scott Summers.
+- Cassie Lang credits Abby Ryder Fortson in the first two Ant-Man films and
+  Emma Fuhrmann in Endgame. TMDB portraits for all 13 and both recast
+  performers.
+- Sources: `doomsdayNewcomers` in `docs/CATALOG-SOURCES.json`, and
+  `docs/CATALOG-AUDIT.md`.
+- Verified: Doomsday's details list 30 characters; every portrait address
+  returns an image; test-threads; Full Batch 5 regression on the final tree: 56
+  check runs clean. Not checked: portraits rendering in a real browser.
+
+## V4 feature — Text size starts from the iPhone's Text Size
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
+
+Notion V4 Tasks, "Text size: start from the iPhone's system Text Size". On an
+iPhone or iPad, until a size is picked in Settings, Text size starts from the
+system Text Size.
+
+- Read through WebKit's `-apple-system-body` font, which follows Dynamic Type:
+  15px or less → Small, 16–17 → Default, 19 and up → Large (Accessibility sizes
+  included). iPhone and iPad only; desktop Safari and everything else are
+  unchanged.
+- Applied before the first paint (the copy in `vite.config.js`), and again when
+  the app comes back from the background, so a change in iOS flows through.
+- Only a choice made in Settings is saved, now Default included; Settings shows
+  the size it picked and says "Matches the Text Size set on this device until
+  you pick one."
+- `qa/test-textsize.js` plays an iPhone (its user agent and a stand-in for the
+  system font) at seven sizes, the Settings note, a choice winning across a
+  reload, a background change, and Android and desktop ignoring it.
+- Verified: Full Batch 5 regression on the final tree: 56 check runs clean.
+  **Not checked on a real iPhone** with its Text Size changed; headless
+  Chromium has no Dynamic Type.
+
+## V4 fix — Room around "Mark what you've seen"
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
+
+Notion V4 Tasks, "Account menu: "Mark what you've seen" text sits too close to
+the button's edges". The account menu's two-line button had its text touching
+the top and bottom edges.
+
+- **Cause:** every button in that menu has a fixed 32px height, too short for
+  two lines.
+- The button now grows to fit, with 8px padding top and bottom (52px minimum on
+  the phone sheet); Portuguese at Large wraps to three lines and the button
+  grows with it.
+- `qa/test-picker.js` fails if the text comes within 6px of the edge.
+- Verified: measured in the browser at every Text size in English and
+  Portuguese, desktop and phone (9px each side). Full Batch 5 regression on the
+  final tree: 56 check runs clean.
+
+## V4 fix — Announced casts of unreleased titles
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
+
+Notion V4 Tasks, "Verify announced casts of unreleased titles (Doomsday, Secret
+Wars, VisionQuest…)". Every character listed for a title not yet out was
+checked against an announcement; Andre approved the changes.
+
+- Avengers: Doomsday drops Peter Parker (Tom Holland is in no official cast
+  list or trailer); the other 17 are confirmed.
+- Avengers: Secret Wars is now Doom, Steve Rogers, Shang-Chi and Shuri (was
+  Alexei, Sam, Vision, Peter, Shang-Chi; four of those were leaks or fan lists
+  only).
+- Daredevil: Born Again season 3, Friendly Neighborhood Spider-Man season 2,
+  VisionQuest and the seven variant mappings checked: no change.
+- Sources in `docs/CATALOG-SOURCES.json` (`castSources`, `castEvidence`) and
+  `docs/CATALOG-AUDIT.md`.
+- Verified: test-threads; Full Batch 5 regression on the final tree: 56 check
+  runs clean.
+
+## V4 improvement — Opening a title closes Settings
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
+
+Notion V4 Tasks, "Close Settings when a title is opened". On desktop, opening a
+title while Settings was open loaded its details behind the panel.
+
+- A Spatial card, a List row, search, Up next or a guide stop now closes
+  Settings and shows the details, the title already open behind it included.
+- Settings slides out (240ms), then the details slide in, instead of Settings
+  vanishing at once. The panel stays mounted while it leaves (`settingsShown`),
+  ignores clicks and Escape, and slides back if reopened mid-way.
+- `qa/test-settings.js`: a card, the card already open, a List row, and every
+  frame's position of both panels (Settings seen sliding, never both on screen,
+  then the details seen sliding).
+- Verified: Full Batch 5 regression on the final tree: 56 check runs clean. Not
+  checked: Safari, Firefox.
+
+## V4 fix — Don't promote a finished guide; celebrate it instead
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
+
+Notion V4 Tasks, "Don’t promote a guide that the user has already finished it".
+A returning visitor was offered a guide they had already finished, and
+finishing one earned nothing.
+
+- **Cause:** the pick ran before a signed-in account's titles had loaded, so
+  every guide looked unfinished. It now waits for the collection to settle
+  (`useCollection().settled`), reads the titles again when it fires, and swaps
+  or closes the offer if a sync shows that guide finished.
+- **The order now:** an unfinished guide for a release in the next 60 days;
+  else, when that guide is finished, the caught-up moment for the release
+  (confetti, countdown, Share), whatever the other guides' progress; else the
+  evergreen guide; else the unfinished guide closest to done; else, with every
+  guide finished, the caught-up moment for the next release (or with no
+  countdown). Each guide is offered once per device, each caught-up moment once
+  per release.
+- New wording in English and Portuguese for the caught-up moment and the
+  "picked for you" offer.
+- `qa/test-promo.js`: titles arriving late, a guide finished while offered, the
+  closest guide, the guide-finished moment (then the evergreen guide), every
+  guide finished on three dates, desktop and phone, English and Portuguese.
+- Verified: Full Batch 5 regression on the final tree: 56 check runs clean. Not
+  checked: a real Google sign-in round trip (simulated by titles arriving after
+  load).
+
+## V4 design — Light theme polish
+
+Recorded: 2026-11-02 12:49 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
+
+Notion V4 Tasks, "Light mode polish: rating pills, card hover, Spatial
+background, progress bar". Four light-theme fixes from Andre's screenshots, and
+softer shadows on Spatial's floating pieces.
+
+- IMDb and RT pills sit on the card colour with a thin border in the light
+  theme (Spatial cards, the List, the details, the phone), instead of a dark
+  chip.
+- A highlighted card's outline is one light hairline with a soft shadow,
+  instead of a heavy grey double line.
+- Spatial's light background has two soft colour washes (warm top left, cool
+  bottom right) and a fainter dot grid; no pattern. Cards get a gentler shadow.
+- The All titles progress bar is red (`--brand`) in both themes.
+- The guide banner, Up next chip, line tooltip, toasts and bulk bar have a much
+  lighter shadow in the light theme.
+- Verified: test-contrast and the accessibility scans in both themes,
+  in-browser at desktop and phone sizes. Full Batch 5 regression on the final
+  tree: 56 check runs clean. Not checked: Safari, Firefox, a real phone.
+
+## V4 feature — D and L switch the theme on desktop
+
+Recorded: 2026-11-02 11:55 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
+
+Notion V4 Tasks, "Desktop keyboard shortcut: D for dark mode, L for light
+mode". On desktop, pressing D switches to the dark theme and L to the light
+one.
+
+- Saved like choosing it in Settings (Theme), so it lasts across visits;
+  Settings → Appearance mentions the shortcut under Theme.
+- Ignored while typing (search, any field), with Ctrl, Cmd or Alt held, on a
+  held-down key, while a menu or dialog is open, and on the phone layout.
+- Screen readers hear "Dark mode" or "Light mode" (a polite live region).
+- `qa/test-settings.js` covers D, L, typing "daredevil" in search, the Settings
+  note and the phone layout.
+- Verified: committed on its own on top of Batch 4, with `bash qa/quick.sh
+  test-settings` (18 check runs clean) and `npm run typecheck`; also part of
+  the full Batch 5 regression (56 check runs clean). Not checked: Safari,
+  Firefox, a real screen reader.
+
 ## V4 improvement — Bigger text and a Text size setting
 
 Recorded: 2026-11-02 09:31 EST (-0500). Pushed to `version/4.0` (V4 staging);

@@ -136,6 +136,8 @@ declare global {
 
     CollectionProvider: Tracking['CollectionProvider'];
     useCollection: Tracking['useCollection'];
+    /** The live collection (what useCollection() returns), for code outside React and the QA checks. */
+    MCU_COLLECTION?: ReturnType<Tracking['useCollection']>;
     TitleStatusActions: Tracking['TitleStatusActions'];
     CollectionSwitch: Tracking['CollectionSwitch'];
     SyncStatus: Tracking['SyncStatus'];
