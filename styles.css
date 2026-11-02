@@ -644,7 +644,7 @@ body { background: var(--v3-bg); }
 .pgh-done {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   width: 14px; height: 14px; border-radius: 50%; font-size: var(--fs-xs); line-height: 1;
-  font-weight: 700; background: var(--pm, var(--v3-accent)); color: var(--v3-bg);
+  font-weight: 700; background: var(--pm, var(--brand)); color: var(--v3-bg);
 }
 /* No opacity here: --v3-text-muted is exactly at AA against these backgrounds, so
    fading it would quietly drop the "+2 upcoming" hint below the line. */
@@ -654,7 +654,7 @@ body { background: var(--v3-bg); }
 }
 .pgh-bar { display: block; height: 2px; border-radius: 1px; background: var(--v3-border); overflow: hidden; }
 .pgh-fill {
-  display: block; height: 100%; border-radius: 1px; background: var(--pm, var(--v3-accent));
+  display: block; height: 100%; border-radius: 1px; background: var(--pm, var(--brand));
   transition: width 600ms cubic-bezier(.2,.8,.2,1);
 }
 /* Segmented meter: one tick per released title, so the shape itself says how
@@ -667,7 +667,7 @@ body { background: var(--v3-bg); }
   flex: 1 1 0; min-width: 0; height: 100%; border-radius: 1px; background: var(--v3-border);
   transition: background 260ms ease;
 }
-.pgh-bar.seg.lit .pgh-seg.on { background: var(--pm, var(--v3-accent)); }
+.pgh-bar.seg.lit .pgh-seg.on { background: var(--pm, var(--brand)); }
 /* The reveal runs once, when the header scrolls into view. The stagger is
    capped at eight steps so that marking a title later moves its segment
    promptly instead of waiting out a long queue. */
@@ -677,7 +677,7 @@ body { background: var(--v3-bg); }
 }
 @keyframes pgh-seg-in {
   from { background: var(--v3-border); transform: scaleY(.35); }
-  to { background: var(--pm, var(--v3-accent)); transform: scaleY(1); }
+  to { background: var(--pm, var(--brand)); transform: scaleY(1); }
 }
 /* The bar animates only after the visitor's own marking, never on first paint
    or a sort change, and never at all with reduced motion. */
@@ -2524,3 +2524,46 @@ body { background: var(--v3-bg); }
    follow the type scale. */
 .dlist .card-rating { font-size: var(--fs-xs); }
 .dlist .card-rating .imdb-tag, .dlist .card-rating .rt-tag { font-size: var(--fs-xs); }
+
+/* ===========================================================================
+   LIGHT THEME POLISH (Notion V4 Tasks, "Light mode polish: rating pills, card
+   hover, Spatial background, progress bar"; Andre, 2026-11-02)
+   =========================================================================== */
+/* Rating pills sit on the light surface instead of a near-black chip: card
+   colour, a hairline border and the score in the text colour. The IMDb and RT
+   tags keep their brand fills (black on #f5c518, white on #cc2a0a at 5.4:1).
+   On a poster the light chip is opaque, so it reads the same over any art. */
+html:not(.dark) .card-rating { background: var(--card); border-color: var(--border); color: var(--foreground); }
+html:not(.dark) .card-rating.imdb, html:not(.dark) .card-rating.rt { color: var(--foreground); }
+
+/* A hovered or connected card: one light hairline and a soft lift, in place
+   of a 53% black border with a second ring outside it. */
+html:not(.dark) .card.highlighted {
+  border-color: color-mix(in oklab, var(--foreground) 22%, transparent);
+  box-shadow: 0 14px 34px -14px color-mix(in oklab, var(--foreground) 30%, transparent);
+}
+
+/* Spatial in light mode: an ambient surface with depth instead of flat white.
+   Two soft washes of colour, a warm one from the top left (the brand's red)
+   and a cool one from the bottom right, over a page that darkens slightly
+   toward the bottom, with the dot grid a touch stronger. White cards with
+   a soft shadow lift off it. It is painted on the viewport, outside the
+   canvas, so it costs nothing when zooming or panning (no layers, no blur). */
+html:not(.dark) .viewport {
+  background:
+    radial-gradient(55% 60% at 0% 0%, oklch(0.94 0.035 27 / .7), transparent 70%),
+    radial-gradient(60% 65% at 100% 100%, oklch(0.94 0.03 255 / .65), transparent 70%),
+    linear-gradient(180deg, oklch(0.995 0.001 27), oklch(0.965 0.004 27));
+}
+html:not(.dark) .viewport::before {
+  background-image: radial-gradient(circle, color-mix(in oklab, var(--foreground) 9%, transparent) 1px, transparent 1px);
+}
+html:not(.dark) .card { box-shadow: 0 1px 2px rgb(0 0 0 / .05), 0 10px 24px -14px rgb(0 0 0 / .22); }
+
+/* What floats over Spatial (the guide's banner, the phone's Up next chip, the
+   line tooltip, toasts, the bulk bar) kept V3's dark-theme shadows, up to 50%
+   black over 30px: heavy smudges on a light page. In light mode they share
+   one soft shadow. */
+html:not(.dark) :is(.g-module.spatial, .un-chip, .line-tooltip, .mcu-toast, .bulk-bar) {
+  box-shadow: 0 1px 2px rgb(0 0 0 / .06), 0 10px 28px -12px rgb(0 0 0 / .2);
+}

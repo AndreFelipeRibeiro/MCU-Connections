@@ -13,6 +13,29 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — Light theme polish
+
+Recorded: 2026-11-02 12:49 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Light mode polish: rating pills, card hover, Spatial
+background, progress bar". Four light-theme fixes from Andre's screenshots, and
+softer shadows on Spatial's floating pieces.
+
+- IMDb and RT pills sit on the card colour with a thin border in the light
+  theme (Spatial cards, the List, the details, the phone), instead of a dark
+  chip.
+- A highlighted card's outline is one light hairline with a soft shadow,
+  instead of a heavy grey double line.
+- Spatial's light background has two soft colour washes (warm top left, cool
+  bottom right) and a fainter dot grid; no pattern. Cards get a gentler shadow.
+- The All titles progress bar is red (`--brand`) in both themes.
+- The guide banner, Up next chip, line tooltip, toasts and bulk bar have a much
+  lighter shadow in the light theme.
+- Verified: test-contrast and the accessibility scans in both themes,
+  in-browser at desktop and phone sizes. Full Batch 5 regression on the final
+  tree: 56 check runs clean. Not checked: Safari, Firefox, a real phone.
+
 ## V4 feature — D and L switch the theme on desktop
 
 Recorded: 2026-11-02 11:55 EST (-0500). Pushed to `version/4.0` (V4 staging);

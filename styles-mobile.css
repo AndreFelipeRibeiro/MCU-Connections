@@ -742,3 +742,9 @@
 /* Settings' gear in the app bar: the language pill's old place, the guide
    button's size. */
 .m-appbar-top .m-settings-btn { width: max(38px, 2.375rem); height: max(38px, 2.375rem); flex: 0 0 38px; }
+
+/* Light theme: the phone's, the details' and Up next's rating pills sit on the
+   light surface too (styles.css, "LIGHT THEME POLISH"). */
+html:not(.dark) .m-sc, html:not(.dark) .m-lrow .m-sc { background: var(--card); border-color: var(--border); }
+html:not(.dark) .m-sc.imdb, html:not(.dark) .m-sc.rt { color: var(--foreground); }
+html:not(.dark) .m-sc.none { color: var(--muted-foreground); }
