@@ -2416,6 +2416,9 @@ body { background: var(--v3-bg); }
   transform: translateX(100%); transition: transform 360ms cubic-bezier(.2,.8,.2,1);
 }
 .settings-panel.open { transform: translateX(0); }
+/* Leaving (closed onto a title, or with ×): a quicker slide out, so the
+   details drawer that follows it doesn't keep anyone waiting. */
+.settings-panel.leaving { pointer-events: none; transition-duration: 240ms; transition-timing-function: cubic-bezier(.4,0,1,1); }
 .settings-scroll { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
 @media (prefers-reduced-motion: reduce) { .settings-panel { transition: none; } }
 

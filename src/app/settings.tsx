@@ -528,20 +528,38 @@ function SettingsButton({ onOpen, open, className = '' }: { onOpen: () => void; 
 /** Desktop: a panel from the right, in the details drawer's place. Modeless
  *  like the drawer; Escape closes it (after an open select closes first), and
  *  focus goes back to the gear. */
-function SettingsPanel({ onClose, onAbout, onShowWelcome }: {
+// `leaving`: closed, and sliding away; `onGone` fires once it is off screen
+// (at once when motion is cut), so the app can unmount it and bring the
+// details drawer in after it. Reopened while leaving, it slides back.
+function SettingsPanel({ onClose, onAbout, onShowWelcome, leaving = false, onGone }: {
   onClose: () => void; onAbout: () => void; onShowWelcome: () => void;
+  leaving?: boolean; onGone?: () => void;
 }) {
   const tr = window.MCU_I18N.tr;
   const headingRef = React.useRef<HTMLHeadingElement>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
   const closeRef = React.useRef(onClose);
   closeRef.current = onClose;
+  const leavingRef = React.useRef(leaving);
+  leavingRef.current = leaving;
+  const goneRef = React.useRef(onGone);
+  goneRef.current = onGone;
   const [open, setOpen] = React.useState(false);
+  React.useEffect(() => {
+    if (!leaving) return undefined;
+    const el = panelRef.current;
+    // Gone when the slide ends; a timer covers a transition that never runs
+    // (motion cut, or the panel never got to open).
+    const moving = !!el && parseFloat(getComputedStyle(el).transitionDuration) > 0.01;
+    const t = window.setTimeout(() => { if (leavingRef.current) goneRef.current?.(); }, moving ? 600 : 0);
+    return () => window.clearTimeout(t);
+  }, [leaving]);
   React.useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     const raf = requestAnimationFrame(() => setOpen(true));
     if (lastInput === 'keyboard') headingRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      if (e.key !== 'Escape' || e.defaultPrevented || leavingRef.current) return;
       // An open select closes itself first: one layer per press.
       // (Base UI keeps a closed popup mounted, marked data-closed.)
       if (document.querySelector('[data-slot="select-content"][data-open]')) return;
@@ -558,7 +576,9 @@ function SettingsPanel({ onClose, onAbout, onShowWelcome }: {
   }, []);
   return (
     // A div, not an aside: role="dialog" is not allowed on <aside> (axe).
-    <div className={`v4 settings-panel${open ? ' open' : ''}`} role="dialog" aria-modal="false" aria-labelledby="settings-title">
+    <div ref={panelRef} className={`v4 settings-panel${open && !leaving ? ' open' : ''}${leaving ? ' leaving' : ''}`} role="dialog" aria-modal="false"
+      aria-labelledby="settings-title"
+      onTransitionEnd={(e) => { if (leavingRef.current && e.target === e.currentTarget && e.propertyName === 'transform') goneRef.current?.(); }}>
       <div className="flex items-center justify-between gap-2 border-b border-border px-5 py-3">
         <h2 id="settings-title" ref={headingRef} tabIndex={-1} className="text-lg font-semibold tracking-tight outline-none">{tr('settings.title')}</h2>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}>×</Button>

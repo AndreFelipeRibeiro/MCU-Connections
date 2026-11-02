@@ -13,6 +13,25 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 improvement — Opening a title closes Settings
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Close Settings when a title is opened". On desktop, opening a
+title while Settings was open loaded its details behind the panel.
+
+- A Spatial card, a List row, search, Up next or a guide stop now closes
+  Settings and shows the details, the title already open behind it included.
+- Settings slides out (240ms), then the details slide in, instead of Settings
+  vanishing at once. The panel stays mounted while it leaves (`settingsShown`),
+  ignores clicks and Escape, and slides back if reopened mid-way.
+- `qa/test-settings.js`: a card, the card already open, a List row, and every
+  frame's position of both panels (Settings seen sliding, never both on screen,
+  then the details seen sliding).
+- Verified: Full Batch 5 regression on the final tree: 56 check runs clean. Not
+  checked: Safari, Firefox.
+
 ## V4 fix — Don't promote a finished guide; celebrate it instead
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);

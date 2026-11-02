@@ -1047,6 +1047,11 @@ function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   // Settings: a panel on desktop, a sheet on phones (sheet === 'settings').
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Settings stays on screen while it slides away (settingsShown), and the
+  // details drawer waits for it, so closing Settings onto a title reads as one
+  // move: Settings out, then the details in.
+  const [settingsShown, setSettingsShown] = useState(false);
+  useEffect(() => { if (settingsOpen) setSettingsShown(true); }, [settingsOpen]);
   // First visit: the same About content as a one-time welcome (about.jsx).
   const [welcome, setWelcome] = useState(() => !!window.MCU_WELCOME);
   // "What have you seen?" (picker.jsx): from the welcome, the account menu or
@@ -2264,9 +2269,32 @@ function App() {
     }
   };
 
+  // Desktop Settings takes the details drawer's place, so a title opened while
+  // it is up would load behind it (Notion V4 Tasks, "Close Settings when a
+  // title is opened"). Clicking a title closes Settings and shows that
+  // title's details, even the one already open behind it (which a second
+  // click would otherwise close).
+  const settingsOpenRef = useRef(settingsOpen);
+  settingsOpenRef.current = settingsOpen;
+  const toggleDetails = (id) => {
+    if (settingsOpen) { setSettingsOpen(false); setDrawerId(id); return; }
+    setDrawerId(drawerId === id ? null : id);
+  };
+  // Every other way in (search, Up next, the stepper, a guide's stops): a new
+  // title in the drawer closes Settings.
+  const lastDrawerRef = useRef(drawerId);
+  useEffect(() => {
+    if (drawerId && drawerId !== lastDrawerRef.current && settingsOpenRef.current) setSettingsOpen(false);
+    lastDrawerRef.current = drawerId;
+  }, [drawerId]);
+
   const onCardTap = (id) => {
     setPair(null);
     canvasPickRef.current = id;
+    if (settingsOpen && !isTouch) {
+      setSettingsOpen(false);
+      if (drawerId === id) return;
+    }
     // With a character pinned the canvas keeps their layout: a tap makes the
     // title current (if it is theirs) and opens its details, without the
     // connections ring.
@@ -3365,7 +3393,7 @@ function App() {
       {desktopView === 'list' && guide
         ? <window.GuideView guide={guide} surface="desktop" includeOptional={guideOptional} setIncludeOptional={setGuideOptional}
             module={guideModule('list')}
-            currentId={stepCurrent} openId={drawerId} onOpen={(id) => setDrawerId(drawerId === id ? null : id)} onContinue={(id) => { setStepId(id); setDrawerId(id); }}
+            currentId={stepCurrent} openId={drawerId} onOpen={toggleDetails} onContinue={(id) => { setStepId(id); setDrawerId(id); }}
             onFollow={(id) => {
               // The stop becomes the guide's current one too, so ← → carry on
               // from it and the banner announces "Stop n of N", as it does for
@@ -3377,7 +3405,7 @@ function App() {
         : desktopView === 'list'
         ? <window.DesktopList upNext={upNext} titles={visible} sort={sort} sortDir={sortDir} setSort={changeSort} setSortDir={setSortDir}
             search={search} searchCharMatches={searchCharMatches} openId={drawerId} activeChar={activeChar} activeChars={activeChars}
-            onOpen={(id) => setDrawerId(drawerId === id ? null : id)}
+            onOpen={toggleDetails}
             onFollow={(id, n, total) => {
               keepFocusOnStep();
               setDrawerId(id);
@@ -3410,10 +3438,11 @@ function App() {
       {/* Settings takes the details drawer's place rather than stacking a
           second panel; closing it brings the drawer back. */}
       {/* The drawer that comes back must not take focus from the gear. */}
-      {settingsOpen && <window.SettingsPanel onClose={() => { if (drawerTitle) keepFocusOnStep(); setSettingsOpen(false); }}
+      {(settingsOpen || settingsShown) && <window.SettingsPanel leaving={!settingsOpen} onGone={() => setSettingsShown(false)}
+        onClose={() => { if (drawerTitle) keepFocusOnStep(); setSettingsOpen(false); }}
         onAbout={() => setAboutOpen(true)} onShowWelcome={() => setWelcome(true)}/>}
       <CastDrawer
-        title={settingsOpen ? null : drawerTitle}
+        title={settingsOpen || settingsShown ? null : drawerTitle}
         onClose={() => { setSelectedId(null); setDrawerId(null); }}
         onCharacterClick={pinCharacter}
         hoveredCharacter={hoveredCharacter}
