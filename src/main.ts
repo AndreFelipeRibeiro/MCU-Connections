@@ -51,6 +51,7 @@ import './app/poster';
 import './app/tracking';
 // Share (V4): the one share helper and button, used by the views below.
 import './app/share';
+import './app/share-image'; // the share card (Share 2/3), drawn on demand
 import './app/celebrate';
 import './app/account';
 import './app/about';

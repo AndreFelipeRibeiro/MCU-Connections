@@ -327,7 +327,8 @@ function AccountPanel({ onPickCollection, onClose, onAbout }) {
       {/* Share my progress (Notion "Share 1/3"): only once there is some. */}
       {!collectionLoading && progress.seenReleased > 0 && (
         <window.ShareButton className="acct-share" text={tr('share.progressLabel')} label={tr('share.progressLabel')}
-          payload={() => ({ text: tr('share.progressText', { n: progress.seenReleased, total: progress.releasedTotal }) })}/>
+          payload={() => ({ text: tr('share.progressText', { n: progress.seenReleased, total: progress.releasedTotal }) })}
+          onShare={() => { if (onClose) onClose(); window.MCU_SHARE_IMAGE.progress(progress.seenReleased, progress.releasedTotal); }}/>
       )}
 
       <div className="acct-links">

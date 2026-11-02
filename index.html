@@ -9,7 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="Red Thread"/>
 <!-- Tab, home-screen and link-preview identity. Crawlers do not run scripts,
      so the description is the English default; the app itself follows the
-     visitor's language. The preview image is served by production (main). -->
+     visitor's language. The preview image is drawn by the build
+     (scripts/og-previews.js), and a shared title, character or guide link
+     gets its own (middleware.ts). -->
 <meta name="description" content="See how every Marvel Cinematic Universe film and series connects through shared characters, and track what you have watched."/>
 <!-- The browser's own chrome, per system scheme: the design system's
      --background in each theme. -->
@@ -21,12 +23,12 @@
 <meta property="og:site_name" content="Red Thread"/>
 <meta property="og:title" content="Red Thread"/>
 <meta property="og:description" content="See how every Marvel Cinematic Universe film and series connects through shared characters."/>
-<meta property="og:url" content="https://mcu-connections.vercel.app/"/>
-<meta property="og:image" content="https://mcu-connections.vercel.app/og-image.jpg"/>
-<meta property="og:image:type" content="image/jpeg"/>
+<meta property="og:url" content="https://redthread.tv/"/>
+<meta property="og:image" content="https://redthread.tv/og/default.png"/>
+<meta property="og:image:type" content="image/png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
-<meta property="og:image:alt" content="Red Thread: titles linked by the characters they share"/>
+<meta property="og:image:alt" content="Marvel films and series drawn as cards, joined by the characters they share"/>
 <meta property="og:locale" content="en_US"/>
 <meta property="og:locale:alternate" content="pt_BR"/>
 <meta name="twitter:card" content="summary_large_image"/>

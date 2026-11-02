@@ -100,10 +100,32 @@ function guideSharePayload(g, statusOf) {
     : days > 0 ? gtr('share.guideDoneDays', { name, n: days }) : gtr('share.guideDone', { name });
   return { params: { guide: g.id }, text };
 }
+// A finished guide shares its card (Notion "Share 2/3"): the guide, Complete,
+// and the days to its destination while that is still ahead.
+function openGuideCard(g, statusOf) {
+  const name = MCU_GUIDE.name(g);
+  const days = guideDaysLeft(g);
+  const target = g.target && MCU_GUIDE.title(g.target);
+  const line = days > 0 && target ? gtr('card.daysTo', { n: days, title: GI18N.titleName(target) }) : `${MCU_GUIDE.kind(g)} · ${MCU_GUIDE.size(g)}`;
+  const phases = MCU_GUIDE.stops(g, false).map(s => s.title.phase);
+  window.MCU_SHARE_IMAGE.open({
+    heading: gtr('share.imageGuide', { name }),
+    alt: gtr('share.imageAltGuide', { name }),
+    filename: 'red-thread-' + g.id,
+    payload: guideSharePayload(g, statusOf),
+    render: async () => {
+      const r = await window.MCU_SHARE_IMAGE.renderer();
+      return r.renderGuideDone({ appName: gtr('app.name'), site: window.MCU_SHARE_IMAGE.site(), guideColor: g.color || '#4a6da3',
+        label: gtr('guide.complete'), name, line, stops: phases.map(p => r.cardPalette.phases[p - 1]) });
+    },
+  });
+}
 function GuideShare({ guide, className, iconOnly = false, size }) {
   const { statusOf } = window.useCollection();
+  const complete = MCU_GUIDE.progress(guide, statusOf).complete;
   return <window.ShareButton className={className} iconOnly={iconOnly} size={size}
-    label={gtr('share.guideLabel', { name: MCU_GUIDE.name(guide) })} payload={() => guideSharePayload(guide, statusOf)}/>;
+    label={gtr('share.guideLabel', { name: MCU_GUIDE.name(guide) })} payload={() => guideSharePayload(guide, statusOf)}
+    onShare={complete ? () => openGuideCard(guide, statusOf) : undefined}/>;
 }
 
 // ---- Skipped stops (V3 Tasks, "Guides: skip a stop, and bring it back").

@@ -11,9 +11,9 @@ import React from 'react';
 // thing: ?title=, ?char= or ?guide= (the keys app.tsx's readURLState knows),
 // or nothing for the home page. Sharing never touches browser history.
 
-/** Production. One place, so the rename ticket's domain step (redthread.tv)
- *  changes it once. */
-export const PUBLIC_URL = 'https://mcu-connections.vercel.app/';
+/** Production, under the public name's domain (Andre, 2026-11-01). It serves
+ *  the same deployment as mcu-connections.vercel.app; www redirects here. */
+export const PUBLIC_URL = 'https://redthread.tv/';
 
 export interface SharePayload {
   /** What the link opens: title, char or guide id; empty for the home page. */
@@ -112,6 +112,13 @@ export async function share(payload: SharePayload): Promise<void> {
       if (e && (e as DOMException).name === 'AbortError') return;
     }
   }
+  await copy(payload);
+}
+
+/** Copy the link, whatever the device (the share card's Copy link). */
+export async function copy(payload: SharePayload): Promise<void> {
+  const tr = window.MCU_I18N.tr;
+  const url = shareURL(payload.params);
   if (await copyText(url)) say(tr('share.copied'));
   else say(tr('share.copyFailed'), url);
 }
@@ -134,8 +141,11 @@ export function ShareIcon({ size = 16 }: { size?: number }) {
  *  visible text is "Share" unless `iconOnly`. `payload` is read on click, so
  *  the message always matches what is on screen. Clicks never reach the canvas
  *  or card behind it. */
-export function ShareButton({ label, payload, className = '', iconOnly = false, text, size }: {
+export function ShareButton({ label, payload, onShare, className = '', iconOnly = false, text, size }: {
   label: string; payload: () => SharePayload; className?: string; iconOnly?: boolean; text?: string; size?: number;
+  /** Instead of sharing the link: what the share card (share-image.tsx) does
+   *  for progress and finished guides. */
+  onShare?: () => void;
 }) {
   const tr = window.MCU_I18N.tr;
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -143,13 +153,13 @@ export function ShareButton({ label, payload, className = '', iconOnly = false, 
     <button type="button" className={`share-btn${iconOnly ? ' icon' : ''}${className ? ' ' + className : ''}`}
       aria-label={label} title={iconOnly ? label : undefined}
       onMouseDown={stop} onTouchStart={stop}
-      onClick={(e) => { e.stopPropagation(); share(payload()); }}>
+      onClick={(e) => { e.stopPropagation(); if (onShare) onShare(); else share(payload()); }}>
       <ShareIcon size={size}/>
       {!iconOnly && <span>{text || tr('share.button')}</span>}
     </button>
   );
 }
 
-const MCU_SHARE = { share, url: shareURL, PUBLIC_URL };
+const MCU_SHARE = { share, copy, url: shareURL, PUBLIC_URL };
 Object.assign(window, { ShareButton, ShareIcon, MCU_SHARE });
 export { MCU_SHARE };

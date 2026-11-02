@@ -2475,3 +2475,22 @@ body { background: var(--v3-bg); }
 /* The celebration toast: beside Undo. */
 .mcu-toast .mt-share { width: 32px; height: 32px; }
 .m-cast-hero-wrap .td-share { height: 40px; }
+
+/* The share card (Notion "Share 2/3"): the image, then what to do with it.
+   A dialog on desktop, the shared sheet on phones. */
+.about-dialog.share-image-dialog { width: min(440px, calc(100vw - 32px)); }
+.share-image { display: flex; flex-direction: column; gap: 16px; }
+.share-image-title { @apply text-lg font-semibold tracking-tight; margin: 0; padding-right: 36px; }
+.share-image-frame {
+  @apply flex items-center justify-center overflow-hidden rounded-xl border border-border bg-muted;
+  height: min(52vh, 500px); aspect-ratio: 4 / 5; margin: 0 auto; max-width: 100%;
+}
+.share-image-frame img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.share-image-wait { @apply px-6 text-center text-sm text-muted-foreground; }
+.share-image-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.share-image-actions .share-btn { flex: 1 1 160px; height: 44px; text-decoration: none; }
+.share-btn.primary { @apply border-transparent bg-primary text-primary-foreground hover:bg-primary/90; }
+.share-image-sheet { padding-bottom: 8px; }
+/* Phones: the actions stack full width, primary first, so a long label
+   ("Compartilhar imagem") never wraps inside its button. */
+.share-image-sheet .share-image-actions .share-btn { flex-basis: 100%; }

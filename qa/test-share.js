@@ -31,16 +31,19 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(f).pipe(res);
 });
 const URL_BASE = 'http://127.0.0.1:' + QA_PORT + '/';
-const PUBLIC = 'https://mcu-connections.vercel.app/';
+const PUBLIC = 'https://redthread.tv/';
 const NOWELCOME = "try { if (!localStorage.getItem('mcu.welcome.v1')) localStorage.setItem('mcu.welcome.v1', 'test'); localStorage.setItem('mcu.signInNudge.v1', '2'); } catch (e) {}";
 // Seeds a small collection once; later loads keep whatever the check stored.
 const SEEN = "if (!localStorage.getItem('mcu.collection.v1')) localStorage.setItem('mcu.collection.v1', JSON.stringify({ version: 1, states: { 'iron-man': 'seen', 'hulk': 'seen' } }));";
 // The phone share sheet, recorded instead of opened. window.__shareMode
 // 'cancel' makes it reject the way a dismissed sheet does.
 const SHEET = `window.__shared = [];
+  navigator.canShare = function (data) { return !!data; };
   navigator.share = function (data) {
     if (window.__shareMode === 'cancel') return Promise.reject(new DOMException('cancelled', 'AbortError'));
-    window.__shared.push(data); return Promise.resolve();
+    window.__shared.push({ title: data.title, text: data.text, url: data.url,
+      files: data.files ? data.files.map(f => ({ name: f.name, type: f.type, size: f.size })) : null });
+    return Promise.resolve();
   };`;
 const DESK = { viewport: { width: 1440, height: 900 } };
 const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true };
@@ -61,6 +64,19 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
   };
   const ready = (page) => require('./ready').appReady(page, 300);
   const go = async (page, q) => { await page.goto(URL_BASE + q); await ready(page); };
+  // The share card opened, drew a 1080×1350 image and described it.
+  const cardOpen = async (page, where, alt) => {
+    await page.waitForSelector('.share-image-frame img', { timeout: 15000 }).catch(() => {});
+    const img = await page.evaluate(async () => {
+      const i = document.querySelector('.share-image-frame img');
+      if (!i) return null;
+      await i.decode().catch(() => {});
+      return { w: i.naturalWidth, h: i.naturalHeight, alt: i.getAttribute('alt'), heading: document.querySelector('#share-image-title').textContent };
+    });
+    out['card ' + where] = img;
+    expect(img && img.w === 1080 && img.h === 1350, where + ': the share card did not draw a 1080×1350 image ' + JSON.stringify(img));
+    expect(img && alt.test(img.alt), where + ': card description is ' + JSON.stringify(img && img.alt));
+  };
   const goodLink = (url, expectSearch, where) => {
     out.links[where] = url;
     expect(typeof url === 'string' && url.indexOf(PUBLIC) === 0, where + ': link is not the production address: ' + url);
@@ -97,11 +113,20 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await go(page, '?guide=before-doomsday');
     expect(await page.locator('.g-module.spatial .gm-share').count() === 1, 'Spatial guide row: no Share');
 
+    // My progress opens the share card (Share 2/3): the image, Download, Copy link.
     await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
-    await reset(); await page.locator('.acct-share').click(); await copiedShown('account');
+    await page.locator('.acct-share').click();
+    await cardOpen(page, 'desktop progress', /^A Red Thread card: \d+ of \d+ released Marvel titles seen$/);
+    const dl = await page.evaluate(() => { const a = document.querySelector('.share-image-actions a[download]'); return a && { name: a.getAttribute('download'), href: a.getAttribute('href').slice(0, 5) }; });
+    expect(dl && dl.name === 'red-thread-progress.png' && dl.href === 'blob:', 'desktop progress card: no Download image link ' + JSON.stringify(dl));
+    expect(await page.locator('.share-image-actions button', { hasText: 'Share image' }).count() === 0, 'desktop progress card: offers Share image on desktop');
+    await reset(); await page.locator('.share-image-actions button', { hasText: 'Copy link' }).click(); await copiedShown('progress card');
     goodLink(await clip(), '', 'desktop progress');
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+    expect(await page.locator('.share-image').count() === 0, 'desktop progress card: Escape did not close it');
 
-    // The account menu stays open after sharing; About is in its footer.
+    // About is in the account menu's footer.
+    await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
     await page.locator('.acct-foot-link').click(); await page.waitForTimeout(400);
     await reset(); await page.locator('.about-share-row .share-btn').click(); await copiedShown('about');
     goodLink(await clip(), '', 'desktop about');
@@ -131,9 +156,25 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     const order = await page.evaluate(() => [...document.querySelectorAll('.mcu-toast.milestone button')].map(b => b.className.split(' ')[0]));
     out.toastButtons = order;
     expect(order.indexOf('mt-undo') === 0 && order.indexOf('share-btn') === 1, 'milestone toast: expected Undo then Share, got ' + JSON.stringify(order));
-    await reset(); await page.locator('.mcu-toast .mt-share').click(); await copiedShown('milestone');
-    goodLink(await clip(), '', 'desktop milestone');
+    await page.locator('.mcu-toast .mt-share').click();
     expect(await page.locator('.mcu-toast .mt-undo').count() === 1, 'milestone toast: sharing closed the toast before Undo could be used');
+    await cardOpen(page, 'milestone', /released Marvel titles seen/);
+    await reset(); await page.locator('.share-image-actions button', { hasText: 'Copy link' }).click(); await copiedShown('milestone card');
+    goodLink(await clip(), '', 'desktop milestone');
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+
+    // A finished guide shares its card; an unfinished one shares its link (above).
+    await page.evaluate(() => {
+      const g = window.GUIDES.find(x => x.id === 'before-doomsday');
+      const states = {}; g.stops.filter(s => s.weight === 'essential').forEach(s => { states[s.id] = 'seen'; });
+      localStorage.setItem('mcu.collection.v1', JSON.stringify({ version: 1, states }));
+    });
+    await go(page, '?guide=before-doomsday&view=list');
+    await page.locator('.g-module .gm-share').click();
+    await cardOpen(page, 'finished guide', /^A Red Thread card: Catch up before Avengers: Doomsday, complete$/);
+    await reset(); await page.locator('.share-image-actions button', { hasText: 'Copy link' }).click(); await copiedShown('guide card');
+    goodLink(await clip(), '?guide=before-doomsday', 'desktop finished guide');
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
     await ctx.close();
   }
 
@@ -171,6 +212,22 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     d = await last();
     goodLink(d && d.url, '?guide=before-doomsday', 'phone guide');
     expect(d && /essential titles to watch/.test(d.text), 'phone guide: message ' + JSON.stringify(d && d.text));
+
+    // My progress on a phone: the card in a sheet, and Share image sends the
+    // image with the message and the link.
+    await go(page, '');
+    await page.locator('.m-acct').click(); await page.waitForTimeout(500);
+    await page.locator('.m-sheet .acct-share').click(); await page.waitForTimeout(600);
+    await cardOpen(page, 'phone progress', /released Marvel titles seen/);
+    expect(await page.locator('.m-sheet .share-image').count() === 1, 'phone progress card: not in a sheet');
+    await page.locator('.share-image-actions button', { hasText: 'Share image' }).click(); await page.waitForTimeout(300);
+    d = await last();
+    out.phoneCard = d;
+    goodLink(d && d.url, '', 'phone progress card');
+    expect(d && d.files && d.files.length === 1 && d.files[0].type === 'image/png' && d.files[0].name === 'red-thread-progress.png' && d.files[0].size > 10000,
+      'phone progress card: Share image did not send the PNG ' + JSON.stringify(d && d.files));
+    expect(d && /^I’ve seen \d+ of \d+ released Marvel titles$/.test(d.text), 'phone progress card: message ' + JSON.stringify(d && d.text));
+    expect(await page.locator('.share-image').count() === 0, 'phone progress card: the sheet stayed open after sharing');
     await ctx.close();
   }
 

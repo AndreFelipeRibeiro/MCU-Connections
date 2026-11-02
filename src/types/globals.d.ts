@@ -1,3 +1,6 @@
+/// <reference types="vite/client" />
+// (Vite's import queries: ?raw for the share card's token file and logo,
+// ?url for its fonts.)
 // The shared surface. Every file in src/app still publishes its components on
 // `window` and reads its neighbours' from there — the bundle changed how the
 // app is delivered, not how its pieces are shared (docs/V4-PLAN.md §5 point 7),
@@ -30,6 +33,7 @@ type App = typeof import('../app/app');
 type ThemeModule = typeof import('../theme');
 type SettingsModule = typeof import('../app/settings');
 type ShareModule = typeof import('../app/share');
+type ShareImageModule = typeof import('../app/share-image');
 
 /** The i18n runtime (i18n.js), a classic script so the startup screen can
  *  speak the visitor's language before the bundle arrives. */
@@ -205,6 +209,8 @@ declare global {
     ShareButton: ShareModule['ShareButton'];
     ShareIcon: ShareModule['ShareIcon'];
     MCU_SHARE: ShareModule['MCU_SHARE'];
+    ShareImageHost: ShareImageModule['ShareImageHost'];
+    MCU_SHARE_IMAGE: ShareImageModule['MCU_SHARE_IMAGE'];
     useReorderAnimation: Mobile['useReorderAnimation'];
     captureViewFlip: Mobile['captureViewFlip'];
     captureFlip: Mobile['captureFlip'];

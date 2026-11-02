@@ -82,6 +82,12 @@ plan, the environment and the Figma workflow.
   (`ModalDialog`), `celebrate.tsx` (counters, confetti, sign-in reminder),
   `share.tsx` (the one share helper and Share button: system share sheet on
   phones, copy the link elsewhere, links always to production),
+  `share-image.tsx` (the share card dialog: progress and finished guides as an
+  image), `src/share-card/` (the image templates, shared by the share card and
+  the build's link previews; colours come from `src/index.css`),
+  `scripts/og-previews.js` (renders every link preview at build time; not in
+  `tools/`, which Vercel's build doesn't get), `middleware.ts` (at the root:
+  serves a shared link its own preview page),
   `settings.tsx` (Settings: theme, language, region, motion, celebrations,
   device actions, and their sync to the account; a v4 surface built from the
   shadcn components), `boot.js` (startup screen, at the root), `i18n.js` + `locales/*.js` (root),
@@ -120,10 +126,10 @@ plan, the environment and the Figma workflow.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (49 check scripts in 50 runs plus the accessibility scan in English,
+    (50 check scripts in 51 runs plus the accessibility scan in English,
     Portuguese and English in the dark theme, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **53 check runs clean**
+    output, not just the exit code. A good run is **54 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
@@ -461,7 +467,9 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
 The app's public name is **Red Thread** (Andre, 2026-11-01). "MCU
 Connections" was a working title: every visitor-facing string, page title,
 link-preview tag and share message says Red Thread (Portuguese: "o Red
-Thread"). The repository, folders, package, domain, Vercel and GitHub keep
+Thread"). Its domain, `https://redthread.tv/`, already serves production and
+is the address every shared link uses (`PUBLIC_URL` in `src/app/share.tsx`).
+The repository, folders, package, Vercel project and GitHub keep
 `mcu-connections` until the Deferred Notion ticket "Rename the app to Red
 Thread (redthread.tv)" runs; don't rename those in passing.
 

@@ -3248,6 +3248,7 @@ function App() {
           </window.Sheet>
         )}
         <window.StatusToast touch/>
+        <window.ShareImageHost touch/>
         <window.SignInNudge touch/>
         <window.BulkConfirm touch/>
         {welcome && !sheet && !drawerTitle && !pickerOpen && <window.AboutSheet welcome onPick={openPicker} onClose={() => setWelcome(false)}/>}
@@ -3368,6 +3369,7 @@ function App() {
         search={search}
       />
       <window.StatusToast touch={false}/>
+      <window.ShareImageHost touch={false}/>
       <window.SignInNudge touch={false}/>
       <window.BulkConfirm touch={false}/>
       {(aboutOpen || welcome) && !pickerOpen && <window.AboutDialog welcome={welcome && !aboutOpen} onPick={openPicker}

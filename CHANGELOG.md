@@ -13,6 +13,41 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 feature — Share cards and link previews; links go to redthread.tv
+
+Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging); not yet merged to `main`.
+
+Notion V4 Tasks, "Share 2/3 — Progress and guide share card (image)" and
+"Share 3/3 — Link previews per title, character and guide", committed
+together because they are built from one set of templates
+(`src/share-card/`); and "Share 1/3", revision 2.
+
+- **Links go to https://redthread.tv/** (Andre), which serves production.
+- **Share cards:** your progress, a finished guide and the celebration
+  toasts share a 1080×1350 image drawn on the device, with the link. Phones
+  that can share files send it through the share sheet (Share image);
+  elsewhere: Download image and Copy link. Dark palette whatever the theme,
+  the visitor's language, no personal details. Nothing on first load; opening
+  a card loads about 340 KB (gzip).
+- **Link previews:** the build draws a 1200×630 preview for the app-wide card
+  and every title, character and guide (160 images, about 3.5 s,
+  `scripts/og-previews.js`), and a copy of the page with that preview's tags;
+  `middleware.ts` (Vercel Routing Middleware) serves it to `/?title=`,
+  `/?char=` and `/?guide=`. Unknown ids and every other request pass through.
+  The app-wide card is redrawn with the Red Thread name and mark.
+- Templates take colours from `src/index.css` and the logo from
+  `src/assets/logo-mark.svg`. New dependencies, pinned: `satori` 0.33.5,
+  `@fontsource/inter` 5.3.0, `@resvg/resvg-js` 2.6.2 (build only).
+- **Verification:** new `qa/test-previews.js` (every preview image and page,
+  tags pointing at redthread.tv, pages identical to index.html otherwise, the
+  middleware run against the built files, the app boots from a preview page);
+  `test-share` covers the cards on desktop and phone; full regression 54
+  check runs clean.
+- **Limits:** the middleware is proven only once deployed; previews are
+  English only; real share sheets with an image and Safari's canvas are not
+  tested. Google sign-in from redthread.tv needs that address allowed in
+  Supabase and the Google client.
+
 ## V4 feature — Share buttons and links
 
 Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging); not yet merged to `main`.

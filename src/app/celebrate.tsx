@@ -148,7 +148,7 @@ function toastPlacement(touch) {
 }
 
 function StatusToast({ touch }) {
-  const { setStatus, undoMany } = window.useCollection();
+  const { setStatus, undoMany, progress } = window.useCollection();
   const { tr } = window.useI18n();
   const [toast, setToast] = React.useState(null);
   const timer = React.useRef(null);
@@ -201,7 +201,9 @@ function StatusToast({ touch }) {
         <button className="mt-undo" onClick={undo}>{tr('toast.undo')}</button>
         {/* A milestone can be shared (Notion "Share 1/3"); Undo stays first. */}
         {m && <window.ShareButton iconOnly size={15} className="mt-share" label={tr('share.toastLabel', { what: head })}
-          payload={() => ({ text: tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }) })}/>}
+          payload={() => ({ text: tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }) })}
+          onShare={() => window.MCU_SHARE_IMAGE.progress(progress.seenReleased, progress.releasedTotal,
+            tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }))}/>}
         <button className="mt-x" onClick={() => setToast(null)} aria-label={tr('toast.dismiss')} title={tr('toast.dismiss')}>×</button>
       </div>
     );
