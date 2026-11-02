@@ -1020,7 +1020,10 @@ function App() {
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [mediaReady, setMediaReady] = useState(!!window.MEDIA);
-  const { states: collectionStates, statusOf, ready: collectionReady } = window.useCollection();
+  const { states: collectionStates, statusOf, ready: collectionReady, settled: collectionSettled } = window.useCollection();
+  // The latest statusOf, for code that runs after a delay.
+  const statusOfRef = useRef(statusOf);
+  statusOfRef.current = statusOf;
 
   useEffect(() => { setMediaReady(true); }, []);
   const device = useDevice();
@@ -2516,11 +2519,16 @@ function App() {
   // ---- Coming back to a guide --------------------------------------------
   // A visit that starts on the home page (no title, character, guide or
   // filter in the address) reopens the guide being followed, once the
-  // collection has loaded: a guide finished meanwhile is forgotten instead.
-  // Otherwise a returning visitor may be offered one guide (GuidePromo): one
-  // leading to a release in the next 60 days, or the evergreen one, each only
-  // once per device. Never on a first visit, after a link, with a guide open,
-  // or while anything else (welcome, picker, sign-in reminder) is on screen.
+  // collection has settled: a guide finished meanwhile is forgotten instead.
+  // Otherwise a returning visitor may be offered one guide (GuidePromo; which
+  // one is MCU_GUIDE.promotion's rule), each only once per device. Never on a
+  // first visit, after a link, with a guide open, or while anything else
+  // (welcome, picker, sign-in reminder) is on screen.
+  // It waits for `settled`, not `ready`: ready can arrive with this device's
+  // titles while a signed-in session is still restoring, and every guide
+  // looked unfinished then (Notion V4 Tasks, "Don't promote a guide that the
+  // user has already finished"). The pick reads the titles again when it
+  // fires, and is re-checked while it is up.
   const urlLinked = !!(urlAtLoad.title || urlAtLoad.char || urlAtLoad.guide || urlAtLoad.phase
     || urlAtLoad.type || urlAtLoad.budget || urlAtLoad.release);
   const [promo, setPromo] = useState(null);
@@ -2528,7 +2536,7 @@ function App() {
   const guideIdNowRef = useRef(guideId);
   guideIdNowRef.current = guideId;
   useEffect(() => {
-    if (homeStartRef.current || !collectionReady) return undefined;
+    if (homeStartRef.current || !collectionSettled) return undefined;
     homeStartRef.current = true;
     if (urlLinked || guideId || !window.MCU_GUIDE) return undefined;
     const G = window.MCU_GUIDE;
@@ -2542,13 +2550,23 @@ function App() {
     setTimeout(() => {
       if (guideIdNowRef.current) return;
       if (document.querySelector('.m-sheet, .about-dialog, [aria-modal="true"], .g-pop, .mcu-confetti')) return;
-      const pick = G.promotion(statusOf, window.todayISO());
+      const pick = G.promotion(statusOfRef.current, window.todayISO());
       if (!pick) return;
-      G.markPromoted(pick.guide.id);
+      G.markPromoted(pick.key);
       setPromo(pick);
     }, 1200);
     return undefined;
-  }, [collectionReady]);
+  }, [collectionSettled]);
+  // Signing in (or a sync landing) while a guide is offered: if it turns out
+  // finished, offer the next pick instead, or close it when there is none.
+  useEffect(() => {
+    if (!promo || promo.caughtUp || !collectionSettled || !window.MCU_GUIDE) return;
+    const G = window.MCU_GUIDE;
+    if (!G.finished(promo.guide, statusOf)) return;
+    const pick = G.promotion(statusOf, window.todayISO());
+    if (pick) G.markPromoted(pick.key);
+    setPromo(pick);
+  }, [collectionStates, collectionSettled]);
   const startPromo = () => { const id = promo.guide.id; setPromo(null); openGuide(id); };
   // ---- The address ------------------------------------------------------
   // The pinned character, when it is one portrayal (a performer pin covering

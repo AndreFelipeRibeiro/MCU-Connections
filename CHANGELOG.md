@@ -13,6 +13,35 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 fix — Don't promote a finished guide; celebrate it instead
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Don’t promote a guide that the user has already finished it".
+A returning visitor was offered a guide they had already finished, and
+finishing one earned nothing.
+
+- **Cause:** the pick ran before a signed-in account's titles had loaded, so
+  every guide looked unfinished. It now waits for the collection to settle
+  (`useCollection().settled`), reads the titles again when it fires, and swaps
+  or closes the offer if a sync shows that guide finished.
+- **The order now:** an unfinished guide for a release in the next 60 days;
+  else, when that guide is finished, the caught-up moment for the release
+  (confetti, countdown, Share), whatever the other guides' progress; else the
+  evergreen guide; else the unfinished guide closest to done; else, with every
+  guide finished, the caught-up moment for the next release (or with no
+  countdown). Each guide is offered once per device, each caught-up moment once
+  per release.
+- New wording in English and Portuguese for the caught-up moment and the
+  "picked for you" offer.
+- `qa/test-promo.js`: titles arriving late, a guide finished while offered, the
+  closest guide, the guide-finished moment (then the evergreen guide), every
+  guide finished on three dates, desktop and phone, English and Portuguese.
+- Verified: Full Batch 5 regression on the final tree: 56 check runs clean. Not
+  checked: a real Google sign-in round trip (simulated by titles arriving after
+  load).
+
 ## V4 design — Light theme polish
 
 Recorded: 2026-11-02 12:49 EST (-0500). Pushed to `version/4.0` (V4 staging);

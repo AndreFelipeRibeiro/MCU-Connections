@@ -165,9 +165,15 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   Spatial opens on the next stop,
   and `?guide=` shares it. The guide you are following reopens when you come
   back to the home page (until you close or finish it). Returning visitors
-  are offered one guide, once per guide on each device: one leading to a
-  release in the next 60 days (Avengers: Doomsday now), with a countdown,
-  or else The Infinity Saga essentials. Search suggests guides by name, a character
+  are offered one guide they haven't finished, once per guide on each device:
+  one leading to a release in the next 60 days (Avengers: Doomsday now), with
+  a countdown, else The Infinity Saga essentials, else the unfinished guide
+  closest to done. Finishing the guide for a release in the next 60 days
+  earns a "caught up" moment for it (confetti, the countdown, Share) before
+  any other guide is offered; someone who has finished every guide gets it
+  too, for the next release. Once per release. The choice waits for a
+  signed-in account's titles to load.
+  Search suggests guides by name, a character
   with a guide offers "See the curated path", and a title's details list the
   guides it belongs to ("Part of", a collapsible section: open, but closed
   while a guide is open; each case remembers its own choice for the visit). Finishing a guide's essential stops bursts
