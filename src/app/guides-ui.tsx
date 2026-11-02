@@ -81,6 +81,31 @@ const MCU_GUIDE = {
 };
 window.MCU_GUIDE = MCU_GUIDE;
 
+// Share a guide (Notion "Share 1/3"). The link opens the guide; the message
+// says what it is, or, once its essentials are all seen, that it is finished
+// and how many days are left to its destination when that is still to come.
+function guideDaysLeft(g) {
+  const t = g.target && MCU_GUIDE.title(g.target);
+  const m = t && /^(\d{4})-(\d{2})-(\d{2})$/.exec(t.release || '');
+  if (!m) return 0;
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.max(0, Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - today) / 86400000));
+}
+function guideSharePayload(g, statusOf) {
+  const name = MCU_GUIDE.name(g);
+  const p = MCU_GUIDE.progress(g, statusOf);
+  const days = p.complete ? guideDaysLeft(g) : 0;
+  const text = !p.complete ? gtr('share.guideText', { name, n: p.ess.total })
+    : days > 0 ? gtr('share.guideDoneDays', { name, n: days }) : gtr('share.guideDone', { name });
+  return { params: { guide: g.id }, text };
+}
+function GuideShare({ guide, className, iconOnly = false, size }) {
+  const { statusOf } = window.useCollection();
+  return <window.ShareButton className={className} iconOnly={iconOnly} size={size}
+    label={gtr('share.guideLabel', { name: MCU_GUIDE.name(guide) })} payload={() => guideSharePayload(guide, statusOf)}/>;
+}
+
 // ---- Skipped stops (V3 Tasks, "Guides: skip a stop, and bring it back").
 // Per guide, remembered on this device (mcu.guideSkips.v1: { guideId: [ids] }).
 // A skipped stop stays listed but leaves the path: progress, the next stop,
@@ -361,6 +386,7 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
             </svg>
           </button>
         )}
+        <GuideShare guide={guide} className="gm-share" iconOnly size={15}/>
         {step}
         {vr}
         {close}
@@ -436,6 +462,8 @@ function GuideModule({ guide, layout = 'list', includeOptional, setIncludeOption
         )}
         {nOpt > 0 && bulkN > 0 && vr}
         {bulkN > 0 && <window.BulkHeaderAction ids={ids} group={MCU_GUIDE.name(guide)}/>}
+        {(nOpt > 0 || bulkN > 0) && vr}
+        <GuideShare guide={guide} className="gm-share"/>
         <span className="gm-fill"/>
         {step}
         {vr}
@@ -649,6 +677,7 @@ function GuideView({ guide, includeOptional, setIncludeOptional, surface, layout
           <div className={`g-kind${p.complete ? ' done' : ''}`}>{p.complete ? gtr('guide.complete') : MCU_GUIDE.kind(guide)}{!p.complete && date && <span> · {gtr('guide.targetOn', { date })}</span>}</div>
           <h2 className="g-name">{MCU_GUIDE.name(guide)}</h2>
         </div>
+        <GuideShare guide={guide} className="g-share" iconOnly/>
       </div>
       {p.complete
         ? <p className="g-ready"><b>{done || gtr('guide.complete')}</b> {gtr('guide.allEssentialSeen')}</p>

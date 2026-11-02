@@ -102,6 +102,10 @@ function AboutContent({ titleId, welcome, onClose, onPick }: {
         <p>{tr('about.ratings')}</p>
         <p>{tr('about.fan')}</p>
       </div>
+      {/* Share the app (Notion "Share 1/3"). */}
+      <div className="about-share-row">
+        <window.ShareButton text={tr('share.appLabel')} label={tr('share.appLabel')} payload={() => ({ text: tr('share.appText') })}/>
+      </div>
       {welcome && (onPick ? (
         // First visit: offer the "What have you seen?" picker (picker.jsx).
         <div className="welcome-pick">

@@ -1,0 +1,155 @@
+import React from 'react';
+
+// Sharing (Notion V4 Tasks, "Share 1/3 — Share buttons and links"). One helper
+// does it everywhere, so every button behaves the same:
+//   - Phones (a touch screen with the system share sheet): navigator.share, so
+//     people pick Messages, WhatsApp and so on. Cancelling it does nothing.
+//   - Anywhere else, or if the share sheet fails: the link is copied, and a
+//     "Link copied" toast says so (screen readers announce it).
+// Links always point at production, never at the address the page is on
+// (staging, a preview or localhost), and carry only what opens the same
+// thing: ?title=, ?char= or ?guide= (the keys app.tsx's readURLState knows),
+// or nothing for the home page. Sharing never touches browser history.
+
+/** Production. One place, so the rename ticket's domain step (redthread.tv)
+ *  changes it once. */
+export const PUBLIC_URL = 'https://mcu-connections.vercel.app/';
+
+export interface SharePayload {
+  /** What the link opens: title, char or guide id; empty for the home page. */
+  params?: Record<string, string>;
+  /** The message that goes with the link, in the visitor's language. */
+  text: string;
+}
+
+export function shareURL(params: Record<string, string> = {}): string {
+  const url = new URL(PUBLIC_URL);
+  Object.keys(params).forEach((k) => url.searchParams.set(k, params[k]));
+  return url.toString();
+}
+
+// ---------------------------------------------------------------------------
+// The "Link copied" toast: plain DOM on <body>, outside #root, so a dialog or
+// sheet that makes the app inert never silences it. The live region exists
+// from the start; screen readers only announce changes to one already there.
+// ---------------------------------------------------------------------------
+
+let host: HTMLDivElement | null = null;
+let hideTimer: ReturnType<typeof setTimeout> | undefined;
+function toastHost(): HTMLDivElement {
+  if (host && host.isConnected) return host;
+  host = document.createElement('div');
+  host.className = 'share-toast';
+  host.setAttribute('role', 'status');
+  host.setAttribute('aria-live', 'polite');
+  document.body.appendChild(host);
+  return host;
+}
+if (document.body) toastHost();
+
+function say(message: string, link?: string) {
+  const el = toastHost();
+  clearTimeout(hideTimer);
+  el.textContent = '';
+  // A new node each time, so saying the same thing twice is announced twice.
+  const line = document.createElement('span');
+  line.className = 'share-toast-msg';
+  line.textContent = message;
+  el.appendChild(line);
+  if (link) {
+    // Copying failed: show the link so it can be selected by hand.
+    const a = document.createElement('span');
+    a.className = 'share-toast-link';
+    a.textContent = link;
+    el.appendChild(a);
+  }
+  el.classList.add('show');
+  hideTimer = setTimeout(() => el.classList.remove('show'), link ? 8000 : 2600);
+}
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) { /* fall through to the older way */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    const active = document.activeElement as HTMLElement | null;
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    if (active && active.isConnected) active.focus({ preventScroll: true });
+    return ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+/** The system share sheet is for phones; desktop browsers that have one
+ *  (Safari, Edge) still copy, as the ticket asks. */
+function useSheet(): boolean {
+  if (typeof navigator.share !== 'function') return false;
+  return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+}
+
+export async function share(payload: SharePayload): Promise<void> {
+  const tr = window.MCU_I18N.tr;
+  const url = shareURL(payload.params);
+  if (useSheet()) {
+    try {
+      await navigator.share({ title: tr('app.name'), text: payload.text, url });
+      return;
+    } catch (e) {
+      // Cancelled: nothing to say. Anything else (not allowed, unsupported
+      // data): copy instead.
+      if (e && (e as DOMException).name === 'AbortError') return;
+    }
+  }
+  if (await copyText(url)) say(tr('share.copied'));
+  else say(tr('share.copyFailed'), url);
+}
+
+// ---------------------------------------------------------------------------
+// The button
+// ---------------------------------------------------------------------------
+
+export function ShareIcon({ size = 16 }: { size?: number }) {
+  // lucide "share": a box with an arrow leaving it, the shape phones use.
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2v13"/><path d="m16 6-4-4-4 4"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+    </svg>
+  );
+}
+
+/** A Share button. `label` is its accessible name ("Share Iron Man"); the
+ *  visible text is "Share" unless `iconOnly`. `payload` is read on click, so
+ *  the message always matches what is on screen. Clicks never reach the canvas
+ *  or card behind it. */
+export function ShareButton({ label, payload, className = '', iconOnly = false, text, size }: {
+  label: string; payload: () => SharePayload; className?: string; iconOnly?: boolean; text?: string; size?: number;
+}) {
+  const tr = window.MCU_I18N.tr;
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+  return (
+    <button type="button" className={`share-btn${iconOnly ? ' icon' : ''}${className ? ' ' + className : ''}`}
+      aria-label={label} title={iconOnly ? label : undefined}
+      onMouseDown={stop} onTouchStart={stop}
+      onClick={(e) => { e.stopPropagation(); share(payload()); }}>
+      <ShareIcon size={size}/>
+      {!iconOnly && <span>{text || tr('share.button')}</span>}
+    </button>
+  );
+}
+
+const MCU_SHARE = { share, url: shareURL, PUBLIC_URL };
+Object.assign(window, { ShareButton, ShareIcon, MCU_SHARE });
+export { MCU_SHARE };

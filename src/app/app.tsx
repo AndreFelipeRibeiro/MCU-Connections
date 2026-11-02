@@ -2845,6 +2845,12 @@ function App() {
     return hoverRelatedIds;
   }, [pair, activeChar, highlightedIds, hoverRelatedIds]);
 
+  // Share a character's timeline: the link pins it, and the message counts the
+  // titles its identity lights (the same set the banner counts).
+  const charSharePayload = (ch) => ({
+    params: { char: ch },
+    text: tr('share.charText', { name: I18N.charName(ch), n: (charTitleIds(ch) || new Set()).size }),
+  });
   const charBanner = activeChar ? (() => {
     const c = window.CHARACTERS[activeChar];
     const media = window.MEDIA;
@@ -2904,6 +2910,8 @@ function App() {
             <button onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!pinnedTitles.length}>›</button>
           </div>
         </>}
+        {pinned && <window.ShareButton iconOnly size={15} className="cb-share" label={tr('share.charLabel', { name: who })}
+          payload={() => charSharePayload(activeChar)}/>}
         <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')}
           onClick={unpinCharacter}>×</button>
       </div>
@@ -2955,6 +2963,8 @@ function App() {
               <window.GuideIcon size={16}/>
             </button>
           )}
+          <window.ShareButton iconOnly size={15} className="cb-share" label={tr('share.charLabel', { name: pinnedActor || I18N.charName(ch) })}
+            payload={() => charSharePayload(ch)}/>
           <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={unpinCharacter}>×</button>
         </div>
       </div>

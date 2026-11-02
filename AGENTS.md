@@ -80,6 +80,8 @@ plan, the environment and the Figma workflow.
   (the guide menu, views, banner, pill and "Part of"), `picker.tsx` ("What
   have you seen?", the poster-grid picker), `account.tsx`, `about.tsx`
   (`ModalDialog`), `celebrate.tsx` (counters, confetti, sign-in reminder),
+  `share.tsx` (the one share helper and Share button: system share sheet on
+  phones, copy the link elsewhere, links always to production),
   `settings.tsx` (Settings: theme, language, region, motion, celebrations,
   device actions, and their sync to the account; a v4 surface built from the
   shadcn components), `boot.js` (startup screen, at the root), `i18n.js` + `locales/*.js` (root),
@@ -118,10 +120,10 @@ plan, the environment and the Figma workflow.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (48 check scripts in 49 runs plus the accessibility scan in English,
+    (49 check scripts in 50 runs plus the accessibility scan in English,
     Portuguese and English in the dark theme, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **52 check runs clean**
+    output, not just the exit code. A good run is **53 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)

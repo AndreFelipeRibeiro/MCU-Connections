@@ -356,14 +356,15 @@ function SwitchRow({ id, title, text, checked, onChange }: {
 }
 
 /** A tappable row that does something (device actions, About). */
-function ActionRow({ children, onClick, tone, chevron, autoFocus }: {
-  children: React.ReactNode; onClick: () => void; tone?: 'destructive'; chevron?: boolean; autoFocus?: boolean;
+function ActionRow({ children, onClick, tone, chevron, trailing, autoFocus }: {
+  children: React.ReactNode; onClick: () => void; tone?: 'destructive'; chevron?: boolean; trailing?: React.ReactNode; autoFocus?: boolean;
 }) {
   return (
     <button type="button" onClick={onClick} autoFocus={autoFocus}
       className={`${ROW} ${ROW_FOCUS} ${PRESS} justify-between ${tone === 'destructive' ? 'font-medium text-destructive' : ''}`}>
       <span>{children}</span>
       {chevron && <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true"/>}
+      {trailing && <span className="flex shrink-0 text-muted-foreground">{trailing}</span>}
     </button>
   );
 }
@@ -446,6 +447,7 @@ function SettingsBody({ onAbout, onShowWelcome, onClose }: {
       <div className="flex flex-col gap-3">
         <Group>
           <ActionRow chevron onClick={() => { onClose(); onAbout(); }}>{tr('about.title')}</ActionRow>
+          <ActionRow trailing={<window.ShareIcon/>} onClick={() => window.MCU_SHARE.share({ text: tr('share.appText') })}>{tr('share.appLabel')}</ActionRow>
         </Group>
         <footer className="flex flex-col gap-1 px-4 text-center text-xs leading-relaxed text-muted-foreground">
           <p>{tr('about.fan')}</p>

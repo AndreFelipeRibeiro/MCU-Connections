@@ -69,6 +69,13 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   language; the Welcome screen and Settings let the visitor choose another. Portuguese shows official Brazilian release titles,
   and search matches titles and characters in either language, with or without
   accents ("Capitao" finds "Capitão").
+- Share: a title (details), a character's timeline (the pinned banner or
+  phone pill), a guide (its card, or once it is finished), your progress
+  (account), the app (About, Settings) and a finished phase (the celebration
+  toast). Phones open the system share sheet with a short message; desktop
+  copies the link and says "Link copied". Links always point at the production
+  site and open the same title, character or guide; nothing personal is
+  shared.
 - Settings (the gear in the desktop toolbar and the phone app bar; a panel
   from the right on desktop, a sheet on phones), laid out like a phone's own
   settings app in grouped lists: theme (a Light / Dark / Auto segmented
@@ -548,6 +555,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/preflight-v4.css` | Tailwind's preflight reset, scoped to `.v4` while V3 and the design system share the page. Generated, and temporary |
 | `src/components/ui/` | The shadcn components on Base UI (Vega style), added with the pinned CLI and ours to edit |
 | `src/theme.ts` | The theme mechanism: `dark` on `<html>`, following the system until the visitor overrides it (`window.MCU_THEME`, `useTheme()`) |
+| `src/app/share.tsx` | Sharing: the one `share()` helper (the system share sheet on phones, copy the link elsewhere, with a "Link copied" toast), the Share button, and the production address every link uses |
 | `src/app/settings.tsx` | Settings (panel on desktop, sheet on phones), the motion and celebration preferences, and their sync to the account; the first surface built from the shadcn components |
 | `design.html` / `src/design/` | The V4 design-system preview, a page of its own that the app never loads and that never loads the app |
 | `src/types/catalog.ts` | The catalog's shapes (`Title`, `Character`, `Guide`, `Media`, `WatchData`), written from the data itself |

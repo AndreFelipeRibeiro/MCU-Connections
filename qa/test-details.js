@@ -55,7 +55,8 @@ const go = async page => { await page.goto(URL); await settle(page); };
 // The sample titles are chosen at run time (released with scores, not out yet
 // without scores, budget unknown), so the check keeps working as release
 // dates pass and the catalogue changes.
-const HEAD = ['td-hero', 'td-scores', 'td-facts', 'tsa', 'synopsis'];
+// Seen and Watchlist sit in one row with Share (td-actrow, Notion "Share 1/3").
+const HEAD = ['td-hero', 'td-scores', 'td-facts', 'td-actrow', 'synopsis'];
 // The "watch" slot is filled by watch.jsx (Where to watch) and "guides" by
 // guides-ui.jsx (Part of): right after Where to watch, and only for a title
 // that is a stop in some guide.

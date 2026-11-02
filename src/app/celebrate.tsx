@@ -199,6 +199,9 @@ function StatusToast({ touch }) {
         </span>
         <span className="mt-text"><b>{head}</b><span>{sub}</span></span>
         <button className="mt-undo" onClick={undo}>{tr('toast.undo')}</button>
+        {/* A milestone can be shared (Notion "Share 1/3"); Undo stays first. */}
+        {m && <window.ShareButton iconOnly size={15} className="mt-share" label={tr('share.toastLabel', { what: head })}
+          payload={() => ({ text: tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }) })}/>}
         <button className="mt-x" onClick={() => setToast(null)} aria-label={tr('toast.dismiss')} title={tr('toast.dismiss')}>×</button>
       </div>
     );

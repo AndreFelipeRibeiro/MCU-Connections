@@ -29,6 +29,7 @@ type Picker = typeof import('../app/picker');
 type App = typeof import('../app/app');
 type ThemeModule = typeof import('../theme');
 type SettingsModule = typeof import('../app/settings');
+type ShareModule = typeof import('../app/share');
 
 /** The i18n runtime (i18n.js), a classic script so the startup screen can
  *  speak the visitor's language before the bundle arrives. */
@@ -201,6 +202,9 @@ declare global {
     PreferencesSync: SettingsModule['PreferencesSync'];
     MCU_PREFS: SettingsModule['MCU_PREFS'];
     MCU_MOTION: SettingsModule['MCU_MOTION'];
+    ShareButton: ShareModule['ShareButton'];
+    ShareIcon: ShareModule['ShareIcon'];
+    MCU_SHARE: ShareModule['MCU_SHARE'];
     useReorderAnimation: Mobile['useReorderAnimation'];
     captureViewFlip: Mobile['captureViewFlip'];
     captureFlip: Mobile['captureFlip'];

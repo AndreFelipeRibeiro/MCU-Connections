@@ -13,6 +13,27 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 feature — Share buttons and links
+
+Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging); not yet merged to `main`.
+
+Notion V4 Tasks, "Share 1/3 — Share buttons and links".
+
+- **Share** at every point: a title (details drawer and phone sheet), a
+  pinned character (banner, phone pill), a guide (card, Spatial row, phone
+  header), your progress (account), the app (About, Settings) and the
+  celebration toasts (after Undo).
+- One helper, `src/app/share.tsx`: phones open the system share sheet with a
+  short message in the visitor's language; elsewhere the link is copied and a
+  "Link copied" toast is announced. A cancelled sheet does nothing; sharing
+  adds no history entry. Links carry only `?title=`, `?char=` or `?guide=`.
+- **Verification:** new `qa/test-share.js` (every point on desktop and a
+  375px phone with a stubbed share sheet, links open what they shared,
+  keyboard, Portuguese); `test-details` follows the new actions row; full
+  regression 53 check runs clean.
+- **Limits:** a real phone's share sheet is not exercised. On phones the
+  pinned pill gives longer names ("Natasha Romanoff") about 20px less room.
+
 ## V4 feature — Settings, laid out like a phone's settings app; the public name is Red Thread
 
 Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging); not yet merged to `main`.

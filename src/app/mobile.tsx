@@ -1427,7 +1427,11 @@ function TitleDetailsBody({ title, surface, search, headingRef, headingId, cast,
             <dd className={title.budget == null ? 'unknown' : ''}>{title.budget != null ? MI18N.budget(title.budget) : mtr('details.budgetUnknown')}</dd>
           </div>
         </dl>
-        <window.TitleStatusActions title={title} variant="inline" className={`td-tsa ${c.tsa}`}/>
+        <div className="td-actrow">
+          <window.TitleStatusActions title={title} variant="inline" className={`td-tsa ${c.tsa}`}/>
+          <window.ShareButton className="td-share" label={mtr('share.titleLabel', { title: MI18N.titleName(title) })}
+            payload={() => ({ params: { title: title.id }, text: mtr('share.titleText', { title: MI18N.titleName(title), year: title.year }) })}/>
+        </div>
         {window.GuideDetailsSkip && <window.GuideDetailsSkip title={title}/>}
         <Synopsis title={title} className={`td-synopsis ${c.synopsis}`}/>
         <DetailSlot name="watch" title={title}/>

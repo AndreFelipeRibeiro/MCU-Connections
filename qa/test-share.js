@@ -1,0 +1,206 @@
+// Sharing (Notion V4 Tasks, "Share 1/3 — Share buttons and links").
+//   - Desktop copies the link and says "Link copied"; phones open the system
+//     share sheet (navigator.share, stubbed here) with the link and message.
+//   - Every share point: a title (drawer, phone sheet), a pinned character
+//     (banner, phone pill), a guide (card, Spatial row, phone header), my
+//     progress (account), the app (About, Settings), and a milestone toast
+//     (beside Undo, which stays first).
+//   - Links always point at production, carry only what opens the same
+//     thing, and open it; sharing adds no history entry; a cancelled share
+//     sheet shows nothing.
+//   - Portuguese messages; accessible names ("Share Iron Man").
+//   - The phone pill still fits "Peggy Carter" at 375px.
+// Every failed expectation lands in `errors`, which is what regress.sh gates on.
+const QA_PORT = +process.env.PORT || 8303;
+const { chromium } = require('playwright');
+const path = require('path');
+const fs = require('fs');
+const http = require('http');
+
+const S = __dirname;
+const SITE = process.env.SITE ? path.join(S, process.env.SITE) : path.join(S, '..', 'dist');
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
+// qa/serve-site.js wraps this and serves the built tree; the fallback below is
+// for running the check by hand without it.
+const server = http.createServer((req, res) => {
+  let p = decodeURIComponent((req.url || '/').split('?')[0]);
+  if (p === '/') p = '/index.html';
+  const f = path.join(SITE, p);
+  if (!f.startsWith(SITE) || !fs.existsSync(f)) { res.writeHead(404); return res.end(); }
+  res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
+  fs.createReadStream(f).pipe(res);
+});
+const URL_BASE = 'http://127.0.0.1:' + QA_PORT + '/';
+const PUBLIC = 'https://mcu-connections.vercel.app/';
+const NOWELCOME = "try { if (!localStorage.getItem('mcu.welcome.v1')) localStorage.setItem('mcu.welcome.v1', 'test'); localStorage.setItem('mcu.signInNudge.v1', '2'); } catch (e) {}";
+// Seeds a small collection once; later loads keep whatever the check stored.
+const SEEN = "if (!localStorage.getItem('mcu.collection.v1')) localStorage.setItem('mcu.collection.v1', JSON.stringify({ version: 1, states: { 'iron-man': 'seen', 'hulk': 'seen' } }));";
+// The phone share sheet, recorded instead of opened. window.__shareMode
+// 'cancel' makes it reject the way a dismissed sheet does.
+const SHEET = `window.__shared = [];
+  navigator.share = function (data) {
+    if (window.__shareMode === 'cancel') return Promise.reject(new DOMException('cancelled', 'AbortError'));
+    window.__shared.push(data); return Promise.resolve();
+  };`;
+const DESK = { viewport: { width: 1440, height: 900 } };
+const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true };
+
+(async () => {
+  await new Promise(r => server.listen(QA_PORT, r));
+  const browser = await chromium.launch();
+  const errors = [];
+  const out = { links: {} };
+  const expect = (ok, msg) => { if (!ok) errors.push(msg); };
+  const open = async (opts, init = '') => {
+    const ctx = await browser.newContext(opts);
+    await ctx.addInitScript(NOWELCOME + init);
+    const page = await ctx.newPage();
+    page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+    await page.route('**/*', r => r.request().url().startsWith('http://127.0.0.1') ? r.continue() : r.abort());
+    return { ctx, page };
+  };
+  const ready = (page) => require('./ready').appReady(page, 300);
+  const go = async (page, q) => { await page.goto(URL_BASE + q); await ready(page); };
+  const goodLink = (url, expectSearch, where) => {
+    out.links[where] = url;
+    expect(typeof url === 'string' && url.indexOf(PUBLIC) === 0, where + ': link is not the production address: ' + url);
+    expect(url === PUBLIC + expectSearch, where + ': link is ' + url + ', expected ' + PUBLIC + expectSearch);
+  };
+
+  // ---- Desktop: copy the link ---------------------------------------------
+  {
+    const { ctx, page } = await open(DESK, SEEN);
+    await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: URL_BASE });
+    const clip = () => page.evaluate(() => navigator.clipboard.readText());
+    const reset = () => page.evaluate(() => navigator.clipboard.writeText(''));
+    const copiedShown = async (where) => {
+      await page.waitForTimeout(250);
+      const t = await page.evaluate(() => { const el = document.querySelector('.share-toast'); return el ? { show: el.classList.contains('show'), text: el.textContent, role: el.getAttribute('role') } : null; });
+      expect(t && t.show && t.text === 'Link copied' && t.role === 'status', where + ': no announced "Link copied" toast ' + JSON.stringify(t));
+    };
+
+    await go(page, '?title=iron-man');
+    const hist = await page.evaluate(() => history.length);
+    const btn = page.locator('.drawer .td-share');
+    expect(await btn.getAttribute('aria-label') === 'Share Iron Man', 'drawer: Share has no "Share Iron Man" name');
+    await reset(); await btn.click(); await copiedShown('drawer');
+    goodLink(await clip(), '?title=iron-man', 'desktop title');
+    expect(await page.evaluate(() => history.length) === hist, 'drawer: sharing added a history entry');
+
+    await go(page, '?char=peggy');
+    await reset(); await page.locator('.char-banner .cb-share').click(); await copiedShown('banner');
+    goodLink(await clip(), '?char=peggy', 'desktop character');
+
+    await go(page, '?guide=before-doomsday&view=list');
+    await reset(); await page.locator('.g-module .gm-share').click(); await copiedShown('guide card');
+    goodLink(await clip(), '?guide=before-doomsday', 'desktop guide');
+    await go(page, '?guide=before-doomsday');
+    expect(await page.locator('.g-module.spatial .gm-share').count() === 1, 'Spatial guide row: no Share');
+
+    await page.locator('.acct-pill').click(); await page.waitForTimeout(400);
+    await reset(); await page.locator('.acct-share').click(); await copiedShown('account');
+    goodLink(await clip(), '', 'desktop progress');
+
+    // The account menu stays open after sharing; About is in its footer.
+    await page.locator('.acct-foot-link').click(); await page.waitForTimeout(400);
+    await reset(); await page.locator('.about-share-row .share-btn').click(); await copiedShown('about');
+    goodLink(await clip(), '', 'desktop about');
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+
+    await page.locator('.toolbar .settings-btn').click(); await page.waitForTimeout(500);
+    await reset(); await page.locator('.settings-panel button', { hasText: 'Share Red Thread' }).click(); await copiedShown('settings');
+    goodLink(await clip(), '', 'desktop settings');
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+
+    // Keyboard: Tab reaches the drawer's Share and Enter shares.
+    await go(page, '?title=iron-man');
+    await page.locator('.drawer .tsa-btn.watch').focus(); await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => document.activeElement && document.activeElement.classList.contains('td-share')), 'keyboard: Tab after Watchlist does not reach Share');
+    await reset(); await page.keyboard.press('Enter'); await copiedShown('keyboard');
+
+    // A milestone toast: every released Phase 1 title seen but one, then Seen.
+    const last = await page.evaluate(() => {
+      const p1 = window.TITLES.filter(t => t.phase === 1 && window.MCU_isReleased(t));
+      const states = {}; p1.slice(0, -1).forEach(t => { states[t.id] = 'seen'; });
+      localStorage.setItem('mcu.collection.v1', JSON.stringify({ version: 1, states }));
+      return p1[p1.length - 1].id;
+    });
+    await go(page, '?title=' + last);
+    await page.locator('.drawer .tsa-btn.seen').click();
+    await page.waitForSelector('.mcu-toast.milestone', { timeout: 3000 }).catch(() => {});
+    const order = await page.evaluate(() => [...document.querySelectorAll('.mcu-toast.milestone button')].map(b => b.className.split(' ')[0]));
+    out.toastButtons = order;
+    expect(order.indexOf('mt-undo') === 0 && order.indexOf('share-btn') === 1, 'milestone toast: expected Undo then Share, got ' + JSON.stringify(order));
+    await reset(); await page.locator('.mcu-toast .mt-share').click(); await copiedShown('milestone');
+    goodLink(await clip(), '', 'desktop milestone');
+    expect(await page.locator('.mcu-toast .mt-undo').count() === 1, 'milestone toast: sharing closed the toast before Undo could be used');
+    await ctx.close();
+  }
+
+  // ---- Phone: the share sheet ---------------------------------------------
+  {
+    const { ctx, page } = await open(PHONE, SEEN + SHEET);
+    const last = () => page.evaluate(() => window.__shared[window.__shared.length - 1] || null);
+
+    await go(page, '?title=iron-man');
+    await page.locator('.m-sheet .td-share').click(); await page.waitForTimeout(200);
+    let d = await last();
+    out.phoneTitle = d;
+    goodLink(d && d.url, '?title=iron-man', 'phone title');
+    expect(d && d.text === 'Iron Man (2008), and how it connects to the rest of the MCU', 'phone title: message ' + JSON.stringify(d && d.text));
+    expect(d && d.title === 'Red Thread', 'phone title: share title is not Red Thread');
+    expect(!(await page.evaluate(() => document.querySelector('.share-toast').classList.contains('show'))), 'phone: a "Link copied" toast showed after the share sheet');
+
+    // Cancelled: nothing at all.
+    await page.evaluate(() => { window.__shareMode = 'cancel'; });
+    await page.locator('.m-sheet .td-share').click(); await page.waitForTimeout(250);
+    expect(!(await page.evaluate(() => document.querySelector('.share-toast').classList.contains('show'))), 'phone: a cancelled share sheet showed a toast');
+    await page.evaluate(() => { window.__shareMode = ''; });
+
+    await go(page, '?char=peggy');
+    const fit = await page.evaluate(() => { const e = document.querySelector('.cp-name'); return { sw: e.scrollWidth, cw: e.clientWidth }; });
+    out.pillName = fit;
+    expect(fit.sw <= fit.cw, 'phone pill: "Peggy Carter" is cut short at 375px ' + JSON.stringify(fit));
+    await page.locator('.char-pill .cb-share').click(); await page.waitForTimeout(200);
+    d = await last();
+    goodLink(d && d.url, '?char=peggy', 'phone character');
+    expect(d && /^Follow Peggy Carter across \d+ titles$/.test(d.text), 'phone character: message ' + JSON.stringify(d && d.text));
+
+    await go(page, '?guide=before-doomsday&view=list');
+    await page.locator('.g-head .g-share').click(); await page.waitForTimeout(200);
+    d = await last();
+    goodLink(d && d.url, '?guide=before-doomsday', 'phone guide');
+    expect(d && /essential titles to watch/.test(d.text), 'phone guide: message ' + JSON.stringify(d && d.text));
+    await ctx.close();
+  }
+
+  // ---- Portuguese ---------------------------------------------------------
+  {
+    const { ctx, page } = await open(PHONE, SEEN + SHEET + "localStorage.setItem('mcu.lang.v1','pt-BR');");
+    await go(page, '?title=iron-man');
+    const btn = page.locator('.m-sheet .td-share');
+    expect((await btn.textContent()).trim() === 'Compartilhar', 'pt-BR: the button does not read Compartilhar');
+    await btn.click(); await page.waitForTimeout(200);
+    const d = await page.evaluate(() => window.__shared[0] || null);
+    out.ptTitle = d && d.text;
+    expect(d && /^Homem de Ferro \(2008\) e como se conecta ao resto do MCU$/.test(d.text), 'pt-BR: message ' + JSON.stringify(d && d.text));
+    await ctx.close();
+  }
+
+  // ---- Each link opens what it shared --------------------------------------
+  {
+    const { ctx, page } = await open(DESK);
+    await go(page, '?title=iron-man');
+    expect((await page.locator('#drawer-title').textContent()).trim() === 'Iron Man', 'link: ?title=iron-man did not open Iron Man');
+    await go(page, '?char=peggy');
+    expect(await page.locator('.char-banner.pinned').count() === 1, 'link: ?char=peggy did not pin Peggy Carter');
+    await go(page, '?guide=before-doomsday');
+    expect(await page.locator('.g-module').count() === 1, 'link: ?guide=before-doomsday did not open the guide');
+    await ctx.close();
+  }
+
+  console.log(JSON.stringify({ ...out, errors }, null, 1));
+  await browser.close();
+  server.close();
+  process.exit(errors.length ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });

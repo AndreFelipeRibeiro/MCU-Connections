@@ -290,6 +290,12 @@ hand.
   says so once per visit; nothing fails. Then check the two-browser sync by
   hand (signed in on both, change the theme on one, reload the other).
 
+- **Share links point at production by a constant:** `PUBLIC_URL` in
+  `src/app/share.tsx` (`https://mcu-connections.vercel.app/` today). The
+  rename ticket's domain step changes that one line. Share 2/3 (the progress
+  and guide card image) and 3/3 (per-title link previews, which also redraw
+  `og-image.jpg`, still showing the old name) build on the same helper.
+
 - **Backlog:** the Notion board, in the user's order, is the live list. The
   items below were recorded at handoff on 2026-10-28. All have since shipped
   except the budget audit and the planning-document reconciliation (both in
