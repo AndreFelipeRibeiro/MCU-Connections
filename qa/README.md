@@ -24,7 +24,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression: 50 check scripts in 51 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English, Portuguese and English in the dark theme, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
+| `bash qa/regress.sh` | Full regression: 51 check scripts in 53 runs (`test-fit` runs three times: English, Portuguese, and Portuguese at the Large text size) plus the accessibility scan in English, Portuguese and English in the dark theme, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
 | `bash qa/quick.sh [checks…]` | The per-ticket run: the checks `qa/checks.json` lists for the files changed in the working tree, plus the checks named (the ticket's own), side by side. A typical ticket takes 1–3 minutes. |
 | `SITE_URL=<address> node qa/smoke.js` | One-minute smoke check against a deployed site, exactly as a visitor gets it: loads, titles appear, Spatial and List open, details open and close, the phone List opens a sheet, no console errors. Run it against staging after each push and production after each merge. |
 | `node qa/a11y-scan.js` | axe-core scan of 16 screens (desktop Spatial, details, List in Release and in By Phase, account menu, an open guide in the List and in Spatial, the Guides popover, the "What have you seen?" dialog, the guide promotion; phone List, details, Spatial, an open guide, the picker sheet, the guide promotion). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). Text whose background axe cannot resolve comes back *incomplete*, not as a violation, so this scan passes it; `test-contrast.js` is what measures those. |
@@ -77,8 +77,10 @@ relative to `qa/`, and build it yourself first:
 
 ## The checks
 
-- Regression set (`regress.sh`): `test-fit` (layout fit for every sort, both
-  languages), `test-ctxfn2` (context summary and filters), `test-panel`
+- Regression set (`regress.sh`): `test-fit` (the desktop toolbar and the
+  phone app bar fit at every width, in English and in Portuguese with
+  Watchlist selected; fails on a control past the screen or its row,
+  overlapping controls, a label past its button or sideways scroll), `test-ctxfn2` (context summary and filters), `test-panel`
   (details panel and drawer), `test-i18n`, `test-dlist` (desktop List),
   `test-suggest` (search suggestions), `test-layers` (menu layering),
   `test-anim` (reorder animations), `test-cel` (counters and celebrations; with the details open, the confetti stays left of the drawer, centred on the toast),
@@ -297,7 +299,16 @@ relative to `qa/`, and build it yourself first:
   share card: My progress, a milestone toast and a finished guide open it with
   a 1080×1350 image and a description; desktop offers Download image and Copy
   link, a phone Share image, which sends the PNG with the message and link),
-  `test-previews` (the build's link previews: a 1200×630 image and a page for
+  `test-textsize` (the type scale and Text size: no visible text under 12px
+  at the default size outside the Spatial cards, on the main desktop and phone
+  surfaces, Settings and the account; Settings → Text size scales the root by
+  87.5% / 106.25% on desktop (112.5% Large on phones), applies at once, survives a reload, stays off the
+  synced preferences and leaves a Spatial card's text alone; phones set body
+  text at 14px, the bottom nav at 12px and draw search at 13px with the field's
+  own font at 16px or more (no zoom on focus on iPhones); the desktop List
+  keeps every cell inside its column in both languages at Default and Large,
+  with all 12 columns at 1280px by default; 200% browser zoom on desktop has no
+  sideways scroll), `test-previews` (the build's link previews: a 1200×630 image and a page for
   every title, character and guide, whose og: tags name it and point at
   redthread.tv and which differ from index.html in nothing else; index.html's
   own card is the new default; middleware.ts, run against the built files,
@@ -344,7 +355,7 @@ one.
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
 - `test-camera` used to fail at "sort change while selected", and separately to
   report a false "wheel cancels the glide" about one run in four. Both were the
-  check, not the app, and both are fixed. A full run is 54 runs (51 check
+  check, not the app, and both are fixed. A full run is 56 runs (53 check
   runs and three scans: English, Portuguese, and English in the dark theme) and all of them should be clean: as of 2026-10-31
   there are no known failures. Treat any `test-camera` failure as real, and
   compare against a clean copy with `SITE=` if in doubt.

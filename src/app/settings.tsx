@@ -62,6 +62,38 @@ function setMotion(next: Motion) {
   applyMotion();
   emitLocal();
 }
+// Text size (Notion "Font size increase"): a data attribute on <html> scales
+// the root font size, which every size in the type scale follows
+// (src/index.css). Kept on this device only (Andre: a phone and a laptop often
+// want different sizes), so it is not part of the synced snapshot below and
+// has its own listeners. vite.config.js sets it before the first paint.
+export type TextSize = 'small' | 'default' | 'large';
+const TEXT_SIZE_KEY = 'mcu.textSize.v1';
+const readTextSize = (): TextSize => {
+  const v = read(TEXT_SIZE_KEY);
+  // "larger" was a fourth step, dropped before release (Andre): it reads as Large.
+  return v === 'small' ? 'small' : v === 'large' || v === 'larger' ? 'large' : 'default';
+};
+let textSize: TextSize = readTextSize();
+const textListeners = new Set<() => void>();
+function applyTextSize() {
+  const el = document.documentElement;
+  if (textSize === 'default') el.removeAttribute('data-text-size');
+  else el.setAttribute('data-text-size', textSize);
+}
+applyTextSize();
+function setTextSize(next: TextSize) {
+  if (next === textSize) return;
+  textSize = next;
+  write(TEXT_SIZE_KEY, next === 'default' ? null : next);
+  applyTextSize();
+  textListeners.forEach((fn) => fn());
+  // Layouts that measure their text (the phone collection row) fit again.
+  window.dispatchEvent(new Event('mcu:textsize'));
+}
+const subscribeText = (fn: () => void) => { textListeners.add(fn); return () => { textListeners.delete(fn); }; };
+const useTextSize = () => React.useSyncExternalStore(subscribeText, () => textSize);
+
 function setCelebrations(on: boolean) {
   if (on === celebrations) return;
   celebrations = on;
@@ -123,6 +155,7 @@ function usePreferences(): Preferences {
 const MCU_PREFS = {
   snapshot, apply: applyPreferences, subscribe: subscribeAll,
   celebrations: () => celebrations, setCelebrations, motion: () => motion, setMotion,
+  textSize: () => textSize, setTextSize,
 };
 const MCU_MOTION = { reduced: reducedMotion };
 
@@ -299,7 +332,7 @@ function Footnote({ children, role }: { children: React.ReactNode; role?: string
 /** A segmented control (theme): a radio group drawn as one track. */
 function Segmented<T extends string>({ value, onChange, label, options }: {
   value: T; onChange: (v: T) => void; label: string;
-  options: Array<{ value: T; label: string; icon: React.ReactNode }>;
+  options: Array<{ value: T; label: string; icon?: React.ReactNode }>;
 }) {
   return (
     // The icons go when the track is too narrow for them beside the longest
@@ -374,6 +407,7 @@ function SettingsBody({ onAbout, onShowWelcome, onClose }: {
 }) {
   const { tr, languages } = window.useI18n();
   const prefs = usePreferences();
+  const size = useTextSize();
   const [confirmClear, setConfirmClear] = React.useState(false);
   const [guidesReset, setGuidesReset] = React.useState(false);
   const regions = window.MCU_regionChoices();
@@ -387,6 +421,15 @@ function SettingsBody({ onAbout, onShowWelcome, onClose }: {
             { value: 'light', label: tr('theme.light'), icon: <SunIcon aria-hidden="true"/> },
             { value: 'dark', label: tr('theme.dark'), icon: <MoonIcon aria-hidden="true"/> },
             { value: 'system', label: tr('theme.system'), icon: <MonitorIcon aria-hidden="true"/> },
+          ]}/>
+      </Section>
+
+      <Section id="settings-text-size" title={tr('settings.textSize')} footnote={<Footnote>{tr('settings.textSizeHint')}</Footnote>}>
+        <Segmented<TextSize> label={tr('settings.textSize')} value={size} onChange={setTextSize}
+          options={[
+            { value: 'small', label: tr('settings.textSmall') },
+            { value: 'default', label: tr('settings.textDefault') },
+            { value: 'large', label: tr('settings.textLarge') },
           ]}/>
       </Section>
 

@@ -155,13 +155,29 @@ work:
   page gets the rule as an inline script Vite injects into its `<head>`
   (`THEME_PREPAINT` in `vite.config.js`). Change the storage key or the rule
   in one and the page paints one theme and then swaps to the other.
-- **`test-fit` reports layout but does not fail on it.** Its `errors` field
-  counts console errors only; the toolbar measurements it prints (offscreen
-  controls, row overflow, overlaps, horizontal scroll, clipped labels) never
-  fail the run. During the first re-skin pass a 12px overflow at 1280px in
-  Portuguese passed it "clean" and was found only by comparing its numbers
-  against the build before. Compare those numbers when changing the toolbar,
-  until the check gates on them.
+- **`test-fit` fails on layout since 2026-11-01** (Notion "Top nav (PT) /
+  content overflowing"): a control past the screen or its row, overlapping
+  toolbar controls, a label past its own button, or sideways scroll, in the
+  desktop toolbar and the phone app bar (all rows, including the collection
+  row it used to miss). Count badges overhang their buttons on purpose and
+  are measured out. Before, it only printed these, and a Portuguese overflow
+  passed as clean; the regression's Portuguese run with Watchlist selected
+  (`MODE=watch`) also never took effect, because the script read only argv.
+- **Text has one scale, in rem** (`--fs-*` in `src/index.css`), and Settings'
+  Text size sets `data-text-size` on `<html>` (Small 87.5%; Large 106.25% on desktop and 112.5% on phones, where body text is 14px and the bottom nav and search grow only to 106.25%).
+  Controls grow with it: their heights are `max(Npx, N/16 rem)` (and
+  Tailwind's spacing unit `max(0.25rem, 4px)`), so they grow at Large and never
+  shrink below today's size, touch targets included. Write new sizes
+  with the tokens. Things that stay in px and don't grow with text: the
+  Spatial canvas cards (on purpose), the List's poster, face and action
+  columns, and most spacing, so very large text leans on the measuring rows
+  and the List's rem breakpoints. Not covered: the browser's minimum font
+  size setting and real iOS Dynamic Type.
+- **The phone collection row fits by measuring** (`MobileTopBar` in
+  `mobile.tsx`): it tries full labels, then an icon-only view menu, then only
+  "All" and the selected label, then "Para ver", and keeps the first that
+  fits, on resize, language, selection and font load. Width breakpoints
+  can't know how long a language's words are, or how big the text is.
 - **Everything a visitor sees says Red Thread** (Andre, 2026-11-01: the public
   name; MCU Connections was a working title), including the link previews the
   build draws. The repository, package, Vercel project and GitHub still say

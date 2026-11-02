@@ -211,6 +211,7 @@ declare global {
     MCU_SHARE: ShareModule['MCU_SHARE'];
     ShareImageHost: ShareImageModule['ShareImageHost'];
     MCU_SHARE_IMAGE: ShareImageModule['MCU_SHARE_IMAGE'];
+    useFitSteps: Mobile['useFitSteps'];
     useReorderAnimation: Mobile['useReorderAnimation'];
     captureViewFlip: Mobile['captureViewFlip'];
     captureFlip: Mobile['captureFlip'];

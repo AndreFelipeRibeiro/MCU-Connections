@@ -33,6 +33,59 @@ function ScoreBadges({ title, lead, compact }: { title: Title; lead?: 'rt' | 'im
 // The app bar is already three rows deep on a phone, so the view switch moved
 // off m-appbar-top (where the account avatar now sits) onto its own tight row
 // rather than becoming a fourth control crammed into the brand row.
+// Fitting a row of controls by measuring rather than by screen width (Notion
+// "Top nav (PT) / content overflowing", "Font size increase"). A row tries
+// steps 0..max, each more compact than the last (its stylesheet keys them on
+// data-fit), and keeps the first where nothing runs past its parent:
+// breakpoints can't know how long a language's words are or how big the text
+// is. It runs before paint, and again when the row's width changes, the fonts
+// load, the Text size changes, or any of `deps` change. Count badges and other
+// absolutely placed extras overhang on purpose and are not measured.
+function rowOverflows(row) {
+  const out = (inner, outer) => inner.right > outer.right + 1 || inner.left < outer.left - 1;
+  const placed = (e) => { const p = getComputedStyle(e).position; return p === 'absolute' || p === 'fixed'; };
+  // Inside the parent's padding, not just its border: a label that eats into
+  // its button's padding reads as cramped (Andre, at Large on a 375px phone),
+  // so that counts as not fitting too.
+  const inner = (el) => {
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+    return { left: r.left + parseFloat(cs.paddingLeft), right: r.right - parseFloat(cs.paddingRight) };
+  };
+  const walk = (el, box) => [...el.children].some((c) => {
+    // A wrapper with no box of its own (GuideOff's display: contents) is
+    // looked through, not skipped.
+    if (getComputedStyle(c).display === 'contents') return walk(c, box);
+    if (!c.getClientRects().length || placed(c)) return false;
+    return out(c.getBoundingClientRect(), box) || walk(c, inner(c));
+  });
+  return walk(row, inner(row));
+}
+function useFitSteps(ref, max, deps) {
+  const [fit, setFit] = React.useState(0);
+  const refit = React.useCallback(() => {
+    const row = ref.current;
+    if (!row || !row.clientWidth) return;
+    let step = 0;
+    for (; step < max; step++) { row.dataset.fit = String(step); if (!rowOverflows(row)) break; }
+    row.dataset.fit = String(step);
+    setFit(step);
+  }, [ref, max]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  React.useLayoutEffect(refit, [refit, ...deps]);
+  React.useEffect(() => {
+    const row = ref.current;
+    if (!row) return undefined;
+    let width = row.clientWidth;
+    const ro = typeof ResizeObserver === 'undefined' ? null
+      : new ResizeObserver(() => { if (row.clientWidth !== width) { width = row.clientWidth; refit(); } });
+    if (ro) ro.observe(row);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+    window.addEventListener('mcu:textsize', refit);
+    return () => { if (ro) ro.disconnect(); window.removeEventListener('mcu:textsize', refit); };
+  }, [ref, refit]);
+  return fit;
+}
+
 function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, onOpenSettings, onOpenGuides, guideActive, guideName, collectionFilter, setCollectionFilter }) {
   // The suggestions list spans the whole search row (see SearchInput).
   const [searchRow, setSearchRow] = React.useState(null);
@@ -51,6 +104,18 @@ function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPick
     };
     hide(fslot.current, guideActive); hide(row3.current, guideActive);
   }, [guideActive]);
+
+  // The collection switch and the view menu share one row, and Portuguese
+  // labels are much longer than English ones (Notion "Top nav (PT) / content
+  // overflowing"). The row tries each step and keeps the first that fits
+  // (useFitSteps), so it holds in any language and at any text size:
+  //   0  every label;
+  //   1  the view menu shows only its icon (its accessible name stays);
+  //   2  the switch shows only "All" and the selected option's label;
+  //   3  "Para ver" in place of "Para assistir" (Andre's approval).
+  const { lang } = window.useI18n();
+  const viewRow = React.useRef(null);
+  const fit = useFitSteps(viewRow, 3, [lang, collectionFilter, viewMode]);
   return (
     <div className={`m-appbar${guideActive ? ' guide' : ''}`} role="banner">
       {guideActive && <window.GuideOffHint/>}
@@ -85,8 +150,8 @@ function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPick
         {guideActive && <span className="m-vslot"><ViewMenu viewMode={viewMode} setViewMode={setViewMode}/></span>}
       </div>
       <div className="m-row3" ref={row3}>
-        <div className="m-viewrow">
-          <window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter} variant="compact"/>
+        <div className="m-viewrow" ref={viewRow} data-fit={fit}>
+          <window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter} variant="compact" short={fit >= 3}/>
           <ViewMenu viewMode={viewMode} setViewMode={setViewMode}/>
         </div>
       </div>
@@ -1507,13 +1572,13 @@ function FocusPop({ title, x, y, onOpenCast, guide, guideSkip, onGuideSkip }) {
 }
 
 
-Object.assign(window, { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, TitleDetailsBody, DetailSection, useDetailOpen, BulkHeaderAction, FocusPop, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });
+Object.assign(window, { useFitSteps, useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip, MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet, TitleDetailsBody, DetailSection, useDetailOpen, BulkHeaderAction, FocusPop, ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight, StoryYear, ReleaseLine, ReleaseBadge });
 
 // Exported so the shared `window` surface can be typed from the real
 // implementations rather than a second, drifting copy of their signatures
 // (src/types/globals.d.ts). The window publication above stays: it is what
 // every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
-export { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip,
+export { useFitSteps, useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip,
   MobileTopBar, SortTabs, MobileGrid, MobileList, FilterSheet, CastSheet,
   TitleDetailsBody, DetailSection, useDetailOpen, BulkHeaderAction, FocusPop,
   ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight,

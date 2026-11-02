@@ -497,6 +497,13 @@ const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title
 function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOpen, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
+  // The sort row fits by measuring (window.useFitSteps; Notion "Font size
+  // increase"), so it holds in Portuguese and at every Text size:
+  //   1  short sort labels;  2  the collection switch labels only All and the
+  //   selected option;  3  the view switch shows icons only;  4  the switch
+  //   labels only All;  5  unselected sort tabs show their icon only.
+  const sortRow = useRef(null);
+  const sortFit = window.useFitSteps(sortRow, 5, [I18N.lang, sort, collectionFilter, desktopView]);
   // Collection has its own always-visible switch, so it is not counted here.
   const activeFilters = (phaseFilter !== 'all' ? 1 : 0) + (budgetFilter !== 'all' ? 1 : 0) + (releaseFilter !== 'all' ? 1 : 0);
   useEffect(() => {
@@ -605,7 +612,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
           <window.AccountButton onPickCollection={setCollectionFilter} onAbout={onAbout}/>
         </div>
       </div>
-      <div className="tb-row tb-sort-row">
+      <div className="tb-row tb-sort-row" ref={sortRow} data-fit={sortFit}>
         <Off off={listOff}><div className="control-group tb-sort-controls">
           <div className="segmented">
             {SORT_OPTIONS.map(([v,ic])=>(
