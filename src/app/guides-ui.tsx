@@ -107,6 +107,12 @@ Object.assign(MCU_GUIDE, {
     try { localStorage.setItem(SKIPS_KEY, JSON.stringify(map)); } catch (e) { /* this visit only */ }
     skipListeners.forEach(fn => fn());
   },
+  // Settings, "Reset guide progress": every skipped stop back on its path.
+  resetSkips() {
+    skipsMap = {};
+    try { localStorage.removeItem(SKIPS_KEY); } catch (e) { /* this visit only */ }
+    skipListeners.forEach(fn => fn());
+  },
   // Drops the skip on stops that have been seen since (seen wins).
   dropSeenSkips(statusOf) {
     const map = skipsNow();

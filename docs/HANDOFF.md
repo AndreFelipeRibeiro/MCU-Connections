@@ -284,6 +284,12 @@ hand.
 
 ## Open threads and what's next
 
+- **Waiting on Andre: run the `user_preferences` section of `schema.sql`** in
+  the Supabase SQL editor (the whole file is idempotent). Until then Settings
+  keep preferences on each device for signed-in visitors too, and the console
+  says so once per visit; nothing fails. Then check the two-browser sync by
+  hand (signed in on both, change the theme on one, reload the other).
+
 - **Backlog:** the Notion board, in the user's order, is the live list. The
   items below were recorded at handoff on 2026-10-28. All have since shipped
   except the budget audit and the planning-document reconciliation (both in

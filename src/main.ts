@@ -59,9 +59,9 @@ import './app/upnext';
 import './app/watch';
 import './app/guides-ui';
 import './app/picker';
-// New in V4, not one of V3's files: the theme control in the toolbar and the
-// phone app bar, published on window like its neighbours.
-import './app/theme-toggle';
+// Settings (V4): the first surface built from the shadcn components. After
+// watch and guides-ui, whose region and guide stores it drives.
+import './app/settings';
 // Last, and it must stay last: this one mounts the app, so everything it
 // renders has to be on `window` by the time it runs.
 import './app/app';

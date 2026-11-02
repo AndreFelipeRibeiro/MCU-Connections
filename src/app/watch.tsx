@@ -206,11 +206,17 @@ function WhereToWatch({ title }) {
 }
 
 window.MCU_detailSlots = Object.assign(window.MCU_detailSlots || {}, { watch: WhereToWatch });
-Object.assign(window, { WhereToWatch, MCU_region: regionStore, MCU_guessRegion: guessRegion });
+// The regions offered, supported ones first: the in-title picker and Settings.
+function regionChoices() {
+  const supported = (window.WATCH || {}).regions || [];
+  return [...supported, ...REGION_CHOICES.filter((c) => supported.indexOf(c) === -1)];
+}
+Object.assign(window, { WhereToWatch, MCU_region: regionStore, MCU_guessRegion: guessRegion,
+  MCU_regionChoices: regionChoices, MCU_countryName: countryName });
 
 // Exported so the shared `window` surface can be typed from the real
 // implementations rather than a second, drifting copy of their signatures
 // (src/types/globals.d.ts). The window publication above stays: it is what
 // every reader and 15 of the QA checks still use. docs/V4-PLAN.md §5.3.
 export { WhereToWatch, regionStore as MCU_region,
-  guessRegion as MCU_guessRegion };
+  guessRegion as MCU_guessRegion, regionChoices as MCU_regionChoices, countryName as MCU_countryName };

@@ -58,7 +58,9 @@ function AboutIcon({ kind }: { kind: string }) {
 function AboutContent({ titleId, welcome, onClose, onPick }: {
   titleId?: string; welcome?: boolean; onClose: () => void; onPick?: () => void;
 }) {
-  const tr = window.MCU_I18N.tr;
+  // Subscribed, so the welcome redraws in a language picked on it.
+  const { tr, lang, setLang, languages } = window.useI18n();
+  const langs = languages();
   const ways = [['connect', 'about.connect'], ['follow', 'about.follow'], ['order', 'about.order'], ['track', 'about.track']];
   return (
     <div className="about">
@@ -69,6 +71,20 @@ function AboutContent({ titleId, welcome, onClose, onPick }: {
           <div className="about-tag">{tr('about.tagline')}</div>
         </div>
       </div>
+      {/* The language menu lives in Settings now, so a first visit that can't
+          read the guessed language can still switch here. Each option is
+          written in its own language. */}
+      {welcome && langs.length > 1 && (
+        <div className="welcome-lang" role="group" aria-labelledby="welcome-lang-label">
+          <span id="welcome-lang-label" className="welcome-lang-label">{tr('lang.label')}</span>
+          <div className="segmented">
+            {langs.map((l) => (
+              <button key={l.code} type="button" lang={l.code} aria-pressed={lang === l.code}
+                className={lang === l.code ? 'on' : ''} onClick={() => setLang(l.code)}>{l.name}</button>
+            ))}
+          </div>
+        </div>
+      )}
       <p className="about-lead">{tr('about.lead')}</p>
       <h3 className="about-h">{tr('about.waysTitle')}</h3>
       <ul className="about-ways">

@@ -397,7 +397,7 @@ document.addEventListener('pointerdown', () => { lastInput = 'pointer'; }, true)
 // without taking focus, so the next press still reaches the list. Cleared once
 // the details have shown that title, or after a moment if they never change.
 let drawerStepFocus = false;
-const stepReducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const stepReducedMotion = () => window.MCU_MOTION.reduced();
 let drawerStepTimer = 0;
 const keepFocusOnStep = () => {
   drawerStepFocus = true;
@@ -494,7 +494,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
 const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
-function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
+function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOpen, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   // Collection has its own always-visible switch, so it is not counted here.
@@ -600,8 +600,8 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onPickTitle, onPickPer
         <div className="tb-end">
           <window.SyncStatus/>
           <window.GuidesButton currentId={guideId} onPick={onOpenGuide}/>
-          <window.ThemeToggle/>
-          <window.LanguageMenu/>
+          {/* Theme and language live in Settings (Notion "Settings menu"). */}
+          <window.SettingsButton onOpen={onSettings} open={settingsOpen}/>
           <window.AccountButton onPickCollection={setCollectionFilter} onAbout={onAbout}/>
         </div>
       </div>
@@ -1035,6 +1035,8 @@ function App() {
   const [sheet, setSheet] = useState(null);
   // Desktop About dialog (phones use the 'about' sheet).
   const [aboutOpen, setAboutOpen] = useState(false);
+  // Settings: a panel on desktop, a sheet on phones (sheet === 'settings').
+  const [settingsOpen, setSettingsOpen] = useState(false);
   // First visit: the same About content as a one-time welcome (about.jsx).
   const [welcome, setWelcome] = useState(() => !!window.MCU_WELCOME);
   // "What have you seen?" (picker.jsx): from the welcome, the account menu or
@@ -1280,7 +1282,7 @@ function App() {
     flickRef.current = { vx: 0, vy: 0, t: performance.now(), px: x, py: y };
   }, []);
   const startInertia = useCallback(() => {
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.MCU_MOTION.reduced()) return;
     let { vx, vy } = flickRef.current;
     let speed = Math.hypot(vx, vy);
     // A slow release is a placement, not a throw: leave it exactly where it is.
@@ -3175,6 +3177,7 @@ function App() {
           filterCount={filterCount}
           sort={sort} sortDir={sortDir} setSortDir={setSortDir}
           onOpenAccount={() => setSheet('account')}
+          onOpenSettings={() => setSheet('settings')}
           onOpenGuides={() => setSheet('guides')} guideActive={!!guide} guideName={guide ? window.MCU_GUIDE.name(guide) : null}
           collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         />
@@ -3224,6 +3227,10 @@ function App() {
           />
         )}
         {sheet === 'about' && <window.AboutSheet onClose={() => setSheet(null)}/>}
+        {sheet === 'settings' && (
+          <window.SettingsSheet onClose={() => setSheet(null)}
+            onAbout={() => setSheet('about')} onShowWelcome={() => { setSheet(null); setWelcome(true); }}/>
+        )}
         {sheet === 'guides' && (
           <window.Sheet onClose={() => setSheet(null)} tall label={tr('guide.menuTitle')}>
             <h2 className="g-sheet-title">{tr('guide.menuTitle')}</h2>
@@ -3271,6 +3278,7 @@ function App() {
       <Toolbar
         onHome={onHomeClick}
         onAbout={() => setAboutOpen(true)}
+        onSettings={() => setSettingsOpen(o => !o)} settingsOpen={settingsOpen}
         onPickTitle={pickTitle} onPickPerson={pickPerson}
         desktopView={desktopView} setDesktopView={changeDesktopView}
         sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
@@ -3334,8 +3342,13 @@ function App() {
         </div>
       )}
 
+      {/* Settings takes the details drawer's place rather than stacking a
+          second panel; closing it brings the drawer back. */}
+      {/* The drawer that comes back must not take focus from the gear. */}
+      {settingsOpen && <window.SettingsPanel onClose={() => { if (drawerTitle) keepFocusOnStep(); setSettingsOpen(false); }}
+        onAbout={() => setAboutOpen(true)} onShowWelcome={() => setWelcome(true)}/>}
       <CastDrawer
-        title={drawerTitle}
+        title={settingsOpen ? null : drawerTitle}
         onClose={() => { setSelectedId(null); setDrawerId(null); }}
         onCharacterClick={pinCharacter}
         hoveredCharacter={hoveredCharacter}
@@ -3359,6 +3372,7 @@ function App() {
 // signed in before it can decide what to load.
 ReactDOM.createRoot(document.getElementById('root')).render(
   <window.AccountProvider>
+    <window.PreferencesSync/>
     <window.CollectionProvider><App/></window.CollectionProvider>
   </window.AccountProvider>
 );

@@ -13,6 +13,40 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 feature — Settings, laid out like a phone's settings app; the public name is Red Thread
+
+Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging); not yet merged to `main`.
+
+Notion V4 Tasks, "Settings menu" (two revisions after Andre's first look).
+
+- **Settings:** a gear in the desktop toolbar and the phone app bar opens a
+  panel from the right (desktop, in the details drawer's place) or a sheet
+  (phones). It holds theme (a Light / Dark / Auto segmented control),
+  language (checkmark rows), the where-to-watch country, Reduce motion and
+  Celebrations (switches), this device's actions (reset guide progress, show
+  the welcome again, clear this device, with a confirmation), and About, the
+  fan note and the version. Grouped rounded lists with hairlines, rows at
+  least 44px. The theme control and both language menus are gone; the
+  Welcome offers a language choice.
+- **Reduce motion** puts `reduce-motion` on `<html>`, which cuts every
+  transition and animation; scripts ask `window.MCU_MOTION.reduced()`.
+  Celebrations off: no confetti.
+- **Sync:** signed-in visitors' preferences sync through a new
+  `user_preferences` table (`schema.sql`, idempotent; Andre runs it in
+  Supabase). Until it exists, preferences stay on the device and nothing fails.
+- **Red Thread everywhere a visitor reads:** About and Welcome, the fan note,
+  the startup error and the link-preview tags no longer say MCU Connections
+  (Andre: the public name is Red Thread). Recorded in AGENTS.md.
+- First surface built from the shadcn components (Radio group, Select,
+  Switch, Label, Button), opted into `v4`.
+- **Verification:** new `qa/test-settings.js` (every setting applies at once
+  and survives a reload, keyboard and Escape ladder, device actions, phone
+  Back, the theme labels fit at 320px in Portuguese, axe clean in both
+  themes); `test-i18n` and `test-layers` follow the moved controls; full
+  regression 52 check runs clean, then quick runs after the rename.
+- **Limits:** account sync is untested until the table exists (two-browser
+  check); not checked on a real phone, Safari or Firefox.
+
 ## V4 fix — character variants light their whole thread, and every lit line ends in lit cards
 
 Recorded: 2026-11-01 19:18 EST (-0500). Pushed to `version/4.0` (V4 staging); not yet

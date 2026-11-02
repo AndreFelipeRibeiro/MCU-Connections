@@ -760,9 +760,6 @@ body { background: var(--v3-bg); }
 .tb-top-row { flex-wrap: wrap; justify-content: space-between; column-gap: 16px; row-gap: 12px; }
 .tb-top-row > .brand { min-width: 0; }
 .tb-end { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-.lang-menu .sort-order-trigger { min-width: 0; gap: 6px; padding: 0 11px; }
-.lang-menu .lang-globe { flex: 0 0 auto; opacity: .8; }
-.lang-menu .sort-order-pop { min-width: 200px; }
 .tb-filter-row { display: flex; align-items: center; gap: 12px; min-width: 0; order: 3; flex: 1 0 100%; }
 .tb-sort-row { gap: 12px; min-width: 0; }
 @media (min-width: 1280px) {
@@ -2084,14 +2081,6 @@ body { background: var(--v3-bg); }
 .ss-item.on { @apply bg-accent text-accent-foreground; }
 .pop-clear { @apply text-sm text-muted-foreground underline-offset-4 hover:text-foreground; }
 
-/* The theme control: three icon triggers in a tab list, as tall as the
-   toolbar's other groups. 28px wide, not shadcn's 32px: at 1280px in
-   Portuguese, where search joins the top row, the wider group pushed that row
-   12px past the window (qa/test-fit). */
-.theme-toggle { height: 44px; }
-.theme-toggle button { justify-content: center; width: 28px; padding: 0; }
-.theme-toggle button svg { @apply size-4; }
-
 /* ===========================================================================
    RE-SKIN, FIRST PASS — details drawer
    (Notion V4 Tasks, "Phase 4 — Details drawer")
@@ -2393,3 +2382,43 @@ body { background: var(--v3-bg); }
    card. A translucent chip over a light row turned grey and the red score
    fell to 2.85:1. On #0a0c14 every rating colour here is 5.9:1 or better. */
 .card-rating { background: rgb(10, 12, 20); }
+
+/* ===========================================================================
+   SETTINGS (Notion V4 Tasks, "Settings menu")
+
+   The gear sits in the toolbar beside V3-styled neighbours, so it takes the
+   same outline-button recipe. The panel is a v4 surface (src/app/settings.tsx)
+   built from the shadcn components; only its frame is here, matched to the
+   details drawer it replaces: below the toolbar, from the right, same width.
+   =========================================================================== */
+.settings-btn {
+  @apply inline-flex shrink-0 cursor-pointer items-center justify-center rounded-md border border-border bg-background text-foreground shadow-xs dark:border-input dark:bg-input/30;
+  width: 44px; height: 44px; padding: 0;
+}
+.settings-btn:hover, .settings-btn.open { @apply bg-muted dark:bg-input/50; }
+.settings-btn:focus-visible { @apply outline-none border-ring ring-[3px] ring-ring/50; }
+.settings-panel {
+  @apply flex flex-col border-l border-border bg-popover text-popover-foreground shadow-lg;
+  position: fixed; top: var(--tb-h, 0px); right: 0; z-index: 60;
+  width: 380px; height: calc(100vh - var(--tb-h, 0px));
+  transform: translateX(100%); transition: transform 360ms cubic-bezier(.2,.8,.2,1);
+}
+.settings-panel.open { transform: translateX(0); }
+.settings-scroll { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
+@media (prefers-reduced-motion: reduce) { .settings-panel { transition: none; } }
+
+/* Motion set to Reduced in Settings: every transition and animation is cut to
+   nothing, whatever the system says. (Auto leaves it to the system, through
+   each rule's own prefers-reduced-motion block.) The durations stay above zero
+   so transitionend still fires for the code that waits for it. */
+:root.reduce-motion *, :root.reduce-motion *::before, :root.reduce-motion *::after {
+  animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important; transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* The Welcome's language choice (the language menu moved into Settings). */
+.welcome-lang { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 14px; }
+.welcome-lang-label { @apply text-sm font-medium text-muted-foreground; }
+.welcome-lang .segmented { padding: 3px; }
+.welcome-lang .segmented button { min-height: 36px; padding: 0 14px; }
