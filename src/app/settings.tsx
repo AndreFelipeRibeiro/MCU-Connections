@@ -402,8 +402,10 @@ function ActionRow({ children, onClick, tone, chevron, trailing, autoFocus }: {
   );
 }
 
-function SettingsBody({ onAbout, onShowWelcome, onClose }: {
+function SettingsBody({ onAbout, onShowWelcome, onClose, keyboard = false }: {
   onAbout: () => void; onShowWelcome: () => void; onClose: () => void;
+  /** Desktop: mention the D / L theme shortcut under Theme. */
+  keyboard?: boolean;
 }) {
   const { tr, languages } = window.useI18n();
   const prefs = usePreferences();
@@ -415,7 +417,8 @@ function SettingsBody({ onAbout, onShowWelcome, onClose }: {
 
   return (
     <div className="flex flex-col gap-6 text-sm text-foreground">
-      <Section id="settings-appearance" title={tr('settings.appearance')}>
+      <Section id="settings-appearance" title={tr('settings.appearance')}
+        footnote={keyboard ? <Footnote>{tr('settings.themeShortcut')}</Footnote> : undefined}>
         <Segmented<ThemeChoice> label={tr('theme.label')} value={prefs.theme} onChange={setThemeChoice}
           options={[
             { value: 'light', label: tr('theme.light'), icon: <SunIcon aria-hidden="true"/> },
@@ -561,7 +564,7 @@ function SettingsPanel({ onClose, onAbout, onShowWelcome }: {
         <Button variant="ghost" size="icon" onClick={onClose} aria-label={tr('details.close')} title={tr('details.close')}>×</Button>
       </div>
       <div className="settings-scroll px-5 py-5">
-        <SettingsBody onAbout={onAbout} onShowWelcome={onShowWelcome} onClose={onClose}/>
+        <SettingsBody onAbout={onAbout} onShowWelcome={onShowWelcome} onClose={onClose} keyboard/>
       </div>
     </div>
   );

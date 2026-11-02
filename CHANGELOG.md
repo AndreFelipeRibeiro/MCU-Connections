@@ -13,6 +13,27 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 feature — D and L switch the theme on desktop
+
+Recorded: 2026-11-02 11:55 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Desktop keyboard shortcut: D for dark mode, L for light
+mode". On desktop, pressing D switches to the dark theme and L to the light
+one.
+
+- Saved like choosing it in Settings (Theme), so it lasts across visits;
+  Settings → Appearance mentions the shortcut under Theme.
+- Ignored while typing (search, any field), with Ctrl, Cmd or Alt held, on a
+  held-down key, while a menu or dialog is open, and on the phone layout.
+- Screen readers hear "Dark mode" or "Light mode" (a polite live region).
+- `qa/test-settings.js` covers D, L, typing "daredevil" in search, the Settings
+  note and the phone layout.
+- Verified: committed on its own on top of Batch 4, with `bash qa/quick.sh
+  test-settings` (18 check runs clean) and `npm run typecheck`; also part of
+  the full Batch 5 regression (56 check runs clean). Not checked: Safari,
+  Firefox, a real screen reader.
+
 ## V4 improvement — Bigger text and a Text size setting
 
 Recorded: 2026-11-02 09:31 EST (-0500). Pushed to `version/4.0` (V4 staging);

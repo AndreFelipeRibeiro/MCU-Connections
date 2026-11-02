@@ -2780,6 +2780,34 @@ function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // D and L switch to the dark and light themes on desktop (Notion V4 Tasks,
+  // "Desktop keyboard shortcut: D for dark mode, L for light mode"): the same
+  // choice as Settings → Theme, so Auto stays one tap away there. Never while
+  // typing, in a menu or dialog, with a modifier held (browser shortcuts keep
+  // working), or on the phone layout. Screen readers hear the new theme.
+  const [themeAnnounce, setThemeAnnounce] = useState('');
+  const isTouchNowRef = useRef(isTouch);
+  isTouchNowRef.current = isTouch;
+  useEffect(() => {
+    let timer = null;
+    const onKey = (e) => {
+      if (isTouchNowRef.current || e.altKey || e.metaKey || e.ctrlKey || e.repeat || e.defaultPrevented) return;
+      const k = (e.key || '').toLowerCase();
+      if (k !== 'd' && k !== 'l') return;
+      const el = e.target;
+      if (el instanceof Element && el.closest('input, textarea, select, [contenteditable="true"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="combobox"]')) return;
+      if (document.querySelector('[aria-modal="true"]')) return;
+      const next = k === 'd' ? 'dark' : 'light';
+      window.MCU_THEME.setChoice(next);
+      setThemeAnnounce('');
+      clearTimeout(timer);
+      timer = setTimeout(() => setThemeAnnounce(tr(next === 'dark' ? 'theme.darkOn' : 'theme.lightOn')), 50);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('keydown', onKey); clearTimeout(timer); };
+  }, []);
+  const themeAnnouncer = <div className="story-sr theme-announce" aria-live="polite">{themeAnnounce}</div>;
+
   // Clicking a connection line opens the pair view and glides to it.
   const pickConnection = (c) => {
     if (selectedIdRef.current) { selectionReturnRef.current = null; setSelectedId(null); }
@@ -3293,6 +3321,7 @@ function App() {
     <div className={`app ${drawerTitle ? 'drawer-open' : ''}`}>
       {upAnnouncer}
       {homeAnnouncer}
+      {themeAnnouncer}
       <Toolbar
         onHome={onHomeClick}
         onAbout={() => setAboutOpen(true)}
