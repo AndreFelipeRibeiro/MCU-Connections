@@ -307,7 +307,8 @@ hand.
 - **Decisions waiting on the user:**
   - Which preferences sync across devices.
   - ~~How variant characters should behave~~: decided 2026-10-28 (one exact
-    portrayal; see decisions.md).
+    portrayal), then changed 2026-11-01: a character lights its whole
+    identity thread (see decisions.md).
   - ~~A wider first Spatial view on desktop~~: dropped 2026-10-30 (not to be
     built).
 - **Deferred:**

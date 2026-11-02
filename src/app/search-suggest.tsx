@@ -46,6 +46,11 @@ function ssBuild(query) {
   if (q.length < 2) return [];
   const titlesOf = {};
   window.TITLES.forEach(t => t.cast.forEach(c => { (titlesOf[c] = titlesOf[c] || new Set()).add(t.id); }));
+  // What picking a character lights: its whole identity (Captain Carter takes
+  // in Peggy Carter's titles), so the row's count matches the cards.
+  const primeOf = (id) => (window.CHARACTERS[id] && window.CHARACTERS[id].prime) || id;
+  const identityTitles = {};
+  window.TITLES.forEach(t => t.cast.forEach(c => { const p = primeOf(c); (identityTitles[p] = identityTitles[p] || new Set()).add(t.id); }));
   // Built per title, not per character, because a part can change hands: Rhodes
   // is Terrence Howard in Iron Man and Don Cheadle after it, so searching
   // either name has to return that performer's own titles and no others.
@@ -82,7 +87,7 @@ function ssBuild(query) {
     if (s === null) return;
     const roster = window.MCU_creditRoster()[id] || [];
     if (roster.length < 2) {
-      out.push({ kind: 'character', key: 'c:' + id, id, label: I.charName(id), score: s, n: titlesOf[id].size });
+      out.push({ kind: 'character', key: 'c:' + id, id, label: I.charName(id), score: s, n: identityTitles[primeOf(id)].size });
       return;
     }
     roster.forEach(r => out.push({

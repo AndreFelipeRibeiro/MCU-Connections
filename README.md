@@ -311,6 +311,8 @@ kang:             { name: 'Kang the Conqueror', color: '#3f9fa8' },
 
 Connections chain on the prime, so *Loki* → *Quantumania* → *Loki Season 2* draws as one unbroken arc — but each segment is still labeled and colored by whichever face actually appeared in that title. Titles where multiple variants of the same identity share a single credit (e.g. all three Peter Parkers in *No Way Home*) collapse to one appearance per title, so that never produces a self-referential loop.
 
+Hovering or pinning a character lights its whole identity thread: Captain Carter lights Peggy Carter's titles too, and the counts in search and in the banner count those titles. A line lights only when both of its cards are lit, so no lit line runs into a dimmed card; a pinned performer lights the titles they are credited in and the lines between them. A segment is labeled with the variant(s) present in both of its titles (*No Way Home* → *Your Friendly Neighborhood Spider-Man* is Tom Holland's Peter), or, where the thread passes from one variant to another, by the earlier title's.
+
 ## Running it locally
 
 V4 builds with [Vite](https://vite.dev/); React and ReactDOM 18.3.1 come from

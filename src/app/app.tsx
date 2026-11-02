@@ -643,7 +643,7 @@ function labelPillWidth(text) {
   }
 }
 
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds, route }) {
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds, route }) {
   // An open guide: one route through its stops in guide order, dashed on to
   // the destination, in place of the character threads. A single path in the
   // existing layer, so the canvas performance rules hold.
@@ -670,7 +670,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     );
   }
   // Group appearances by prime identity so variants share one continuous thread,
-  // but remember which specific variant appeared in each title.
+  // but remember which specific variants appeared in each title.
   // One appearance per (prime, title): several variants of the same identity can share a
   // title (the three Peters in No Way Home) — that is not a connection between titles.
   const primeToAppearances = {};
@@ -678,9 +678,9 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     t.cast.forEach(c => {
       const p = primeOf(c);
       if (!primeToAppearances[p]) primeToAppearances[p] = {};
-      if (!primeToAppearances[p][t.id]) {
-        primeToAppearances[p][t.id] = { id: t.id, variant: c, release: t.release };
-      }
+      const app = primeToAppearances[p][t.id];
+      if (!app) primeToAppearances[p][t.id] = { id: t.id, variants: [c], release: t.release, prime: p };
+      else if (app.variants.indexOf(c) === -1) app.variants.push(c);
     });
   });
 
@@ -695,8 +695,15 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       if (a.id === b.id) continue;
       const key = a.id + '__' + b.id;
       if (!grouped[key]) grouped[key] = { a: a.id, b: b.id, characters: [] };
-      // Label/colour the segment by the variant present at the earlier title
-      if (!grouped[key].characters.includes(a.variant)) grouped[key].characters.push(a.variant);
+      // Label/colour the segment by the variant(s) in both titles (No Way Home
+      // to Your Friendly Neighborhood Spider-Man is Holland's Peter, whichever
+      // Peter No Way Home lists first). A thread that passes between variants
+      // (Captain Carter on to Peggy) has none in common: it takes the earlier
+      // title's, preferring the core identity when that title has it.
+      const shared = a.variants.filter(v => b.variants.indexOf(v) !== -1);
+      const labels = shared.length ? shared
+        : [a.variants.indexOf(a.prime) !== -1 ? a.prime : a.variants[0]];
+      labels.forEach(v => { if (!grouped[key].characters.includes(v)) grouped[key].characters.push(v); });
     }
   });
   const connections = Object.values(grouped);
@@ -784,7 +791,12 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       // A hovered character narrows everything to that character's thread, so
       // no other line stays lit while leading into a dimmed card. Otherwise the
       // pair view, a hovered line or the focused title's lines are lit.
-      const isChar = !!activeChars && activeChars.indexOf(ch) !== -1;
+      // A character lights its whole identity thread (hovering Captain Carter
+      // lights Peggy's lines too), and only where both ends are lit cards: a
+      // performer pin lights their own titles, so a line on to a title they are
+      // not in stays dim. Every lit line ends in two lit cards.
+      const isChar = !!activeChars && activeChars.some(a => primeOf(a) === primeOf(ch))
+        && (!litIds || (litIds.has(conn.a) && litIds.has(conn.b)));
       const emphasized = pair ? isPair : activeChar ? isChar : (isHovered || involvesFocus);
       const dimmed = anyFocus && !emphasized;
       const baseOpacity = dimmed ? 0.05 : (emphasized ? 1 : 0.55);
@@ -1164,7 +1176,7 @@ function App() {
     return m;
   }, [performers]);
   // Every title a character is in, over the WHOLE catalog. Not the same thing
-  // as charToTitleIds, which counts only what is currently visible: a search
+  // as primeToTitleIds, which counts only what is currently visible: a search
   // narrows that, so using it to work out whether a performer covers a
   // character's whole run gives the wrong answer at exactly the moment the
   // question is asked — while the user is searching.
@@ -1188,8 +1200,11 @@ function App() {
   const pinnedTitleIds = useMemo(() => {
     if (pinnedActor) return (performers[pinnedActor] && performers[pinnedActor].titles) || null;
     if (!highlightedChar) return null;
+    // A pinned character covers its whole identity: pinning Captain Carter
+    // takes in Peggy Carter's titles, as her thread does (Andre, 2026-11-01).
+    const prime = primeOf(highlightedChar);
     const s = new Set();
-    window.TITLES.forEach(t => { if (t.cast.indexOf(highlightedChar) !== -1) s.add(t.id); });
+    window.TITLES.forEach(t => { if (t.cast.some(c => primeOf(c) === prime)) s.add(t.id); });
     return s;
   }, [pinnedActor, performers, highlightedChar]);
   // Pinned character: show only their titles (default) or everything, dimmed.
@@ -1586,21 +1601,10 @@ function App() {
     ? window.collectionEmptyCopy(collectionFilter)
     : null;
 
-  // Keyed by the exact character: a selected character means that portrayal, so
-  // Peter Parker (Raimi) counts, lists and steps through Tobey Maguire's titles
-  // only (scope decided 2026-10-28). Connection lines still thread variants
-  // together, so Kang's arc stays drawn across the canvas either way.
-  const charToTitleIds = useMemo(() => {
-    const m = {};
-    filtered.forEach(t => t.cast.forEach(c => {
-      if (!m[c]) m[c] = new Set();
-      m[c].add(t.id);
-    }));
-    return m;
-  }, [filtered]);
-
-  // Keyed by prime identity instead, for the threading itself: a title's
-  // connection count has to agree with the lines actually drawn from it.
+  // Keyed by prime identity: the threading, a title's connection count, and the
+  // titles a hovered or pinned character lights all go by the identity, so
+  // every lit line ends in a lit card (Andre, 2026-11-01, replacing the
+  // 2026-10-28 rule that a character meant that one portrayal).
   const primeToTitleIds = useMemo(() => {
     const m = {};
     filtered.forEach(t => t.cast.forEach(c => {
@@ -1610,6 +1614,9 @@ function App() {
     }));
     return m;
   }, [filtered]);
+
+  // The visible titles a character lights: its whole identity thread.
+  const charTitleIds = (c) => (c && primeToTitleIds[primeOf(c)]) || null;
 
   const activeChar = highlightedChar || hoveredCharacter;
   // Every character the highlight covers, so a performer's whole cast list and
@@ -1628,7 +1635,7 @@ function App() {
   }, [pinnedTitleIds, filtered]);
   const highlightedIds = (guide ? guideIds : null)
     || (highlightedChar ? pinnedVisibleIds : null)
-    || (activeChar && charToTitleIds[activeChar] ? charToTitleIds[activeChar] : null);
+    || charTitleIds(activeChar);
 
   // The ids the active canvas filters single out. Collection status and a pinned
   // character are both *dimming* treatments — the cards stay in the layout — so
@@ -1638,8 +1645,8 @@ function App() {
   // so passing the cursor over the cast list can't move the viewport.
   const pinnedCharIds = useMemo(() => {
     if (!highlightedChar) return null;
-    return pinnedVisibleIds || charToTitleIds[highlightedChar] || null;
-  }, [highlightedChar, pinnedVisibleIds, charToTitleIds]);
+    return pinnedVisibleIds || charTitleIds(highlightedChar);
+  }, [highlightedChar, pinnedVisibleIds, primeToTitleIds]);
 
   const recenterFocusIds = useMemo(() => {
     const sets = [];
@@ -2388,7 +2395,7 @@ function App() {
   // change is visible.
   const pinSubject = (chars, actor, startAt) => {
     const from = startAt || drawerId;
-    const covers = from && chars.some(c => { const ids = charToTitleIds[c]; return ids && ids.has(from); });
+    const covers = from && chars.some(c => { const ids = charTitleIds(c); return ids && ids.has(from); });
     const start = covers ? from : null;
     setGuideId(null);
     setPinnedActor(actor);
@@ -2857,9 +2864,11 @@ function App() {
     // performer's share — the same number the search suggestion shows for their
     // row. The whole chain is already in the stepper ("6 of 8"), so repeating it
     // here said Mike McGill was in 8 titles when he is in one.
-    const namedRow = creditedHere ? roster.find(r => r.name === creditedHere) : null;
+    // Only for a part several people played: with one performer the count is
+    // the titles lit, which for a variant includes its identity's other titles.
+    const namedRow = creditedHere && roster.length > 1 ? roster.find(r => r.name === creditedHere) : null;
     const count = namedRow ? namedRow.n
-      : (pinned ? (pinnedVisibleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
+      : (pinned ? (pinnedVisibleIds || new Set()) : (charTitleIds(activeChar) || new Set())).size;
     const who = asActor ? pinnedActor : I18N.charName(activeChar);
     const sub = asActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
       : (creditedHere || roster.length < 2) ? named
@@ -3040,6 +3049,7 @@ function App() {
           hoveredTitle={hoveredTitle}
           activeChar={activeChar}
           activeChars={activeChars}
+          litIds={activeChar ? highlightedIds : null}
           onHoverConnection={setHoveredConnection}
           hoveredConnection={hoveredConnection}
           selectedId={selectedId}

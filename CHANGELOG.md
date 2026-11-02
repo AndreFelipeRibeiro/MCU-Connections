@@ -13,6 +13,39 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 fix — character variants light their whole thread, and every lit line ends in lit cards
+
+Recorded: 2026-11-01 19:18 EST (-0500). Pushed to `version/4.0` (V4 staging); not yet
+merged to `main`.
+
+Notion V4 Tasks, "Re-check all the title and character connections". Hovering
+Captain Carter drew a lit line into Avengers: Doomsday while Doomsday stayed
+dimmed. Lines followed a character's identity (Peggy and Captain Carter are one
+thread) but lit cards followed the exact character only.
+
+- **One rule for cards and lines (Andre's Option A):** hovering or pinning a
+  character lights every title of its identity (Captain Carter lights Peggy
+  Carter's titles; He Who Remains and Victor Timely light Kang's; Sylvie,
+  Loki's; White Vision, Vision's; Raimi and Webb Peter, Peter Parker's), and a
+  line is emphasised only when both its cards are lit. A pinned performer keeps
+  their own credited titles.
+- **Line labels:** a line is labelled with the variant(s) in both titles, so
+  No Way Home → Your Friendly Neighborhood Spider-Man is Holland's Peter, not
+  whichever Peter was listed first.
+- **Counts follow:** the search suggestion and the banner count the identity's
+  titles; parts several people played keep the named performer's own share.
+- Supersedes the 2026-10-28 "one exact portrayal" rule (docs/decisions.md).
+- **Verification:** new `qa/test-threads.js` (425 hovers and 14 pins; every
+  lit line ends in two lit cards, counts match): 0 errors, against 261 on the
+  build before the fix. `qa/test-pickperson.js` updated to the identity
+  counts. `bash qa/quick.sh test-threads` clean; full regression (52 check
+  runs) clean on the tree that also holds the Settings work. Headless
+  screenshots of Andre's example in both themes.
+- **Limits:** variants played by someone else now light that identity's other
+  titles too (pinning Raimi Peter lists Tom Holland's titles), which Andre
+  accepted with the ticket. Not checked on a real phone, Safari or Firefox.
+  The announced casts of unreleased titles are their own ticket.
+
 ## V4 design — toolbar and phone header controls back to V3's heights
 
 Recorded: 2026-11-01 09:02 EST (-0500). Pushed to `version/4.0` (V4 staging);
