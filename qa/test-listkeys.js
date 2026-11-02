@@ -84,7 +84,10 @@ const COVER = (id) => {
   const x = b.left + Math.min(80, b.width / 2);
   let first = null;
   for (let y = Math.ceil(b.top); y < b.bottom; y++) { const el = document.elementFromPoint(x, y); if (el && r.contains(el)) { first = y; break; } }
-  return { top: Math.round(b.top), hidden: first == null ? 999 : Math.round(first - b.top), inView: b.top >= 0 && b.bottom <= innerHeight };
+  // Measured from the first whole pixel scanned, not the fractional top: rows
+  // with fractional heights (text in rem) would otherwise read "1px hidden"
+  // when nothing covers them.
+  return { top: Math.round(b.top), hidden: first == null ? 999 : first - Math.ceil(b.top), inView: b.top >= 0 && b.bottom <= innerHeight };
 };
 
 (async () => {

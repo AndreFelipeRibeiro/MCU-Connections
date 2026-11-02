@@ -86,6 +86,11 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   per title, character and guide (`scripts/og-previews.js`, a few seconds),
   and `middleware.ts` serves a shared link a copy of the page with that
   preview's tags. Previews are English; unknown ids get the app-wide card.
+- Text size: Settings → Text size (Small / Default / Large) scales every
+  piece of text, and the controls around it, except the Spatial cards (zoom
+  the canvas for those); controls never get smaller than the default,
+  saved on the device. A larger default font size in the browser enlarges the
+  app's text too. The default size has no informative text under 12px.
 - Settings (the gear in the desktop toolbar and the phone app bar; a panel
   from the right on desktop, a sheet on phones), laid out like a phone's own
   settings app in grouped lists: theme (a Light / Dark / Auto segmented

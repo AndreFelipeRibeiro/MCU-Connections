@@ -36,6 +36,10 @@ const URL = 'http://127.0.0.1:' + QA_PORT + '/';
 // selected, the longest label; it was read only from argv before, so the
 // full run never used it.
 const MODE = process.env.MODE || process.argv[2] || 'all';
+// TEXT=small|large measures at that Text size (Settings; Notion
+// "Font size increase"); unset is the default size.
+const TEXT = process.env.TEXT || '';
+const TEXT_SEED = TEXT ? `localStorage.setItem('mcu.textSize.v1', '${TEXT}');` : '';
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
@@ -113,15 +117,15 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
       labels: [...document.querySelectorAll('.coll-switch .coll-label')].filter(l => l.offsetParent).map(l => l.innerText).join('/') };
   };
   for (const w of [900, 999, 1000, 1100, 1199, 1200, 1250, 1279, 1280, 1300, 1301, 1439, 1440, 1600, 1919, 1920, 2199, 2200, 2559, 2560]) {
-    const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 900 }, locale: process.env.LOC || 'en-US' }, SEED);
+    const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 900 }, locale: process.env.LOC || 'en-US' }, SEED + TEXT_SEED);
     await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
     if (MODE === 'watch') { await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); }
     out['d' + w] = { ...(await page.evaluate(fit)), errors: errors.length };
-    if ([900, 1279, 1280, 1440, 1920].includes(w)) await page.screenshot({ path: path.join(S, 'shots', 'fit-' + (process.env.LOC||'en') + '-d' + w + (MODE === 'watch' ? 'watch' : '') + '.png'), clip: { x: 0, y: 0, width: w, height: 200 } });
+    if ([900, 1279, 1280, 1440, 1920].includes(w)) await page.screenshot({ path: path.join(S, 'shots', 'fit-' + (process.env.LOC||'en') + '-d' + w + (MODE === 'watch' ? 'watch' : '') + (TEXT ? '-' + TEXT : '') + '.png'), clip: { x: 0, y: 0, width: w, height: 200 } });
     await ctx.close();
   }
   for (const w of [320, 360, 375, 390, 430]) {
-    const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 760 }, hasTouch: true, isMobile: true, locale: process.env.LOC || 'en-US' }, SEED);
+    const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 760 }, hasTouch: true, isMobile: true, locale: process.env.LOC || 'en-US' }, SEED + TEXT_SEED);
     await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
     if (MODE === 'watch') { await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); }
     out['m' + w] = { ...(await page.evaluate(fit)), errors: errors.length };

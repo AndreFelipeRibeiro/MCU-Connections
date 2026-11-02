@@ -115,6 +115,11 @@ const THEME_PREPAINT = `try {
   var dark = saved === 'dark' || saved === 'light' ? saved === 'dark'
     : window.matchMedia('(prefers-color-scheme: dark)').matches;
   if (dark) document.documentElement.classList.add('dark');
+  // Text size (src/app/settings.tsx), before the first paint too, so a Large
+  // visitor never sees the page jump.
+  var size = localStorage.getItem('mcu.textSize.v1');
+  if (size === 'larger') size = 'large';
+  if (size === 'small' || size === 'large') document.documentElement.setAttribute('data-text-size', size);
 } catch (e) {}`;
 
 const themePrepaint = () => ({

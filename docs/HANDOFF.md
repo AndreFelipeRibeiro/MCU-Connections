@@ -163,6 +163,16 @@ work:
   are measured out. Before, it only printed these, and a Portuguese overflow
   passed as clean; the regression's Portuguese run with Watchlist selected
   (`MODE=watch`) also never took effect, because the script read only argv.
+- **Text has one scale, in rem** (`--fs-*` in `src/index.css`), and Settings'
+  Text size sets `data-text-size` on `<html>` (Small 87.5%; Large 106.25% on desktop and 112.5% on phones, where body text is 14px and the bottom nav and search grow only to 106.25%).
+  Controls grow with it: their heights are `max(Npx, N/16 rem)` (and
+  Tailwind's spacing unit `max(0.25rem, 4px)`), so they grow at Large and never
+  shrink below today's size, touch targets included. Write new sizes
+  with the tokens. Things that stay in px and don't grow with text: the
+  Spatial canvas cards (on purpose), the List's poster, face and action
+  columns, and most spacing, so very large text leans on the measuring rows
+  and the List's rem breakpoints. Not covered: the browser's minimum font
+  size setting and real iOS Dynamic Type.
 - **The phone collection row fits by measuring** (`MobileTopBar` in
   `mobile.tsx`): it tries full labels, then an icon-only view menu, then only
   "All" and the selected label, then "Para ver", and keeps the first that

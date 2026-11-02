@@ -13,6 +13,40 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 improvement — Bigger text and a Text size setting
+
+Recorded: 2026-11-02 09:31 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Font size increase". Text is bigger by default and follows
+one type scale; Settings adds Text size.
+
+- **One type scale in rem** (`--fs-xs` 12px … `--fs-7xl` 68px,
+  `src/index.css`): 316 pixel font sizes converted, so text follows the
+  browser's default font size. The Spatial canvas's cards keep px (they have
+  zoom).
+- **Bigger by default:** no informative text under 12px; desktop body text
+  15–16px; Tailwind's `text-xs` / `text-sm` one step up (13 / 15px). **Phones**
+  set body text at 14px, the bottom nav at 12px, and draw the search field at
+  13px while its own font stays 16px or more, so iPhones don't zoom on focus.
+- **Settings → Text size: Small / Default / Large**, kept per device and
+  applied before the first paint. Small is 87.5%; Large is 106.25% on desktop
+  and 112.5% on phones, where the bottom nav and search grow only to 106.25%.
+- **Controls grow with the text, never shrink:** heights are `max(Npx, N/16
+  rem)` (162 declarations) and Tailwind's spacing unit is `max(0.25rem, 4px)`,
+  so Large gets taller buttons and Small keeps today's touch targets.
+- **Fits:** the desktop sort row steps down by measuring instead of width
+  breakpoints; the desktop List's columns are in rem and drop earlier with
+  bigger text (all 12 at 1280px by Default); the phone progress header wraps;
+  rows count a label eating into its padding as not fitting.
+- New `qa/test-textsize.js` (the 12px floor, the three sizes, phone sizes,
+  controls, List columns, 200% zoom); `test-fit` takes a Text size and the full
+  run adds Portuguese at Large; `test-listkeys` measuring fix.
+- Verified: full regression, 56 check runs clean; `test-fit` for English and
+  Portuguese at every size and width; in-browser at 375 and 1280–1440px in both
+  languages. Not checked: a real phone, Safari, Firefox, the browser's own
+  font-size preference, iOS's system Text Size (its own ticket).
+
 ## V4 fix — Portuguese header rows fit; test-fit fails on overflow
 
 Recorded: 2026-11-02 09:31 EST (-0500). Pushed to `version/4.0` (V4 staging);

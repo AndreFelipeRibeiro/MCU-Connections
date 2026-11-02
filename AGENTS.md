@@ -126,10 +126,10 @@ plan, the environment and the Figma workflow.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (50 check scripts in 51 runs plus the accessibility scan in English,
+    (51 check scripts in 53 runs plus the accessibility scan in English,
     Portuguese and English in the dark theme, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **54 check runs clean**
+    output, not just the exit code. A good run is **56 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
@@ -311,6 +311,28 @@ rules carry over unchanged.
   `var(--phase-N)`; code that paints on a canvas resolves them first.
 - Text on the dark overlays that sit on posters uses `--on-image` (fixed light
   values): the overlay stays dark in both themes because it sits on an image.
+- **Font sizes come from the type scale** (`--fs-xs` … `--fs-7xl` in
+  `src/index.css`, in rem): never a pixel size, so all text follows the
+  browser's default font size and Settings' Text size. No informative text
+  under 12px (`--fs-xs`) at the default size. The one exception is the
+  Spatial canvas (cards and band labels keep px; the canvas has zoom), and the
+  shared pieces a card borrows are pinned back to px inside `.card`.
+  `qa/test-textsize.js` holds the floor. Tailwind's `text-xs` / `text-sm` are
+  one step bigger than the library default (13 / 15px) for the same reason.
+  They read the scale's variables (`--fs-sm` / `--fs-md`), so phones, which
+  set body text at 14px, move them in one place (`src/index.css`).
+- **Control sizes grow with the text, never shrink:** a control's height (and
+  a square icon button's width) is `max(Npx, N/16 rem)`, and Tailwind's
+  spacing unit is `max(0.25rem, 4px)`. At Large everything grows in step; at
+  Small nothing gets smaller than its default, so touch targets keep their
+  size. Thumbnails, avatars, icons and the Spatial canvas stay in px.
+- **A row of controls that can run out of room fits by measuring**
+  (`window.useFitSteps`, `src/app/mobile.tsx`): its stylesheet keys more
+  compact steps on `data-fit`, and the hook keeps the first that fits, on
+  resize, language, font load and Text size. Use it rather than a width
+  breakpoint for anything holding words: breakpoints can't know a
+  translation's length or the text size. `test-fit` fails when something
+  doesn't fit.
 - Type: the design system's Inter (`--font-sans`, served with the bundle) and
   the system monospace (`--font-mono`) for labels, numbers and badges
   (Andre's decision, 2026-11-01). Bebas Neue appears only in the generated
