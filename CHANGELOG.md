@@ -13,6 +13,27 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 fix — Announced casts of unreleased titles
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Verify announced casts of unreleased titles (Doomsday, Secret
+Wars, VisionQuest…)". Every character listed for a title not yet out was
+checked against an announcement; Andre approved the changes.
+
+- Avengers: Doomsday drops Peter Parker (Tom Holland is in no official cast
+  list or trailer); the other 17 are confirmed.
+- Avengers: Secret Wars is now Doom, Steve Rogers, Shang-Chi and Shuri (was
+  Alexei, Sam, Vision, Peter, Shang-Chi; four of those were leaks or fan lists
+  only).
+- Daredevil: Born Again season 3, Friendly Neighborhood Spider-Man season 2,
+  VisionQuest and the seven variant mappings checked: no change.
+- Sources in `docs/CATALOG-SOURCES.json` (`castSources`, `castEvidence`) and
+  `docs/CATALOG-AUDIT.md`.
+- Verified: test-threads; Full Batch 5 regression on the final tree: 56 check
+  runs clean.
+
 ## V4 improvement — Opening a title closes Settings
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);

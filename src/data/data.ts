@@ -90,9 +90,9 @@ const TITLES: Title[] = [
   { id: 'brand-new-day', title: 'Spider-Man: Brand New Day', year: 2026, phase: 6, type: 'film', release: '2026-07-31', chronOrder: 59, story: '2028', accent: '#a02020', cast: ['peter', 'bruce', 'yelena', 'frank'] },
   { id: 'visionquest', title: 'VisionQuest', year: 2026, phase: 6, type: 'series', release: '2026-10-13', chronOrder: 60, story: 'c. 2028', accent: '#9b3030', cast: ['ultron', 'white-vision', 'tommy', 'paladin'] },
   { id: 'friendly-spidey-s2', title: 'Your Friendly Neighborhood Spider-Man Season 2', year: 2027, phase: 6, type: 'series', release: '2027-01-13', chronOrder: 61, accent: '#a02020', cast: ['peter'] },
-  { id: 'doomsday', title: 'Avengers: Doomsday', year: 2026, phase: 6, type: 'film', release: '2026-12-18', chronOrder: 62, accent: '#704040', cast: ['shangchi', 'mbaku', 'reed', 'sue', 'johnny', 'ben', 'doom', 'peggy', 'thor', 'loki', 'sam', 'scott', 'bucky', 'steve', 'peter', 'yelena', 'alexei', 'shuri'] },
+  { id: 'doomsday', title: 'Avengers: Doomsday', year: 2026, phase: 6, type: 'film', release: '2026-12-18', chronOrder: 62, accent: '#704040', cast: ['shangchi', 'mbaku', 'reed', 'sue', 'johnny', 'ben', 'doom', 'peggy', 'thor', 'loki', 'sam', 'scott', 'bucky', 'steve', 'yelena', 'alexei', 'shuri'] },
   { id: 'daredevil-born-again-s3', title: 'Daredevil: Born Again Season 3', year: 2027, phase: 6, type: 'series', release: '2027-03', chronOrder: 63, accent: '#a02020', cast: ['matt', 'fisk'] },
-  { id: 'secret-wars', title: 'Avengers: Secret Wars', year: 2027, phase: 6, type: 'film', release: '2027-12-17', chronOrder: 64, accent: '#6a3a5a', cast: ['alexei', 'sam', 'vision', 'peter', 'shangchi'] },
+  { id: 'secret-wars', title: 'Avengers: Secret Wars', year: 2027, phase: 6, type: 'film', release: '2027-12-17', chronOrder: 64, accent: '#6a3a5a', cast: ['doom', 'steve', 'shangchi', 'shuri'] },
 ];
 
 // Characters with unique connection-line colors

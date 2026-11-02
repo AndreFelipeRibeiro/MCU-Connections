@@ -459,7 +459,12 @@
         "value": "2027-01-13",
         "url": "https://www.laughingplace.com/disney-entertainment/your-friendly-neighborhood-spider-man-season-2-date/",
         "note": "NYCC date reporting, corroborated by GamesRadar; supersedes the old 2026 window."
-      }
+      },
+      "castSources": [
+        "https://www.gamesradar.com/entertainment/marvel-tv-shows/your-friendly-neighborhood-spider-man-season-2-release-date-trailer-cast-news/"
+      ],
+      "castCheckedAt": "2026-11-02",
+      "castEvidence": "Hudson Thames returns as Peter Parker."
     },
     "doomsday": {
       "imdbUrl": null,
@@ -471,7 +476,14 @@
         "value": "2026-12-18",
         "url": "https://www.rottentomatoes.com/m/avengers_doomsday",
         "note": "Reconfirmed; no rating yet."
-      }
+      },
+      "castSources": [
+        "https://www.nme.com/news/film/all-the-actors-confirmed-for-avengers-doomsday-3855950",
+        "https://geektyrant.com/news/avengers-doomsday-officially-confirms-hayley-atwell-is-returning-as-peggy-carter",
+        "https://www.imdb.com/news/ni65010779/"
+      ],
+      "castCheckedAt": "2026-11-02",
+      "castEvidence": "Marvel's March 2025 cast reveal (as listed by NME), Downey as Doom (SDCC 2024), Evans as Steve Rogers (December 2025 teaser) and Atwell as Peggy Carter (SDCC July 2026 Hall H) confirm all 17 listed characters. Peter Parker removed 2026-11-02 with Andre's approval: Tom Holland is in no official cast list or trailer. Confirmed newcomers not in the catalog (U.S. Agent, Namor, Ghost, Cassie Lang, Joaquín Torres, Sentry, the X-Men) are the Notion ticket \"Add the confirmed Doomsday newcomers to the catalog\"."
     },
     "daredevil-born-again-s3": {
       "imdbUrl": "https://www.imdb.com/title/tt18923754/",
@@ -483,7 +495,12 @@
         "value": "2027-03",
         "url": "https://www.techradar.com/streaming/disney-plus/marvel-has-canceled-daredevil-born-again-after-three-seasons-and-ive-been-afraid-this-would-happen-to-the-disney-show-for-many-many-months",
         "note": "March window reported with Disney spokesperson confirmation; no verified day."
-      }
+      },
+      "castSources": [
+        "https://au.variety.com/2025/tv/global/daredevil-born-again-renewed-season-3-27865/"
+      ],
+      "castCheckedAt": "2026-11-02",
+      "castEvidence": "Matt Murdock and Wilson Fisk confirmed by the renewal announcement."
     },
     "secret-wars": {
       "imdbUrl": null,
@@ -495,7 +512,13 @@
         "value": "2027-12-17",
         "url": "https://www.rottentomatoes.com/m/avengers_secret_wars",
         "note": "Reconfirmed; no rating yet."
-      }
+      },
+      "castSources": [
+        "https://www.marvel.com/movies/avengers-secret-wars",
+        "https://screenrant.com/avengers-secret-wars-cast-noah-jupe/"
+      ],
+      "castCheckedAt": "2026-11-02",
+      "castEvidence": "Marvel's page lists Robert Downey Jr. (Doom); Chris Evans has said he is in it, and Screen Rant (Sep 1, 2026) reports Letitia Wright (Shuri) and Simu Liu (Shang-Chi). Sam, Vision, Peter and Alexei removed 2026-11-02 with Andre's approval: leaks and fan lists only. Peggy is reported only through a relay of THR and is left out until a primary source."
     }
   },
   "creditSceneAudit": {

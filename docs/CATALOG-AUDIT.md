@@ -548,3 +548,37 @@ Not used: Loki season 2's reported $141.3M covers only pre-production and UK
 filming, not the whole cost; She-Hulk has conflicting second-hand figures
 ($212M and $225M) with no primary report found; Agatha All Along is confirmed
 by Marvel as its least expensive series, without a figure.
+
+## Announced casts of unreleased titles — 2026-11-02
+
+Every character listed for a title not yet out was checked against an official
+or reliable announcement (Notion V4 Tasks, "Verify announced casts of
+unreleased titles"). Sources are in `CATALOG-SOURCES.json` (`castSources`,
+`castEvidence`). Changes approved by Andre on 2026-11-02.
+
+- **Avengers: Doomsday** (December 18, 2026): 17 of the 18 confirmed. Marvel's
+  March 2025 cast reveal ([NME's list](https://www.nme.com/news/film/all-the-actors-confirmed-for-avengers-doomsday-3855950)),
+  Downey as Doom (SDCC 2024), Evans as Steve Rogers (the December 2025
+  teaser) and Atwell as Peggy Carter, not Captain Carter (SDCC July 2026,
+  [GeekTyrant](https://geektyrant.com/news/avengers-doomsday-officially-confirms-hayley-atwell-is-returning-as-peggy-carter)).
+  **Removed: Peter Parker**: Tom Holland is in no official cast list or
+  trailer. Confirmed characters the catalog lacks (U.S. Agent, Namor, Ghost,
+  Cassie Lang, Joaquín Torres, Sentry, the X-Men) are their own ticket, "Add
+  the confirmed Doomsday newcomers to the catalog".
+- **Avengers: Secret Wars** (December 17, 2027): Marvel's page lists only
+  Downey (Doom); Evans has said he is in it, and [Screen Rant](https://screenrant.com/avengers-secret-wars-cast-noah-jupe/)
+  (Sep 1, 2026) reports Wright and Liu. **Removed: Sam, Vision, Peter and
+  Alexei** (leaks and fan lists only). **Added: Doom, Steve and Shuri.** Kept:
+  Shang-Chi. Peggy is reported only through a relay of THR and stays out.
+- **Daredevil: Born Again season 3** (March 2027): Matt and Fisk confirmed by
+  the renewal ([Variety](https://au.variety.com/2025/tv/global/daredevil-born-again-renewed-season-3-27865/)).
+  No change.
+- **Your Friendly Neighborhood Spider-Man season 2** (January 13, 2027): Hudson
+  Thames returns as Peter ([GamesRadar](https://www.gamesradar.com/entertainment/marvel-tv-shows/your-friendly-neighborhood-spider-man-season-2-release-date-trailer-cast-news/)).
+  No change.
+- **VisionQuest** came out on October 13, 2026; its cast was sourced on
+  2026-10-26.
+- **Variant mappings** (Captain Carter → Peggy; He Who Remains and Victor
+  Timely → Kang; Sylvie → Loki; White Vision → Vision; Peter Parker (Raimi)
+  and (Webb) → Peter): each is that character's variant on screen. No change.
+
