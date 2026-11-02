@@ -175,13 +175,13 @@
   // uses this one function so they always agree.
   const fold = (value) => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
+  const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
+
   const api = {
     get lang() { return lang; },
     setLang, tr, titleName, titleNames, charName, charNames, storyLabel, storyNote, synopsis,
-    release, budget, upper, compare, languages, detect, fold,
+    release, budget, upper, compare, languages, detect, fold, subscribe,
   };
-
-  const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 
   // Components call useI18n() to re-render when the language changes.
   function useI18n() {

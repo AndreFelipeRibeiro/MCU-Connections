@@ -66,10 +66,35 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   always-visible switch (desktop toolbar; mobile second header row, beside the
   List/Grid/Spatial menu), with a dashed-ring, check and bookmark icon for each state.
 - English and Brazilian Portuguese. The first visit follows the browser/phone
-  language; a language menu in the header (desktop toolbar, mobile app bar)
-  overrides it per device. Portuguese shows official Brazilian release titles,
+  language; the Welcome screen and Settings let the visitor choose another. Portuguese shows official Brazilian release titles,
   and search matches titles and characters in either language, with or without
   accents ("Capitao" finds "Capitão").
+- Share: a title (details), a character's timeline (the pinned banner or
+  phone pill), a guide (its card, or once it is finished), your progress
+  (account), the app (About, Settings) and a finished phase (the celebration
+  toast). Phones open the system share sheet with a short message; desktop
+  copies the link and says "Link copied". Links always point at
+  https://redthread.tv and open the same title, character or guide; nothing
+  personal is shared.
+- Share cards: your progress, a finished guide and a celebration share an
+  image (1080×1350, drawn on the device) with the link. Phones that can share
+  files send the image through the share sheet; elsewhere it can be
+  downloaded.
+- Link previews: a shared title, character or guide shows its own preview card
+  in chat apps and social networks (its name, a short description and the
+  app's own card art, no studio imagery). The build draws one 1200×630 image
+  per title, character and guide (`scripts/og-previews.js`, a few seconds),
+  and `middleware.ts` serves a shared link a copy of the page with that
+  preview's tags. Previews are English; unknown ids get the app-wide card.
+- Settings (the gear in the desktop toolbar and the phone app bar; a panel
+  from the right on desktop, a sheet on phones), laid out like a phone's own
+  settings app in grouped lists: theme (a Light / Dark / Auto segmented
+  control), language, the where-to-watch country, Reduce motion (off follows
+  the device's reduced-motion setting, on always cuts animation), celebrations
+  (confetti when a phase or guide is finished), and actions for this device
+  (reset guide progress, show the welcome again, clear everything saved in
+  this browser, with a confirmation). Changes apply at once. Signed-in
+  visitors' settings sync to their account; signed out, they stay on the device.
 - Desktop has Spatial and List views (switch at the end of the sort row). The
   List is one row per title with sortable column headers (title, phase, release,
   in-story years, IMDb, RT) that stay in step with the sort row; a row opens the
@@ -311,6 +336,8 @@ kang:             { name: 'Kang the Conqueror', color: '#3f9fa8' },
 
 Connections chain on the prime, so *Loki* → *Quantumania* → *Loki Season 2* draws as one unbroken arc — but each segment is still labeled and colored by whichever face actually appeared in that title. Titles where multiple variants of the same identity share a single credit (e.g. all three Peter Parkers in *No Way Home*) collapse to one appearance per title, so that never produces a self-referential loop.
 
+Hovering or pinning a character lights its whole identity thread: Captain Carter lights Peggy Carter's titles too, and the counts in search and in the banner count those titles. A line lights only when both of its cards are lit, so no lit line runs into a dimmed card; a pinned performer lights the titles they are credited in and the lines between them. A segment is labeled with the variant(s) present in both of its titles (*No Way Home* → *Your Friendly Neighborhood Spider-Man* is Tom Holland's Peter), or, where the thread passes from one variant to another, by the earlier title's.
+
 ## Running it locally
 
 V4 builds with [Vite](https://vite.dev/); React and ReactDOM 18.3.1 come from
@@ -369,8 +396,11 @@ does not deploy the folder. Details are in [qa/README.md](qa/README.md).
    `wauhmmftltlxzrcwpdvp`. Its schema is already deployed; a new project needs
    [schema.sql](schema.sql) run in its SQL editor.
 2. Run the sanity checks at the bottom of the schema: RLS enabled, four ownership
-   policies, and two-account isolation tested with actual signed-in client requests.
-   `authenticated` has CRUD grants; `anon` cannot access `title_states`.
+   policies on each table, and two-account isolation tested with actual
+   signed-in client requests. `authenticated` has CRUD grants; `anon` cannot
+   access `title_states` or `user_preferences`. The schema is idempotent, so
+   re-running the whole file adds `user_preferences` (V4 Settings) to a
+   project that only had `title_states`.
 3. Put the project's URL and **public publishable key** in
    [config.js](config.js). Both are intentionally committed. Never add a
    service-role/secret key, Google client secret, database or SMTP credential.
@@ -379,7 +409,7 @@ does not deploy the folder. Details are in [qa/README.md](qa/README.md).
    Email/password is deferred to Phase 6 and requires separate approval.
 
 Collections use `title_states.user_id → auth.users.id`, with RLS based on
-`auth.uid()`. Auth credentials stay with Supabase Auth; there is no application
+`auth.uid()`; preferences use one `user_preferences` row per user the same way. Auth credentials stay with Supabase Auth; there is no application
 password table or profile table. Title ids in `data.js` are permanent and must
 never be renamed or reused. `none` is the absence of a row, so clearing deletes it.
 
@@ -410,6 +440,7 @@ In Supabase → Authentication → URL Configuration, set the **Site URL** to
 | Environment | Google JavaScript origin | Supabase redirect URL |
 |---|---|---|
 | Production | `https://mcu-connections.vercel.app` | `https://mcu-connections.vercel.app/` |
+| Production, public domain (share links land here) | `https://redthread.tv` | `https://redthread.tv/` |
 | V3 preview | `https://mcu-connections-git-version-30-afr-bfcd.vercel.app` | `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/` |
 | V4 preview | `https://mcu-connections-git-version-40-afr-bfcd.vercel.app` | `https://mcu-connections-git-version-40-afr-bfcd.vercel.app/` |
 | Local (`npm run dev` and `npm run preview`, both fixed to this port) | `http://localhost:8126` | `http://localhost:8126/` |
@@ -429,7 +460,14 @@ and [redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
 Guest marks use `localStorage` key `mcu.collection.v1`; the auth client uses
 `mcu.auth.v1`. Display preferences (mobile view, desktop view, sort mode and order) use
 `mcu.prefs.v1` on that device only; filters and search are not saved. The
-language choice uses `mcu.lang.v1`. Signed-in rows load from Supabase. Guest merges write only changed
+language choice uses `mcu.lang.v1`, the theme `mcu.theme`, the where-to-watch
+country `mcu.region.v1`, motion `mcu.motion.v1` and celebrations
+`mcu.celebrations.v1`. Signed in, those five also sync to the account's
+`user_preferences` row: signing in applies the account's settings, or uploads
+this device's if the account has none, and a change is saved locally at once and
+sent in the background, retried on the next change, when the connection
+returns or when the tab is shown again. Until `user_preferences` exists in the
+project, settings stay on the device and the console says so once. Signed-in rows load from Supabase. Guest merges write only changed
 rows and clear guest storage only after success. Per-title write queues retain
 their original account scope, keep the latest intent, and prevent stale responses
 from changing a different account's UI. Writes are optimistic; failures roll back
@@ -470,7 +508,7 @@ fallback for any title a language leaves out).
 To add a language: copy `locales/pt-BR.js` to `locales/<code>.js`, set its
 `meta` (name in that language, short code, `htmlLang`, matching browser
 prefixes), translate it, and add its `<script>` tag to `index.html` before
-`i18n.js`. The header menu lists it automatically. Check long labels at the
+`i18n.js`. Settings and the Welcome screen list it automatically. Check long labels at the
 narrowest desktop and phone widths; the toolbar steps down labels by width.
 
 ## Deploying and releasing
@@ -528,7 +566,12 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/preflight-v4.css` | Tailwind's preflight reset, scoped to `.v4` while V3 and the design system share the page. Generated, and temporary |
 | `src/components/ui/` | The shadcn components on Base UI (Vega style), added with the pinned CLI and ours to edit |
 | `src/theme.ts` | The theme mechanism: `dark` on `<html>`, following the system until the visitor overrides it (`window.MCU_THEME`, `useTheme()`) |
-| `src/app/theme-toggle.tsx` | The Light / Dark / Auto control, in the desktop toolbar and the phone account sheet |
+| `src/app/share-image.tsx` | The share card dialog (desktop) and sheet (phone): the progress or finished-guide image, Share image, Download image, Copy link |
+| `src/share-card/` | The share images' templates (`cards.ts`), colours read from `src/index.css` (`tokens.ts`), preview text per title, character and guide (`previews.ts`), the preview tags (`meta.ts`), and the in-browser renderer (`render-browser.ts`, loaded on demand) |
+| `scripts/og-previews.js` | Renders the link previews during `npm run build` (Satori and resvg; no browser) |
+| `middleware.ts` | Vercel Routing Middleware: `/?title=`, `/?char=`, `/?guide=` get their preview page; everything else passes through |
+| `src/app/share.tsx` | Sharing: the one `share()` helper (the system share sheet on phones, copy the link elsewhere, with a "Link copied" toast), the Share button, and the production address every link uses |
+| `src/app/settings.tsx` | Settings (panel on desktop, sheet on phones), the motion and celebration preferences, and their sync to the account; the first surface built from the shadcn components |
 | `design.html` / `src/design/` | The V4 design-system preview, a page of its own that the app never loads and that never loads the app |
 | `src/types/catalog.ts` | The catalog's shapes (`Title`, `Character`, `Guide`, `Media`, `WatchData`), written from the data itself |
 | `src/types/globals.d.ts` | The shared `window` surface, typed from the modules themselves rather than restated |

@@ -1,3 +1,6 @@
+/// <reference types="vite/client" />
+// (Vite's import queries: ?raw for the share card's token file and logo,
+// ?url for its fonts.)
 // The shared surface. Every file in src/app still publishes its components on
 // `window` and reads its neighbours' from there — the bundle changed how the
 // app is delivered, not how its pieces are shared (docs/V4-PLAN.md §5 point 7),
@@ -28,7 +31,9 @@ type GuidesUI = typeof import('../app/guides-ui');
 type Picker = typeof import('../app/picker');
 type App = typeof import('../app/app');
 type ThemeModule = typeof import('../theme');
-type ThemeToggleModule = typeof import('../app/theme-toggle');
+type SettingsModule = typeof import('../app/settings');
+type ShareModule = typeof import('../app/share');
+type ShareImageModule = typeof import('../app/share-image');
 
 /** The i18n runtime (i18n.js), a classic script so the startup screen can
  *  speak the visitor's language before the bundle arrives. */
@@ -55,6 +60,8 @@ export interface I18nRuntime {
   /** One normalisation for case and accents, shared by search, suggestions
    *  and highlighting (AGENTS.md). */
   fold(text: string): string;
+  /** Called after every language change (Settings syncs it to the account). */
+  subscribe(fn: () => void): () => void;
 }
 
 /** Guide helpers, assembled across guides-ui. */
@@ -72,6 +79,8 @@ export interface GuideRuntime {
   blurb(guide: Guide): string;
   size(guide: Guide): string;
   forTitle(id: string): Guide[];
+  /** Settings: every skipped stop back on its path. */
+  resetSkips(): void;
   targetDate(guide: Guide): string | null;
   [key: string]: unknown;
 }
@@ -191,8 +200,17 @@ declare global {
     ReleaseBadge: Mobile['ReleaseBadge'];
     Synopsis: Mobile['Synopsis'];
     SortOrderMenu: Mobile['SortOrderMenu'];
-    LanguageMenu: Mobile['LanguageMenu'];
-    ThemeToggle: ThemeToggleModule['ThemeToggle'];
+    SettingsPanel: SettingsModule['SettingsPanel'];
+    SettingsSheet: SettingsModule['SettingsSheet'];
+    SettingsButton: SettingsModule['SettingsButton'];
+    PreferencesSync: SettingsModule['PreferencesSync'];
+    MCU_PREFS: SettingsModule['MCU_PREFS'];
+    MCU_MOTION: SettingsModule['MCU_MOTION'];
+    ShareButton: ShareModule['ShareButton'];
+    ShareIcon: ShareModule['ShareIcon'];
+    MCU_SHARE: ShareModule['MCU_SHARE'];
+    ShareImageHost: ShareImageModule['ShareImageHost'];
+    MCU_SHARE_IMAGE: ShareImageModule['MCU_SHARE_IMAGE'];
     useReorderAnimation: Mobile['useReorderAnimation'];
     captureViewFlip: Mobile['captureViewFlip'];
     captureFlip: Mobile['captureFlip'];
@@ -215,6 +233,8 @@ declare global {
 
     WhereToWatch: Watch['WhereToWatch'];
     MCU_region: Watch['MCU_region'];
+    MCU_regionChoices: Watch['MCU_regionChoices'];
+    MCU_countryName: Watch['MCU_countryName'];
     MCU_guessRegion: Watch['MCU_guessRegion'];
 
     GuideMenu: GuidesUI['GuideMenu'];

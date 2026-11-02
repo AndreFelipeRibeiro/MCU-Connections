@@ -397,7 +397,7 @@ document.addEventListener('pointerdown', () => { lastInput = 'pointer'; }, true)
 // without taking focus, so the next press still reaches the list. Cleared once
 // the details have shown that title, or after a moment if they never change.
 let drawerStepFocus = false;
-const stepReducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const stepReducedMotion = () => window.MCU_MOTION.reduced();
 let drawerStepTimer = 0;
 const keepFocusOnStep = () => {
   drawerStepFocus = true;
@@ -494,7 +494,7 @@ function CastDrawer({ title: current, onClose, onCharacterClick, hoveredCharacte
 // [sort, icon]; labels come from the active language (sort.* / sort.short.*).
 const SORT_OPTIONS = [['release','▤'],['chrono','⇄'],['phase','◫'],['title','⇅'],['imdb','★'],['rt','◉']];
 
-function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
+function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOpen, onPickTitle, onPickPerson, desktopView, setDesktopView, sort, setSort, sortDir, setSortDir, phaseFilter, setPhaseFilter, typeFilter, setTypeFilter, budgetFilter, setBudgetFilter, releaseFilter, setReleaseFilter, collectionFilter, setCollectionFilter, search, setSearch }) {
   const [popOpen, setPopOpen] = useState(false);
   const popRef = useRef(null);
   // Collection has its own always-visible switch, so it is not counted here.
@@ -600,8 +600,8 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onPickTitle, onPickPer
         <div className="tb-end">
           <window.SyncStatus/>
           <window.GuidesButton currentId={guideId} onPick={onOpenGuide}/>
-          <window.ThemeToggle/>
-          <window.LanguageMenu/>
+          {/* Theme and language live in Settings (Notion "Settings menu"). */}
+          <window.SettingsButton onOpen={onSettings} open={settingsOpen}/>
           <window.AccountButton onPickCollection={setCollectionFilter} onAbout={onAbout}/>
         </div>
       </div>
@@ -643,7 +643,7 @@ function labelPillWidth(text) {
   }
 }
 
-function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds, route }) {
+function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeChar, activeChars, litIds, onHoverConnection, hoveredConnection, selectedId, focusId, pair, onPickConnection, avoidIds, route }) {
   // An open guide: one route through its stops in guide order, dashed on to
   // the destination, in place of the character threads. A single path in the
   // existing layer, so the canvas performance rules hold.
@@ -670,7 +670,7 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     );
   }
   // Group appearances by prime identity so variants share one continuous thread,
-  // but remember which specific variant appeared in each title.
+  // but remember which specific variants appeared in each title.
   // One appearance per (prime, title): several variants of the same identity can share a
   // title (the three Peters in No Way Home) — that is not a connection between titles.
   const primeToAppearances = {};
@@ -678,9 +678,9 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
     t.cast.forEach(c => {
       const p = primeOf(c);
       if (!primeToAppearances[p]) primeToAppearances[p] = {};
-      if (!primeToAppearances[p][t.id]) {
-        primeToAppearances[p][t.id] = { id: t.id, variant: c, release: t.release };
-      }
+      const app = primeToAppearances[p][t.id];
+      if (!app) primeToAppearances[p][t.id] = { id: t.id, variants: [c], release: t.release, prime: p };
+      else if (app.variants.indexOf(c) === -1) app.variants.push(c);
     });
   });
 
@@ -695,8 +695,15 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       if (a.id === b.id) continue;
       const key = a.id + '__' + b.id;
       if (!grouped[key]) grouped[key] = { a: a.id, b: b.id, characters: [] };
-      // Label/colour the segment by the variant present at the earlier title
-      if (!grouped[key].characters.includes(a.variant)) grouped[key].characters.push(a.variant);
+      // Label/colour the segment by the variant(s) in both titles (No Way Home
+      // to Your Friendly Neighborhood Spider-Man is Holland's Peter, whichever
+      // Peter No Way Home lists first). A thread that passes between variants
+      // (Captain Carter on to Peggy) has none in common: it takes the earlier
+      // title's, preferring the core identity when that title has it.
+      const shared = a.variants.filter(v => b.variants.indexOf(v) !== -1);
+      const labels = shared.length ? shared
+        : [a.variants.indexOf(a.prime) !== -1 ? a.prime : a.variants[0]];
+      labels.forEach(v => { if (!grouped[key].characters.includes(v)) grouped[key].characters.push(v); });
     }
   });
   const connections = Object.values(grouped);
@@ -784,7 +791,12 @@ function FloatingConnections({ visibleTitles, positions, hoveredTitle, activeCha
       // A hovered character narrows everything to that character's thread, so
       // no other line stays lit while leading into a dimmed card. Otherwise the
       // pair view, a hovered line or the focused title's lines are lit.
-      const isChar = !!activeChars && activeChars.indexOf(ch) !== -1;
+      // A character lights its whole identity thread (hovering Captain Carter
+      // lights Peggy's lines too), and only where both ends are lit cards: a
+      // performer pin lights their own titles, so a line on to a title they are
+      // not in stays dim. Every lit line ends in two lit cards.
+      const isChar = !!activeChars && activeChars.some(a => primeOf(a) === primeOf(ch))
+        && (!litIds || (litIds.has(conn.a) && litIds.has(conn.b)));
       const emphasized = pair ? isPair : activeChar ? isChar : (isHovered || involvesFocus);
       const dimmed = anyFocus && !emphasized;
       const baseOpacity = dimmed ? 0.05 : (emphasized ? 1 : 0.55);
@@ -1023,6 +1035,8 @@ function App() {
   const [sheet, setSheet] = useState(null);
   // Desktop About dialog (phones use the 'about' sheet).
   const [aboutOpen, setAboutOpen] = useState(false);
+  // Settings: a panel on desktop, a sheet on phones (sheet === 'settings').
+  const [settingsOpen, setSettingsOpen] = useState(false);
   // First visit: the same About content as a one-time welcome (about.jsx).
   const [welcome, setWelcome] = useState(() => !!window.MCU_WELCOME);
   // "What have you seen?" (picker.jsx): from the welcome, the account menu or
@@ -1164,7 +1178,7 @@ function App() {
     return m;
   }, [performers]);
   // Every title a character is in, over the WHOLE catalog. Not the same thing
-  // as charToTitleIds, which counts only what is currently visible: a search
+  // as primeToTitleIds, which counts only what is currently visible: a search
   // narrows that, so using it to work out whether a performer covers a
   // character's whole run gives the wrong answer at exactly the moment the
   // question is asked — while the user is searching.
@@ -1188,8 +1202,11 @@ function App() {
   const pinnedTitleIds = useMemo(() => {
     if (pinnedActor) return (performers[pinnedActor] && performers[pinnedActor].titles) || null;
     if (!highlightedChar) return null;
+    // A pinned character covers its whole identity: pinning Captain Carter
+    // takes in Peggy Carter's titles, as her thread does (Andre, 2026-11-01).
+    const prime = primeOf(highlightedChar);
     const s = new Set();
-    window.TITLES.forEach(t => { if (t.cast.indexOf(highlightedChar) !== -1) s.add(t.id); });
+    window.TITLES.forEach(t => { if (t.cast.some(c => primeOf(c) === prime)) s.add(t.id); });
     return s;
   }, [pinnedActor, performers, highlightedChar]);
   // Pinned character: show only their titles (default) or everything, dimmed.
@@ -1265,7 +1282,7 @@ function App() {
     flickRef.current = { vx: 0, vy: 0, t: performance.now(), px: x, py: y };
   }, []);
   const startInertia = useCallback(() => {
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.MCU_MOTION.reduced()) return;
     let { vx, vy } = flickRef.current;
     let speed = Math.hypot(vx, vy);
     // A slow release is a placement, not a throw: leave it exactly where it is.
@@ -1586,21 +1603,10 @@ function App() {
     ? window.collectionEmptyCopy(collectionFilter)
     : null;
 
-  // Keyed by the exact character: a selected character means that portrayal, so
-  // Peter Parker (Raimi) counts, lists and steps through Tobey Maguire's titles
-  // only (scope decided 2026-10-28). Connection lines still thread variants
-  // together, so Kang's arc stays drawn across the canvas either way.
-  const charToTitleIds = useMemo(() => {
-    const m = {};
-    filtered.forEach(t => t.cast.forEach(c => {
-      if (!m[c]) m[c] = new Set();
-      m[c].add(t.id);
-    }));
-    return m;
-  }, [filtered]);
-
-  // Keyed by prime identity instead, for the threading itself: a title's
-  // connection count has to agree with the lines actually drawn from it.
+  // Keyed by prime identity: the threading, a title's connection count, and the
+  // titles a hovered or pinned character lights all go by the identity, so
+  // every lit line ends in a lit card (Andre, 2026-11-01, replacing the
+  // 2026-10-28 rule that a character meant that one portrayal).
   const primeToTitleIds = useMemo(() => {
     const m = {};
     filtered.forEach(t => t.cast.forEach(c => {
@@ -1610,6 +1616,9 @@ function App() {
     }));
     return m;
   }, [filtered]);
+
+  // The visible titles a character lights: its whole identity thread.
+  const charTitleIds = (c) => (c && primeToTitleIds[primeOf(c)]) || null;
 
   const activeChar = highlightedChar || hoveredCharacter;
   // Every character the highlight covers, so a performer's whole cast list and
@@ -1628,7 +1637,7 @@ function App() {
   }, [pinnedTitleIds, filtered]);
   const highlightedIds = (guide ? guideIds : null)
     || (highlightedChar ? pinnedVisibleIds : null)
-    || (activeChar && charToTitleIds[activeChar] ? charToTitleIds[activeChar] : null);
+    || charTitleIds(activeChar);
 
   // The ids the active canvas filters single out. Collection status and a pinned
   // character are both *dimming* treatments — the cards stay in the layout — so
@@ -1638,8 +1647,8 @@ function App() {
   // so passing the cursor over the cast list can't move the viewport.
   const pinnedCharIds = useMemo(() => {
     if (!highlightedChar) return null;
-    return pinnedVisibleIds || charToTitleIds[highlightedChar] || null;
-  }, [highlightedChar, pinnedVisibleIds, charToTitleIds]);
+    return pinnedVisibleIds || charTitleIds(highlightedChar);
+  }, [highlightedChar, pinnedVisibleIds, primeToTitleIds]);
 
   const recenterFocusIds = useMemo(() => {
     const sets = [];
@@ -2388,7 +2397,7 @@ function App() {
   // change is visible.
   const pinSubject = (chars, actor, startAt) => {
     const from = startAt || drawerId;
-    const covers = from && chars.some(c => { const ids = charToTitleIds[c]; return ids && ids.has(from); });
+    const covers = from && chars.some(c => { const ids = charTitleIds(c); return ids && ids.has(from); });
     const start = covers ? from : null;
     setGuideId(null);
     setPinnedActor(actor);
@@ -2836,6 +2845,12 @@ function App() {
     return hoverRelatedIds;
   }, [pair, activeChar, highlightedIds, hoverRelatedIds]);
 
+  // Share a character's timeline: the link pins it, and the message counts the
+  // titles its identity lights (the same set the banner counts).
+  const charSharePayload = (ch) => ({
+    params: { char: ch },
+    text: tr('share.charText', { name: I18N.charName(ch), n: (charTitleIds(ch) || new Set()).size }),
+  });
   const charBanner = activeChar ? (() => {
     const c = window.CHARACTERS[activeChar];
     const media = window.MEDIA;
@@ -2857,9 +2872,11 @@ function App() {
     // performer's share — the same number the search suggestion shows for their
     // row. The whole chain is already in the stepper ("6 of 8"), so repeating it
     // here said Mike McGill was in 8 titles when he is in one.
-    const namedRow = creditedHere ? roster.find(r => r.name === creditedHere) : null;
+    // Only for a part several people played: with one performer the count is
+    // the titles lit, which for a variant includes its identity's other titles.
+    const namedRow = creditedHere && roster.length > 1 ? roster.find(r => r.name === creditedHere) : null;
     const count = namedRow ? namedRow.n
-      : (pinned ? (pinnedVisibleIds || new Set()) : (charToTitleIds[activeChar] || new Set())).size;
+      : (pinned ? (pinnedVisibleIds || new Set()) : (charTitleIds(activeChar) || new Set())).size;
     const who = asActor ? pinnedActor : I18N.charName(activeChar);
     const sub = asActor ? tr('suggest.as', { names: pinnedChars.map(id => I18N.charName(id)).join(', ') })
       : (creditedHere || roster.length < 2) ? named
@@ -2893,6 +2910,8 @@ function App() {
             <button onClick={() => stepBy(1)} aria-label={tr('highlight.next')} disabled={!pinnedTitles.length}>›</button>
           </div>
         </>}
+        {pinned && <window.ShareButton iconOnly size={15} className="cb-share" label={tr('share.charLabel', { name: who })}
+          payload={() => charSharePayload(activeChar)}/>}
         <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')}
           onClick={unpinCharacter}>×</button>
       </div>
@@ -2944,6 +2963,8 @@ function App() {
               <window.GuideIcon size={16}/>
             </button>
           )}
+          <window.ShareButton iconOnly size={15} className="cb-share" label={tr('share.charLabel', { name: pinnedActor || I18N.charName(ch) })}
+            payload={() => charSharePayload(ch)}/>
           <button className="cb-close" aria-label={tr('highlight.clear')} title={tr('highlight.clear')} onClick={unpinCharacter}>×</button>
         </div>
       </div>
@@ -3040,6 +3061,7 @@ function App() {
           hoveredTitle={hoveredTitle}
           activeChar={activeChar}
           activeChars={activeChars}
+          litIds={activeChar ? highlightedIds : null}
           onHoverConnection={setHoveredConnection}
           hoveredConnection={hoveredConnection}
           selectedId={selectedId}
@@ -3165,6 +3187,7 @@ function App() {
           filterCount={filterCount}
           sort={sort} sortDir={sortDir} setSortDir={setSortDir}
           onOpenAccount={() => setSheet('account')}
+          onOpenSettings={() => setSheet('settings')}
           onOpenGuides={() => setSheet('guides')} guideActive={!!guide} guideName={guide ? window.MCU_GUIDE.name(guide) : null}
           collectionFilter={collectionFilter} setCollectionFilter={setCollectionFilter}
         />
@@ -3214,6 +3237,10 @@ function App() {
           />
         )}
         {sheet === 'about' && <window.AboutSheet onClose={() => setSheet(null)}/>}
+        {sheet === 'settings' && (
+          <window.SettingsSheet onClose={() => setSheet(null)}
+            onAbout={() => setSheet('about')} onShowWelcome={() => { setSheet(null); setWelcome(true); }}/>
+        )}
         {sheet === 'guides' && (
           <window.Sheet onClose={() => setSheet(null)} tall label={tr('guide.menuTitle')}>
             <h2 className="g-sheet-title">{tr('guide.menuTitle')}</h2>
@@ -3221,6 +3248,7 @@ function App() {
           </window.Sheet>
         )}
         <window.StatusToast touch/>
+        <window.ShareImageHost touch/>
         <window.SignInNudge touch/>
         <window.BulkConfirm touch/>
         {welcome && !sheet && !drawerTitle && !pickerOpen && <window.AboutSheet welcome onPick={openPicker} onClose={() => setWelcome(false)}/>}
@@ -3261,6 +3289,7 @@ function App() {
       <Toolbar
         onHome={onHomeClick}
         onAbout={() => setAboutOpen(true)}
+        onSettings={() => setSettingsOpen(o => !o)} settingsOpen={settingsOpen}
         onPickTitle={pickTitle} onPickPerson={pickPerson}
         desktopView={desktopView} setDesktopView={changeDesktopView}
         sort={sort} setSort={changeSort} sortDir={sortDir} setSortDir={setSortDir}
@@ -3324,8 +3353,13 @@ function App() {
         </div>
       )}
 
+      {/* Settings takes the details drawer's place rather than stacking a
+          second panel; closing it brings the drawer back. */}
+      {/* The drawer that comes back must not take focus from the gear. */}
+      {settingsOpen && <window.SettingsPanel onClose={() => { if (drawerTitle) keepFocusOnStep(); setSettingsOpen(false); }}
+        onAbout={() => setAboutOpen(true)} onShowWelcome={() => setWelcome(true)}/>}
       <CastDrawer
-        title={drawerTitle}
+        title={settingsOpen ? null : drawerTitle}
         onClose={() => { setSelectedId(null); setDrawerId(null); }}
         onCharacterClick={pinCharacter}
         hoveredCharacter={hoveredCharacter}
@@ -3335,6 +3369,7 @@ function App() {
         search={search}
       />
       <window.StatusToast touch={false}/>
+      <window.ShareImageHost touch={false}/>
       <window.SignInNudge touch={false}/>
       <window.BulkConfirm touch={false}/>
       {(aboutOpen || welcome) && !pickerOpen && <window.AboutDialog welcome={welcome && !aboutOpen} onPick={openPicker}
@@ -3349,6 +3384,7 @@ function App() {
 // signed in before it can decide what to load.
 ReactDOM.createRoot(document.getElementById('root')).render(
   <window.AccountProvider>
+    <window.PreferencesSync/>
     <window.CollectionProvider><App/></window.CollectionProvider>
   </window.AccountProvider>
 );

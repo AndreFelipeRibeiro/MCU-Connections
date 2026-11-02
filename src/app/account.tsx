@@ -323,7 +323,12 @@ function AccountPanel({ onPickCollection, onClose, onAbout }) {
           <span>{tr('account.watchStat')}</span>
         </div>
       </div>
-
+      )}
+      {/* Share my progress (Notion "Share 1/3"): only once there is some. */}
+      {!collectionLoading && progress.seenReleased > 0 && (
+        <window.ShareButton className="acct-share" text={tr('share.progressLabel')} label={tr('share.progressLabel')}
+          payload={() => ({ text: tr('share.progressText', { n: progress.seenReleased, total: progress.releasedTotal }) })}
+          onShare={() => { if (onClose) onClose(); window.MCU_SHARE_IMAGE.progress(progress.seenReleased, progress.releasedTotal); }}/>
       )}
 
       <div className="acct-links">
@@ -499,11 +504,6 @@ function AccountSheet({ onClose, onPickCollection, onAbout }) {
         <div className="m-sh-title">{window.MCU_I18N.tr('account.title')}</div>
       </div>
       <AccountPanel onPickCollection={onPickCollection} onClose={onClose} onAbout={onAbout}/>
-      {/* The theme control lives here on phones; the desktop toolbar has its own. */}
-      <div className="m-theme-row">
-        <span className="m-theme-label">{window.MCU_I18N.tr('theme.label')}</span>
-        <window.ThemeToggle/>
-      </div>
     </Sheet>
   );
 }

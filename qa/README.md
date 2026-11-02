@@ -24,7 +24,7 @@ Run from the repository root:
 
 | Command | What it does |
 |---|---|
-| `bash qa/regress.sh` | Full regression: 46 check scripts in 47 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English, Portuguese and English in the dark theme, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
+| `bash qa/regress.sh` | Full regression: 50 check scripts in 51 runs (`test-fit` runs twice, one per language) plus the accessibility scan in English, Portuguese and English in the dark theme, 4 at a time; about 7 minutes (it was about 24 one at a time). Every errors field should read `[]` or `0`, the scans "no violations"; lines marked `!!` are failures and the run exits non-zero. Ends with the total time and the ten slowest. `JOBS=1` runs one at a time; `QA_VERBOSE=1` prints the tail of a failing check. |
 | `bash qa/quick.sh [checks…]` | The per-ticket run: the checks `qa/checks.json` lists for the files changed in the working tree, plus the checks named (the ticket's own), side by side. A typical ticket takes 1–3 minutes. |
 | `SITE_URL=<address> node qa/smoke.js` | One-minute smoke check against a deployed site, exactly as a visitor gets it: loads, titles appear, Spatial and List open, details open and close, the phone List opens a sheet, no console errors. Run it against staging after each push and production after each merge. |
 | `node qa/a11y-scan.js` | axe-core scan of 16 screens (desktop Spatial, details, List in Release and in By Phase, account menu, an open guide in the List and in Spatial, the Guides popover, the "What have you seen?" dialog, the guide promotion; phone List, details, Spatial, an open guide, the picker sheet, the guide promotion). Add `LOC=pt-BR` for Portuguese. Exits non-zero and prints `!!` when it finds any violation (it used to exit 0 regardless, so read the output of older runs). Text whose background axe cannot resolve comes back *incomplete*, not as a violation, so this scan passes it; `test-contrast.js` is what measures those. |
@@ -266,7 +266,43 @@ relative to `qa/`, and build it yourself first:
   light and dark at 32, 32, 28 and 48px; the startup screen shows it with the
   bundle blocked; the header reads "Red Thread" in English and Portuguese, as
   do the page title and the home-screen name.
-  Fails on the build before the change).
+  Fails on the build before the change), `test-threads` (every lit
+  connection line ends in two lit cards, and the banner's count is the cards
+  lit: every character hovered from a title it is in, in the default view,
+  then the titles with variants under a phase filter and selected; each
+  variant pinned, and the performers who play several. Hovering Captain
+  Carter lights Avengers: Doomsday, and No Way Home's line on to Your
+  Friendly Neighborhood Spider-Man is Holland's Peter. About 2 minutes. Fails
+  on the build before the change, 261 errors), `test-settings` (the gear
+  opens Settings as a panel on desktop and a sheet on phones, and the theme
+  control and language menu are gone from the toolbar, app bar and account
+  sheet; the panel takes the details drawer's place and gives it back;
+  keyboard open focuses its heading, Escape closes an open select first, then
+  the panel, with focus back on the gear; theme, language, region, motion and
+  celebrations apply at once and survive a reload; reset guide progress,
+  show the welcome again and clear this device (asks first; Cancel keeps
+  everything); tapping a switch row's text toggles it; Back closes the phone
+  sheet; the app bar title fits at 375px; the theme control's labels fit at
+  320px in Portuguese;
+  the Welcome offers a language choice; axe clean in the open panel and
+  sheet in both themes. Account sync is not exercised: it needs a signed-in
+  Supabase session), `test-share` (Share at every point: the title drawer and
+  phone sheet, the pinned character's banner and phone pill, the guide card,
+  Spatial row and phone header, account progress, About, Settings, and a
+  milestone toast with Undo still first. Desktop copies the link and announces
+  "Link copied"; phones send link and message to the share sheet (stubbed);
+  a cancelled sheet shows nothing; links are always the production address and
+  open what they shared; no history entry; Portuguese messages; Tab and Enter
+  reach and use it; "Peggy Carter" still fits the phone pill at 375px. The
+  share card: My progress, a milestone toast and a finished guide open it with
+  a 1080×1350 image and a description; desktop offers Download image and Copy
+  link, a phone Share image, which sends the PNG with the message and link),
+  `test-previews` (the build's link previews: a 1200×630 image and a page for
+  every title, character and guide, whose og: tags name it and point at
+  redthread.tv and which differ from index.html in nothing else; index.html's
+  own card is the new default; middleware.ts, run against the built files,
+  serves each kind and passes unknown or malformed ids and every other request
+  through; the app boots from a preview page).
 - Checks written for specific fixes (run them when touching that area):
   - `test-pan`: zoomed-out Spatial layers and memory.
   - `test-back`: phone Back closes sheets.
@@ -308,7 +344,7 @@ one.
   `test-widetouch` reports it as `knownWarning` rather than in `errors`.
 - `test-camera` used to fail at "sort change while selected", and separately to
   report a false "wheel cancels the glide" about one run in four. Both were the
-  check, not the app, and both are fixed. A full run is 49 runs (46 check
+  check, not the app, and both are fixed. A full run is 54 runs (51 check
   runs and three scans: English, Portuguese, and English in the dark theme) and all of them should be clean: as of 2026-10-31
   there are no known failures. Treat any `test-camera` failure as real, and
   compare against a clean copy with `SITE=` if in doubt.

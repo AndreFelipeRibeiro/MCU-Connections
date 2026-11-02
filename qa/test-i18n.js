@@ -132,9 +132,11 @@ const scan = (list) => (() => {
     await page.fill('.m-search-input input', 'Visão'); await page.waitForTimeout(300);
     out.en.searchPtCharInEn = await page.evaluate(() => document.querySelectorAll('.m-lrow').length);
     await page.fill('.m-search-input input', ''); await page.waitForTimeout(200);
-    await page.locator('.lang-menu .sort-order-trigger').click(); await page.waitForTimeout(200);
-    out.en.menuOptions = await page.evaluate(() => [...document.querySelectorAll('.lang-menu .sort-order-pop button')].map(b => b.textContent));
-    await page.locator('.lang-menu .sort-order-pop button', { hasText: 'Português' }).click(); await page.waitForTimeout(400);
+    // The language choice lives in Settings (Notion "Settings menu").
+    await page.locator('.m-settings-btn').click(); await page.waitForTimeout(400);
+    out.en.menuOptions = await page.evaluate(() => [...document.querySelectorAll('.m-sheet [role="radiogroup"]')].map(g => g.getAttribute('aria-label') === 'Language' ? [...g.querySelectorAll('[role="radio"]')].map(l => l.textContent) : null).filter(Boolean)[0] || []);
+    await page.locator('.m-sheet [role="radio"]', { hasText: 'Português' }).click(); await page.waitForTimeout(400);
+    await page.keyboard.press('Escape'); await page.waitForTimeout(400);
     out.en.afterSwitch = { lang: await page.evaluate(() => document.documentElement.lang), tab0: await page.locator('.m-tabs button').first().textContent(), stored: await page.evaluate(() => localStorage.getItem('mcu.lang.v1')) };
     await page.fill('.m-search-input input', 'Avengers'); await page.waitForTimeout(300);
     out.en.searchEnInPt = await page.evaluate(() => [...document.querySelectorAll('.m-ltitle')].map(e => e.textContent));

@@ -17,7 +17,7 @@ import ReactDOM from 'react-dom';
 // Rendered into <body> so sheets and dialogs that make the app inert don't
 // block its Undo button.
 
-const reducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const reducedMotion = () => window.MCU_MOTION.reduced();
 
 // Newly completed milestone for a change to 'seen', judged on the states after
 // the change: everything released ('all'), or everything released in the
@@ -68,7 +68,8 @@ function celebrationArea() {
 // the bottom. `palette` (optional) replaces the phase colours: a finished
 // guide bursts in greens.
 function burstConfetti(palette) {
-  if (reducedMotion()) return;
+  // Off in Settings, or motion reduced.
+  if (!window.MCU_PREFS.celebrations() || reducedMotion()) return;
   const canvas = document.createElement('canvas');
   canvas.className = 'mcu-confetti';
   canvas.setAttribute('aria-hidden', 'true');
@@ -147,7 +148,7 @@ function toastPlacement(touch) {
 }
 
 function StatusToast({ touch }) {
-  const { setStatus, undoMany } = window.useCollection();
+  const { setStatus, undoMany, progress } = window.useCollection();
   const { tr } = window.useI18n();
   const [toast, setToast] = React.useState(null);
   const timer = React.useRef(null);
@@ -156,7 +157,8 @@ function StatusToast({ touch }) {
     // A single removal only updates the counters; a bulk one still gets its
     // toast, because "Mark as unseen" across many titles needs an Undo.
     if (e.to === 'none' && !e.bulk) return;
-    const milestone = e.to === 'seen' ? (e.bulk ? completedMilestoneBulk(e) : completedMilestone(e)) : null;
+    // Celebrations off in Settings: an ordinary toast, no confetti.
+    const milestone = e.to === 'seen' && window.MCU_PREFS.celebrations() ? (e.bulk ? completedMilestoneBulk(e) : completedMilestone(e)) : null;
     if (milestone) burstConfetti();
     setToast({ key: Date.now(), ...e, milestone, place: toastPlacement(touch) });
   }), [touch]);
@@ -197,6 +199,11 @@ function StatusToast({ touch }) {
         </span>
         <span className="mt-text"><b>{head}</b><span>{sub}</span></span>
         <button className="mt-undo" onClick={undo}>{tr('toast.undo')}</button>
+        {/* A milestone can be shared (Notion "Share 1/3"); Undo stays first. */}
+        {m && <window.ShareButton iconOnly size={15} className="mt-share" label={tr('share.toastLabel', { what: head })}
+          payload={() => ({ text: tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }) })}
+          onShare={() => window.MCU_SHARE_IMAGE.progress(progress.seenReleased, progress.releasedTotal,
+            tr(m.kind === 'all' ? 'share.allText' : 'share.phaseText', { n: m.phase }))}/>}
         <button className="mt-x" onClick={() => setToast(null)} aria-label={tr('toast.dismiss')} title={tr('toast.dismiss')}>×</button>
       </div>
     );

@@ -80,8 +80,17 @@ plan, the environment and the Figma workflow.
   (the guide menu, views, banner, pill and "Part of"), `picker.tsx` ("What
   have you seen?", the poster-grid picker), `account.tsx`, `about.tsx`
   (`ModalDialog`), `celebrate.tsx` (counters, confetti, sign-in reminder),
-  `theme-toggle.tsx` (the Light / Dark / Auto control: desktop toolbar, phone
-  account sheet), `boot.js` (startup screen, at the root), `i18n.js` + `locales/*.js` (root),
+  `share.tsx` (the one share helper and Share button: system share sheet on
+  phones, copy the link elsewhere, links always to production),
+  `share-image.tsx` (the share card dialog: progress and finished guides as an
+  image), `src/share-card/` (the image templates, shared by the share card and
+  the build's link previews; colours come from `src/index.css`),
+  `scripts/og-previews.js` (renders every link preview at build time; not in
+  `tools/`, which Vercel's build doesn't get), `middleware.ts` (at the root:
+  serves a shared link its own preview page),
+  `settings.tsx` (Settings: theme, language, region, motion, celebrations,
+  device actions, and their sync to the account; a v4 surface built from the
+  shadcn components), `boot.js` (startup screen, at the root), `i18n.js` + `locales/*.js` (root),
   `src/data/data.ts` (catalog; permanent title ids), `src/data/guides.ts`,
   `src/data/media-data.ts` (TMDB paths), `src/config.ts` (public Supabase URL +
   publishable key), `src/main.ts` (the bundle entry), `schema.sql`,
@@ -117,10 +126,10 @@ plan, the environment and the Figma workflow.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (46 check scripts in 47 runs plus the accessibility scan in English,
+    (50 check scripts in 51 runs plus the accessibility scan in English,
     Portuguese and English in the dark theme, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **50 check runs clean**
+    output, not just the exit code. A good run is **54 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
@@ -335,7 +344,10 @@ rules carry over unchanged.
   - Every Spatial card is reachable with Tab (an invisible first button) and
     opens with Enter or Space.
 - Phones: each sheet owns one history entry, so the browser Back button closes
-  it. Respect `prefers-reduced-motion`.
+  it. Respect `prefers-reduced-motion`, and the visitor's Reduce motion
+  setting: scripts ask `window.MCU_MOTION.reduced()` rather than the media
+  query, and turning it on puts `reduce-motion` on `<html>`, which `styles.css` answers by
+  cutting every transition and animation.
 - Motion: layout moves use `600ms cubic-bezier(.2,.8,.2,1)`.
 - Spatial canvas performance: no per-card GPU layers (no `will-change` or 3D
   transforms on cards) and no `backdrop-filter` inside the canvas. The canvas is
@@ -400,7 +412,9 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   work on a surface either edits its section or, better, swaps that surface's
   markup for the React components in `src/components/ui/` and deletes the
   section and the V3 rules it overrides together (docs/decisions.md).
-- **How a surface opts in** when its markup moves onto the components:
+- **How a surface opts in** when its markup moves onto the components
+  (Settings, `src/app/settings.tsx`, was the first, built that way from the
+  start):
   - Tailwind's preflight reset is scoped to `.v4` (`src/preflight-v4.css`,
     generated from Tailwind's own; its header says why). A converted surface
     puts class `v4` on its root, and a component that portals out of a
@@ -434,8 +448,8 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   `useTheme()`, the override in `localStorage` under `mcu.theme`, cleared to
   go back to following the system); every page gets the class before first
   paint from a copy of the rule that Vite injects into its `<head>`
-  (`THEME_PREPAINT` in `vite.config.js`). What the user clicks to override it
-  is the Dark/Light ticket. The app starts it in `src/main.ts`, but the class
+  (`THEME_PREPAINT` in `vite.config.js`). The visitor overrides it in
+  Settings (`src/app/settings.tsx`). The app starts it in `src/main.ts`, but the class
   reaches a surface only once that surface is on the tokens: V3's stylesheets
   are dark whatever class `<html>` carries.
 - Both themes meet WCAG AA, and `qa/test-contrast.js` is what says so. Where a
@@ -449,6 +463,15 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
   menus).
 
 ## Language
+
+The app's public name is **Red Thread** (Andre, 2026-11-01). "MCU
+Connections" was a working title: every visitor-facing string, page title,
+link-preview tag and share message says Red Thread (Portuguese: "o Red
+Thread"). Its domain, `https://redthread.tv/`, already serves production and
+is the address every shared link uses (`PUBLIC_URL` in `src/app/share.tsx`).
+The repository, folders, package, Vercel project and GitHub keep
+`mcu-connections` until the Deferred Notion ticket "Rename the app to Red
+Thread (redthread.tv)" runs; don't rename those in passing.
 
 User-facing text is translated: never hard-code UI strings in components. Add a
 key to `locales/en.js` (the complete base), translate it in every other

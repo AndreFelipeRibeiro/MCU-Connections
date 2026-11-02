@@ -47,6 +47,39 @@ const copyLegacy = () => ({
   },
 });
 
+// The share card (Notion V4 Tasks, "Share 2/3") is drawn by Satori in the
+// browser, and Satori's text shaper, HarfBuzz, fetches its hb.wasm from the
+// site root with no way to be handed the file. So the file is served there:
+// copied into the build, and answered by the dev server. It is only fetched
+// when someone opens a share card.
+const HB_WASM = fileURLToPath(new URL('./node_modules/harfbuzzjs/hb.wasm', import.meta.url));
+const shareCardWasm = () => ({
+  name: 'mcu-share-card-wasm',
+  configureServer(server) {
+    server.middlewares.use('/hb.wasm', (req, res) => {
+      res.setHeader('Content-Type', 'application/wasm');
+      res.end(readFileSync(HB_WASM));
+    });
+  },
+  writeBundle(options) {
+    copyFileSync(HB_WASM, join(options.dir, 'hb.wasm'));
+  },
+});
+
+// Link previews (Notion V4 Tasks, "Share 3/3"): an image and a page for the
+// app-wide card and every title, character and guide, in dist/og/, rendered
+// after the bundle is written because each page is a copy of the built
+// index.html. Loaded only here, so the dev server never pays for it.
+const linkPreviews = () => ({
+  name: 'mcu-link-previews',
+  apply: 'build',
+  async closeBundle() {
+    const { buildPreviews } = await import('./scripts/og-previews.js');
+    const r = await buildPreviews({ root: process.cwd(), outDir: 'dist' });
+    console.log(`link previews: ${r.count} images, ${(r.bytes / 1048576).toFixed(1)} MB, ${(r.ms / 1000).toFixed(1)}s`);
+  },
+});
+
 // A file index.html loads as a classic script but LEGACY does not copy is a
 // 404 the browser reports as a blank page, so fail the build loudly rather
 // than shipping a site with a hole in it.
@@ -90,7 +123,7 @@ const themePrepaint = () => ({
 });
 
 export default {
-  plugins: [react(), tailwindcss(), themePrepaint(), checkLegacy(), copyLegacy()],
+  plugins: [react(), tailwindcss(), themePrepaint(), checkLegacy(), copyLegacy(), shareCardWasm(), linkPreviews()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

@@ -33,7 +33,7 @@ function ScoreBadges({ title, lead, compact }: { title: Title; lead?: 'rt' | 'im
 // The app bar is already three rows deep on a phone, so the view switch moved
 // off m-appbar-top (where the account avatar now sits) onto its own tight row
 // rather than becoming a fourth control crammed into the brand row.
-function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, onOpenGuides, guideActive, guideName, collectionFilter, setCollectionFilter }) {
+function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPickTitle, onPickPerson, onOpenFilters, filterCount, sort, sortDir, setSortDir, onOpenAccount, onOpenSettings, onOpenGuides, guideActive, guideName, collectionFilter, setCollectionFilter }) {
   // The suggestions list spans the whole search row (see SearchInput).
   const [searchRow, setSearchRow] = React.useState(null);
   // An open guide shortens the bar (V3 Tasks, "Phone guide: one bar…"):
@@ -64,7 +64,9 @@ function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPick
           <button type="button" className={`m-gbtn${guideActive ? ' on' : ''}`} onClick={onOpenGuides}
             aria-label={guideActive && guideName ? mtr('guide.buttonOpen', { name: guideName }) : mtr('guide.button')} title={mtr('guide.button')}><window.GuideIcon size={18}/><span className="m-gbtn-label" aria-hidden="true">{mtr('guide.button')}</span></button>
         )}
-        <window.LanguageMenu compact/>
+        {/* The language menu moved into Settings; the gear takes its place, so
+            the bar keeps the same number of buttons. */}
+        {onOpenSettings && <window.SettingsButton onOpen={onOpenSettings} className="m-settings-btn"/>}
         <window.AccountAvatarButton onOpen={onOpenAccount}/>
       </div>
       <div className="m-searchrow" ref={setSearchRow}>
@@ -117,54 +119,6 @@ function SortOrderMenu({ sort, sortDir, setSortDir, mobile = false }) {
 }
 window.SortOrderMenu = SortOrderMenu;
 
-// Language picker in the header (desktop toolbar and mobile app bar). A menu
-// rather than a two-way toggle so more languages fit without layout changes;
-// each option is written in its own language. Same open/close behaviour as
-// SortOrderMenu, including ignoring Safari's null-relatedTarget blur on tap.
-function LanguageMenu({ compact = false }) {
-  const { lang, setLang, languages, tr } = window.useI18n();
-  const [open, setOpen] = React.useState(false);
-  const wrap = React.useRef(null), trigger = React.useRef(null), choices = React.useRef(null);
-  const id = React.useId();
-  const list = languages();
-  const current = list.find((l) => l.code === lang) || list[0];
-  React.useEffect(() => {
-    if (!open) return;
-    choices.current?.querySelector('[aria-pressed="true"]')?.focus();
-    const away = e => { if (!wrap.current?.contains(e.target)) setOpen(false); };
-    const escape = e => { if (e.key === 'Escape') { setOpen(false); trigger.current?.focus(); } };
-    document.addEventListener('pointerdown', away);
-    document.addEventListener('keydown', escape);
-    return () => {
-      document.removeEventListener('pointerdown', away);
-      document.removeEventListener('keydown', escape);
-    };
-  }, [open]);
-  if (list.length < 2) return null;
-  return <div className={`sort-order lang-menu${compact ? ' mobile-order' : ''}`} ref={wrap}
-    onBlur={e => { if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
-    <button ref={trigger} className="sort-order-trigger" aria-expanded={open} aria-controls={id}
-      aria-label={tr('lang.aria', { name: current.name })} title={tr('lang.label')} onClick={() => setOpen(v => !v)}>
-      <svg className="lang-globe" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>
-      </svg>
-      <span>{current.short}</span>
-      <svg className="sort-order-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="m6 9 6 6 6-6"/>
-      </svg>
-    </button>
-    {open && <div id={id} ref={choices} className="sort-order-pop" role="group" aria-label={tr('lang.label')}>
-      <div className="sort-order-heading">{tr('lang.label')}</div>
-      {list.map((l) => <button key={l.code} lang={l.code} aria-pressed={lang === l.code}
-        onClick={() => { setLang(l.code); setOpen(false); trigger.current?.focus(); }}>
-        <span>{l.name}</span><span aria-hidden="true">{lang === l.code ? '✓' : ''}</span>
-      </button>)}
-    </div>}
-  </div>;
-}
-window.LanguageMenu = LanguageMenu;
 
 // List / Grid / Spatial as one compact menu, so the second header row has room
 // for the collection switch. Same open/close behaviour as SortOrderMenu,
@@ -217,7 +171,7 @@ function ViewMenu({ viewMode, setViewMode }) {
 function scrollListToTop() {
   const area = document.querySelector('.m-main .m-scrollarea');
   if (!area || area.scrollTop === 0) return;
-  const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const still = window.MCU_MOTION.reduced();
   area.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
 }
 
@@ -308,7 +262,7 @@ function ProgressHeader({ label, color, seen, released, upcoming, band, width, a
   const [lit, setLit] = React.useState(false);
   React.useEffect(() => {
     const el = ref.current;
-    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced = window.MCU_MOTION.reduced();
     // No observer, or motion turned down: show the finished meter at once.
     if (!el || !window.IntersectionObserver || reduced) { setLit(true); return; }
     const io = new IntersectionObserver((entries) => {
@@ -512,7 +466,7 @@ function playFlip(root, prev, opts = {}) {
 }
 
 const flipAllowed = () => typeof Element !== 'undefined' && !!Element.prototype.animate
-  && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  && !window.MCU_MOTION.reduced();
 
 // Phones: called just before switching between List and Grid, so the view that
 // mounts next can animate from the one being replaced.
@@ -1248,7 +1202,7 @@ function Sheet({ children, onClose, tall, label, labelledBy, describedBy, classN
     const sheet = ref.current;
     const body = sheet.querySelector('.m-sheet-body');
     const scrim = sheet.previousElementSibling;
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = window.MCU_MOTION.reduced();
     let s = null;
     const place = (y, animate) => {
       const tr = animate && !reduce ? '200ms cubic-bezier(.2,.8,.2,1)' : '';
@@ -1473,7 +1427,11 @@ function TitleDetailsBody({ title, surface, search, headingRef, headingId, cast,
             <dd className={title.budget == null ? 'unknown' : ''}>{title.budget != null ? MI18N.budget(title.budget) : mtr('details.budgetUnknown')}</dd>
           </div>
         </dl>
-        <window.TitleStatusActions title={title} variant="inline" className={`td-tsa ${c.tsa}`}/>
+        <div className="td-actrow">
+          <window.TitleStatusActions title={title} variant="inline" className={`td-tsa ${c.tsa}`}/>
+          <window.ShareButton className="td-share" label={mtr('share.titleLabel', { title: MI18N.titleName(title) })}
+            payload={() => ({ params: { title: title.id }, text: mtr('share.titleText', { title: MI18N.titleName(title), year: title.year }) })}/>
+        </div>
         {window.GuideDetailsSkip && <window.GuideDetailsSkip title={title}/>}
         <Synopsis title={title} className={`td-synopsis ${c.synopsis}`}/>
         <DetailSlot name="watch" title={title}/>
@@ -1560,4 +1518,4 @@ export { useReorderAnimation, captureViewFlip, captureFlip, playPendingFlip,
   TitleDetailsBody, DetailSection, useDetailOpen, BulkHeaderAction, FocusPop,
   ScoreBadges, Sheet, EmptyState, MatchBadge, ProgressHeader, Highlight,
   StoryYear, ReleaseLine, ReleaseBadge, MPHASE_COLORS, SortOrderMenu,
-  LanguageMenu, Synopsis };
+  Synopsis };

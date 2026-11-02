@@ -162,13 +162,12 @@ work:
   Portuguese passed it "clean" and was found only by comparing its numbers
   against the build before. Compare those numbers when changing the toolbar,
   until the check gates on them.
-- **The app is half renamed, on purpose.** Since the placeholder logo
-  ticket the header, the home link's accessible name, the page title, the
-  home-screen name and the icons say Red Thread, while the link preview
-  (`og:` tags and `og-image.jpg`), the About copy and the startup error still
-  say MCU Connections. Those belong to the rename ticket
-  ("Rename the app to Red Thread"), so a mixed About dialog on staging is
-  expected, not a bug.
+- **Everything a visitor sees says Red Thread** (Andre, 2026-11-01: the public
+  name; MCU Connections was a working title), including the link previews the
+  build draws. The repository, package, Vercel project and GitHub still say
+  mcu-connections until the rename ticket ("Rename the app to Red Thread")
+  runs. `og-image.jpg`, the old preview, is still copied into the build for
+  links already cached with it, and nothing points at it.
 - **The logo is a mask, not an image.** `src/assets/logo-mark.svg` carries
   only the shape; its own colours are ignored, and `--brand` paints it. A
   final logo with more than one colour will need a different build (an
@@ -284,6 +283,32 @@ hand.
 
 ## Open threads and what's next
 
+- **Waiting on Andre: run the `user_preferences` section of `schema.sql`** in
+  the Supabase SQL editor (the whole file is idempotent). Until then Settings
+  keep preferences on each device for signed-in visitors too, and the console
+  says so once per visit; nothing fails. Then check the two-browser sync by
+  hand (signed in on both, change the theme on one, reload the other).
+
+- **Share links point at `https://redthread.tv/`** (`PUBLIC_URL` in
+  `src/app/share.tsx`), which serves the production deployment.
+- **Waiting on Andre: allow redthread.tv for Google sign-in.** In Supabase →
+  Authentication → URL Configuration, add `https://redthread.tv/` to the
+  redirect URLs (and make it the Site URL when ready), and add
+  `https://redthread.tv` to the Google client's JavaScript origins. Until then
+  someone who opens a shared link and signs in from redthread.tv may be sent
+  back to the Site URL instead (README, "App redirects").
+- **Link previews depend on `middleware.ts` running on Vercel.** It is Vercel
+  Routing Middleware at the repository root, which Vercel picks up on its own
+  (no dashboard setting). It can only be proven on a deploy: after the first
+  push, open `/?title=iron-man` on staging and check the page source's
+  `og:image`, then try the link in the Facebook Sharing Debugger or LinkedIn
+  Post Inspector on production. If it doesn't run, shared links fall back to
+  the app-wide card and nothing else changes.
+- **The share card loads about 340 KB (gzip) on demand**: Satori, its layout
+  engine (yoga.wasm) and text shaper (hb.wasm, which Satori fetches from the
+  site root, so the build copies it there), and three Inter weights. Only when
+  someone opens a share card; nothing on the first load.
+
 - **Backlog:** the Notion board, in the user's order, is the live list. The
   items below were recorded at handoff on 2026-10-28. All have since shipped
   except the budget audit and the planning-document reconciliation (both in
@@ -307,7 +332,8 @@ hand.
 - **Decisions waiting on the user:**
   - Which preferences sync across devices.
   - ~~How variant characters should behave~~: decided 2026-10-28 (one exact
-    portrayal; see decisions.md).
+    portrayal), then changed 2026-11-01: a character lights its whole
+    identity thread (see decisions.md).
   - ~~A wider first Spatial view on desktop~~: dropped 2026-10-30 (not to be
     built).
 - **Deferred:**

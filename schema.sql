@@ -113,6 +113,69 @@ grant select, insert, update, delete on public.title_states to authenticated;
 revoke all on public.title_states from anon;
 
 -- ---------------------------------------------------------------------------
+-- Preferences (V4, Notion "Settings menu")
+-- ---------------------------------------------------------------------------
+-- One row per signed-in user: theme, language, where-to-watch region, motion
+-- and celebrations, as one JSON object the app reads and writes whole
+-- (src/app/settings.tsx). Signed-out visitors keep preferences in
+-- localStorage and never touch this table. Until this section has been run,
+-- the app keeps preferences on the device and says so in the console.
+
+create table if not exists public.user_preferences (
+  user_id    uuid        not null references auth.users (id) on delete cascade,
+  prefs      jsonb       not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+
+  constraint user_preferences_pkey primary key (user_id),
+  constraint user_preferences_prefs_object check (jsonb_typeof(prefs) = 'object')
+);
+
+comment on table public.user_preferences is
+  'Per-user app preferences (theme, language, region, motion, celebrations). One row per user.';
+
+drop trigger if exists user_preferences_set_updated_at on public.user_preferences;
+
+create trigger user_preferences_set_updated_at
+  before update on public.user_preferences
+  for each row
+  execute function public.set_updated_at();
+
+alter table public.user_preferences enable row level security;
+
+drop policy if exists "own prefs: select" on public.user_preferences;
+drop policy if exists "own prefs: insert" on public.user_preferences;
+drop policy if exists "own prefs: update" on public.user_preferences;
+drop policy if exists "own prefs: delete" on public.user_preferences;
+
+create policy "own prefs: select"
+  on public.user_preferences
+  for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+
+create policy "own prefs: insert"
+  on public.user_preferences
+  for insert
+  to authenticated
+  with check ((select auth.uid()) = user_id);
+
+create policy "own prefs: update"
+  on public.user_preferences
+  for update
+  to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
+create policy "own prefs: delete"
+  on public.user_preferences
+  for delete
+  to authenticated
+  using ((select auth.uid()) = user_id);
+
+grant select, insert, update, delete on public.user_preferences to authenticated;
+revoke all on public.user_preferences from anon;
+
+-- ---------------------------------------------------------------------------
 -- Sanity checks after running this file
 -- ---------------------------------------------------------------------------
 -- 1. RLS is on:
@@ -126,3 +189,9 @@ revoke all on public.title_states from anon;
 -- 3. Isolation, from the app with two different signed-in users: user A must
 --    get zero rows when selecting user B's rows. Verify at the API layer too,
 --    not just in the UI.
+--
+-- 4. The same for preferences:
+--      select relrowsecurity from pg_class where relname = 'user_preferences';
+--      -- expect: t
+--      select cmd from pg_policies where tablename = 'user_preferences';
+--      -- expect four rows

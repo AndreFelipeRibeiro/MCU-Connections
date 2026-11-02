@@ -16,6 +16,7 @@
    them. Each Phase 4 surface ticket adds its file here as it converts. */
 @source "./components";
 @source "./design";
+@source "./app/settings.tsx";
 
 @custom-variant dark (&:is(.dark *));
 

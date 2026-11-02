@@ -64,6 +64,13 @@ const { TITLES, CHARACTERS } = data;
 const exact = {};
 TITLES.forEach(t => t.cast.forEach(c => { (exact[c] = exact[c] || new Set()).add(t.id); }));
 const chars = Object.keys(CHARACTERS).filter(id => exact[id]);
+// What pinning a character lights: its whole identity thread, so Captain
+// Carter takes in Peggy Carter's titles (decided 2026-11-01, docs/decisions.md;
+// it replaced the exact-portrayal rule this check was written for).
+const primeOf = id => (CHARACTERS[id] && CHARACTERS[id].prime) || id;
+const ident = {};
+TITLES.forEach(t => t.cast.forEach(c => { const p = primeOf(c); (ident[p] = ident[p] || new Set()).add(t.id); }));
+const identOf = id => ident[primeOf(id)];
 // Performers are resolved per title, because a part can change hands: Rhodes is
 // Terrence Howard in Iron Man and Don Cheadle after it, so each name gets the
 // titles they were actually credited in.
@@ -98,8 +105,10 @@ const performersOf = id => new Set(TITLES.filter(t => t.cast.indexOf(id) !== -1)
 // character with a single performer the two are equal.
 const subjects = []
   .concat(chars.map(id => ({
-    kind: 'character', label: CHARACTERS[id].name, expect: exact[id].size,
-    count: tallyOf[id][topOf[id]],
+    kind: 'character', label: CHARACTERS[id].name, expect: identOf(id).size,
+    // A part several people played names one of them and gives their share;
+    // a part with one performer gives the titles lit, the whole identity.
+    count: performersOf(id) > 1 ? tallyOf[id][topOf[id]] : identOf(id).size,
     who: CHARACTERS[id].name, sub: [topOf[id]],
     starts: performersOf(id) > 1,
   })))
@@ -113,13 +122,14 @@ const subjects = []
     const single = plays === 1;
     return {
       kind: 'actor', label: a, plays,
-      expect: single ? exact[only].size : s.size,
+      expect: single ? identOf(only).size : s.size,
       // The subtitle counts this performer's own titles; the stepper keeps the
       // whole chain, so a recast performer reads "1 title" beside "6 of 8".
-      count: s.size,
+      // Sole performer of a part: the part's whole identity, as above.
+      count: single && performersOf(only) === 1 ? identOf(only).size : s.size,
       who: single ? CHARACTERS[only].name : a,
       sub: single ? [a] : byActor[a].map(id => CHARACTERS[id].name),
-      starts: single && s.size < exact[only].size,
+      starts: single && s.size < identOf(only).size,
     };
   }));
 
