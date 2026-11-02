@@ -2268,6 +2268,10 @@ body { background: var(--v3-bg); }
 .acct-stat span { @apply text-xs; }
 .acct-links button { @apply h-8 rounded-md border-border bg-background px-2.5 text-sm font-medium text-foreground shadow-xs dark:border-input dark:bg-input/30; }
 .acct-links button:hover { @apply bg-muted dark:bg-input/50; }
+/* "Mark what you've seen" holds two lines (title and hint): it grows to fit
+   them, with padding, instead of the one-line buttons' fixed height. */
+.acct-links .acct-pick { height: auto; min-height: max(48px, 3rem); padding-block: 8px; line-height: 1.25; }
+.acct-pick-text small { margin-top: 2px; }
 .acct-action { @apply h-9 min-h-9 rounded-md border-border bg-background text-sm font-medium text-foreground shadow-xs dark:border-input dark:bg-input/30; }
 .acct-action:hover { @apply bg-muted dark:bg-input/50; }
 .acct-action.primary { @apply border-transparent bg-primary text-primary-foreground shadow-none; }

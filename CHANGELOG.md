@@ -13,6 +13,25 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 fix — Room around "Mark what you've seen"
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Account menu: "Mark what you've seen" text sits too close to
+the button's edges". The account menu's two-line button had its text touching
+the top and bottom edges.
+
+- **Cause:** every button in that menu has a fixed 32px height, too short for
+  two lines.
+- The button now grows to fit, with 8px padding top and bottom (52px minimum on
+  the phone sheet); Portuguese at Large wraps to three lines and the button
+  grows with it.
+- `qa/test-picker.js` fails if the text comes within 6px of the edge.
+- Verified: measured in the browser at every Text size in English and
+  Portuguese, desktop and phone (9px each side). Full Batch 5 regression on the
+  final tree: 56 check runs clean.
+
 ## V4 fix — Announced casts of unreleased titles
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);

@@ -518,7 +518,7 @@
 .pk.touch .pk-ask { width: 100%; border-radius: 18px 18px 0 0; border-bottom: 0; padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
 .m-sheet .welcome-pick { bottom: calc(-24px - env(safe-area-inset-bottom, 0px)); margin: 22px -18px calc(-24px - env(safe-area-inset-bottom, 0px));
   padding: 14px 18px calc(20px + env(safe-area-inset-bottom, 0px)); }
-.m-sheet .acct-links .acct-pick { min-height: max(48px, 3rem); padding: 6px 12px; }
+.m-sheet .acct-links .acct-pick { min-height: max(52px, 3.25rem); padding: 8px 12px; }
 
 /* Guide promotion on phones (Option C, Phone C artboard): the band runs to the
    sheet's top edge under the handle and the ×; covers take one line each. */
