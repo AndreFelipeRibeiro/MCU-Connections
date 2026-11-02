@@ -90,7 +90,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   piece of text, and the controls around it, except the Spatial cards (zoom
   the canvas for those); controls never get smaller than the default,
   saved on the device. A larger default font size in the browser enlarges the
-  app's text too. The default size has no informative text under 12px.
+  app's text too. On an iPhone or iPad it starts from the system Text Size
+  (the two smallest steps → Small, xLarge and up → Large) until a size is
+  picked in Settings. The default size has no informative text under 12px.
 - Settings (the gear in the desktop toolbar and the phone app bar; a panel
   from the right on desktop, a sheet on phones), laid out like a phone's own
   settings app in grouped lists: theme (a Light / Dark / Auto segmented

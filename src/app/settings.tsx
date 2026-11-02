@@ -67,14 +67,44 @@ function setMotion(next: Motion) {
 // (src/index.css). Kept on this device only (Andre: a phone and a laptop often
 // want different sizes), so it is not part of the synced snapshot below and
 // has its own listeners. vite.config.js sets it before the first paint.
+//
+// On an iPhone or iPad, until the visitor picks a size here, it starts from
+// the system Text Size (Notion V4 Tasks, "Text size: start from the iPhone's
+// system Text Size"). Safari doesn't apply that to web pages, but the WebKit
+// system font -apple-system-body follows it: 17px at the iOS default. Its
+// steps map by range onto the app's three sizes, nothing above Large:
+// 15px or less (xSmall, Small) → Small; 16–17 (Medium, the default) →
+// Default; 19 or more (xLarge up, the Accessibility sizes too) → Large.
+// Only a choice made here is saved (Default included), so a later change in
+// iOS keeps flowing through until then. Everywhere else the root stays at
+// the browser's own font size, through rem. vite.config.js holds the one
+// copy of this rule that runs before the first paint; keep the two alike.
 export type TextSize = 'small' | 'default' | 'large';
 const TEXT_SIZE_KEY = 'mcu.textSize.v1';
-const readTextSize = (): TextSize => {
+const readSavedTextSize = (): TextSize | null => {
   const v = read(TEXT_SIZE_KEY);
   // "larger" was a fourth step, dropped before release (Andre): it reads as Large.
-  return v === 'small' ? 'small' : v === 'large' || v === 'larger' ? 'large' : 'default';
+  return v === 'small' ? 'small' : v === 'large' || v === 'larger' ? 'large' : v === 'default' ? 'default' : null;
 };
-let textSize: TextSize = readTextSize();
+/** The size matching the system Text Size on an iPhone or iPad, or null
+ *  anywhere else (desktop Safari knows the font too, at macOS sizes). */
+function systemTextSize(): TextSize | null {
+  try {
+    const ua = navigator.userAgent;
+    const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    if (!ios || !(window.CSS && CSS.supports('font', '-apple-system-body'))) return null;
+    const probe = document.createElement('span');
+    probe.setAttribute('data-probe', 'system-body');
+    probe.style.cssText = 'position:absolute;visibility:hidden;font:-apple-system-body';
+    document.documentElement.appendChild(probe);
+    const px = parseFloat(getComputedStyle(probe).fontSize);
+    probe.remove();
+    return !px ? null : px <= 15 ? 'small' : px >= 19 ? 'large' : 'default';
+  } catch (e) { return null; }
+}
+let textSaved: TextSize | null = readSavedTextSize();
+let textSystem: TextSize | null = systemTextSize();
+let textSize: TextSize = textSaved || textSystem || 'default';
 const textListeners = new Set<() => void>();
 function applyTextSize() {
   const el = document.documentElement;
@@ -82,17 +112,30 @@ function applyTextSize() {
   else el.setAttribute('data-text-size', textSize);
 }
 applyTextSize();
-function setTextSize(next: TextSize) {
-  if (next === textSize) return;
+function showTextSize(next: TextSize) {
+  const changed = next !== textSize;
   textSize = next;
-  write(TEXT_SIZE_KEY, next === 'default' ? null : next);
-  applyTextSize();
+  if (changed) applyTextSize();
   textListeners.forEach((fn) => fn());
   // Layouts that measure their text (the phone collection row) fit again.
-  window.dispatchEvent(new Event('mcu:textsize'));
+  if (changed) window.dispatchEvent(new Event('mcu:textsize'));
 }
+function setTextSize(next: TextSize) {
+  textSaved = next;
+  write(TEXT_SIZE_KEY, next);
+  showTextSize(next);
+}
+// Still following iOS: a Text Size changed while the app was in the
+// background shows when it comes back.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || textSaved) return;
+  textSystem = systemTextSize();
+  if (textSystem && textSystem !== textSize) showTextSize(textSystem);
+});
 const subscribeText = (fn: () => void) => { textListeners.add(fn); return () => { textListeners.delete(fn); }; };
 const useTextSize = () => React.useSyncExternalStore(subscribeText, () => textSize);
+/** True while the size comes from the system Text Size (nothing picked here). */
+const useTextSizeFromSystem = () => React.useSyncExternalStore(subscribeText, () => !textSaved && !!textSystem);
 
 function setCelebrations(on: boolean) {
   if (on === celebrations) return;
@@ -410,6 +453,7 @@ function SettingsBody({ onAbout, onShowWelcome, onClose, keyboard = false }: {
   const { tr, languages } = window.useI18n();
   const prefs = usePreferences();
   const size = useTextSize();
+  const fromSystem = useTextSizeFromSystem();
   const [confirmClear, setConfirmClear] = React.useState(false);
   const [guidesReset, setGuidesReset] = React.useState(false);
   const regions = window.MCU_regionChoices();
@@ -427,7 +471,8 @@ function SettingsBody({ onAbout, onShowWelcome, onClose, keyboard = false }: {
           ]}/>
       </Section>
 
-      <Section id="settings-text-size" title={tr('settings.textSize')} footnote={<Footnote>{tr('settings.textSizeHint')}</Footnote>}>
+      <Section id="settings-text-size" title={tr('settings.textSize')}
+        footnote={<Footnote>{fromSystem ? tr('settings.textSizeSystem') + ' ' : ''}{tr('settings.textSizeHint')}</Footnote>}>
         <Segmented<TextSize> label={tr('settings.textSize')} value={size} onChange={setTextSize}
           options={[
             { value: 'small', label: tr('settings.textSmall') },

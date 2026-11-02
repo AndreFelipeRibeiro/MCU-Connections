@@ -60,6 +60,7 @@ window.MCU_LOCALES.en = {
     'settings.textDefault': 'Default',
     'settings.textLarge': 'Large',
     'settings.textSizeHint': 'Saved on this device. The Spatial view’s cards keep their size; zoom the canvas to make them bigger.',
+    'settings.textSizeSystem': 'Matches the Text Size set on this device until you pick one.',
     'settings.region': 'Where to watch',
     'settings.regionHint': 'The country whose streaming, rental and purchase options each title shows. You can also change it inside a title.',
     'settings.country': 'Country',

@@ -59,6 +59,7 @@ window.MCU_LOCALES['pt-BR'] = {
     'settings.textDefault': 'Padrão',
     'settings.textLarge': 'Grande',
     'settings.textSizeHint': 'Salvo neste dispositivo. Os cards da visualização Espacial mantêm o tamanho; use o zoom para aumentá-los.',
+    'settings.textSizeSystem': 'Segue o Tamanho do Texto definido neste aparelho até você escolher um.',
     'settings.region': 'Onde assistir',
     'settings.regionHint': 'O país cujas opções de streaming, aluguel e compra aparecem em cada título. Você também pode mudar isso dentro de um título.',
     'settings.country': 'País',

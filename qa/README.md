@@ -308,7 +308,8 @@ relative to `qa/`, and build it yourself first:
   own font at 16px or more (no zoom on focus on iPhones); the desktop List
   keeps every cell inside its column in both languages at Default and Large,
   with all 12 columns at 1280px by default; 200% browser zoom on desktop has no
-  sideways scroll), `test-previews` (the build's link previews: a 1200×630 image and a page for
+  sideways scroll; a simulated iPhone starts from its system Text Size until a
+  size is picked, and nothing off iOS does), `test-previews` (the build's link previews: a 1200×630 image and a page for
   every title, character and guide, whose og: tags name it and point at
   redthread.tv and which differ from index.html in nothing else; index.html's
   own card is the new default; middleware.ts, run against the built files,

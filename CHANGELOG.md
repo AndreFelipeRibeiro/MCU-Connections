@@ -13,6 +13,31 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 feature — Text size starts from the iPhone's Text Size
+
+Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Text size: start from the iPhone's system Text Size". On an
+iPhone or iPad, until a size is picked in Settings, Text size starts from the
+system Text Size.
+
+- Read through WebKit's `-apple-system-body` font, which follows Dynamic Type:
+  15px or less → Small, 16–17 → Default, 19 and up → Large (Accessibility sizes
+  included). iPhone and iPad only; desktop Safari and everything else are
+  unchanged.
+- Applied before the first paint (the copy in `vite.config.js`), and again when
+  the app comes back from the background, so a change in iOS flows through.
+- Only a choice made in Settings is saved, now Default included; Settings shows
+  the size it picked and says "Matches the Text Size set on this device until
+  you pick one."
+- `qa/test-textsize.js` plays an iPhone (its user agent and a stand-in for the
+  system font) at seven sizes, the Settings note, a choice winning across a
+  reload, a background change, and Android and desktop ignoring it.
+- Verified: Full Batch 5 regression on the final tree: 56 check runs clean.
+  **Not checked on a real iPhone** with its Text Size changed; headless
+  Chromium has no Dynamic Type.
+
 ## V4 fix — Room around "Mark what you've seen"
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
