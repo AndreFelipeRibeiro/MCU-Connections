@@ -15,7 +15,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V4 feature — Share cards and link previews; links go to redthread.tv
 
-Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging); not yet merged to `main`.
+Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in Batch 3.
 
 Notion V4 Tasks, "Share 2/3 — Progress and guide share card (image)" and
 "Share 3/3 — Link previews per title, character and guide", committed
@@ -50,7 +51,8 @@ together because they are built from one set of templates
 
 ## V4 feature — Share buttons and links
 
-Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging); not yet merged to `main`.
+Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in Batch 3.
 
 Notion V4 Tasks, "Share 1/3 — Share buttons and links".
 
@@ -71,7 +73,8 @@ Notion V4 Tasks, "Share 1/3 — Share buttons and links".
 
 ## V4 feature — Settings, laid out like a phone's settings app; the public name is Red Thread
 
-Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging); not yet merged to `main`.
+Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in Batch 3.
 
 Notion V4 Tasks, "Settings menu" (two revisions after Andre's first look).
 
@@ -105,8 +108,8 @@ Notion V4 Tasks, "Settings menu" (two revisions after Andre's first look).
 
 ## V4 fix — character variants light their whole thread, and every lit line ends in lit cards
 
-Recorded: 2026-11-01 19:18 EST (-0500). Pushed to `version/4.0` (V4 staging); not yet
-merged to `main`.
+Recorded: 2026-11-01 19:18 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-01 after Andre's approval, in Batch 3.
 
 Notion V4 Tasks, "Re-check all the title and character connections". Hovering
 Captain Carter drew a lit line into Avengers: Doomsday while Doomsday stayed
