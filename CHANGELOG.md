@@ -16,7 +16,7 @@ separate product releases. The merge checkpoint is included explicitly.
 ## V4 improvement — Bigger text and a Text size setting
 
 Recorded: 2026-11-02 09:31 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 4.
 
 Notion V4 Tasks, "Font size increase". Text is bigger by default and follows
 one type scale; Settings adds Text size.
@@ -50,7 +50,7 @@ one type scale; Settings adds Text size.
 ## V4 fix — Portuguese header rows fit; test-fit fails on overflow
 
 Recorded: 2026-11-02 09:31 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 4.
 
 Notion V4 Tasks, "Top nav (PT) / content overflowing". The phone's second
 header row ran past the right edge in Portuguese; it now fits at every width.
