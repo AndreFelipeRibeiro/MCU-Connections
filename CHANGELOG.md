@@ -16,7 +16,7 @@ separate product releases. The merge checkpoint is included explicitly.
 ## V4 improvement — The Avengers: Doomsday newcomers join the catalog
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
 
 Notion V4 Tasks, "Add the confirmed Doomsday newcomers to the catalog".
 Thirteen characters confirmed for Avengers: Doomsday were missing, so they drew
@@ -42,7 +42,7 @@ no threads. Characters: 89 → 102.
 ## V4 feature — Text size starts from the iPhone's Text Size
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
 
 Notion V4 Tasks, "Text size: start from the iPhone's system Text Size". On an
 iPhone or iPad, until a size is picked in Settings, Text size starts from the
@@ -67,7 +67,7 @@ system Text Size.
 ## V4 fix — Room around "Mark what you've seen"
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
 
 Notion V4 Tasks, "Account menu: "Mark what you've seen" text sits too close to
 the button's edges". The account menu's two-line button had its text touching
@@ -86,7 +86,7 @@ the top and bottom edges.
 ## V4 fix — Announced casts of unreleased titles
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
 
 Notion V4 Tasks, "Verify announced casts of unreleased titles (Doomsday, Secret
 Wars, VisionQuest…)". Every character listed for a title not yet out was
@@ -107,7 +107,7 @@ checked against an announcement; Andre approved the changes.
 ## V4 improvement — Opening a title closes Settings
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
 
 Notion V4 Tasks, "Close Settings when a title is opened". On desktop, opening a
 title while Settings was open loaded its details behind the panel.
@@ -126,7 +126,7 @@ title while Settings was open loaded its details behind the panel.
 ## V4 fix — Don't promote a finished guide; celebrate it instead
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
 
 Notion V4 Tasks, "Don’t promote a guide that the user has already finished it".
 A returning visitor was offered a guide they had already finished, and
@@ -155,7 +155,7 @@ finishing one earned nothing.
 ## V4 design — Light theme polish
 
 Recorded: 2026-11-02 12:49 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
 
 Notion V4 Tasks, "Light mode polish: rating pills, card hover, Spatial
 background, progress bar". Four light-theme fixes from Andre's screenshots, and
@@ -178,7 +178,7 @@ softer shadows on Spatial's floating pieces.
 ## V4 feature — D and L switch the theme on desktop
 
 Recorded: 2026-11-02 11:55 EST (-0500). Pushed to `version/4.0` (V4 staging);
-not yet on `main`.
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 5.
 
 Notion V4 Tasks, "Desktop keyboard shortcut: D for dark mode, L for light
 mode". On desktop, pressing D switches to the dark theme and L to the light
