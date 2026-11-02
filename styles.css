@@ -795,9 +795,16 @@ body { background: var(--v3-bg); }
 /* Compact (mobile): label All and the active option; others are icons. */
 .coll-compact button { flex: 1 1 auto; min-width: 0; padding: 0 8px; }
 .coll-compact button.on { flex-grow: 2; }
-.coll-compact .coll-label { display: none; }
-.coll-compact button:first-child .coll-label, .coll-compact button.on .coll-label { display: inline; }
-@media (min-width: 400px) { .coll-compact .coll-label { display: inline; } }
+/* The phone row's fitting steps (mobile.tsx, MobileTopBar): the row tries
+   each in turn and keeps the first that fits. 2+: only "All" and the selected
+   option keep their label. 3: the shorter label where there is one. */
+/* The short label exists only for the phone row's last step: hidden in every
+   other switch, the desktop toolbar's included. */
+.coll-switch .cl-short { display: none; }
+.m-viewrow:is([data-fit="2"], [data-fit="3"]) .coll-compact .coll-label { display: none; }
+.m-viewrow:is([data-fit="2"], [data-fit="3"]) .coll-compact :is(button:first-child, button.on) .coll-label { display: inline; }
+.m-viewrow[data-fit="3"] .coll-compact .cl-full { display: none; }
+.m-viewrow[data-fit="3"] .coll-compact .cl-short { display: inline; }
 /* Desktop toolbar step-downs, sized for the longest translation
    (Portuguese). Row 3: short sort labels, then label only All + the active
    collection, then icons only. Row 2: drop "Order:", then Filters' text. */

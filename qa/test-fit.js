@@ -1,4 +1,10 @@
-// Checks saved display preferences (mcu.prefs.v1) on mobile and desktop.
+// Fit: the desktop toolbar and the phone app bar at every width, in the
+// language LOC gives (regress runs English and Portuguese). Since Notion
+// "Top nav (PT) / content overflowing" it FAILS on anything that doesn't fit:
+// a control past the screen edge, a control past its row, overlapping
+// toolbar controls, a label running past its own button, or sideways scroll.
+// (It used to only report them, which is how a Portuguese overflow passed.)
+// Count badges sit over their button's corner on purpose and don't count.
 const QA_PORT = +process.env.PORT || 8187; // regress/quick give each check its own port
 const { chromium } = require('playwright');
 const path = require('path');
@@ -26,6 +32,10 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(f).pipe(res);
 });
 const URL = 'http://127.0.0.1:' + QA_PORT + '/';
+// MODE=watch (as regress.sh runs it in Portuguese) measures with Watchlist
+// selected, the longest label; it was read only from argv before, so the
+// full run never used it.
+const MODE = process.env.MODE || process.argv[2] || 'all';
 const MOBILE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 
@@ -79,29 +89,56 @@ const SEED = "localStorage.setItem('mcu.collection.v1', JSON.stringify({version:
   const out = {};
   const fit = () => {
     const over = [...document.querySelectorAll('.toolbar button, .toolbar input, .m-appbar button, .m-appbar input')].filter(b => { const r = b.getBoundingClientRect(); return r.width && (r.right > innerWidth + 0.5 || r.left < -0.5); }).length;
-    const rows = [...document.querySelectorAll('.tb-top-row, .tb-filter-row, .tb-sort-row, .tb-sort-controls, .ctx-float, .ctx-line, .ctx-pill, .tb-view-switch, .m-searchrow, .m-viewrow')].map(r => r.scrollWidth - r.clientWidth).filter(d => d > 1);
+    // A row overflows when one of its controls runs past it (measured by box,
+    // so count badges overhanging a button's corner don't count).
+    const past = (inner, outer) => Math.max(inner.right - outer.right, outer.left - inner.left);
+    const rows = [...document.querySelectorAll('.tb-top-row, .tb-filter-row, .tb-sort-row, .tb-sort-controls, .ctx-float, .ctx-line, .ctx-pill, .tb-view-switch, .m-searchrow, .m-viewrow')]
+      .filter(r => r.offsetParent).map(r => { const box = r.getBoundingClientRect(); return Math.max(0, ...[...r.children].filter(c => c.getClientRects().length).map(c => past(c.getBoundingClientRect(), box))); })
+      .filter(d => d > 1).map(d => Math.round(d));
     const search = document.querySelector('.search-wrap, .m-searchbar');
     // overlapping toolbar controls
     const els = [...document.querySelectorAll('.toolbar .segmented, .toolbar .coll-switch, .toolbar .filters-pill, .toolbar .search-wrap, .toolbar .acct-wrap, .toolbar .sort-order')].map(e => e.getBoundingClientRect());
     let overlaps = 0;
     for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) { const a = els[i], b = els[j]; if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) overlaps++; }
-    return { offscreen: over, rowOverflow: rows, overlaps, searchW: search ? Math.round(search.getBoundingClientRect().width) : null, hScroll: document.documentElement.scrollWidth > innerWidth, tbH: (document.querySelector('.toolbar')||{}).offsetHeight, clipped: [...document.querySelectorAll('.toolbar button')].filter(b => b.offsetParent && b.scrollWidth > b.clientWidth + 1).length, labels: [...document.querySelectorAll('.coll-switch .coll-label')].filter(l => l.offsetParent).map(l => l.textContent).join('/') };
+    return { offscreen: over, rowOverflow: rows, overlaps, searchW: search ? Math.round(search.getBoundingClientRect().width) : null, hScroll: document.documentElement.scrollWidth > innerWidth, tbH: (document.querySelector('.toolbar')||{}).offsetHeight,
+      // A label running past its own button (absolutely placed extras, the
+      // count badges and screen-reader text, excluded).
+      clipped: [...document.querySelectorAll('.toolbar button, .m-appbar button')].filter(b => b.offsetParent).filter(b => {
+        const box = b.getBoundingClientRect();
+        return [...b.querySelectorAll('*')].some(e => e.getClientRects().length && getComputedStyle(e).position !== 'absolute' && !e.closest('[style*="position: absolute"]') && past(e.getBoundingClientRect(), box) > 1);
+      }).map(b => (b.innerText || b.getAttribute('aria-label') || '').trim().slice(0, 30)),
+      // Both a full and a short label showing at once (the short one is only
+      // for the phone row's last step).
+      doubled: [...document.querySelectorAll('.coll-switch button')].filter(b => [...b.querySelectorAll('.cl-full, .cl-short')].filter(x => x.getClientRects().length).length > 1).length,
+      labels: [...document.querySelectorAll('.coll-switch .coll-label')].filter(l => l.offsetParent).map(l => l.innerText).join('/') };
   };
   for (const w of [900, 999, 1000, 1100, 1199, 1200, 1250, 1279, 1280, 1300, 1301, 1439, 1440, 1600, 1919, 1920, 2199, 2200, 2559, 2560]) {
     const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 900 }, locale: process.env.LOC || 'en-US' }, SEED);
     await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
-    if (process.argv[2] === 'watch') { await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); }
+    if (MODE === 'watch') { await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); }
     out['d' + w] = { ...(await page.evaluate(fit)), errors: errors.length };
-    if ([900, 1279, 1280, 1440, 1920].includes(w)) await page.screenshot({ path: path.join(S, 'shots', 'fit-' + (process.env.LOC||'en') + '-d' + w + (process.argv[2] || '') + '.png'), clip: { x: 0, y: 0, width: w, height: 200 } });
+    if ([900, 1279, 1280, 1440, 1920].includes(w)) await page.screenshot({ path: path.join(S, 'shots', 'fit-' + (process.env.LOC||'en') + '-d' + w + (MODE === 'watch' ? 'watch' : '') + '.png'), clip: { x: 0, y: 0, width: w, height: 200 } });
     await ctx.close();
   }
-  for (const w of [320, 360, 390, 430]) {
+  for (const w of [320, 360, 375, 390, 430]) {
     const { ctx, page, errors } = await ctxPage(browser, { viewport: { width: w, height: 760 }, hasTouch: true, isMobile: true, locale: process.env.LOC || 'en-US' }, SEED);
     await page.goto('http://127.0.0.1:' + QA_PORT + '/'); await require('./ready').appReady(page);
-    if (process.argv[2] === 'watch') { await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); }
+    if (MODE === 'watch') { await page.locator('.coll-switch button').nth(3).click(); await page.waitForTimeout(300); }
     out['m' + w] = { ...(await page.evaluate(fit)), errors: errors.length };
     await ctx.close();
   }
+  // Everything that doesn't fit is a failure.
+  const failures = [];
+  for (const [k, v] of Object.entries(out)) {
+    if (v.offscreen) failures.push(`${k}: ${v.offscreen} control(s) past the screen edge`);
+    if (v.rowOverflow.length) failures.push(`${k}: a control runs ${v.rowOverflow.join(', ')}px past its row`);
+    if (v.overlaps) failures.push(`${k}: ${v.overlaps} toolbar controls overlap`);
+    if (v.hScroll) failures.push(`${k}: the page scrolls sideways`);
+    if (v.doubled) failures.push(`${k}: ${v.doubled} switch option(s) show both their full and short label`);
+    if (v.clipped.length) failures.push(`${k}: label past its button: ${v.clipped.join(' | ')}`);
+  }
+  out.errors = failures;
   console.log(JSON.stringify(out));
   await browser.close(); server.close();
+  process.exit(failures.length ? 1 : 0);
 })().catch(e => { console.error(e.message); process.exit(1); });

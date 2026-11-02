@@ -274,6 +274,10 @@
 .view-menu .sort-order-pop .vi { margin-right: 9px; }
 .view-menu .sort-order-pop { min-width: 180px; }
 .m-viewrow .coll-switch { flex: 1; min-width: 0; }
+/* Fitting step 1+ (mobile.tsx): the view menu keeps only its icon; the label
+   stays for screen readers, as in the guide's slot above. */
+.m-viewrow:not([data-fit="0"]) .vm-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.m-viewrow:not([data-fit="0"]) .view-menu .sort-order-trigger { padding: 0 12px; }
 
 .m-acct {
   position: relative; flex: 0 0 auto;
@@ -597,7 +601,10 @@
 .m-vslot .view-menu .sort-order-pop { right: 0; left: auto; }
 .m-row3 { display: grid; grid-template-rows: 1fr; clip-path: inset(-40px -400px -800px -400px);
   transition: grid-template-rows 600ms cubic-bezier(.2,.8,.2,1), margin-top 600ms cubic-bezier(.2,.8,.2,1), opacity 300ms ease, clip-path 600ms cubic-bezier(.2,.8,.2,1); }
-.m-row3 > .m-viewrow { min-height: 0; }
+/* min-width: 0, or the row grows past the screen with its content instead of
+   fitting it (mobile.tsx measures overflow against the row). */
+.m-row3 { grid-template-columns: minmax(0, 1fr); }
+.m-row3 > .m-viewrow { min-height: 0; min-width: 0; }
 .m-appbar.guide .m-row3 { grid-template-rows: 0fr; margin-top: -10px; opacity: 0; clip-path: inset(0 0 100% 0); }
 @media (prefers-reduced-motion: reduce) { .m-fslot, .m-row3 { transition: none; } .m-vslot { animation: none; } }
 

@@ -13,6 +13,35 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 fix — Portuguese header rows fit; test-fit fails on overflow
+
+Recorded: 2026-11-02 09:31 EST (-0500). Pushed to `version/4.0` (V4 staging);
+not yet on `main`.
+
+Notion V4 Tasks, "Top nav (PT) / content overflowing". The phone's second
+header row ran past the right edge in Portuguese; it now fits at every width.
+
+- **Wording:** the phone sort bar says **Lançados**; the desktop List's column
+  says **Lançamento** (Andre's choice).
+- **The phone collection row fits by measuring** (`useFitSteps`,
+  `src/app/mobile.tsx`): it tries every label, then an icon-only view menu,
+  then only All and the selected option labelled, then "Para ver" for "Para
+  assistir" (approved), and keeps the first step that fits. It re-measures on
+  resize, language, selection, view and font load, and the row is held to the
+  screen's width. Before, Portuguese ran about 27px past the edge at 430px and
+  29px at 320px.
+- The short label is hidden in every other switch, the desktop toolbar's
+  included.
+- **`test-fit` now fails** on a control past the screen or its row, overlapping
+  toolbar controls, a label past its button, a switch showing both labels, or
+  sideways scroll, and checks the phone collection row and 375px. Its
+  Portuguese Watchlist pass now really selects Watchlist.
+- Sweep of every surface in Portuguese and English at phone and desktop widths:
+  nothing else overflowed.
+- Verified: `test-fit` against the old build fails in Portuguese and is clean
+  on this one in both languages; full regression with the font-size change, 56
+  check runs clean. Not checked: a real phone, Safari, Firefox.
+
 ## V4 feature — Share cards and link previews; links go to redthread.tv
 
 Recorded: 2026-11-01 21:52 EST (-0500). Pushed to `version/4.0` (V4 staging);

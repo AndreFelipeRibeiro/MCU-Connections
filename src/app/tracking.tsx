@@ -773,7 +773,10 @@ function CountBadge({ n, kind, appeared }) {
   );
 }
 
-function CollectionSwitch({ value, onChange, variant = 'toolbar' }) {
+/** `short`: the phone row ran out of room, so options with a shorter label
+ *  ("Para ver" for "Para assistir") use it, accessible name included. Both
+ *  labels are rendered, so the row can measure either before it decides. */
+function CollectionSwitch({ value, onChange, variant = 'toolbar', short = false }) {
   const { tr } = window.useI18n();
   const { progress, loading } = useCollection();
   const counts = { seen: loading ? 0 : progress.seenTotal, watchlist: loading ? 0 : progress.watchlist };
@@ -785,14 +788,18 @@ function CollectionSwitch({ value, onChange, variant = 'toolbar' }) {
   return (
     <div className={`coll-switch coll-${variant}`} role="group" aria-label={tr('collection.groupAria')}>
       {COLLECTION_OPTIONS.map(([v]) => {
-        const l = tr('collection.' + v);
+        const full = tr('collection.' + v);
+        const shortL = v === 'watchlist' ? tr('collection.watchlistShort') : full;
+        const l = short ? shortL : full;
         const n = counts[v] || 0;
         const label = n ? tr('collection.countAria', { label: l, n }) : l;
         return (
         <button key={v} className={value === v ? 'on' : ''} aria-pressed={value === v}
           aria-label={label} title={label} onClick={() => onChange(v)}>
           {v !== 'all' && <span className="coll-ic"><CollectionIcon kind={v}/></span>}
-          <span className="coll-label">{l}</span>
+          <span className="coll-label">
+            {shortL === full ? full : <><span className="cl-full">{full}</span><span className="cl-short">{shortL}</span></>}
+          </span>
           {n > 0 && <CountBadge n={n} kind={v} appeared={!!before && !before[v]}/>}
         </button>
         );

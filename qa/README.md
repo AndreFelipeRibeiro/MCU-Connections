@@ -77,8 +77,10 @@ relative to `qa/`, and build it yourself first:
 
 ## The checks
 
-- Regression set (`regress.sh`): `test-fit` (layout fit for every sort, both
-  languages), `test-ctxfn2` (context summary and filters), `test-panel`
+- Regression set (`regress.sh`): `test-fit` (the desktop toolbar and the
+  phone app bar fit at every width, in English and in Portuguese with
+  Watchlist selected; fails on a control past the screen or its row,
+  overlapping controls, a label past its button or sideways scroll), `test-ctxfn2` (context summary and filters), `test-panel`
   (details panel and drawer), `test-i18n`, `test-dlist` (desktop List),
   `test-suggest` (search suggestions), `test-layers` (menu layering),
   `test-anim` (reorder animations), `test-cel` (counters and celebrations; with the details open, the confetti stays left of the drawer, centred on the toast),

@@ -186,6 +186,7 @@ window.MCU_LOCALES.en = {
     'collection.unseen': 'Unseen',
     'collection.seen': 'Seen',
     'collection.watchlist': 'Watchlist',
+    'collection.watchlistShort': 'Watchlist',
     'collection.countAria': "{label}, {n}",
     'toast.seen': "Marked as seen",
     'toast.watch': "Added to your watchlist",

@@ -51,6 +51,52 @@ function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPick
     };
     hide(fslot.current, guideActive); hide(row3.current, guideActive);
   }, [guideActive]);
+
+  // The collection switch and the view menu share one row, and Portuguese
+  // labels are much longer than English ones (Notion "Top nav (PT) / content
+  // overflowing"). Rather than guess by screen width, the row tries each step
+  // in turn and keeps the first that fits, so it holds in any language and at
+  // any text size:
+  //   0  every label;
+  //   1  the view menu shows only its icon (its accessible name stays);
+  //   2  the switch shows only "All" and the selected option's label;
+  //   3  "Para ver" in place of "Para assistir" (Andre's approval).
+  // Measured on the DOM before paint; React state then carries the step into
+  // the accessible names.
+  const { lang } = window.useI18n();
+  const viewRow = React.useRef(null);
+  const [fit, setFit] = React.useState(0);
+  const refit = React.useCallback(() => {
+    const row = viewRow.current;
+    if (!row || !row.clientWidth) return;
+    // Overflow is a label running past its button, or a control past the row.
+    // (Scroll sizes would count the count badges, which sit over the edge of
+    // their buttons on purpose.)
+    const out = (inner, outer) => inner.right > outer.right + 1 || inner.left < outer.left - 1;
+    const overflows = () => {
+      const box = row.getBoundingClientRect();
+      if ([...row.children].some(c => out(c.getBoundingClientRect(), box))) return true;
+      return [...row.querySelectorAll('.coll-switch button, .sort-order-trigger')].some(btn => {
+        const b = btn.getBoundingClientRect();
+        return [...btn.querySelectorAll('.coll-label, .vm-label, .sort-order-chevron')]
+          .some(l => l.getClientRects().length && getComputedStyle(l).position !== 'absolute' && out(l.getBoundingClientRect(), b));
+      });
+    };
+    let step = 0;
+    for (; step < 3; step++) { row.dataset.fit = String(step); if (!overflows()) break; }
+    row.dataset.fit = String(step);
+    setFit(step);
+  }, []);
+  React.useLayoutEffect(refit, [refit, lang, collectionFilter, viewMode]);
+  React.useEffect(() => {
+    const row = viewRow.current;
+    if (!row || typeof ResizeObserver === 'undefined') return undefined;
+    let width = row.clientWidth;
+    const ro = new ResizeObserver(() => { if (row.clientWidth !== width) { width = row.clientWidth; refit(); } });
+    ro.observe(row);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+    return () => ro.disconnect();
+  }, [refit]);
   return (
     <div className={`m-appbar${guideActive ? ' guide' : ''}`} role="banner">
       {guideActive && <window.GuideOffHint/>}
@@ -85,8 +131,8 @@ function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPick
         {guideActive && <span className="m-vslot"><ViewMenu viewMode={viewMode} setViewMode={setViewMode}/></span>}
       </div>
       <div className="m-row3" ref={row3}>
-        <div className="m-viewrow">
-          <window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter} variant="compact"/>
+        <div className="m-viewrow" ref={viewRow} data-fit={fit}>
+          <window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter} variant="compact" short={fit >= 3}/>
           <ViewMenu viewMode={viewMode} setViewMode={setViewMode}/>
         </div>
       </div>
