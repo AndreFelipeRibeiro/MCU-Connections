@@ -13,6 +13,25 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 improvement — Stepping through a character or guide keeps the landing's zoom
+
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Desktop Spatial: character and guide stepping zoom to 70%,
+smaller than the landing". On a wide screen the landing opens at 100%, but
+stepping through a pinned character or a guide landed every stop at a fixed
+70% (a V3 floor tuned for laptops), so the cards felt small.
+
+- Desktop stepping and the re-centring after a title's details close now use
+  the landing's own reading zoom (about 7.5 titles across, capped at 100%):
+  100% on windows 1,466px and wider, the landing's smaller zoom on narrower
+  ones. A bigger zoom chosen by hand is kept. Phones unchanged.
+- New check `qa/test-stepzoom.js`: 100% at 1600px and 87% at 1280px for
+  character and guide steps, and a chosen zoom kept; `test-refocus` expects
+  the reading zoom instead of 70%.
+- Verified: the checks above, and in the browser at 1600 and 1280px; full
+  Batch 7 regression on the final tree. Not checked on Andre's own screen.
+
 ## V4 fix — test-camera no longer clicks a hidden card
 
 Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging);

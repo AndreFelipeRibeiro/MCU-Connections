@@ -10,14 +10,14 @@
     "test-recastname", "test-bannerhold", "test-progress", "test-release", "test-urlstate", "test-bulk",
     "test-details", "test-nextup", "test-watch", "test-guides", "test-picker", "test-listkeys", "test-promo",
     "test-home", "test-unreleased", "test-partof", "test-refocus", "test-skip", "test-guidemode",
-    "test-contrast", "test-v4scope", "test-retap", "test-logo", "test-threads", "test-settings", "test-share", "test-previews", "test-textsize",
+    "test-contrast", "test-v4scope", "test-retap", "test-logo", "test-threads", "test-settings", "test-share", "test-previews", "test-textsize", "test-stepzoom",
     { "check": "a11y-scan", "env": { "LOC": "en-US" }, "exitOnly": true },
     { "check": "a11y-scan", "env": { "LOC": "pt-BR" }, "exitOnly": true },
     { "check": "a11y-scan", "env": { "LOC": "en-US", "SCHEME": "dark" }, "exitOnly": true }
   ],
   "serial": ["test-camera", "test-inertia", "test-anim", "test-widetouch"],
   "files": {
-    "src/app/app.tsx": ["test-textsize", "test-share", "test-settings", "test-threads", "test-logo", "test-back", "test-guidemode", "test-panel", "test-esc", "test-escpin", "test-urlstate", "test-home", "test-refocus", "test-listkeys", "test-layers", "test-camera"],
+    "src/app/app.tsx": ["test-stepzoom", "test-textsize", "test-share", "test-settings", "test-threads", "test-logo", "test-back", "test-guidemode", "test-panel", "test-esc", "test-escpin", "test-urlstate", "test-home", "test-refocus", "test-listkeys", "test-layers", "test-camera"],
     "src/app/mobile.tsx": ["test-textsize", "test-share", "test-settings", "test-retap", "test-logo", "test-back", "test-guidemode", "test-v2", "test-panel", "test-details", "test-mviewport", "test-align2", "test-progress"],
     "src/app/desktop-list.tsx": ["test-textsize", "test-dlist", "test-bulk", "test-listkeys", "test-progress"],
     "src/data/guides.ts": ["test-guides", "test-promo", "test-partof", "test-skip"],

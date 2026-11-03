@@ -44,6 +44,13 @@ const CARD_H = 270;
 // uses it to frame Up next and a title whose details just closed, so cards
 // read at one size whichever order is on.
 const phoneReadScale = (w) => Math.min(1, w / (CARD_W * 1.15 * 2.5));
+// Desktop's reading zoom: the timeline orders open at about 7.5 titles across
+// (one title step is CARD_W * 1.15), capped at 100%, so any window 1,466px or
+// wider reads at 100%. Stepping through a character or a guide, and centring
+// a title after its details close, never go below it either (Notion V4 Tasks,
+// "Desktop Spatial: character and guide stepping zoom to 70%"), so the cards
+// keep the size the landing showed them at.
+const deskReadScale = (w) => Math.min(1, w / (CARD_W * 1.15 * 7.5));
 // How far above its row a band label's pill starts, in canvas units. The pill
 // is drawn there and the camera leaves room for it, so both read this one
 // number: when they disagreed, By Phase cut the first pill off at the top and
@@ -1844,7 +1851,7 @@ function App() {
           : (rect.width - 32) / canvasW)
       // Timeline layouts open at about 7.5 titles across on desktop and 2.5 on
       // touch (one title step is CARD_W * 1.15), capped at 100%.
-      : isTouch ? phoneReadScale(rect.width) : Math.min(1, Math.max(ZOOM_MIN, rect.width / (CARD_W * 1.15 * 7.5)));
+      : isTouch ? phoneReadScale(rect.width) : Math.max(ZOOM_MIN, deskReadScale(rect.width));
 
     // Phones, a guide open: its next stop, centred at the readable zoom this
     // layout opens at, between the top chrome and the guide pill. The route
@@ -2107,7 +2114,7 @@ function App() {
       return left >= 8 && top >= 8 && left + CARD_W * v.scale <= rect.width - 8 && top + CARD_H * v.scale <= rect.height - 8;
     })();
     if (fits) glideTo(v);
-    else centreOn(isTouch ? phoneReadScale(rect.width) : Math.max(v ? v.scale : 0, 0.7));
+    else centreOn(isTouch ? phoneReadScale(rect.width) : Math.max(v ? v.scale : 0, deskReadScale(rect.width)));
     refocusAfterKeyboard(`.card[data-id="${prev}"] button`);
   }, [selectedId]);
 
@@ -2757,7 +2764,8 @@ function App() {
       if (!p) return;
       const rect = viewportRef.current.getBoundingClientRect();
       // A camera that was never framed (Spatial just opened) sits at 100%.
-      const floor = isTouch ? 0.6 : 0.7;
+      // Desktop steps at no less than the landing's reading zoom.
+      const floor = isTouch ? 0.6 : deskReadScale(rect.width);
       const scale = cameraFramedRef.current ? Math.max(viewRef.current.scale, floor) : floor;
       cameraFramedRef.current = true;
       const drawerSpace = isTouch ? 0 : 380;
