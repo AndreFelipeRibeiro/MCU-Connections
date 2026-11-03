@@ -110,8 +110,11 @@
       --status-seen-text: oklch(0.45 0.13 147);
       --status-watch: oklch(0.55 0.10 75);
       --on-color: oklch(0.985 0 0);
-      /* The logo mark's colour (styles.css .logo-mark). */
+      /* The brand red for interface accents. The logo itself keeps the
+         designer's red in both themes (--logo, styles.css .logo-mark): a
+         logo is not text, so it needs no lighter dark-theme variant. */
       --brand: oklch(0.55 0.2 27);
+      --logo: #c41e3a;
       --background: oklch(1 0 0);
       --foreground: oklch(0.145 0 0);
       --card: oklch(1 0 0);
@@ -171,6 +174,7 @@
       --status-watch: #d4a05a;
       --on-color: oklch(0.145 0 0);
       --brand: oklch(0.68 0.17 23);
+      --logo: #c41e3a;
       --background: oklch(0.145 0 0);
       --foreground: oklch(0.985 0 0);
       --card: oklch(0.205 0 0);

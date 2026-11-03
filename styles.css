@@ -120,18 +120,32 @@ body { background: var(--v3-bg); }
 .brand:focus-visible { outline: 2px solid var(--v3-accent); outline-offset: 4px; }
 .brand-mark { flex: 0 0 32px; width: 32px; height: 32px; }
 /* The logo mark, everywhere it appears (toolbar, phone app bar, About,
-   startup screen): one SVG file used as a mask, painted with the --brand
-   token so it follows the theme. Swapping the logo means replacing
+   startup screen): one SVG file used as a mask, painted with the --logo
+   token (the designer's red, the same in both themes). Swapping the logo means replacing
    src/assets/logo-mark.svg and nothing else. The fallback colour covers the
    startup screen in development, where the token stylesheet arrives with the
    bundle; in the built site it loads with the page. */
 .logo-mark {
   display: block;
-  background-color: var(--brand, #cc2827);
+  background-color: var(--logo, #c41e3a);
   -webkit-mask: url('./src/assets/logo-mark.svg') center / contain no-repeat;
   mask: url('./src/assets/logo-mark.svg') center / contain no-repeat;
 }
+/* The wordmark's lettering, beside the mark in the toolbar and the phone app
+   bar: one SVG file used as a mask and painted with the text colour, so it is
+   dark on light and light on dark. Its sizes keep the designer's horizontal
+   lockup: lettering 0.74 of the pin's height, 5.3 times as wide as tall, set
+   0.42 of the pin's height to its right. Swapping it means replacing
+   src/assets/logo-wordmark.svg (and these ratios, if the shape changes). */
+.logo-word {
+  display: block;
+  background-color: var(--foreground, currentColor);
+  -webkit-mask: url('./src/assets/logo-wordmark.svg') center / contain no-repeat;
+  mask: url('./src/assets/logo-wordmark.svg') center / contain no-repeat;
+}
+.brand .brand-mark { flex: 0 0 15px; width: 15px; height: 28px; }
 .brand-title { margin: 0; font-size: var(--fs-base); font-weight: 600; letter-spacing: 0.2px; }
+.brand-title .logo-word { width: 111px; height: 21px; }
 
 .control-group { display: flex; align-items: center; gap: 10px; }
 .control-group label {
@@ -2058,6 +2072,22 @@ body { background: var(--v3-bg); }
 .segmented button, .coll-switch button { @apply rounded-md border-transparent font-medium text-muted-foreground; }
 .segmented button:hover, .coll-switch button:hover { @apply text-foreground; }
 .segmented button.on, .coll-switch button.on { @apply border-transparent bg-background text-foreground shadow-sm dark:border-input dark:bg-input/30; }
+/* The sliding selection (src/app/seg-pill.tsx; Notion V4 Tasks, "Interface
+   animation: sliding selection in the segmented controls"): where a group has
+   a .seg-pill, the pill carries the selected look and slides between the
+   buttons, and the selected button itself goes clear. Groups without one keep
+   the look on the button. Layout moves use 600ms; a pill crossing a toolbar
+   group reads better quicker, on the same curve. */
+.segmented:has(> .seg-pill), .coll-switch:has(> .seg-pill) { position: relative; }
+.seg-pill {
+  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; opacity: 0;
+  @apply rounded-md border border-transparent bg-background shadow-sm dark:border-input dark:bg-input/30;
+  transition: transform 300ms cubic-bezier(.2,.8,.2,1), width 300ms cubic-bezier(.2,.8,.2,1), height 300ms cubic-bezier(.2,.8,.2,1);
+}
+.seg-pill.instant { transition: none; }
+.segmented:has(> .seg-pill) > button, .coll-switch:has(> .seg-pill) > button { position: relative; z-index: 1; }
+.segmented:has(> .seg-pill) > button.on, .coll-switch:has(> .seg-pill) > button.on { @apply border-transparent bg-transparent shadow-none dark:border-transparent dark:bg-transparent; }
+@media (prefers-reduced-motion: reduce) { .seg-pill { transition: none; } }
 .coll-switch button.on .coll-ic { color: inherit; }
 .segmented button:focus-visible, .coll-switch button:focus-visible { @apply outline-none border-ring ring-[3px] ring-ring/50; }
 .control-group label { @apply font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground; }

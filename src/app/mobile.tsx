@@ -122,7 +122,7 @@ function MobileTopBar({ onHome, viewMode, setViewMode, search, setSearch, onPick
       <div className="m-appbar-top">
         <a className="m-brandrow" href="/" onClick={onHome} aria-label={mtr('home.link')}>
           <span className="m-mark logo-mark" aria-hidden="true"/>
-          <h1 className="m-btitle">{mtr('app.name')}</h1>
+          <h1 className="m-btitle"><span className="logo-word" aria-hidden="true"/><span className="story-sr">{mtr('app.name')}</span></h1>
         </a>
         <window.SyncStatus/>
         {onOpenGuides && (

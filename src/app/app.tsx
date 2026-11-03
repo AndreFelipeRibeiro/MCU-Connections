@@ -44,6 +44,13 @@ const CARD_H = 270;
 // uses it to frame Up next and a title whose details just closed, so cards
 // read at one size whichever order is on.
 const phoneReadScale = (w) => Math.min(1, w / (CARD_W * 1.15 * 2.5));
+// Desktop's reading zoom: the timeline orders open at about 7.5 titles across
+// (one title step is CARD_W * 1.15), capped at 100%, so any window 1,466px or
+// wider reads at 100%. Stepping through a character or a guide, and centring
+// a title after its details close, never go below it either (Notion V4 Tasks,
+// "Desktop Spatial: character and guide stepping zoom to 70%"), so the cards
+// keep the size the landing showed them at.
+const deskReadScale = (w) => Math.min(1, w / (CARD_W * 1.15 * 7.5));
 // How far above its row a band label's pill starts, in canvas units. The pill
 // is drawn there and the camera leaves room for it, so both read this one
 // number: when they disagreed, By Phase cut the first pill off at the top and
@@ -531,7 +538,9 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
         {/* The logo is a link home: it resets the app in place (onHome). */}
         <a className="brand" href="/" onClick={onHome} aria-label={tr('home.link')} title={tr('home.link')}>
           <span className="brand-mark logo-mark" aria-hidden="true"/>
-          <h1 className="brand-title">{tr('app.name')}</h1>
+          {/* The wordmark is drawn (.logo-word); the name stays as text for
+              screen readers and the page outline. */}
+          <h1 className="brand-title"><span className="logo-word" aria-hidden="true"/><span className="story-sr">{tr('app.name')}</span></h1>
         </a>
         <div className="tb-filter-row">
           <div className="search-wrap">
@@ -564,6 +573,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
                 <div className="control-group">
                   <label>{tr('filters.budget')}</label>
                   <div className="segmented">
+                    <window.SegPill value={budgetFilter}/>
                     {[['all','filters.all'],['low','budget.low'],['mid','budget.mid'],['high','budget.high'],['mega','budget.mega']].map(([v,k])=>(
                       <button key={v} className={budgetFilter===v?'on':''} onClick={()=>setBudgetFilter(v)}>{tr(k)}</button>
                     ))}
@@ -574,6 +584,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
                 <div className="control-group">
                   <label>{tr('filter.release')}</label>
                   <div className="segmented">
+                    <window.SegPill value={releaseFilter}/>
                     {[['all','filter.release.all'],['released','filter.release.released']].map(([v,k])=>(
                       <button key={v} className={releaseFilter===v?'on':''} aria-pressed={releaseFilter===v} onClick={()=>setReleaseFilter(v)}>{tr(k)}</button>
                     ))}
@@ -582,6 +593,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
                 <div className="control-group">
                   <label>{tr('order.label')}</label>
                   <div className="segmented">
+                    <window.SegPill value={sortDir}/>
                     {sortDirectionLabels(sort).map((label, i) => (
                       <button key={label} className={sortDir===(i===0?'asc':'desc')?'on':''}
                         aria-pressed={sortDir===(i===0?'asc':'desc')}
@@ -597,6 +609,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
           </div></Off>
           <Off off={guideOn}><div className="control-group tb-type-controls">
             <div className="segmented">
+              <window.SegPill value={typeFilter}/>
               {[['all','type.all'],['film','type.films'],['series','type.series']].map(([v,k])=>(
                 <button key={v} className={typeFilter===v?'on':''} onClick={()=>setTypeFilter(v)}>{tr(k)}</button>
               ))}
@@ -615,6 +628,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
       <div className="tb-row tb-sort-row" ref={sortRow} data-fit={sortFit}>
         <Off off={listOff}><div className="control-group tb-sort-controls">
           <div className="segmented">
+            <window.SegPill value={sort}/>
             {SORT_OPTIONS.map(([v,ic])=>(
               <button key={v} className={sort===v?'on':''} onClick={()=>setSort(v)} aria-pressed={sort===v} title={tr('sort.' + v)}>
                 <span className="si">{ic}</span><span className="lg">{tr('sort.' + v)}</span><span className="sm">{tr('sort.short.' + v)}</span>
@@ -624,6 +638,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
         </div></Off>
         <Off off={guideOn}><window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter}/></Off>
         <div className="segmented tb-view-switch" role="group" aria-label={tr('view.label')}>
+          <window.SegPill value={desktopView}/>
           {[['spatial', '◈'], ['list', '☰']].map(([v, ic]) => (
             <button key={v} className={desktopView === v ? 'on' : ''} aria-pressed={desktopView === v}
               title={tr('view.' + v)} aria-label={tr('view.' + v)} onClick={() => setDesktopView(v)}>
@@ -1844,7 +1859,7 @@ function App() {
           : (rect.width - 32) / canvasW)
       // Timeline layouts open at about 7.5 titles across on desktop and 2.5 on
       // touch (one title step is CARD_W * 1.15), capped at 100%.
-      : isTouch ? phoneReadScale(rect.width) : Math.min(1, Math.max(ZOOM_MIN, rect.width / (CARD_W * 1.15 * 7.5)));
+      : isTouch ? phoneReadScale(rect.width) : Math.max(ZOOM_MIN, deskReadScale(rect.width));
 
     // Phones, a guide open: its next stop, centred at the readable zoom this
     // layout opens at, between the top chrome and the guide pill. The route
@@ -2107,7 +2122,7 @@ function App() {
       return left >= 8 && top >= 8 && left + CARD_W * v.scale <= rect.width - 8 && top + CARD_H * v.scale <= rect.height - 8;
     })();
     if (fits) glideTo(v);
-    else centreOn(isTouch ? phoneReadScale(rect.width) : Math.max(v ? v.scale : 0, 0.7));
+    else centreOn(isTouch ? phoneReadScale(rect.width) : Math.max(v ? v.scale : 0, deskReadScale(rect.width)));
     refocusAfterKeyboard(`.card[data-id="${prev}"] button`);
   }, [selectedId]);
 
@@ -2757,7 +2772,8 @@ function App() {
       if (!p) return;
       const rect = viewportRef.current.getBoundingClientRect();
       // A camera that was never framed (Spatial just opened) sits at 100%.
-      const floor = isTouch ? 0.6 : 0.7;
+      // Desktop steps at no less than the landing's reading zoom.
+      const floor = isTouch ? 0.6 : deskReadScale(rect.width);
       const scale = cameraFramedRef.current ? Math.max(viewRef.current.scale, floor) : floor;
       cameraFramedRef.current = true;
       const drawerSpace = isTouch ? 0 : 380;
@@ -2826,18 +2842,19 @@ function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // D and L switch to the dark and light themes on desktop (Notion V4 Tasks,
-  // "Desktop keyboard shortcut: D for dark mode, L for light mode"): the same
-  // choice as Settings → Theme, so Auto stays one tap away there. Never while
-  // typing, in a menu or dialog, with a modifier held (browser shortcuts keep
-  // working), or on the phone layout. Screen readers hear the new theme.
+  // D and L switch to the dark and light themes (Notion V4 Tasks, "Desktop
+  // keyboard shortcut: D for dark mode, L for light mode"): the same choice as
+  // Settings → Theme, so Auto stays one tap away there. The phone layout has
+  // them too ("D / L theme shortcut on the phone layout too"): they only fire
+  // from a real keyboard (Chrome's device preview, a tablet or phone with one),
+  // since the on-screen keyboard only opens in a field. Never while typing, in
+  // a menu or dialog, or with a modifier held (browser shortcuts keep
+  // working). Screen readers hear the new theme.
   const [themeAnnounce, setThemeAnnounce] = useState('');
-  const isTouchNowRef = useRef(isTouch);
-  isTouchNowRef.current = isTouch;
   useEffect(() => {
     let timer = null;
     const onKey = (e) => {
-      if (isTouchNowRef.current || e.altKey || e.metaKey || e.ctrlKey || e.repeat || e.defaultPrevented) return;
+      if (e.altKey || e.metaKey || e.ctrlKey || e.repeat || e.defaultPrevented) return;
       const k = (e.key || '').toLowerCase();
       if (k !== 'd' && k !== 'l') return;
       const el = e.target;
@@ -2980,6 +2997,7 @@ function App() {
             </button>
           )}
           <div className="segmented cb-mode" role="group" aria-label={tr('highlight.modeAria')}>
+            <window.SegPill value={charOnly}/>
             <button className={charOnly ? 'on' : ''} aria-pressed={charOnly} onClick={() => setCharOnly(true)}>{tr('highlight.only')}</button>
             <button className={!charOnly ? 'on' : ''} aria-pressed={!charOnly} onClick={() => setCharOnly(false)}>{tr('highlight.all')}</button>
           </div>
@@ -3255,6 +3273,7 @@ function App() {
       <div className={`app touch ${device}`}>
         {upAnnouncer}
         {homeAnnouncer}
+        {themeAnnouncer}
         <window.MobileTopBar
           onHome={onHomeClick}
           device={device}

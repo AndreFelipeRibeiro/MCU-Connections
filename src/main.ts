@@ -48,6 +48,7 @@ import './data/media-data'; // window.MEDIA, window.mediaURL
 // tree rendered by the CDN UMD copy reads that copy's null dispatcher and
 // throws. docs/V4-PLAN.md §5.7.
 import './app/poster';
+import './app/seg-pill';  // the sliding selection in segmented groups
 import './app/tracking';
 // Share (V4): the one share helper and button, used by the views below.
 import './app/share';

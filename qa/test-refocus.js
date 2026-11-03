@@ -1,7 +1,8 @@
 // The view lands on the title whose details just closed (V3 Tasks, "Refocus
 // view based on title selected and deselected afterward"):
 // - desktop Spatial: She-Hulk opened from Up next while framed on Phase 1,
-//   then closed, is centred (within a few px) at a zoom of at least 0.7;
+//   then closed, is centred (within a few px) at no less than the landing's
+//   reading zoom (about 7.5 titles across, capped at 100%);
 // - a card clicked on the canvas returns the camera exactly as before;
 // - phone Spatial opens on Up next once something is Seen, at one card size in
 //   every order (a first visit keeps the bird's-eye view);
@@ -109,7 +110,8 @@ const CAMERA = (id) => {
     const after = await page.evaluate(CAMERA, 'she-hulk');
     out.spatial = { before, after };
     expect(Math.abs(after.dx) <= 4 && Math.abs(after.dy) <= 4, `She-Hulk not centred after closing: ${JSON.stringify(after)}`);
-    expect(after.scale >= 0.7, `zoom ${after.scale} below 0.7`);
+    const read = await page.evaluate(() => Math.min(1, document.querySelector('.viewport').getBoundingClientRect().width / (170 * 1.15 * 7.5)));
+    expect(after.scale >= read - 0.005, `zoom ${after.scale} below the reading zoom ${read}`);
     // A card clicked on the canvas: the camera returns exactly as before.
     await page.goto(URL); await settle(page);
     const cam0 = await page.evaluate(() => document.querySelector('.canvas').style.transform);

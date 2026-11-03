@@ -41,7 +41,7 @@ function loadYoga(): Promise<void> {
 }
 
 const colors = cardColors(readDarkTokens(css));
-const logo = logoMark(logoSvg, colors.brand);
+const logo = logoMark(logoSvg, colors.logo);
 
 async function toPNG(node: Node): Promise<Blob> {
   const [loaded] = await Promise.all([loadFonts(), loadYoga()]);

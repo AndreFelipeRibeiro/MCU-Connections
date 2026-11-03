@@ -59,7 +59,7 @@ export function loadFonts() {
 export async function buildPreviews({ root, outDir }) {
   const started = Date.now();
   const colors = cardColors(readDarkTokens(readFileSync(join(root, 'src/index.css'), 'utf8')));
-  const logo = logoMark(readFileSync(join(root, 'src/assets/logo-mark.svg'), 'utf8'), colors.brand);
+  const logo = logoMark(readFileSync(join(root, 'src/assets/logo-mark.svg'), 'utf8'), colors.logo);
   const fonts = loadFonts();
   const catalog = await loadCatalog(root);
   const entries = previewEntries(catalog, loadLocale(root, 'en'), colors, SITE.replace(/^https:\/\//, ''));

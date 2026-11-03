@@ -13,6 +13,93 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — The selection slides in the toolbar's segmented groups
+
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 7.
+
+Notion V4 Tasks, "Interface animation: sliding selection in the segmented
+controls, plus other micro-interactions". Picking another item in a group
+now slides the selection across to it instead of switching it over.
+
+- New `src/app/seg-pill.tsx`: one pill behind a group's buttons that measures
+  the selected button and moves to it (300ms, the layout curve). It fits any
+  language, Text size or compact toolbar step, settles without a slide on first
+  paint and on resizes, and moves at once with Reduce motion.
+- In sort, type, collection (desktop and phone), view, the character banner's
+  mode switch, and the filter popover's Budget, Released and Order groups. The
+  phase group keeps its own coloured pills.
+- New check `qa/test-segpill.js`: on the selected button in every group in
+  English, Portuguese and at Large text; mid-slide then aligned after a change;
+  immediate with Reduce motion (setting and system); the phone row.
+- Verified: those checks; measured the slide in headless Chromium; full Batch 7
+  regression on the final tree. The other suggested micro-interactions are
+  Batch 8.
+
+## V4 improvement — D and L switch the theme on the phone layout too
+
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 7.
+
+Notion V4 Tasks, "D / L theme shortcut on the phone layout too". The keyboard
+shortcut was off on the phone layout, so it did nothing in Chrome's device
+preview or on a tablet with a keyboard.
+
+- D and L now work on the phone layout, with the same rules (never while
+  typing, in a menu or dialog, or with a modifier held), and screen readers
+  hear the new theme there too.
+- `qa/test-settings.js` expects the phone layout to switch, announce and switch
+  back.
+- Verified: test-settings; full Batch 7 regression on the final tree.
+
+## V4 design — The work-in-progress Red Thread logo: push pin and wordmark
+
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 7.
+
+Notion V4 Tasks, "Apply the WIP Red Thread logo (push pin + wordmark) and
+favicon". Andre's work-in-progress logo replaces the placeholder: a red push
+pin and a "Red Thread" serif wordmark.
+
+- `src/assets/logo-mark.svg` is now the pin, so every place that draws the mark
+  follows: toolbar, phone app bar, Welcome/About, startup screen, share cards,
+  link previews and icons. New `src/assets/logo-wordmark.svg` holds the
+  lettering, drawn as a mask in the text colour, so one file serves light and
+  dark. Both stay single files, so the next version is a swap.
+- The toolbar and the phone app bar show pin and lettering in the designer's
+  lockup proportions, at the same size on both (Andre found the first desktop
+  size a bit big); the name stays as text for screen readers.
+- New `--logo` token, the designer's `#c41e3a` in both themes, paints the mark;
+  `--brand` stays for interface accents.
+- Icons redrawn in the designer's "dark bg" favicon colours (red pin on navy),
+  the pin larger than in the padded source file.
+- Share cards and link previews keep the mark's shape (a tall mark was being
+  stretched to a square).
+- Verified: test-logo (pin sizes and colour, the wordmark's file, colour per
+  theme, size, aria-hidden); looked at desktop light and dark, phone in
+  Portuguese, 320px, the icons and the link preview; full Batch 7 regression on
+  the final tree. Not checked: a real iPhone.
+
+## V4 improvement — Stepping through a character or guide keeps the landing's zoom
+
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 7.
+
+Notion V4 Tasks, "Desktop Spatial: character and guide stepping zoom to 70%,
+smaller than the landing". On a wide screen the landing opens at 100%, but
+stepping through a pinned character or a guide landed every stop at a fixed
+70% (a V3 floor tuned for laptops), so the cards felt small.
+
+- Desktop stepping and the re-centring after a title's details close now use
+  the landing's own reading zoom (about 7.5 titles across, capped at 100%):
+  100% on windows 1,466px and wider, the landing's smaller zoom on narrower
+  ones. A bigger zoom chosen by hand is kept. Phones unchanged.
+- New check `qa/test-stepzoom.js`: 100% at 1600px and 87% at 1280px for
+  character and guide steps, and a chosen zoom kept; `test-refocus` expects
+  the reading zoom instead of 70%.
+- Verified: the checks above, and in the browser at 1600 and 1280px; full
+  Batch 7 regression on the final tree: 58 check runs clean. Not checked on Andre's own screen.
+
 ## V4 fix — test-camera no longer clicks a hidden card
 
 Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging);

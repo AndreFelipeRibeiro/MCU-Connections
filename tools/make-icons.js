@@ -5,10 +5,11 @@
 //   node tools/make-icons.js
 //
 // Uses the Playwright that qa/ installs (bash qa/setup.sh), rendering in
-// headless Chromium so the SVG is drawn exactly as the app draws it: as a mask,
-// painted with the dark theme's --brand on the dark theme's --background
-// (src/index.css). Icons have no light or dark mode, and the dark tile reads
-// on both light and dark browser chrome, as V3's icons did.
+// headless Chromium so the SVG is drawn exactly as the app draws it: as a mask.
+// Icons have no light or dark mode, so they take the designer's favicon
+// colours (Andre, 2026-11-02): the logo red on the navy tile of the
+// "dark bg" option, which reads on both light and dark browser chrome. The
+// "light bg" option is the same with TILE = '#FFFFFF'.
 import path from 'node:path';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
@@ -18,15 +19,16 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { chromium } = createRequire(import.meta.url)(path.join(ROOT, 'qa', 'node_modules', 'playwright'));
 const svg = fs.readFileSync(path.join(ROOT, 'src', 'assets', 'logo-mark.svg'), 'utf8');
 const mask = 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
-const BRAND = 'oklch(0.68 0.17 23)';   // --brand, .dark
-const TILE = 'oklch(0.145 0 0)';       // --background, .dark
+const BRAND = '#C41E3A';   // the logo's red
+const TILE = '#0A0E27';    // the favicon's navy (its "dark bg" option)
 
 const ICONS = [
   // The tab icon keeps transparent corners; the tile is the icon.
-  { file: 'favicon.png', size: 64, radius: 14, mark: 44 },
+  // The mark is a tall pin: these sizes are its height.
+  { file: 'favicon.png', size: 64, radius: 14, mark: 50 },
   // iOS rounds the corners itself and fills transparency with black, so this
   // one is a full, opaque square.
-  { file: 'apple-touch-icon.png', size: 180, radius: 0, mark: 112 },
+  { file: 'apple-touch-icon.png', size: 180, radius: 0, mark: 124 },
 ];
 
 (async () => {

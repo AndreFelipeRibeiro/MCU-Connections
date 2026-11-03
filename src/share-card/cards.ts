@@ -29,12 +29,20 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 /** The logo mark (src/assets/logo-mark.svg) painted in one colour. The app
  *  uses the file as a mask, so only its shape matters: every fill and stroke
- *  becomes the colour, and shapes with no paint of their own get it too. */
+ *  becomes the colour, and shapes with no paint of their own get it too. The
+ *  cards draw it in a square box, which stretches a mark that isn't square
+ *  (the push pin is tall), so its viewBox is widened to a centred square. */
 export function logoMark(svgText: string, color: string): string {
   const painted = svgText
     .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/(fill|stroke)="(?!none)[^"]*"/g, `$1="${color}"`)
-    .replace(/<svg\b/, `<svg fill="${color}"`);
+    .replace(/<svg\b/, `<svg fill="${color}"`)
+    .replace(/viewBox="([^"]+)"/, (all, box: string) => {
+      const [x, y, w, h] = box.trim().split(/[\s,]+/).map(Number);
+      if (![x, y, w, h].every(Number.isFinite) || w === h) return all;
+      const side = Math.max(w, h);
+      return `viewBox="${x - (side - w) / 2} ${y - (side - h) / 2} ${side} ${side}"`;
+    });
   return svgURI(painted);
 }
 

@@ -106,9 +106,13 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   (reset guide progress, show the welcome again, clear everything saved in
   this browser, with a confirmation). Changes apply at once. Signed-in
   visitors' settings sync to their account; signed out, they stay on the device.
-  On desktop, D and L switch to the dark and light themes (not while typing or
-  in a menu), and opening a title closes Settings so its details show (Settings
+  With a keyboard, D and L switch to the dark and light themes (not while
+  typing or in a menu; the phone layout too, for a tablet or phone with a
+  keyboard), and opening a title closes Settings so its details show (Settings
   slides out, then the details slide in).
+- In the toolbar's segmented groups (sort, type, collection, view, the filter
+  choices) and the phone collection row, the selection slides to the item
+  you pick rather than switching over; with Reduce motion it moves at once.
 - Desktop has Spatial and List views (switch at the end of the sort row). The
   List is one row per title with sortable column headers (title, phase, release,
   in-story years, IMDb, RT) that stay in step with the sort row; a row opens the
@@ -578,7 +582,8 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/app/watch.tsx` | Where to watch in the details: offers for the chosen country, the country picker, credits |
 | `src/main.ts` | V4 bundle entry: imports the data layer and then every view below, in the order `index.html` used to load them. The files still share their components through `window`, so the bundle changed how the app is delivered, not how its pieces fit together |
 | `watch-data.js` | The where-to-watch snapshot (written by `tools/refresh-watch.js`; do not edit by hand) |
-| `src/assets/logo-mark.svg` | The logo mark (the Red Thread placeholder), the one file every place that shows the logo draws from |
+| `src/assets/logo-mark.svg` | The logo mark (the work-in-progress push pin), the one file every place that shows the mark draws from, icons and link previews included |
+| `src/assets/logo-wordmark.svg` | The wordmark's lettering, drawn beside the mark in the toolbar and the phone app bar |
 | `tools/make-icons.js` | Maintainer script: redraws `favicon.png` and `apple-touch-icon.png` from the logo mark (uses the Playwright that `qa/` installs; not deployed) |
 | `tools/refresh-watch.js` | Maintainer script: refreshes `watch-data.js` from TMDB (needs `TMDB_READ_TOKEN` in your environment; not deployed) |
 | `src/data/guides.ts` | Guides data (stops, weights, reasons in each language) and the per-title continuity marker; edited by hand, reviewed before shipping |

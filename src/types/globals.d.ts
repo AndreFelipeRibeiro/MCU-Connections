@@ -18,6 +18,7 @@
 import type { Title, Character, Guide, ContinuityMark, Media, WatchData, Lang } from './catalog';
 
 type Poster = typeof import('../app/poster');
+type SegPillModule = typeof import('../app/seg-pill');
 type Tracking = typeof import('../app/tracking');
 type Celebrate = typeof import('../app/celebrate');
 type Account = typeof import('../app/account');
@@ -140,6 +141,7 @@ declare global {
     MCU_COLLECTION?: ReturnType<Tracking['useCollection']>;
     TitleStatusActions: Tracking['TitleStatusActions'];
     CollectionSwitch: Tracking['CollectionSwitch'];
+    SegPill: SegPillModule['SegPill'];
     SyncStatus: Tracking['SyncStatus'];
     SeenMarker: Tracking['SeenMarker'];
     CheckIcon: Tracking['CheckIcon'];

@@ -226,12 +226,17 @@ const PHONE = { viewport: { width: 375, height: 812 }, isMobile: true, hasTouch:
     await page.locator('.settings-btn').click(); await page.waitForTimeout(400);
     expect(await page.locator('.settings-panel', { hasText: 'press D for dark or L for light' }).count() === 1, 'Settings does not mention the D / L shortcut');
     await ctx.close();
-    // Not on the phone layout.
+    // The phone layout too, from a keyboard (Notion V4 Tasks, "D / L theme
+    // shortcut on the phone layout too"), announced the same way.
     const ph = await open(PHONE);
     await ph.page.goto(URL_BASE); await ready(ph.page);
     const before = await ph.page.evaluate(() => document.documentElement.classList.contains('dark'));
-    await ph.page.keyboard.press(before ? 'l' : 'd'); await ph.page.waitForTimeout(200);
-    expect(await ph.page.evaluate(() => document.documentElement.classList.contains('dark')) === before, 'the phone layout switched theme on a key press');
+    await ph.page.keyboard.press(before ? 'l' : 'd'); await ph.page.waitForTimeout(300);
+    expect(await ph.page.evaluate(() => document.documentElement.classList.contains('dark')) === !before, 'the phone layout did not switch theme on D / L');
+    const phSaid = await ph.page.evaluate(() => (document.querySelector('.theme-announce') || {}).textContent || '');
+    expect(/mode/i.test(phSaid), 'the phone layout did not announce the theme: "' + phSaid + '"');
+    await ph.page.keyboard.press(before ? 'd' : 'l'); await ph.page.waitForTimeout(300);
+    expect(await ph.page.evaluate(() => document.documentElement.classList.contains('dark')) === before, 'the phone layout did not switch back');
     await ph.ctx.close();
   }
 

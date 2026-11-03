@@ -126,10 +126,10 @@ plan, the environment and the Figma workflow.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (51 check scripts in 53 runs plus the accessibility scan in English,
+    (53 check scripts in 55 runs plus the accessibility scan in English,
     Portuguese and English in the dark theme, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **56 check runs clean**
+    output, not just the exit code. A good run is **58 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
@@ -345,10 +345,16 @@ rules carry over unchanged.
 - Type: the design system's Inter (`--font-sans`, served with the bundle) and
   the system monospace (`--font-mono`) for labels, numbers and badges
   (Andre's decision, 2026-11-01). Bebas Neue appears only in the generated
-  poster art. Logo mark: one SVG file, `src/assets/logo-mark.svg`, drawn
-  everywhere as a CSS mask painted with `--brand` (`.logo-mark` in
-  `styles.css`); `node tools/make-icons.js` redraws `favicon.png` and
-  `apple-touch-icon.png` from it. Today it is the Red Thread placeholder.
+  poster art. Logo: two SVG files, each drawn as a CSS mask so the next
+  version is a file swap. `src/assets/logo-mark.svg` is the mark (today the
+  work-in-progress push pin), painted with `--logo` (the designer's red, the
+  same in both themes; `.logo-mark` in `styles.css`) everywhere the mark
+  appears, including the share cards and link previews;
+  `src/assets/logo-wordmark.svg` is the lettering, painted with
+  `--foreground` (`.logo-word`) beside the mark in the toolbar and the phone
+  app bar, where the name stays as text for screen readers.
+  `node tools/make-icons.js` redraws `favicon.png` and `apple-touch-icon.png`
+  from the mark.
 - Contrast: informative text meets WCAG AA (4.5:1 for normal text) against its
   real background. Both halves of that run: `qa/a11y-scan.js` (axe) and
   `qa/test-contrast.js` (the calculation). They do not overlap — axe returns
@@ -379,7 +385,10 @@ rules carry over unchanged.
   setting: scripts ask `window.MCU_MOTION.reduced()` rather than the media
   query, and turning it on puts `reduce-motion` on `<html>`, which `styles.css` answers by
   cutting every transition and animation.
-- Motion: layout moves use `600ms cubic-bezier(.2,.8,.2,1)`.
+- Motion: layout moves use `600ms cubic-bezier(.2,.8,.2,1)`; the sliding
+  selection in segmented groups (`src/app/seg-pill.tsx`) uses 300ms on the
+  same curve. A new segmented group gets `<window.SegPill value={…}/>` as its
+  first child.
 - Spatial canvas performance: no per-card GPU layers (no `will-change` or 3D
   transforms on cards) and no `backdrop-filter` inside the canvas. The canvas is
   composited only at 30% zoom and above (`LAYER_MIN_SCALE`). These rules keep

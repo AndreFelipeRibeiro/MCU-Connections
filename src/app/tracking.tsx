@@ -797,6 +797,7 @@ function CollectionSwitch({ value, onChange, variant = 'toolbar', short = false 
   React.useEffect(() => { last.current = loading ? null : counts; });
   return (
     <div className={`coll-switch coll-${variant}`} role="group" aria-label={tr('collection.groupAria')}>
+      <window.SegPill value={value}/>
       {COLLECTION_OPTIONS.map(([v]) => {
         const full = tr('collection.' + v);
         const shortL = v === 'watchlist' ? tr('collection.watchlistShort') : full;
