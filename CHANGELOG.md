@@ -15,7 +15,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V4 design — The selection slides in the toolbar's segmented groups
 
-Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging).
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 7.
 
 Notion V4 Tasks, "Interface animation: sliding selection in the segmented
 controls, plus other micro-interactions". Picking another item in a group
@@ -37,7 +38,8 @@ now slides the selection across to it instead of switching it over.
 
 ## V4 improvement — D and L switch the theme on the phone layout too
 
-Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging).
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 7.
 
 Notion V4 Tasks, "D / L theme shortcut on the phone layout too". The keyboard
 shortcut was off on the phone layout, so it did nothing in Chrome's device
@@ -52,7 +54,8 @@ preview or on a tablet with a keyboard.
 
 ## V4 design — The work-in-progress Red Thread logo: push pin and wordmark
 
-Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging).
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 7.
 
 Notion V4 Tasks, "Apply the WIP Red Thread logo (push pin + wordmark) and
 favicon". Andre's work-in-progress logo replaces the placeholder: a red push
@@ -79,7 +82,8 @@ pin and a "Red Thread" serif wordmark.
 
 ## V4 improvement — Stepping through a character or guide keeps the landing's zoom
 
-Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging).
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 7.
 
 Notion V4 Tasks, "Desktop Spatial: character and guide stepping zoom to 70%,
 smaller than the landing". On a wide screen the landing opens at 100%, but
@@ -94,7 +98,7 @@ stepping through a pinned character or a guide landed every stop at a fixed
   character and guide steps, and a chosen zoom kept; `test-refocus` expects
   the reading zoom instead of 70%.
 - Verified: the checks above, and in the browser at 1600 and 1280px; full
-  Batch 7 regression on the final tree. Not checked on Andre's own screen.
+  Batch 7 regression on the final tree: 58 check runs clean. Not checked on Andre's own screen.
 
 ## V4 fix — test-camera no longer clicks a hidden card
 
