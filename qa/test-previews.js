@@ -7,7 +7,10 @@
 //     its own og:url, no tag says MCU Connections, and every image is under
 //     300 KB (WhatsApp skips bigger ones). (Notion V4 Tasks, "Social media
 //     post cover art".)
-//   - The retired og-image.jpg's address goes to the new card (vercel.json).
+//   - The old address: vercel.json and the middleware send
+//     mcu-connections.vercel.app to redthread.tv with the path and query,
+//     never a preview address; the retired og-image.jpg goes to the new card.
+//     (Notion V4 Tasks, "Rename the app to Red Thread".)
 //   - middleware.ts, run here against the built files: /?title=, /?char= and
 //     /?guide= get their page; an unknown or malformed id, a plain / and any
 //     other parameter pass through (the app-wide card).
@@ -112,9 +115,18 @@ const tagErrors = (html, label, url) => {
   out.pagesChecked = checked;
   out.biggestImageKB = Math.round(biggest / 1024);
 
-  // ---- The retired preview image (vercel.json) ------------------------------
+  // ---- The old addresses (vercel.json) --------------------------------------
+  // Vercel matches a `has` host value as a whole-string pattern; so does this.
   const vercel = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
   const rules = vercel.redirects || [];
+  const hostRule = rules.find(r => (r.has || []).some(h => h.type === 'host'));
+  const hostRe = hostRule && new RegExp('^(?:' + hostRule.has.find(h => h.type === 'host').value + ')$');
+  expect(hostRule && hostRule.source === '/:path*' && hostRule.destination === PUBLIC + '/:path*' && hostRule.permanent === true,
+    'vercel.json: no permanent /:path* redirect from the old host to ' + PUBLIC);
+  expect(hostRe && hostRe.test('mcu-connections.vercel.app'), 'vercel.json: mcu-connections.vercel.app is not redirected');
+  for (const host of ['redthread.tv', 'www.redthread.tv', 'mcu-connections-git-version-40-afr-bfcd.vercel.app', 'red-thread-git-version-40-afr-bfcd.vercel.app', 'localhost']) {
+    expect(hostRe && !hostRe.test(host), `vercel.json: ${host} would be redirected`);
+  }
   const oldImage = rules.find(r => r.source === '/og-image.jpg');
   expect(oldImage && oldImage.destination === '/og/default.png' && !oldImage.has, 'vercel.json: /og-image.jpg does not go to the new card');
 
@@ -139,6 +151,14 @@ const tagErrors = (html, label, url) => {
   }
   for (const q of ['', '?sort=phase', '?title=not-a-title', '?title=../index', '?char=%3Cscript%3E', '?guide=']) {
     expect(await run(q) === null, `middleware ${q || '/'}: should pass through, but answered`);
+  }
+  for (const [from, to] of [['https://mcu-connections.vercel.app/', PUBLIC + '/'], ['https://mcu-connections.vercel.app/?title=iron-man&char=tony', PUBLIC + '/?title=iron-man&char=tony'], ['https://mcu-connections.vercel.app/?guide=before-doomsday', PUBLIC + '/?guide=before-doomsday']]) {
+    const r = await middleware(new Request(from));
+    expect(r && r.status === 308 && r.headers.get('location') === to, `middleware ${from}: answered ${r && r.status} ${r && r.headers.get('location')}, not 308 to ${to}`);
+  }
+  {
+    const r = await middleware(new Request('https://mcu-connections-git-version-40-afr-bfcd.vercel.app/?title=iron-man'));
+    expect(r && r.status === 200 && meta(await r.text(), 'og:image') === `${PUBLIC}/og/title/iron-man.png`, 'middleware: a preview address is redirected or gets no preview');
   }
   out.middlewareFetches = fetched.length;
   fs.unlinkSync(tmp);

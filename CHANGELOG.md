@@ -13,6 +13,45 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 maintenance — The rename to Red Thread reaches GitHub, Vercel and sign-in
+
+Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Rename the app to Red Thread (redthread.tv)". Andre's
+answers: names `red-thread`; a simple redirect from the old address; Claude
+makes the dashboard changes with his approval for each.
+
+- Outside the code, approved one by one: GitHub `AndreFelipeRibeiro/MCU-Connections`
+  → `AndreFelipeRibeiro/red-thread` (old links and Git addresses redirect),
+  with redthread.tv as its website; Vercel project `mcu-connections` →
+  `red-thread`; Supabase allows the new staging address and is named Red
+  Thread; Google's OAuth client allows redthread.tv and the new staging
+  address, and its consent screen names the app Red Thread; the Google Cloud
+  project and the Notion pages are named Red Thread.
+- `mcu-connections.vercel.app` redirects to `https://redthread.tv`, path and
+  query kept (`vercel.json`, and `middleware.ts` for the home page in case
+  middleware runs first). Visitors signed out there arrive without the
+  progress saved on that address; signed-in visitors sync it back.
+  `red-thread.vercel.app` belongs to another project, so the old address stays
+  this project's own production alias.
+- npm packages `red-thread` and `red-thread-qa`; the design preview, comments,
+  the `qa/smoke.js` examples, README, AGENTS.md, HANDOFF.md, decisions.md and
+  the V4 brief titles; the calendar recap title becomes "Red Thread V4 –
+  Backlog batch n".
+- Kept as `mcu` on purpose, as one rule (Andre, after a full pass over every
+  remaining "MCU"): everything people see says Red Thread, and `mcu` stays the
+  internal prefix (saved-data keys, `window.MCU_*`, CSS classes), because the
+  saved-data keys can't change without wiping progress. "MCU" meaning the
+  Marvel Cinematic Universe and history files stay too.
+- `qa/test-previews.js` checks the redirect rule (old host redirected;
+  redthread.tv, www, staging and localhost not) and the middleware's 308s.
+- Verified: each dashboard change read back after saving; the old GitHub
+  address answers 301; Vercel's Git connection shows the new repository; full
+  Batch 6 regression on the final tree. Still to do: the local folders
+  (`red-thread`, `red-thread-v4`; commands on the ticket, run with every
+  session closed) and, in about three months, removing the old addresses from
+  Google and Supabase.
+
 ## V4 design — Link previews: the red thread, X tags and the old image retired
 
 Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging).

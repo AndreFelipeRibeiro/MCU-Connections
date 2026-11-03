@@ -1,7 +1,7 @@
 {
-  "name": "mcu-connections-qa",
+  "name": "red-thread-qa",
   "private": true,
-  "description": "Development-only browser checks for MCU Connections. Not part of the app: the site never loads anything from qa/, and Vercel does not deploy this folder.",
+  "description": "Development-only browser checks for Red Thread. Not part of the app: the site never loads anything from qa/, and Vercel does not deploy this folder.",
   "scripts": {
     "setup": "bash setup.sh",
     "regress": "bash regress.sh",

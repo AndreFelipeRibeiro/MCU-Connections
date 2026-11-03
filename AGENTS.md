@@ -1,7 +1,7 @@
 # Repository instructions
 
-The single shared rulebook for every agent working on MCU Connections (Claude
-Code, Codex, or any other). It assumes no chat history. `CLAUDE.md` only imports
+The single shared rulebook for every agent working on Red Thread (formerly
+MCU Connections; Claude Code, Codex, or any other). It assumes no chat history. `CLAUDE.md` only imports
 this file; put new rules here. For the current state of the project, open
 threads and why things are the way they are, read
 [docs/HANDOFF.md](docs/HANDOFF.md) and [docs/decisions.md](docs/decisions.md)
@@ -143,18 +143,27 @@ plan, the environment and the Figma workflow.
 
 ## Branches, deploys and approvals
 
+- The code lives in the GitHub repository `AndreFelipeRibeiro/red-thread`
+  (renamed from `MCU-Connections` on 2026-11-02; GitHub redirects the old web
+  and Git addresses as long as no repository is ever created under the old
+  name). The Vercel project is `red-thread`.
 - `version/4.0` is **V4 staging**, checked out in the `MCU-V4` worktree. Every
   push deploys the Vercel preview
-  `https://mcu-connections-git-version-40-afr-bfcd.vercel.app/` (first
-  deployed 2026-10-31).
+  `https://red-thread-git-version-40-afr-bfcd.vercel.app/` (the project's
+  name since 2026-11-02; before that it was
+  `mcu-connections-git-version-40-afr-bfcd.vercel.app`).
 - `version/3.0` is **V3 staging** (worktree `MCU-V3`, preview
-  `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/`). V3 fixes, if
-  any, are made there under that branch's own AGENTS.md and then merged
-  forward into `version/4.0` with the user's approval.
-- `main` is **production**: `https://mcu-connections.vercel.app/`. It serves
-  V4 since the first V4 release (2026-11-01, Andre's approval). Each later
-  batch reaches `main` only with the user's explicit approval for that merge;
-  V3 is history on `version/3.0`.
+  `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/`, its address
+  from before the rename; a new push would move it to
+  `red-thread-git-version-30-afr-bfcd.vercel.app`). V3 fixes, if any, are
+  made there under that branch's own AGENTS.md and then merged forward into
+  `version/4.0` with the user's approval.
+- `main` is **production**: `https://redthread.tv/`. The project's own
+  `https://mcu-connections.vercel.app/` redirects there, path and query
+  included (`vercel.json`), and so does `www`. It serves V4 since the first V4
+  release (2026-11-01, Andre's approval). Each later batch reaches `main` only
+  with the user's explicit approval for that merge; V3 is history on
+  `version/3.0`.
 - All three deploy automatically through Vercel's Git integration; there is no
   Vercel CLI step. Check a deploy with the commit status on GitHub.
 - Keep iterations local and uncommitted until the user approves committing and
@@ -201,10 +210,10 @@ plan, the environment and the Figma workflow.
 
 ## Backlog workflow (Notion V4 Tasks)
 
-The backlog is the Notion database **V4 Tasks**, under the **MCU - V4** page
+The backlog is the Notion database **V4 Tasks**, under the **Red Thread - V4** page
 (`https://app.notion.com/p/f8e1ebb392a6450d8ef883458e12bd76`; data source
 `collection://629a6bf8-a98d-47b1-b64d-9bad9d29a2b8`). **V3 Tasks** (under
-**MCU - V3**) is V3's history and holds any V3 maintenance tickets. Open V4,
+**Red Thread - V3**) is V3's history and holds any V3 maintenance tickets. Open V4,
 V5 and unversioned tickets were copied from it on 2026-10-31; each copy links
 its original in **V3 ticket**.
 
@@ -273,7 +282,7 @@ exists to avoid.
 
 Title line, then one bullet per ticket:
 
-> **MCU V4 – Backlog batch <n> (<a few keywords>)**
+> **Red Thread V4 – Backlog batch <n> (<a few keywords>)**
 >
 > - **Fixed:** search now matches with or without accents ("Capitao" finds "Capitão").
 > - **Improved:** clicking empty canvas on desktop closes the selected title and its details.
@@ -489,11 +498,18 @@ once (`/mcp`, then figma, then Authenticate). Codex adds it with
 The app's public name is **Red Thread** (Andre, 2026-11-01). "MCU
 Connections" was a working title: every visitor-facing string, page title,
 link-preview tag and share message says Red Thread (Portuguese: "o Red
-Thread"). Its domain, `https://redthread.tv/`, already serves production and
-is the address every shared link uses (`PUBLIC_URL` in `src/app/share.tsx`).
-The repository, folders, package, Vercel project and GitHub keep
-`mcu-connections` until the Deferred Notion ticket "Rename the app to Red
-Thread (redthread.tv)" runs; don't rename those in passing.
+Thread"). Its domain, `https://redthread.tv/`, serves production and is the
+address every shared link uses (`PUBLIC_URL` in `src/app/share.tsx`). Since
+2026-11-02 (Notion "Rename the app to Red Thread") the GitHub repository, the
+Vercel project, the npm package and the Supabase and Google display names say
+Red Thread too. One rule: everything people see says Red Thread, and `mcu`
+stays the internal prefix. Deliberately unchanged, and not to be renamed in
+passing: the saved-data keys (`mcu.*` in localStorage; renaming them would wipe every
+visitor's saved progress and settings), the `window.MCU_*` names and CSS
+class names (internal, and the QA checks read them), the Supabase project
+address, "MCU" where it means the Marvel Cinematic Universe, and history
+(CHANGELOG entries, the V3 plan files). The local folders keep their names
+until the rename ticket's folder step (docs/HANDOFF.md).
 
 User-facing text is translated: never hard-code UI strings in components. Add a
 key to `locales/en.js` (the complete base), translate it in every other

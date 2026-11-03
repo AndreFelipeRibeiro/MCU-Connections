@@ -1,12 +1,16 @@
-# MCU Connections
+# Red Thread
+
+Formerly MCU Connections (a working title).
 
 An interactive explorer for the Marvel Cinematic Universe: films and series on
 a spatial map, connected by shared actors and characters. V3 adds seen/watchlist
 tracking, Google sign-in and cloud sync across devices.
 
-- [V4 preview](https://mcu-connections-git-version-40-afr-bfcd.vercel.app/) — V4 in progress, published from `version/4.0`.
-- [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/)
-- [Production](https://mcu-connections.vercel.app/) — V3, published from `main`.
+- [Production](https://redthread.tv/) — V4, published from `main`. The
+  project's own `mcu-connections.vercel.app` and `www.redthread.tv` redirect
+  there.
+- [V4 preview](https://red-thread-git-version-40-afr-bfcd.vercel.app/) — V4 in progress, published from `version/4.0`.
+- [V3 preview](https://mcu-connections-git-version-30-afr-bfcd.vercel.app/) — V3 as released (its address from before the Vercel project was renamed).
   See the changelog for approved maintenance changes and deployment checks.
 - Work continues on `version/4.0`; [catalog audit and sources](docs/CATALOG-AUDIT.md).
   The Notion V4 Tasks board is the roadmap and the live queue, and
@@ -290,7 +294,7 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   All titles meter floats top-right (desktop) or under the count pill (phones).
   Counts ignore the Seen/Watchlist tab, and the headers stand down during a
   text search or with a character pinned.
-- About MCU Connections (account menu footer on desktop, account sheet on phones,
+- About Red Thread (account menu footer on desktop, account sheet on phones,
   for guests too): what the app is, ways to explore it, and credits. A future
   Settings entry will join it there. First-time visitors see it once as a
   welcome (a browser with no saved preferences, language, collection or sign-in);
@@ -451,15 +455,21 @@ never be renamed or reused. `none` is the absence of a row, so clearing deletes 
 ### App redirects
 
 In Supabase → Authentication → URL Configuration, set the **Site URL** to
-`https://mcu-connections.vercel.app/` and allow the exact app page URLs needed:
+`https://redthread.tv/` and allow the exact app page URLs needed:
 
 | Environment | Google JavaScript origin | Supabase redirect URL |
 |---|---|---|
-| Production | `https://mcu-connections.vercel.app` | `https://mcu-connections.vercel.app/` |
-| Production, public domain (share links land here) | `https://redthread.tv` | `https://redthread.tv/` |
-| V3 preview | `https://mcu-connections-git-version-30-afr-bfcd.vercel.app` | `https://mcu-connections-git-version-30-afr-bfcd.vercel.app/` |
-| V4 preview | `https://mcu-connections-git-version-40-afr-bfcd.vercel.app` | `https://mcu-connections-git-version-40-afr-bfcd.vercel.app/` |
+| Production | `https://redthread.tv` | `https://redthread.tv/` |
+| V4 preview | `https://red-thread-git-version-40-afr-bfcd.vercel.app` | `https://red-thread-git-version-40-afr-bfcd.vercel.app/` |
 | Local (`npm run dev` and `npm run preview`, both fixed to this port) | `http://localhost:8126` | `http://localhost:8126/` |
+
+Still allowed, until the old addresses are retired (Notion "Rename the app to
+Red Thread"): `https://mcu-connections.vercel.app` (now a redirect to
+redthread.tv), the V3 preview
+`https://mcu-connections-git-version-30-afr-bfcd.vercel.app` and the V4
+preview's old address `https://mcu-connections-git-version-40-afr-bfcd.vercel.app`.
+The Google consent screen names the app Red Thread, with redthread.tv as its
+home page.
 
 Add the corresponding `/index.html` URL separately if entering the app that way.
 The app supplies `redirectTo = origin + pathname`, so sign-in returns to the
@@ -592,7 +602,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 | `src/types/catalog.ts` | The catalog's shapes (`Title`, `Character`, `Guide`, `Media`, `WatchData`), written from the data itself |
 | `src/types/globals.d.ts` | The shared `window` surface, typed from the modules themselves rather than restated |
 | `tsconfig.json` | TypeScript at full `strict`; `npm run typecheck` |
-| `vite.config.js` / `vercel.json` / `package.json` | The V4 build: entries, the `@` alias, the dev port, the files that stay plain URLs, and the build Vercel runs |
+| `vite.config.js` / `vercel.json` / `package.json` | The V4 build: entries, the `@` alias, the dev port, the files that stay plain URLs, the build Vercel runs, and the redirects from the old addresses |
 | `schema.sql` | Watch-state table, constraints, trigger, grants and ownership RLS |
 | `V3-SPEC.md` / `V3-TASKS.md` / `KICKOFF-PROMPT.md` | The original V3 plan (2026-10-24), kept as history with dated notes where it no longer holds; current guidance is this README, AGENTS.md and docs/ |
 | `KICKOFF-PROMPT.md` | Original kickoff and current continuation/approval rules |

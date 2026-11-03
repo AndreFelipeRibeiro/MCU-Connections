@@ -11,8 +11,8 @@ import React from 'react';
 // thing: ?title=, ?char= or ?guide= (the keys app.tsx's readURLState knows),
 // or nothing for the home page. Sharing never touches browser history.
 
-/** Production, under the public name's domain (Andre, 2026-11-01). It serves
- *  the same deployment as mcu-connections.vercel.app; www redirects here. */
+/** Production, under the public name's domain (Andre, 2026-11-01). www and
+ *  the project's own mcu-connections.vercel.app redirect here (vercel.json). */
 export const PUBLIC_URL = 'https://redthread.tv/';
 
 export interface SharePayload {
