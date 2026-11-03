@@ -538,7 +538,9 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
         {/* The logo is a link home: it resets the app in place (onHome). */}
         <a className="brand" href="/" onClick={onHome} aria-label={tr('home.link')} title={tr('home.link')}>
           <span className="brand-mark logo-mark" aria-hidden="true"/>
-          <h1 className="brand-title">{tr('app.name')}</h1>
+          {/* The wordmark is drawn (.logo-word); the name stays as text for
+              screen readers and the page outline. */}
+          <h1 className="brand-title"><span className="logo-word" aria-hidden="true"/><span className="story-sr">{tr('app.name')}</span></h1>
         </a>
         <div className="tb-filter-row">
           <div className="search-wrap">

@@ -120,18 +120,32 @@ body { background: var(--v3-bg); }
 .brand:focus-visible { outline: 2px solid var(--v3-accent); outline-offset: 4px; }
 .brand-mark { flex: 0 0 32px; width: 32px; height: 32px; }
 /* The logo mark, everywhere it appears (toolbar, phone app bar, About,
-   startup screen): one SVG file used as a mask, painted with the --brand
-   token so it follows the theme. Swapping the logo means replacing
+   startup screen): one SVG file used as a mask, painted with the --logo
+   token (the designer's red, the same in both themes). Swapping the logo means replacing
    src/assets/logo-mark.svg and nothing else. The fallback colour covers the
    startup screen in development, where the token stylesheet arrives with the
    bundle; in the built site it loads with the page. */
 .logo-mark {
   display: block;
-  background-color: var(--brand, #cc2827);
+  background-color: var(--logo, #c41e3a);
   -webkit-mask: url('./src/assets/logo-mark.svg') center / contain no-repeat;
   mask: url('./src/assets/logo-mark.svg') center / contain no-repeat;
 }
+/* The wordmark's lettering, beside the mark in the toolbar and the phone app
+   bar: one SVG file used as a mask and painted with the text colour, so it is
+   dark on light and light on dark. Its sizes keep the designer's horizontal
+   lockup: lettering 0.74 of the pin's height, 5.3 times as wide as tall, set
+   0.42 of the pin's height to its right. Swapping it means replacing
+   src/assets/logo-wordmark.svg (and these ratios, if the shape changes). */
+.logo-word {
+  display: block;
+  background-color: var(--foreground, currentColor);
+  -webkit-mask: url('./src/assets/logo-wordmark.svg') center / contain no-repeat;
+  mask: url('./src/assets/logo-wordmark.svg') center / contain no-repeat;
+}
+.brand .brand-mark { flex: 0 0 15px; width: 15px; height: 28px; }
 .brand-title { margin: 0; font-size: var(--fs-base); font-weight: 600; letter-spacing: 0.2px; }
+.brand-title .logo-word { width: 111px; height: 21px; }
 
 .control-group { display: flex; align-items: center; gap: 10px; }
 .control-group label {

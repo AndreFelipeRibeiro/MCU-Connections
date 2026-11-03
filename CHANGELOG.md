@@ -13,6 +13,33 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — The work-in-progress Red Thread logo: push pin and wordmark
+
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Apply the WIP Red Thread logo (push pin + wordmark) and
+favicon". Andre's work-in-progress logo replaces the placeholder: a red push
+pin and a "Red Thread" serif wordmark.
+
+- `src/assets/logo-mark.svg` is now the pin, so every place that draws the mark
+  follows: toolbar, phone app bar, Welcome/About, startup screen, share cards,
+  link previews and icons. New `src/assets/logo-wordmark.svg` holds the
+  lettering, drawn as a mask in the text colour, so one file serves light and
+  dark. Both stay single files, so the next version is a swap.
+- The toolbar and the phone app bar show pin and lettering in the designer's
+  lockup proportions, at the same size on both (Andre found the first desktop
+  size a bit big); the name stays as text for screen readers.
+- New `--logo` token, the designer's `#c41e3a` in both themes, paints the mark;
+  `--brand` stays for interface accents.
+- Icons redrawn in the designer's "dark bg" favicon colours (red pin on navy),
+  the pin larger than in the padded source file.
+- Share cards and link previews keep the mark's shape (a tall mark was being
+  stretched to a square).
+- Verified: test-logo (pin sizes and colour, the wordmark's file, colour per
+  theme, size, aria-hidden); looked at desktop light and dark, phone in
+  Portuguese, 320px, the icons and the link preview; full Batch 7 regression on
+  the final tree. Not checked: a real iPhone.
+
 ## V4 improvement — Stepping through a character or guide keeps the landing's zoom
 
 Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging).

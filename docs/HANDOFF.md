@@ -207,10 +207,14 @@ work:
   `git worktree repair`), with every Claude, Codex, editor and dev server
   closed first; and, after about three months, remove the old addresses from
   Google and Supabase.
-- **The logo is a mask, not an image.** `src/assets/logo-mark.svg` carries
-  only the shape; its own colours are ignored, and `--brand` paints it. A
-  final logo with more than one colour will need a different build (an
-  `<img>` per theme, or inline SVG) rather than a drop-in swap.
+- **The logo is two masks, not images** (the work-in-progress logo, Andre,
+  2026-11-02). `src/assets/logo-mark.svg` (the push pin) and
+  `src/assets/logo-wordmark.svg` (the lettering) carry only shapes; their own
+  colours are ignored. `--logo` (the designer's `#c41e3a`, both themes) paints
+  the mark and `--foreground` the lettering, so one wordmark file serves light
+  and dark. The toolbar's and app bar's sizes keep the designer's horizontal
+  lockup (styles.css, `.logo-word`); a differently shaped logo needs those
+  ratios adjusted. Icons take the favicon's navy tile (`tools/make-icons.js`).
 - **Each surface's look is a section at the end of the stylesheets.** The
   first re-skin pass restyled V3's markup through `@apply` in "RE-SKIN, FIRST
   PASS — <surface>" sections, placed last so they win ties. A rule earlier in

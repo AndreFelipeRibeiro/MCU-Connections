@@ -1,9 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- Red Thread placeholder mark (Notion V4 Tasks, "Placeholder new logo"):
-       two nodes joined by a thread. Only the shape lives here. The app uses
-       this file as a CSS mask and paints it with the brand colour token
-       (styles.css, .logo-mark), so the final logo replaces this one file. -->
-  <circle cx="7.5" cy="24.5" r="4.5"/>
-  <circle cx="24.5" cy="7.5" r="4.5"/>
-  <path d="M7.5 24.5C3 13 29 19 24.5 7.5" fill="none" stroke="#000" stroke-width="3.25" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="52 52 52 98">
+  <!-- Red Thread mark, work in progress (Andre, 2026-11-02): a push pin, the
+       pin a red thread is tied to. Only the shape lives here, cropped to the
+       pin: the app uses this file as a CSS mask and paints it with the brand
+       colour token (styles.css, .logo-mark), and the build draws the link
+       previews and tools/make-icons.js the icons from it, so a new mark
+       replaces this one file. -->
+  <path d="M78 68C92.3594 68 104 64.4183 104 60C104 55.5817 92.3594 52 78 52C63.6406 52 52 55.5817 52 60C52 64.4183 63.6406 68 78 68Z"/>
+  <path d="M52 60V67C52 71.4 63.6 75 78 75C92.4 75 104 71.4 104 67V60H52Z"/>
+  <path d="M68 74L64 92C58 98 52 104 52 114H104C104 104 98 98 92 92L88 74H68Z"/>
+  <path d="M78 120C92.3594 120 104 117.314 104 114C104 110.686 92.3594 108 78 108C63.6406 108 52 110.686 52 114C52 117.314 63.6406 120 78 120Z"/>
+  <path d="M74 120H82L78 150L74 120Z"/>
 </svg>

@@ -20,7 +20,10 @@
 .m-brandrow { flex: 1 1 auto; min-width: 0; }
 .m-brandrow { display: flex; align-items: center; gap: 10px; min-width: 0; color: inherit; text-decoration: none; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
 .m-brandrow:focus-visible { outline: 2px solid var(--v3-accent); outline-offset: 3px; }
-.m-mark { width: 28px; height: 28px; flex: 0 0 28px; }
+.m-mark { width: 15px; height: 28px; flex: 0 0 15px; }
+/* The wordmark beside the pin, in the lockup's proportions (styles.css,
+   .logo-word). */
+.m-btitle .logo-word { width: 111px; height: 21px; }
 .m-btitle { margin: 0; font-size: var(--fs-base); font-weight: 600; line-height: 1.15; white-space: nowrap; }
 .m-btitle { overflow: hidden; text-overflow: ellipsis; }
 /* Context summary (ContextSummary in app.jsx): one line at the top of List and

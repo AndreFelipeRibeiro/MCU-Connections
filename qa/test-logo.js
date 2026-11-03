@@ -1,9 +1,16 @@
-// The placeholder logo (Notion V4 Tasks, "Placeholder new logo").
+// The logo (Notion V4 Tasks, "Placeholder new logo", then "Apply the WIP Red
+// Thread logo": a push pin and a wordmark).
 //   - Every place the mark appears (desktop toolbar, the Welcome/About dialog,
 //     phone app bar, startup screen) draws it from the one SVG file: each
 //     carries .logo-mark, and all of them show the same mask image.
-//   - The mark is painted with the --brand token, in light and in dark, at
-//     the sizes the layout was built around (32, 32, 28 and 48px).
+//   - The mark is painted with the --logo token (the designer's red, the same
+//     in light and dark), at the sizes the layout was built around: the pin
+//     15x28 in the toolbar and in the phone app bar beside the
+//     wordmark, 32px square in the Welcome/About dialog, 48px on the startup
+//     screen.
+//   - The toolbar and the phone app bar draw the wordmark from its one file,
+//     painted with the text colour (dark on light, light on dark), hidden from
+//     screen readers, which read the name as text instead.
 //   - The startup screen shows the mark before the app's script has run: the
 //     bundle is blocked, and the mark must still be there.
 //   - The header reads "Red Thread" in English and Portuguese, and so do the
@@ -38,7 +45,7 @@ const read = (sel) => {
   if (!el) return null;
   const cs = getComputedStyle(el);
   const probe = document.createElement('div');
-  probe.style.backgroundColor = 'var(--brand)';
+  probe.style.backgroundColor = 'var(--logo)';
   document.body.appendChild(probe);
   const brand = getComputedStyle(probe).backgroundColor;
   probe.remove();
@@ -53,6 +60,24 @@ const read = (sel) => {
   };
 };
 
+// The wordmark beside the mark, with the text colour resolved the same way.
+const readWord = (sel) => {
+  const el = document.querySelector(sel);
+  if (!el) return null;
+  const cs = getComputedStyle(el);
+  const probe = document.createElement('div');
+  probe.style.backgroundColor = 'var(--foreground)';
+  document.body.appendChild(probe);
+  const fg = getComputedStyle(probe).backgroundColor;
+  probe.remove();
+  const r = el.getBoundingClientRect();
+  return {
+    mask: cs.maskImage && cs.maskImage !== 'none' ? cs.maskImage : (cs.webkitMaskImage || 'none'),
+    bg: cs.backgroundColor, fg, w: Math.round(r.width), h: Math.round(r.height),
+    hidden: el.getAttribute('aria-hidden'),
+  };
+};
+
 (async () => {
   await new Promise(r => server.listen(QA_PORT, r));
   const browser = await chromium.launch();
@@ -60,16 +85,28 @@ const read = (sel) => {
   const out = {};
   const masks = new Set();
   const expect = (ok, msg) => { if (!ok) errors.push(msg); };
-  const checkMark = (label, m, size) => {
+  const checkMark = (label, m, size, height = size) => {
     out[label] = m;
     if (!m) return errors.push(label + ': no mark on the page');
     expect(m.cls, label + ': mark lacks .logo-mark');
     expect(/svg/.test(m.mask), label + ': mark has no SVG mask (' + m.mask.slice(0, 60) + ')');
-    expect(m.bg === m.brand && m.brand !== 'rgba(0, 0, 0, 0)', label + ': painted ' + m.bg + ', --brand is ' + m.brand);
+    expect(m.bg === m.brand && m.brand === 'rgb(196, 30, 58)', label + ': painted ' + m.bg + ', --logo is ' + m.brand);
     expect(m.after === 'none' || m.after === 'normal', label + ': old ::after cut-out still drawn');
-    expect(m.w === size && m.h === size, label + ': ' + m.w + 'x' + m.h + ', expected ' + size);
+    expect(m.w === size && m.h === height, label + ': ' + m.w + 'x' + m.h + ', expected ' + size + 'x' + height);
     expect(m.hidden === 'true', label + ': mark is not aria-hidden');
     masks.add(m.mask);
+  };
+  const checkWord = (label, m, w, h, theme) => {
+    out[label] = m;
+    if (!m) return errors.push(label + ': no wordmark on the page');
+    expect(/logo-wordmark/.test(m.mask), label + ': wordmark is not drawn from logo-wordmark.svg (' + m.mask.slice(0, 60) + ')');
+    expect(m.bg === m.fg, label + ': painted ' + m.bg + ', the text colour is ' + m.fg);
+    // Lightness, from an oklch() or an rgb() value.
+    const ok = /oklch\(\s*([\d.]+)/.exec(m.bg), rgb = (m.bg.match(/[\d.]+/g) || []).map(Number);
+    const L = ok ? Number(ok[1]) : (rgb[0] + rgb[1] + rgb[2]) / 765;
+    expect(theme === 'dark' ? L > 0.8 : L < 0.3, label + ': ' + m.bg + ' is not ' + (theme === 'dark' ? 'light' : 'dark'));
+    expect(m.w === w && m.h === h, label + ': ' + m.w + 'x' + m.h + ', expected ' + w + 'x' + h);
+    expect(m.hidden === 'true', label + ': wordmark is not aria-hidden');
   };
   const open = async (opts, theme, lang, { welcome = false, block = false } = {}) => {
     const ctx = await browser.newContext(opts);
@@ -97,7 +134,8 @@ const read = (sel) => {
       await page.goto(URL_BASE);
       await require('./ready').appReady(page, 400);
       expect(await page.evaluate(() => document.documentElement.classList.contains('dark')) === (theme === 'dark'), theme + ': theme class not applied');
-      checkMark(theme + ' toolbar', await page.evaluate(read, '.toolbar .brand-mark'), 32);
+      checkMark(theme + ' toolbar', await page.evaluate(read, '.toolbar .brand-mark'), 15, 28);
+      checkWord(theme + ' toolbar word', await page.evaluate(readWord, '.toolbar .brand-title .logo-word'), 111, 21, theme);
       await page.waitForSelector('.about-head .brand-mark', { timeout: 4000 }).catch(() => {});
       checkMark(theme + ' welcome', await page.evaluate(read, '.about-head .brand-mark'), 32);
       brands[theme] = out[theme + ' toolbar'] && out[theme + ' toolbar'].brand;
@@ -108,7 +146,8 @@ const read = (sel) => {
       const { ctx, page } = await open(PHONE, theme, null);
       await page.goto(URL_BASE);
       await require('./ready').appReady(page, 400);
-      checkMark(theme + ' phone', await page.evaluate(read, '.m-brandrow .m-mark'), 28);
+      checkMark(theme + ' phone', await page.evaluate(read, '.m-brandrow .m-mark'), 15, 28);
+      checkWord(theme + ' phone word', await page.evaluate(readWord, '.m-btitle .logo-word'), 111, 21, theme);
       await ctx.close();
     }
     // Startup screen, with the bundle blocked so the app never replaces it.
@@ -131,7 +170,7 @@ const read = (sel) => {
     await ctx.close();
   }
   expect(masks.size === 1, 'the marks use ' + masks.size + ' different images, expected the one file');
-  expect(brands.light && brands.dark && brands.light !== brands.dark, '--brand does not change with the theme: ' + JSON.stringify(brands));
+  expect(brands.light && brands.light === brands.dark, '--logo differs between the themes: ' + JSON.stringify(brands));
 
   // The name beside the mark.
   for (const [lang, opts] of [['en-US', DESK], ['pt-BR', DESK], ['en-US', PHONE], ['pt-BR', PHONE]]) {

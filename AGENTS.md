@@ -345,10 +345,16 @@ rules carry over unchanged.
 - Type: the design system's Inter (`--font-sans`, served with the bundle) and
   the system monospace (`--font-mono`) for labels, numbers and badges
   (Andre's decision, 2026-11-01). Bebas Neue appears only in the generated
-  poster art. Logo mark: one SVG file, `src/assets/logo-mark.svg`, drawn
-  everywhere as a CSS mask painted with `--brand` (`.logo-mark` in
-  `styles.css`); `node tools/make-icons.js` redraws `favicon.png` and
-  `apple-touch-icon.png` from it. Today it is the Red Thread placeholder.
+  poster art. Logo: two SVG files, each drawn as a CSS mask so the next
+  version is a file swap. `src/assets/logo-mark.svg` is the mark (today the
+  work-in-progress push pin), painted with `--logo` (the designer's red, the
+  same in both themes; `.logo-mark` in `styles.css`) everywhere the mark
+  appears, including the share cards and link previews;
+  `src/assets/logo-wordmark.svg` is the lettering, painted with
+  `--foreground` (`.logo-word`) beside the mark in the toolbar and the phone
+  app bar, where the name stays as text for screen readers.
+  `node tools/make-icons.js` redraws `favicon.png` and `apple-touch-icon.png`
+  from the mark.
 - Contrast: informative text meets WCAG AA (4.5:1 for normal text) against its
   real background. Both halves of that run: `qa/a11y-scan.js` (axe) and
   `qa/test-contrast.js` (the calculation). They do not overlap — axe returns

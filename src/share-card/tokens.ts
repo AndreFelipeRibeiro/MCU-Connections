@@ -63,6 +63,8 @@ export interface CardColors {
   muted: string;
   border: string;
   brand: string;
+  /** The logo mark's colour (--logo). */
+  logo: string;
   seen: string;
   phases: string[];
 }
@@ -76,6 +78,7 @@ export function cardColors(tokens: Tokens): CardColors {
     muted: t('muted-foreground'),
     border: t('border'),
     brand: t('brand'),
+    logo: t('logo'),
     seen: t('status-seen'),
     phases: [1, 2, 3, 4, 5, 6].map((n) => t('phase-' + n)),
   };
