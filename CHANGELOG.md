@@ -15,7 +15,8 @@ separate product releases. The merge checkpoint is included explicitly.
 
 ## V4 fix — test-camera no longer clicks a hidden card
 
-Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging).
+Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 6.
 
 Notion V4 Tasks, "test-camera fails intermittently". The check failed 3 runs in
 4 on the unchanged Batch 5 commit: in its A → B step it picked Iron Man 3, a
@@ -31,7 +32,8 @@ nothing selected. The app was fine.
 
 ## V4 maintenance — The rename to Red Thread reaches GitHub, Vercel and sign-in
 
-Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging).
+Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 6.
 
 Notion V4 Tasks, "Rename the app to Red Thread (redthread.tv)". Andre's
 answers: names `red-thread`; a simple redirect from the old address; Claude
@@ -63,14 +65,15 @@ makes the dashboard changes with his approval for each.
   redthread.tv, www, staging and localhost not) and the middleware's 308s.
 - Verified: each dashboard change read back after saving; the old GitHub
   address answers 301; Vercel's Git connection shows the new repository; full
-  Batch 6 regression on the final tree. Still to do: the local folders
-  (`red-thread`, `red-thread-v4`; commands on the ticket, run with every
-  session closed) and, in about three months, removing the old addresses from
-  Google and Supabase.
+  Batch 6 regression on the final tree: 56 check runs clean; staging smoke
+  check clean. Still to do: the local folders (`red-thread`, `red-thread-v4`;
+  commands on the ticket, run with every session closed) and, in about three
+  months, removing the old addresses from Google and Supabase.
 
 ## V4 design — Link previews: the red thread, X tags and the old image retired
 
-Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging).
+Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 6.
 
 Notion V4 Tasks, "Social media post cover art". Most of it had landed with
 Batch 3's link previews ("Share 3/3"), which replaced the V3 `og-image.jpg`
@@ -91,12 +94,13 @@ with a card the build draws under the Red Thread name. This finishes it.
   its `og:` tags, its canonical isn't its own address, a preview tag says MCU
   Connections, an image reaches 300 KB (WhatsApp skips bigger ones; the largest
   is 62 KB), or the build still ships `og-image.jpg`.
-- Verified: build and test-previews (172 preview pages); the new card looked at
-  full size and at 300 px wide; full Batch 6 regression on the final tree.
-  Limits: at 300 px the small "Red Thread" beside the logo is about 9 px
-  (headline clear; chat apps print the site name under the image). The
-  Facebook and LinkedIn re-scrapes and the iMessage, WhatsApp and Slack paste
-  checks need production. No social profile art (no accounts yet).
+- Verified: build and test-previews (172 preview pages); the new card looked
+  at full size and at 300 px wide; full Batch 6 regression on the final tree:
+  56 check runs clean; staging smoke check clean. Limits: at 300 px the small
+  "Red Thread" beside the logo is about 9 px (headline clear; chat apps print
+  the site name under the image). The Facebook and LinkedIn re-scrapes and the
+  iMessage, WhatsApp and Slack paste checks need production. No social profile
+  art (no accounts yet).
 
 ## V4 improvement — The Avengers: Doomsday newcomers join the catalog
 
