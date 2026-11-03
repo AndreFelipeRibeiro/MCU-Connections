@@ -13,6 +13,22 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 fix — test-camera no longer clicks a hidden card
+
+Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "test-camera fails intermittently". The check failed 3 runs in
+4 on the unchanged Batch 5 commit: in its A → B step it picked Iron Man 3, a
+card hidden outside A's ring, so the press hit empty canvas, closed A and left
+nothing selected. The app was fine.
+
+- `centerCard` skips `.ring-hidden` cards.
+- The B click waits for the cards to stop moving, hovers, finds B where it now
+  is and presses only when the pointer is on B; attempts are reported as
+  `ringClickAttempts`, and a failed one says why.
+- Verified: 20 runs in a row, 20 passed on the first click; full Batch 6
+  regression on the final tree.
+
 ## V4 maintenance — The rename to Red Thread reaches GitHub, Vercel and sign-in
 
 Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging).

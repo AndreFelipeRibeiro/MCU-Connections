@@ -83,6 +83,21 @@ const settleCanvas = async (page, timeout = 2500) => {
   }
   return last;
 };
+// The canvas's style.transform jumps straight to its end value, so it can't
+// say whether the cards are still gliding into a ring. Their on-screen boxes
+// can: wait until two samples in a row agree.
+const settleCards = async (page, timeout = 2500) => {
+  const boxes = () => page.evaluate(() => [...document.querySelectorAll('.card')].slice(0, 80)
+    .map(c => { const r = c.getBoundingClientRect(); return Math.round(r.left * 2) + ',' + Math.round(r.top * 2) + ',' + Math.round(r.width * 2); }).join(' '));
+  let last = null, stable = 0;
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    const b = await boxes();
+    if (b === last) { if (++stable >= 2) return true; } else { stable = 0; last = b; }
+    await page.waitForTimeout(80);
+  }
+  return false;
+};
 const parse = t => { const m = t.match(/translate(?:3d)?\(([-\d.]+)px, ([-\d.]+)px.*scale\(([-\d.]+)\)/); return m ? { x: +m[1], y: +m[2], s: +m[3] } : null; };
 const near = (a, b, tol = 1.5) => a && b && Math.abs(a.x - b.x) < tol && Math.abs(a.y - b.y) < tol && Math.abs(a.s - b.s) < 0.002;
 async function emptyPoint(page, xs, ys) {
@@ -97,7 +112,9 @@ async function emptyPoint(page, xs, ys) {
 async function centerCard(page, exclude) {
   return page.evaluate((exclude) => {
     const W = innerWidth, H = innerHeight;
-    const cards = [...document.querySelectorAll('.card')].map(c => ({ c, r: c.getBoundingClientRect() }))
+    // Cards outside the selected title's ring stay in the page, invisible and
+    // not clickable (.ring-hidden): never pick one.
+    const cards = [...document.querySelectorAll('.card:not(.ring-hidden)')].map(c => ({ c, r: c.getBoundingClientRect() }))
       .filter(({ r }) => r.left > 20 && r.right < W - 400 && r.top > 140 && r.bottom < H - 20);
     const pick = cards.filter(({ c }) => !exclude || !c.textContent.includes(exclude))
       .sort((a, b) => Math.hypot(a.r.x - W / 2, a.r.y - H / 2) - Math.hypot(b.r.x - W / 2, b.r.y - H / 2))[0];
@@ -114,6 +131,57 @@ async function clickCard(page, pt) {
   await page.mouse.down();
   await page.waitForTimeout(40);
   await page.mouse.up();
+}
+// Click card B in the ring around the selected card A. The press used to land
+// on empty canvas now and then, which closes A and leaves nothing selected
+// (Notion V4 Tasks, "test-camera fails intermittently"): B could be a card
+// hidden outside the ring (centerCard now skips those), picked while the ring
+// was still forming, or shifted by the hover. So: wait for the cards to stop,
+// pick B, hover it, wait again, find B where it now is, and press only when
+// the pointer is on B. Attempts are reported, as for openCentreCard.
+async function clickRingCard(page, exclude, tally) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    await settleCards(page);
+    const b = await centerCard(page, exclude);
+    if (!b) break;
+    // Hover, let the canvas settle, and find B where it now is; repeat until
+    // the pointer sits on B and B has stopped moving under it.
+    let at = null, px = b.x, py = b.y;
+    for (let step = 0; step < 4; step++) {
+      await page.mouse.move(px, py);
+      await page.waitForTimeout(step ? 150 : 250);
+      await settleCards(page);
+      at = await page.evaluate((title) => {
+        const card = [...document.querySelectorAll('.card:not(.ring-hidden)')].find(c => {
+          const t = c.querySelector('.card-title, h3, .title');
+          return (t ? t.textContent : c.textContent.slice(0, 40)) === title;
+        });
+        if (!card) return null;
+        const r = card.getBoundingClientRect();
+        const x = r.left + r.width / 2, y = r.top + r.height * 0.8;
+        const hit = document.elementFromPoint(x, y);
+        return hit && hit.closest('.card') === card ? { x, y, title } : null;
+      }, b.title);
+      if (!at) break;
+      if (Math.abs(at.x - px) <= 1 && Math.abs(at.y - py) <= 1) break;
+      px = at.x; py = at.y; at = null;
+    }
+    if (!at) { tally.push('B moved off the pointer: ' + b.title); continue; }
+    await page.mouse.down();
+    await page.waitForTimeout(40);
+    await page.mouse.up();
+    try {
+      await page.waitForFunction(() => !!document.querySelector('.card.selected .card-title'), null, { timeout: 2500 });
+      tally.push(attempt);
+      return at;
+    } catch (e) {
+      // A was closed: nothing left to retry from. Say what the press hit.
+      tally.push('pressed ' + at.title + ', nothing selected; drawer ' + (await page.evaluate(() => !!document.querySelector('.drawer.open'))));
+      break;
+    }
+  }
+  tally.push('failed');
+  return null;
 }
 // Select the centre card and make sure it actually opened, re-measuring if the
 // press missed. The canvas can still shift between measuring and pressing, and
@@ -181,9 +249,10 @@ const pickView = async (page, n) => { await page.locator('.view-menu .sort-order
   const a2 = await centerCard(page);
   await clickCard(page, a2);
   await page.waitForTimeout(900);
-  const b = await centerCard(page, a2.title.slice(0, 12));
-  out.cardB = b && b.title;
-  await clickCard(page, b);
+  const ringClicks = [];
+  const b = await clickRingCard(page, a2.title.slice(0, 12), ringClicks);
+  out.ringClickAttempts = ringClicks;
+  if (!b) throw new Error('A -> B: no ring card could be clicked (attempts ' + JSON.stringify(ringClicks) + ')');
   await page.waitForTimeout(900);
   // Measure whichever card the click actually selected (tiny ring cards overlap).
   b.title = await page.evaluate(() => document.querySelector('.card.selected .card-title').textContent);
