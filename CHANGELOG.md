@@ -13,6 +13,21 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 improvement — D and L switch the theme on the phone layout too
+
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "D / L theme shortcut on the phone layout too". The keyboard
+shortcut was off on the phone layout, so it did nothing in Chrome's device
+preview or on a tablet with a keyboard.
+
+- D and L now work on the phone layout, with the same rules (never while
+  typing, in a menu or dialog, or with a modifier held), and screen readers
+  hear the new theme there too.
+- `qa/test-settings.js` expects the phone layout to switch, announce and switch
+  back.
+- Verified: test-settings; full Batch 7 regression on the final tree.
+
 ## V4 design — The work-in-progress Red Thread logo: push pin and wordmark
 
 Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging).

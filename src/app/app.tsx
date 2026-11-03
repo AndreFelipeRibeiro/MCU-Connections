@@ -2836,18 +2836,19 @@ function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // D and L switch to the dark and light themes on desktop (Notion V4 Tasks,
-  // "Desktop keyboard shortcut: D for dark mode, L for light mode"): the same
-  // choice as Settings → Theme, so Auto stays one tap away there. Never while
-  // typing, in a menu or dialog, with a modifier held (browser shortcuts keep
-  // working), or on the phone layout. Screen readers hear the new theme.
+  // D and L switch to the dark and light themes (Notion V4 Tasks, "Desktop
+  // keyboard shortcut: D for dark mode, L for light mode"): the same choice as
+  // Settings → Theme, so Auto stays one tap away there. The phone layout has
+  // them too ("D / L theme shortcut on the phone layout too"): they only fire
+  // from a real keyboard (Chrome's device preview, a tablet or phone with one),
+  // since the on-screen keyboard only opens in a field. Never while typing, in
+  // a menu or dialog, or with a modifier held (browser shortcuts keep
+  // working). Screen readers hear the new theme.
   const [themeAnnounce, setThemeAnnounce] = useState('');
-  const isTouchNowRef = useRef(isTouch);
-  isTouchNowRef.current = isTouch;
   useEffect(() => {
     let timer = null;
     const onKey = (e) => {
-      if (isTouchNowRef.current || e.altKey || e.metaKey || e.ctrlKey || e.repeat || e.defaultPrevented) return;
+      if (e.altKey || e.metaKey || e.ctrlKey || e.repeat || e.defaultPrevented) return;
       const k = (e.key || '').toLowerCase();
       if (k !== 'd' && k !== 'l') return;
       const el = e.target;
@@ -3265,6 +3266,7 @@ function App() {
       <div className={`app touch ${device}`}>
         {upAnnouncer}
         {homeAnnouncer}
+        {themeAnnouncer}
         <window.MobileTopBar
           onHome={onHomeClick}
           device={device}
