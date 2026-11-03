@@ -22,6 +22,14 @@ function setMeta(html: string, key: 'property' | 'name', id: string, value: stri
   return html.replace(re, (_, a: string, b: string) => a + attr(value) + b);
 }
 
+/** Sets the canonical address, which names the page a search engine should
+ *  list for this content: each shared link's own, never the home page. */
+function setCanonical(html: string, url: string): string {
+  const re = /(<link rel="canonical" href=")[^"]*(")/;
+  if (!re.test(html)) throw new Error('share-card: index.html has no <link rel="canonical">');
+  return html.replace(re, (_, a: string, b: string) => a + attr(url) + b);
+}
+
 export function applyPreviewTags(html: string, t: PreviewTags): string {
   let out = html;
   out = setMeta(out, 'property', 'og:title', t.title);
@@ -31,5 +39,9 @@ export function applyPreviewTags(html: string, t: PreviewTags): string {
   out = setMeta(out, 'property', 'og:image', t.image);
   out = setMeta(out, 'property', 'og:image:type', 'image/png');
   out = setMeta(out, 'property', 'og:image:alt', t.alt);
+  out = setMeta(out, 'name', 'twitter:title', t.title);
+  out = setMeta(out, 'name', 'twitter:description', t.description);
+  out = setMeta(out, 'name', 'twitter:image:alt', t.alt);
+  out = setCanonical(out, t.url);
   return out;
 }

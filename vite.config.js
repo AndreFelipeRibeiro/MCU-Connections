@@ -25,11 +25,11 @@ const LEGACY = [
   'watch-data.js',
   // Vite fingerprints the icons and rewrites the tags that point at them, but
   // clients ask for these paths directly without reading the HTML (iOS asks
-  // for /apple-touch-icon.png; crawlers follow the absolute og:image URL), so
-  // the plain root paths have to keep working too.
+  // for /apple-touch-icon.png), so the plain root paths have to keep working
+  // too. The old preview image, og-image.jpg, is gone: vercel.json sends its
+  // address to the generated og/default.png.
   'favicon.png',
   'apple-touch-icon.png',
-  'og-image.jpg',
   // Served today and linked from the README's setup notes.
   'schema.sql',
 ];

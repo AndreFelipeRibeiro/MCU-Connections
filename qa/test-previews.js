@@ -3,6 +3,11 @@
 //     guide, a 1200×630 PNG and a page whose og: tags name it, point at
 //     https://redthread.tv and differ from index.html in nothing else.
 //   - index.html's own preview is the app-wide card on redthread.tv.
+//   - Every page's twitter: tags equal its og: tags, its canonical address is
+//     its own og:url, no tag says MCU Connections, and every image is under
+//     300 KB (WhatsApp skips bigger ones). (Notion V4 Tasks, "Social media
+//     post cover art".)
+//   - The retired og-image.jpg's address goes to the new card (vercel.json).
 //   - middleware.ts, run here against the built files: /?title=, /?char= and
 //     /?guide= get their page; an unknown or malformed id, a plain / and any
 //     other parameter pass through (the app-wide card).
@@ -33,7 +38,23 @@ const NOWELCOME = "try { if (!localStorage.getItem('mcu.welcome.v1')) localStora
 
 const pngSize = (file) => { const b = fs.readFileSync(file); return b.slice(1, 4).toString() === 'PNG' ? [b.readUInt32BE(16), b.readUInt32BE(20)] : null; };
 const meta = (html, prop) => { const m = html.match(new RegExp(`<meta (?:property|name)="${prop}" content="([^"]*)"`)); return m ? m[1] : null; };
-const stripMeta = (html) => html.replace(/<meta (?:property="og:[a-z:]+"|name="description") content="[^"]*"\/>/g, '');
+const canonical = (html) => { const m = html.match(/<link rel="canonical" href="([^"]*)"/); return m ? m[1] : null; };
+const stripMeta = (html) => html
+  .replace(/<meta (?:property="og:[a-z:]+"|name="(?:description|twitter:[a-z:]+)") content="[^"]*"\/>/g, '')
+  .replace(/<link rel="canonical" href="[^"]*"\/>/g, '');
+const MAX_BYTES = 300 * 1024;
+// The tags a preview is built from, which must agree with each other and
+// carry the public name only.
+const tagErrors = (html, label, url) => {
+  const e = [];
+  for (const [tw, og] of [['twitter:title', 'og:title'], ['twitter:description', 'og:description'], ['twitter:image:alt', 'og:image:alt']]) {
+    if (meta(html, tw) !== meta(html, og)) e.push(`${label}: ${tw} "${meta(html, tw)}" is not its ${og} "${meta(html, og)}"`);
+  }
+  if (canonical(html) !== url) e.push(`${label}: canonical is ${canonical(html)}, not ${url}`);
+  const tags = (html.match(/<meta (?:property="og:|name="twitter:)[^>]*>/g) || []).join('\n');
+  if (/mcu[ -]connections/i.test(tags)) e.push(`${label}: a preview tag still says MCU Connections`);
+  return e;
+};
 
 (async () => {
   await new Promise(r => server.listen(QA_PORT, r));
@@ -47,6 +68,11 @@ const stripMeta = (html) => html.replace(/<meta (?:property="og:[a-z:]+"|name="d
   expect(meta(index, 'og:url') === PUBLIC + '/', 'index.html: og:url is ' + meta(index, 'og:url'));
   const def = path.join(SITE, 'og', 'default.png');
   expect(fs.existsSync(def) && String(pngSize(def)) === '1200,630', 'og/default.png missing or not 1200×630');
+  expect(fs.existsSync(def) && fs.statSync(def).size < MAX_BYTES, 'og/default.png is 300 KB or more');
+  errors.push(...tagErrors(index, 'index.html', PUBLIC + '/'));
+  expect(meta(index, 'og:site_name') === 'Red Thread' && meta(index, 'og:title') === 'Red Thread', 'index.html: og:site_name / og:title are not Red Thread');
+  expect(!fs.existsSync(path.join(SITE, 'og-image.jpg')), 'the build still ships the old og-image.jpg');
+  let biggest = fs.existsSync(def) ? fs.statSync(def).size : 0;
 
   // The catalog, read the way the app's own files publish it.
   const vm = require('vm');
@@ -69,17 +95,28 @@ const stripMeta = (html) => html.replace(/<meta (?:property="og:[a-z:]+"|name="d
       const page = path.join(SITE, 'og', kind, id + '.html');
       if (!fs.existsSync(png) || !fs.existsSync(page)) { errors.push(`${kind} ${id}: no preview image or page`); continue; }
       if (String(pngSize(png)) !== '1200,630') errors.push(`${kind} ${id}: image is ${pngSize(png)}, not 1200×630`);
+      const bytes = fs.statSync(png).size;
+      biggest = Math.max(biggest, bytes);
+      if (bytes >= MAX_BYTES) errors.push(`${kind} ${id}: image is ${Math.round(bytes / 1024)} KB, over 300 KB`);
       const html = fs.readFileSync(page, 'utf8');
       const q = `${PUBLIC}/?${kind}=${id}`;
       if (meta(html, 'og:url') !== q) errors.push(`${kind} ${id}: og:url ${meta(html, 'og:url')}`);
       if (meta(html, 'og:image') !== `${PUBLIC}/og/${kind}/${id}.png`) errors.push(`${kind} ${id}: og:image ${meta(html, 'og:image')}`);
       if (!(meta(html, 'og:title') || '').includes(name.replace(/&/g, '&amp;'))) errors.push(`${kind} ${id}: og:title "${meta(html, 'og:title')}" does not name ${name}`);
       if (!meta(html, 'og:description') || !meta(html, 'og:image:alt')) errors.push(`${kind} ${id}: empty description or alt`);
+      errors.push(...tagErrors(html, `${kind} ${id}`, q));
       if (stripMeta(html) !== base) errors.push(`${kind} ${id}: the page differs from index.html beyond its preview tags`);
       checked++;
     }
   }
   out.pagesChecked = checked;
+  out.biggestImageKB = Math.round(biggest / 1024);
+
+  // ---- The retired preview image (vercel.json) ------------------------------
+  const vercel = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
+  const rules = vercel.redirects || [];
+  const oldImage = rules.find(r => r.source === '/og-image.jpg');
+  expect(oldImage && oldImage.destination === '/og/default.png' && !oldImage.has, 'vercel.json: /og-image.jpg does not go to the new card');
 
   // ---- The middleware, against the built files ------------------------------
   const { code: mw } = await transformWithOxc(fs.readFileSync(path.join(ROOT, 'middleware.ts'), 'utf8'), 'middleware.ts', { lang: 'ts' });

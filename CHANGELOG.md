@@ -13,6 +13,36 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — Link previews: the red thread, X tags and the old image retired
+
+Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Social media post cover art". Most of it had landed with
+Batch 3's link previews ("Share 3/3"), which replaced the V3 `og-image.jpg`
+with a card the build draws under the Red Thread name. This finishes it.
+
+- The app-wide card (`og/default.png`) draws the lines tying its cards together
+  in the brand red, so the picture is the name; the cards keep their phase
+  colours (`src/share-card/previews.ts`).
+- `index.html` gains `twitter:title`, `twitter:description` and
+  `twitter:image:alt`, equal to their `og:` tags, and a canonical link to
+  `https://redthread.tv/`. Every title, character and guide page the build
+  writes sets all of them to its own values, its canonical being its own
+  address (`src/share-card/meta.ts`).
+- The V3 `og-image.jpg` ("MCU Connections") is deleted; `vercel.json`
+  redirects its address to `/og/default.png`, so a client that cached it gets
+  the new card.
+- `qa/test-previews.js` now also fails if a page's `twitter:` tags differ from
+  its `og:` tags, its canonical isn't its own address, a preview tag says MCU
+  Connections, an image reaches 300 KB (WhatsApp skips bigger ones; the largest
+  is 62 KB), or the build still ships `og-image.jpg`.
+- Verified: build and test-previews (172 preview pages); the new card looked at
+  full size and at 300 px wide; full Batch 6 regression on the final tree.
+  Limits: at 300 px the small "Red Thread" beside the logo is about 9 px
+  (headline clear; chat apps print the site name under the image). The
+  Facebook and LinkedIn re-scrapes and the iMessage, WhatsApp and Slack paste
+  checks need production. No social profile art (no accounts yet).
+
 ## V4 improvement — The Avengers: Doomsday newcomers join the catalog
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);

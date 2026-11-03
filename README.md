@@ -553,7 +553,7 @@ narrowest desktop and phone widths; the toolbar steps down labels by width.
 |---|---|
 | `index.html` | Entry point; startup screen markup, the locale scripts, the pinned/SRI supabase-js script and the app bundle |
 | `boot.js` | Startup screen states (loading, slow, failed start with Reload) before the first render; a classic script so it runs before the bundle |
-| `favicon.png`, `apple-touch-icon.png`, `og-image.jpg` | Tab icon and home-screen icon (drawn from the logo mark by `tools/make-icons.js`) and link-preview image |
+| `favicon.png`, `apple-touch-icon.png` | Tab icon and home-screen icon, drawn from the logo mark by `tools/make-icons.js`. Link-preview images are drawn by the build (`scripts/og-previews.js`); the old `og-image.jpg` address redirects to the app-wide card |
 | `src/data/data.ts` | Static titles/characters, ratings, phases, stable ids and variant links |
 | `src/data/media-data.ts` | TMDB poster and actor-portrait paths |
 | `src/config.ts` | Public Supabase project URL and publishable key |

@@ -44,6 +44,7 @@
     "src/share-card/": ["test-share", "test-previews"],
     "scripts/og-previews.js": ["test-previews"],
     "middleware.ts": ["test-previews"],
+    "vercel.json": ["test-previews"],
     "src/app/settings.tsx": ["test-textsize", "test-share", "test-settings", "test-i18n", "test-layers"],
     "src/components/ui/": ["test-settings", "test-v4scope"],
     "schema.sql": ["test-settings"],
