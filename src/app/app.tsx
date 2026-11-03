@@ -8,7 +8,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-// MCU Explorer — Floating canvas layout
+// Red Thread — the app shell and the floating (Spatial) canvas layout
 
 const { useState, useEffect, useMemo, useRef, useLayoutEffect, useCallback } = React;
 

@@ -58,7 +58,8 @@ export function previewEntries(cat: Catalog, loc: LocaleTables, colors: CardColo
   const page = (name: string) => tr('og.pageTitle', { name, app });
   const out: PreviewEntry[] = [];
 
-  // The app-wide card: a little network in every phase's colour.
+  // The app-wide card: a little network of cards in every phase's colour, tied
+  // together by the brand's red thread (the app's name, drawn).
   out.push({
     kind: 'default', id: 'default',
     title: tr('og.defaultTitle', { app }),
@@ -67,7 +68,7 @@ export function previewEntries(cat: Catalog, loc: LocaleTables, colors: CardColo
     input: {
       appName: app, site, eyebrow: tr('about.tagline'), heading: tr('share.appText'), sub: tr('og.defaultSub'),
       art: { layout: 'hub', cards: [...colors.phases.map((c, i): ArtCard => ({ color: c, hi: i === 0 })), { color: colors.phases[2] }],
-        lines: colors.phases.slice(1).concat([colors.phases[0]]) },
+        lines: colors.phases.map(() => colors.brand) },
     },
   });
 

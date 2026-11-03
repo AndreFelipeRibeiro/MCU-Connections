@@ -13,6 +13,95 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 fix — test-camera no longer clicks a hidden card
+
+Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 6.
+
+Notion V4 Tasks, "test-camera fails intermittently". The check failed 3 runs in
+4 on the unchanged Batch 5 commit: in its A → B step it picked Iron Man 3, a
+card hidden outside A's ring, so the press hit empty canvas, closed A and left
+nothing selected. The app was fine.
+
+- `centerCard` skips `.ring-hidden` cards.
+- The B click waits for the cards to stop moving, hovers, finds B where it now
+  is and presses only when the pointer is on B; attempts are reported as
+  `ringClickAttempts`, and a failed one says why.
+- Verified: 20 runs in a row, 20 passed on the first click; full Batch 6
+  regression on the final tree.
+
+## V4 maintenance — The rename to Red Thread reaches GitHub, Vercel and sign-in
+
+Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 6.
+
+Notion V4 Tasks, "Rename the app to Red Thread (redthread.tv)". Andre's
+answers: names `red-thread`; a simple redirect from the old address; Claude
+makes the dashboard changes with his approval for each.
+
+- Outside the code, approved one by one: GitHub `AndreFelipeRibeiro/MCU-Connections`
+  → `AndreFelipeRibeiro/red-thread` (old links and Git addresses redirect),
+  with redthread.tv as its website; Vercel project `mcu-connections` →
+  `red-thread`; Supabase allows the new staging address and is named Red
+  Thread; Google's OAuth client allows redthread.tv and the new staging
+  address, and its consent screen names the app Red Thread; the Google Cloud
+  project and the Notion pages are named Red Thread.
+- `mcu-connections.vercel.app` redirects to `https://redthread.tv`, path and
+  query kept (`vercel.json`, and `middleware.ts` for the home page in case
+  middleware runs first). Visitors signed out there arrive without the
+  progress saved on that address; signed-in visitors sync it back.
+  `red-thread.vercel.app` belongs to another project, so the old address stays
+  this project's own production alias.
+- npm packages `red-thread` and `red-thread-qa`; the design preview, comments,
+  the `qa/smoke.js` examples, README, AGENTS.md, HANDOFF.md, decisions.md and
+  the V4 brief titles; the calendar recap title becomes "Red Thread V4 –
+  Backlog batch n".
+- Kept as `mcu` on purpose, as one rule (Andre, after a full pass over every
+  remaining "MCU"): everything people see says Red Thread, and `mcu` stays the
+  internal prefix (saved-data keys, `window.MCU_*`, CSS classes), because the
+  saved-data keys can't change without wiping progress. "MCU" meaning the
+  Marvel Cinematic Universe and history files stay too.
+- `qa/test-previews.js` checks the redirect rule (old host redirected;
+  redthread.tv, www, staging and localhost not) and the middleware's 308s.
+- Verified: each dashboard change read back after saving; the old GitHub
+  address answers 301; Vercel's Git connection shows the new repository; full
+  Batch 6 regression on the final tree: 56 check runs clean; staging smoke
+  check clean. Still to do: the local folders (`red-thread`, `red-thread-v4`;
+  commands on the ticket, run with every session closed) and, in about three
+  months, removing the old addresses from Google and Supabase.
+
+## V4 design — Link previews: the red thread, X tags and the old image retired
+
+Recorded: 2026-11-02 20:47 EST (-0500). Pushed to `version/4.0` (V4 staging);
+merged to `main` (production) on 2026-11-02 after Andre's approval, in Batch 6.
+
+Notion V4 Tasks, "Social media post cover art". Most of it had landed with
+Batch 3's link previews ("Share 3/3"), which replaced the V3 `og-image.jpg`
+with a card the build draws under the Red Thread name. This finishes it.
+
+- The app-wide card (`og/default.png`) draws the lines tying its cards together
+  in the brand red, so the picture is the name; the cards keep their phase
+  colours (`src/share-card/previews.ts`).
+- `index.html` gains `twitter:title`, `twitter:description` and
+  `twitter:image:alt`, equal to their `og:` tags, and a canonical link to
+  `https://redthread.tv/`. Every title, character and guide page the build
+  writes sets all of them to its own values, its canonical being its own
+  address (`src/share-card/meta.ts`).
+- The V3 `og-image.jpg` ("MCU Connections") is deleted; `vercel.json`
+  redirects its address to `/og/default.png`, so a client that cached it gets
+  the new card.
+- `qa/test-previews.js` now also fails if a page's `twitter:` tags differ from
+  its `og:` tags, its canonical isn't its own address, a preview tag says MCU
+  Connections, an image reaches 300 KB (WhatsApp skips bigger ones; the largest
+  is 62 KB), or the build still ships `og-image.jpg`.
+- Verified: build and test-previews (172 preview pages); the new card looked
+  at full size and at 300 px wide; full Batch 6 regression on the final tree:
+  56 check runs clean; staging smoke check clean. Limits: at 300 px the small
+  "Red Thread" beside the logo is about 9 px (headline clear; chat apps print
+  the site name under the image). The Facebook and LinkedIn re-scrapes and the
+  iMessage, WhatsApp and Slack paste checks need production. No social profile
+  art (no accounts yet).
+
 ## V4 improvement — The Avengers: Doomsday newcomers join the catalog
 
 Recorded: 2026-11-02 12:50 EST (-0500). Pushed to `version/4.0` (V4 staging);

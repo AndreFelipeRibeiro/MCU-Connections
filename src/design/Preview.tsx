@@ -183,7 +183,7 @@ export default function Preview() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
           <div className="min-w-0 basis-full sm:basis-auto">
             <h1 className="text-base font-semibold tracking-tight">
-              MCU Connections — V4 design system
+              Red Thread — V4 design system
             </h1>
             <p className="text-xs text-muted-foreground">
               shadcn/ui on Base UI · Vega · Neutral

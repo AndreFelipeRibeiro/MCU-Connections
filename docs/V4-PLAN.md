@@ -1,4 +1,4 @@
-# MCU Connections V4 — plan
+# Red Thread V4 — plan (written as MCU Connections)
 
 Draft written 2026-10-31 for Andre's review, Phase 1 of
 [V4-KICKOFF.md](V4-KICKOFF.md). Nothing here is settled: the open questions at

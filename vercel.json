@@ -2,5 +2,18 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "framework": "vite"
+  "framework": "vite",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "mcu-connections\\.vercel\\.app" }],
+      "destination": "https://redthread.tv/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/og-image.jpg",
+      "destination": "/og/default.png",
+      "permanent": true
+    }
+  ]
 }

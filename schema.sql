@@ -1,4 +1,4 @@
--- MCU Connections V3 — watch tracking schema
+-- Red Thread (formerly MCU Connections) — watch tracking schema, from V3
 -- Run in the Supabase SQL editor. Idempotent: safe to re-run.
 --
 -- Validated against PostgreSQL 16 with a stubbed auth schema: runs clean twice,

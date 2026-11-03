@@ -1,6 +1,6 @@
 import React from 'react';
 
-// About MCU Connections: what the app is, ways to explore it, and credits
+// About Red Thread: what the app is, ways to explore it, and credits
 // (TMDB requires its logo and notice in an About or Credits section).
 // Desktop shows it as a centred dialog; phones reuse the bottom Sheet.
 // Opened from the account menu/sheet footer, which is also where a future

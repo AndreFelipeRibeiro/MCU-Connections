@@ -1,4 +1,6 @@
-# MCU Connections — handoff
+# Red Thread — handoff
+
+Formerly MCU Connections; renamed 2026-11-02.
 
 Written 2026-10-28 when development moved from a Claude chat session to Claude
 Code. Codex continues to contribute; [AGENTS.md](../AGENTS.md) is the shared
@@ -18,12 +20,12 @@ because it is how most of the behaviour got here.
   (`a44891a`), and `main`, `version/3.0` and `version/4.0` all started from
   that commit. V3 stays on `version/3.0` as history.
 - **V4 is in production** since 2026-11-01: the first V4 release merged
-  `version/4.0` into `main` (https://mcu-connections.vercel.app/), with
+  `version/4.0` into `main` (now https://redthread.tv/), with
   Batch 1 (build step, TypeScript, design system) and Batch 2 (the first
   re-skin pass, the theme control, the Red Thread placeholder logo).
 - **V4 is open**, on branch `version/4.0` in the `MCU-V4` worktree, deploying
-  to https://mcu-connections-git-version-40-afr-bfcd.vercel.app/ on every
-  push. Its backlog is the Notion **V4 Tasks** board; **V3 Tasks** is kept as
+  to https://red-thread-git-version-40-afr-bfcd.vercel.app/ on every
+  push (mcu-connections-git-version-40-… before the Vercel rename). Its backlog is the Notion **V4 Tasks** board; **V3 Tasks** is kept as
   history. Each batch reaches `main` only with Andre's explicit approval.
 - **What V4 has landed so far** (released 2026-11-01): Batch 1 — the Vite
   build step and the move of the whole app into one bundle, the TypeScript
@@ -181,10 +183,30 @@ work:
   can't know how long a language's words are, or how big the text is.
 - **Everything a visitor sees says Red Thread** (Andre, 2026-11-01: the public
   name; MCU Connections was a working title), including the link previews the
-  build draws. The repository, package, Vercel project and GitHub still say
-  mcu-connections until the rename ticket ("Rename the app to Red Thread")
-  runs. `og-image.jpg`, the old preview, is still copied into the build for
-  links already cached with it, and nothing points at it.
+  build draws. Since 2026-11-02 (Notion "Rename the app to Red Thread") so do
+  the GitHub repository (`AndreFelipeRibeiro/red-thread`), the Vercel project
+  (`red-thread`), the npm package, the Supabase project's display name and
+  Google's consent screen. `mcu-connections.vercel.app` redirects to
+  redthread.tv with the path and query (`vercel.json`, and `middleware.ts`
+  for the home page), so a visitor signed out there arrives without the
+  progress saved on that address (Andre chose a plain redirect over carrying
+  it across); signed-in visitors sync it back. The old `og-image.jpg` is gone
+  and its address redirects to the app-wide card. The GitHub About box, the
+  Notion pages ("Red Thread - Bugs and Features Backlog", "Red Thread - V4",
+  "Red Thread - V3"), the Google Cloud project's display name and the recap
+  title ("Red Thread V4 – Backlog batch n") were renamed the same day.
+  **One rule** (Andre, after a full pass over every remaining "MCU"):
+  everything people see says Red Thread, and `mcu` stays the internal prefix:
+  the `mcu.*` saved-data keys (renaming them would wipe progress and sign
+  everyone out), `window.MCU_*`, the `mcu-*` CSS classes, log prefixes and
+  build plugin names. Renaming the code names alone would leave the keys
+  behind, a half-and-half nobody wants. Also kept: "MCU" meaning the Marvel
+  Cinematic Universe, the Supabase project address and the Google Cloud
+  project ID (neither can change), and history files. **Still to do on the rename ticket:** move the local folders
+  (`MCU Connections` → `red-thread`, `MCU-V4` → `red-thread-v4`, then
+  `git worktree repair`), with every Claude, Codex, editor and dev server
+  closed first; and, after about three months, remove the old addresses from
+  Google and Supabase.
 - **The logo is a mask, not an image.** `src/assets/logo-mark.svg` carries
   only the shape; its own colours are ignored, and `--brand` paints it. A
   final logo with more than one colour will need a different build (an

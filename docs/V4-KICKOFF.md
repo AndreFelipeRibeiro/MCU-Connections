@@ -1,4 +1,7 @@
-# MCU Connections V4 — kickoff brief
+# Red Thread V4 — kickoff brief
+
+Written when the app was still called MCU Connections; the addresses below
+are the ones of that time. AGENTS.md has the current ones.
 
 Written 2026-10-31 when V4 was set up. This is the starting brief for Claude
 Code (and Codex) on V4. [AGENTS.md](../AGENTS.md) stays the rulebook; this file

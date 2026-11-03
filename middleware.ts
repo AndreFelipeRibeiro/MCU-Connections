@@ -18,6 +18,14 @@
 
 export const config = { matcher: '/' };
 
+// The project's own *.vercel.app production address, kept by Vercel through
+// the project rename (red-thread.vercel.app belongs to someone else), sends
+// visitors to the public one. vercel.json redirects every path on it; this
+// covers the home page again in case Vercel runs middleware first, so a shared
+// /?title=… link on the old address still lands on redthread.tv.
+const PUBLIC = 'https://redthread.tv';
+const OLD_HOSTS = ['mcu-connections.vercel.app'];
+
 // In the order the app gives them precedence: a title link may also pin a
 // character, and then it is the title that was shared.
 const KINDS = ['title', 'guide', 'char'] as const;
@@ -25,6 +33,7 @@ const ID = /^[a-z0-9-]{1,80}$/;
 
 export default async function middleware(request: Request): Promise<Response | undefined> {
   const url = new URL(request.url);
+  if (OLD_HOSTS.includes(url.hostname)) return Response.redirect(PUBLIC + url.pathname + url.search, 308);
   for (const kind of KINDS) {
     const id = url.searchParams.get(kind);
     if (id === null) continue;

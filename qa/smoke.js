@@ -1,8 +1,8 @@
 // One-minute smoke check against a deployed site: staging after each push,
 // production after each merge (V3 Tasks, "Make testing faster").
 //
-//   SITE_URL=https://mcu-connections-git-version-30-afr-bfcd.vercel.app/ node qa/smoke.js
-//   SITE_URL=https://mcu-connections.vercel.app/ node qa/smoke.js
+//   SITE_URL=https://mcu-connections-git-version-40-afr-bfcd.vercel.app/ node qa/smoke.js
+//   SITE_URL=https://redthread.tv/ node qa/smoke.js
 //
 // Loads the real deployment (real CDN libraries, real Babel in the page) as a
 // returning visitor on desktop and phone: the page starts with no console or
@@ -13,7 +13,7 @@
 const { chromium } = require('playwright');
 
 const SITE_URL = process.env.SITE_URL;
-if (!SITE_URL) { console.error('Set SITE_URL, for example SITE_URL=https://mcu-connections.vercel.app/'); process.exit(2); }
+if (!SITE_URL) { console.error('Set SITE_URL, for example SITE_URL=https://redthread.tv/'); process.exit(2); }
 const base = SITE_URL.endsWith('/') ? SITE_URL : SITE_URL + '/';
 const DESK = { viewport: { width: 1440, height: 900 } };
 const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true };
