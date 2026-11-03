@@ -110,6 +110,9 @@ See the [dated changelog](CHANGELOG.md) for commit-by-commit history and the
   typing or in a menu; the phone layout too, for a tablet or phone with a
   keyboard), and opening a title closes Settings so its details show (Settings
   slides out, then the details slide in).
+- In the toolbar's segmented groups (sort, type, collection, view, the filter
+  choices) and the phone collection row, the selection slides to the item
+  you pick rather than switching over; with Reduce motion it moves at once.
 - Desktop has Spatial and List views (switch at the end of the sort row). The
   List is one row per title with sortable column headers (title, phase, release,
   in-story years, IMDb, RT) that stay in step with the sort row; a row opens the

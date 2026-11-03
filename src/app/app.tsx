@@ -573,6 +573,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
                 <div className="control-group">
                   <label>{tr('filters.budget')}</label>
                   <div className="segmented">
+                    <window.SegPill value={budgetFilter}/>
                     {[['all','filters.all'],['low','budget.low'],['mid','budget.mid'],['high','budget.high'],['mega','budget.mega']].map(([v,k])=>(
                       <button key={v} className={budgetFilter===v?'on':''} onClick={()=>setBudgetFilter(v)}>{tr(k)}</button>
                     ))}
@@ -583,6 +584,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
                 <div className="control-group">
                   <label>{tr('filter.release')}</label>
                   <div className="segmented">
+                    <window.SegPill value={releaseFilter}/>
                     {[['all','filter.release.all'],['released','filter.release.released']].map(([v,k])=>(
                       <button key={v} className={releaseFilter===v?'on':''} aria-pressed={releaseFilter===v} onClick={()=>setReleaseFilter(v)}>{tr(k)}</button>
                     ))}
@@ -591,6 +593,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
                 <div className="control-group">
                   <label>{tr('order.label')}</label>
                   <div className="segmented">
+                    <window.SegPill value={sortDir}/>
                     {sortDirectionLabels(sort).map((label, i) => (
                       <button key={label} className={sortDir===(i===0?'asc':'desc')?'on':''}
                         aria-pressed={sortDir===(i===0?'asc':'desc')}
@@ -606,6 +609,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
           </div></Off>
           <Off off={guideOn}><div className="control-group tb-type-controls">
             <div className="segmented">
+              <window.SegPill value={typeFilter}/>
               {[['all','type.all'],['film','type.films'],['series','type.series']].map(([v,k])=>(
                 <button key={v} className={typeFilter===v?'on':''} onClick={()=>setTypeFilter(v)}>{tr(k)}</button>
               ))}
@@ -624,6 +628,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
       <div className="tb-row tb-sort-row" ref={sortRow} data-fit={sortFit}>
         <Off off={listOff}><div className="control-group tb-sort-controls">
           <div className="segmented">
+            <window.SegPill value={sort}/>
             {SORT_OPTIONS.map(([v,ic])=>(
               <button key={v} className={sort===v?'on':''} onClick={()=>setSort(v)} aria-pressed={sort===v} title={tr('sort.' + v)}>
                 <span className="si">{ic}</span><span className="lg">{tr('sort.' + v)}</span><span className="sm">{tr('sort.short.' + v)}</span>
@@ -633,6 +638,7 @@ function Toolbar({ onHome, guideId, onOpenGuide, onAbout, onSettings, settingsOp
         </div></Off>
         <Off off={guideOn}><window.CollectionSwitch value={collectionFilter} onChange={setCollectionFilter}/></Off>
         <div className="segmented tb-view-switch" role="group" aria-label={tr('view.label')}>
+          <window.SegPill value={desktopView}/>
           {[['spatial', '◈'], ['list', '☰']].map(([v, ic]) => (
             <button key={v} className={desktopView === v ? 'on' : ''} aria-pressed={desktopView === v}
               title={tr('view.' + v)} aria-label={tr('view.' + v)} onClick={() => setDesktopView(v)}>
@@ -2991,6 +2997,7 @@ function App() {
             </button>
           )}
           <div className="segmented cb-mode" role="group" aria-label={tr('highlight.modeAria')}>
+            <window.SegPill value={charOnly}/>
             <button className={charOnly ? 'on' : ''} aria-pressed={charOnly} onClick={() => setCharOnly(true)}>{tr('highlight.only')}</button>
             <button className={!charOnly ? 'on' : ''} aria-pressed={!charOnly} onClick={() => setCharOnly(false)}>{tr('highlight.all')}</button>
           </div>

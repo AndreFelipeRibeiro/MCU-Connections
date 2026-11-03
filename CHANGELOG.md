@@ -13,6 +13,28 @@ landed related files separately; each is listed rather than implying those were
 separate product releases. The merge checkpoint is included explicitly.
 
 
+## V4 design — The selection slides in the toolbar's segmented groups
+
+Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging).
+
+Notion V4 Tasks, "Interface animation: sliding selection in the segmented
+controls, plus other micro-interactions". Picking another item in a group
+now slides the selection across to it instead of switching it over.
+
+- New `src/app/seg-pill.tsx`: one pill behind a group's buttons that measures
+  the selected button and moves to it (300ms, the layout curve). It fits any
+  language, Text size or compact toolbar step, settles without a slide on first
+  paint and on resizes, and moves at once with Reduce motion.
+- In sort, type, collection (desktop and phone), view, the character banner's
+  mode switch, and the filter popover's Budget, Released and Order groups. The
+  phase group keeps its own coloured pills.
+- New check `qa/test-segpill.js`: on the selected button in every group in
+  English, Portuguese and at Large text; mid-slide then aligned after a change;
+  immediate with Reduce motion (setting and system); the phone row.
+- Verified: those checks; measured the slide in headless Chromium; full Batch 7
+  regression on the final tree. The other suggested micro-interactions are
+  Batch 8.
+
 ## V4 improvement — D and L switch the theme on the phone layout too
 
 Recorded: 2026-11-02 22:54 EST (-0500). Pushed to `version/4.0` (V4 staging).

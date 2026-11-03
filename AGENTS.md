@@ -126,10 +126,10 @@ plan, the environment and the Figma workflow.
     lists for the files changed in the working tree. A new check goes into
     `checks.json` ("regress" and the files it covers) in the same change.
   - **Once per batch, before pushing it to staging:** `bash qa/regress.sh`
-    (52 check scripts in 54 runs plus the accessibility scan in English,
+    (53 check scripts in 55 runs plus the accessibility scan in English,
     Portuguese and English in the dark theme, about 7 minutes; it exits non-zero and marks failures with
     `!!`), on the final tree with nothing edited while it runs. Read the
-    output, not just the exit code. A good run is **57 check runs clean**
+    output, not just the exit code. A good run is **58 check runs clean**
     with no known failures.
   - **After each push to staging, and after each merge to `main`:**
     `SITE_URL=<the deployed address> node qa/smoke.js` (about a minute)
@@ -385,7 +385,10 @@ rules carry over unchanged.
   setting: scripts ask `window.MCU_MOTION.reduced()` rather than the media
   query, and turning it on puts `reduce-motion` on `<html>`, which `styles.css` answers by
   cutting every transition and animation.
-- Motion: layout moves use `600ms cubic-bezier(.2,.8,.2,1)`.
+- Motion: layout moves use `600ms cubic-bezier(.2,.8,.2,1)`; the sliding
+  selection in segmented groups (`src/app/seg-pill.tsx`) uses 300ms on the
+  same curve. A new segmented group gets `<window.SegPill value={…}/>` as its
+  first child.
 - Spatial canvas performance: no per-card GPU layers (no `will-change` or 3D
   transforms on cards) and no `backdrop-filter` inside the canvas. The canvas is
   composited only at 30% zoom and above (`LAYER_MIN_SCALE`). These rules keep
